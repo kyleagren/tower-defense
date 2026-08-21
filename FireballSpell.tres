@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="FireballSpell" format=3 uid="uid://dv6iw2uxlrvt6"]
+
+[ext_resource type="Script" uid="uid://bamn5fqu62j5i" path="res://scripts/data/Spells/FireballSpell.cs" id="1_ae04e"]
+
+[resource]
+script = ExtResource("1_ae04e")
+metadata/_custom_type_script = "uid://bamn5fqu62j5i"

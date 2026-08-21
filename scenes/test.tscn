@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://7hj4nnu3w48"]
+
+[ext_resource type="Script" uid="uid://ipjifq2it0s6" path="res://TestTrigger.cs" id="1_bl13t"]
+[ext_resource type="PackedScene" uid="uid://3w41p5p76ydb" path="res://target_dummy/TargetDummy.tscn" id="2_iyx0m"]
+[ext_resource type="Resource" uid="uid://dv6iw2uxlrvt6" path="res://FireballSpell.tres" id="2_lpvoh"]
+[ext_resource type="Resource" uid="uid://rjkfa4u5o50r" path="res://MultiProjectileRune.tres" id="3_at5dv"]
+[ext_resource type="Script" uid="uid://o2blj4y1pgho" path="res://scripts/cast_effects/ProjectileCastEffect.cs" id="5_jcd4p"]
+[ext_resource type="PackedScene" uid="uid://cpv6numl77c7" path="res://projectiles/Projectile.tscn" id="6_uacia"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_s42qg"]
+
+[node name="Node3D" type="Node3D" unique_id=1110859380 node_paths=PackedStringArray("projectileCastEffect", "spawnPoint")]
+script = ExtResource("1_bl13t")
+fireballSpell = ExtResource("2_lpvoh")
+multiProjectileRune = ExtResource("3_at5dv")
+projectileCastEffect = NodePath("ProjectileCastEffect")
+spawnPoint = NodePath("SpawnPoint")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1792171229]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
+mesh = SubResource("PlaneMesh_s42qg")
+
+[node name="StaticBody3D" parent="." unique_id=55608553 instance=ExtResource("2_iyx0m")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.145822, 0.538908, 0)
+
+[node name="SpawnPoint" type="Node3D" parent="." unique_id=2036962739]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 3.111795, 1, 0)
+
+[node name="ProjectileCastEffect" type="Node" parent="." unique_id=1605923147]
+script = ExtResource("5_jcd4p")
+projectileScene = ExtResource("6_uacia")
+metadata/_custom_type_script = "uid://o2blj4y1pgho"
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=835142518]
+transform = Transform3D(1, 0, 0, 0, 0.9659259, 0.25881907, 0, -0.25881907, 0.9659258, 0, 2, 7.0278153)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1423970295]
+transform = Transform3D(1, 0, 0, 0, 0.8660254, -0.5, 0, 0.5, 0.8660254, 0, 5, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=161673182]
