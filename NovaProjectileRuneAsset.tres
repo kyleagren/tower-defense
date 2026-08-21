@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="NovaProjectileRune" format=3 uid="uid://btebjiitbt4qx"]
+
+[ext_resource type="Script" uid="uid://b44tjtredoyr7" path="res://scripts/data/Runes/NovaProjectileRune.cs" id="1_fnvl0"]
+
+[resource]
+script = ExtResource("1_fnvl0")
+metadata/_custom_type_script = "uid://b44tjtredoyr7"

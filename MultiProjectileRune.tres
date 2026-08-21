@@ -1,7 +1,0 @@
-[gd_resource type="Resource" script_class="MultiProjectileRune" format=3 uid="uid://rjkfa4u5o50r"]
-
-[ext_resource type="Script" uid="uid://78qm0x0wdcm7" path="res://scripts/data/Runes/MultiProjectileRune.cs" id="1_tfs3y"]
-
-[resource]
-script = ExtResource("1_tfs3y")
-metadata/_custom_type_script = "uid://78qm0x0wdcm7"

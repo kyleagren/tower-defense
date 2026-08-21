@@ -3,10 +3,18 @@ using System.Linq;
 
 public partial class TestTrigger : Node3D
 {
-    [Export] private FireballSpell fireballSpell;
-    [Export] private MultiProjectileRune multiProjectileRune;
-    [Export] private ProjectileCastEffect projectileCastEffect;
-    [Export] private Node3D spawnPoint;
+    [Export] public FireballSpell FireballSpell { get; private set; }
+    [Export] public MultiProjectileRune MultiProjectileRune { get; private set; }
+    [Export] public NovaProjectileRune NovaProjectileRune { get; private set; }
+    [Export] public ProjectileCastEffect ProjectileCastEffect { get; private set; }
+    [Export] public Node3D SpawnPoint { get; private set; }
+
+    private SpellInstance fireballInstance;
+
+    public override void _Ready()
+    {
+        fireballInstance = new SpellInstance(FireballSpell);
+    }
 
     public override void _UnhandledInput(InputEvent @event)
     {
@@ -17,31 +25,36 @@ public partial class TestTrigger : Node3D
 
         if (@event.IsActionPressed("toggle_rune"))
         {
-            ToggleMultiProjectileRune();
+            ToggleRune(MultiProjectileRune, "Multi-Projectile");
+        }
+
+        if (@event.IsActionPressed("toggle_nova"))
+        {
+            ToggleRune(NovaProjectileRune, "Nova-Projectile");
         }
     }
 
-    private void ToggleMultiProjectileRune()
+    private void ToggleRune(Rune rune, string label)
     {
-        if (fireballSpell.AttachedRunes.Contains(multiProjectileRune))
+        if (fireballInstance.AttachedRunes.Contains(rune))
         {
-            fireballSpell.DetachRune(multiProjectileRune);
-            GD.Print("Multi-Projectile detached.");
+            fireballInstance.DetachRune(rune);
+            GD.Print($"{label} detached.");
         }
         else
         {
-            fireballSpell.TryAttachRune(multiProjectileRune);
-            GD.Print("Multi-Projectile attached.");
+            fireballInstance.TryAttachRune(rune);
+            GD.Print($"{label} attached.");
         }
     }
 
     private void CastFireball()
     {
-        SpellCastContext context = fireballSpell.Resolve();
+        SpellCastContext context = fireballInstance.Resolve();
 
         if (context is ProjectileCastContext projectileContext)
         {
-            projectileCastEffect.Cast(projectileContext, spawnPoint);
+            ProjectileCastEffect.Cast(projectileContext, SpawnPoint);
         }
     }
 }
