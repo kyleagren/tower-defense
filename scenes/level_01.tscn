@@ -1,4 +1,19 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene format=3 uid="uid://vqr88ehteuiw"]
+
+[ext_resource type="Script" uid="uid://c6jpbpp1tql77" path="res://scripts/systems/EnemySpawner.cs" id="1_enemyspawner"]
+[ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://scripts/systems/WaveController.cs" id="2_wavecontroller"]
+[ext_resource type="PackedScene" path="res://enemies/Enemy.tscn" id="3_enemyscene"]
+[ext_resource type="Script" uid="uid://dpq7f55mr60l1" path="res://scripts/data/Waves/WaveDefinition.cs" id="3_j60wy"]
+[ext_resource type="Script" uid="uid://458lchfiacb7" path="res://scripts/data/Waves/WaveSpawnEntry.cs" id="4_qgxqk"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
+vertices = PackedVector3Array(-4.5, 0.3, -7, -4.25, 0.3, -6, -1, 0.3, -6, -1, 0.3, -14.25, -19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, 1.25, 0.3, -5.75, 4.5, 0.3, -5.75, 4.75, 0.3, -7, 1.25, 0.3, -14.25, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, -4.75, 0.3, -4.75, -1, 0.3, 9.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5, 0, 0.3, 14.5, 0, 0.3, 9.75, 4.75, 0.3, -4.75, 1.25, 0.3, 9.25, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5)
+polygons = [PackedInt32Array(1, 0, 2), PackedInt32Array(2, 0, 3), PackedInt32Array(5, 4, 6), PackedInt32Array(6, 4, 7), PackedInt32Array(0, 6, 3), PackedInt32Array(3, 6, 7), PackedInt32Array(9, 8, 10), PackedInt32Array(10, 8, 11), PackedInt32Array(13, 12, 14), PackedInt32Array(14, 12, 15), PackedInt32Array(10, 11, 12), PackedInt32Array(12, 11, 15), PackedInt32Array(1, 2, 16), PackedInt32Array(16, 2, 17), PackedInt32Array(5, 18, 4), PackedInt32Array(4, 18, 19), PackedInt32Array(17, 21, 20), PackedInt32Array(17, 20, 16), PackedInt32Array(16, 20, 18), PackedInt32Array(18, 20, 19), PackedInt32Array(9, 22, 8), PackedInt32Array(8, 22, 23), PackedInt32Array(13, 14, 24), PackedInt32Array(24, 14, 25), PackedInt32Array(20, 21, 23), PackedInt32Array(23, 22, 20), PackedInt32Array(20, 22, 24), PackedInt32Array(20, 24, 25)]
+agent_height = 1.8
+agent_radius = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
+albedo_color = Color(0.35, 0.45, 0.3, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(40, 30)
@@ -6,8 +21,8 @@ size = Vector2(40, 30)
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
 size = Vector3(40, 0.2, 30)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
-albedo_color = Color(0.35, 0.45, 0.3, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
+albedo_color = Color(0.3, 0.3, 0.32, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_ns"]
 size = Vector3(41, 3, 1)
@@ -27,8 +42,8 @@ size = Vector3(1, 3, 24)
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_center"]
 size = Vector3(1, 3, 24)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
-albedo_color = Color(0.3, 0.3, 0.32, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fence"]
+albedo_color = Color(0.45, 0.3, 0.15, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_fence"]
 size = Vector3(10, 1.5, 1)
@@ -36,146 +51,174 @@ size = Vector3(10, 1.5, 1)
 [sub_resource type="BoxShape3D" id="BoxShape3D_fence"]
 size = Vector3(10, 1.5, 1)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fence"]
-albedo_color = Color(0.45, 0.3, 0.15, 1)
-
-[sub_resource type="SphereMesh" id="SphereMesh_objective"]
-radius = 1.1
-height = 2.2
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_objective"]
 albedo_color = Color(0.85, 0.7, 0.15, 1)
 emission_enabled = true
 emission = Color(0.85, 0.7, 0.15, 1)
 emission_energy_multiplier = 0.5
 
+[sub_resource type="SphereMesh" id="SphereMesh_objective"]
+radius = 1.1
+height = 2.2
+
+[sub_resource type="Resource" id="Resource_o4vi7"]
+script = ExtResource("4_qgxqk")
+SpawnerId = "LaneA"
+EnemyScene = ExtResource("3_enemyscene")
+Count = 2
+metadata/_custom_type_script = "uid://458lchfiacb7"
+
+[sub_resource type="Resource" id="Resource_vflxp"]
+script = ExtResource("4_qgxqk")
+SpawnerId = "LaneB"
+EnemyScene = ExtResource("3_enemyscene")
+metadata/_custom_type_script = "uid://458lchfiacb7"
+
+[sub_resource type="Resource" id="Resource_s42qg"]
+script = ExtResource("3_j60wy")
+Entries = Array[ExtResource("4_qgxqk")]([SubResource("Resource_o4vi7"), SubResource("Resource_vflxp")])
+metadata/_custom_type_script = "uid://dpq7f55mr60l1"
+
 [sub_resource type="Environment" id="Environment_default"]
 
-[node name="LevelOne" type="Node3D"]
+[node name="LevelOne" type="Node3D" unique_id=493134053]
 
-[node name="Ground" type="StaticBody3D" parent="."]
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1818073141]
+navigation_mesh = SubResource("NavigationMesh_level01")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("PlaneMesh_ground")
+[node name="Ground" type="StaticBody3D" parent="NavigationRegion3D" unique_id=1659584178]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Ground" unique_id=2058018523]
 material_override = SubResource("StandardMaterial3D_ground")
+mesh = SubResource("PlaneMesh_ground")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Ground" unique_id=1977139758]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 shape = SubResource("BoxShape3D_ground")
 
-[node name="Boundary" type="Node3D" parent="."]
+[node name="Boundary" type="Node3D" parent="NavigationRegion3D" unique_id=710636024]
 
-[node name="WallNorth" type="StaticBody3D" parent="Boundary"]
+[node name="WallNorth" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=143044077]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -15.5)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallNorth"]
-mesh = SubResource("BoxMesh_wall_ns")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallNorth" unique_id=1877919501]
 material_override = SubResource("StandardMaterial3D_wall")
+mesh = SubResource("BoxMesh_wall_ns")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary/WallNorth"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Boundary/WallNorth" unique_id=1392043500]
 shape = SubResource("BoxShape3D_wall_ns")
 
-[node name="WallSouth" type="StaticBody3D" parent="Boundary"]
+[node name="WallSouth" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=1539600664]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 15.5)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallSouth"]
-mesh = SubResource("BoxMesh_wall_ns")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallSouth" unique_id=937932479]
 material_override = SubResource("StandardMaterial3D_wall")
+mesh = SubResource("BoxMesh_wall_ns")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary/WallSouth"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Boundary/WallSouth" unique_id=487684819]
 shape = SubResource("BoxShape3D_wall_ns")
 
-[node name="WallEast" type="StaticBody3D" parent="Boundary"]
+[node name="WallEast" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=1779068082]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 1.5, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallEast"]
-mesh = SubResource("BoxMesh_wall_ew")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallEast" unique_id=902569249]
 material_override = SubResource("StandardMaterial3D_wall")
+mesh = SubResource("BoxMesh_wall_ew")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary/WallEast"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Boundary/WallEast" unique_id=2117430937]
 shape = SubResource("BoxShape3D_wall_ew")
 
-[node name="WallWest" type="StaticBody3D" parent="Boundary"]
+[node name="WallWest" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=2005571862]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 1.5, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallWest"]
-mesh = SubResource("BoxMesh_wall_ew")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallWest" unique_id=106579811]
 material_override = SubResource("StandardMaterial3D_wall")
+mesh = SubResource("BoxMesh_wall_ew")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary/WallWest"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Boundary/WallWest" unique_id=493720802]
 shape = SubResource("BoxShape3D_wall_ew")
 
-[node name="WallCenter" type="StaticBody3D" parent="Boundary"]
+[node name="WallCenter" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=1429035798]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallCenter"]
-mesh = SubResource("BoxMesh_wall_center")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallCenter" unique_id=2013672262]
 material_override = SubResource("StandardMaterial3D_wall")
+mesh = SubResource("BoxMesh_wall_center")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Boundary/WallCenter"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Boundary/WallCenter" unique_id=1407199353]
 shape = SubResource("BoxShape3D_wall_center")
 
-[node name="Obstacles" type="Node3D" parent="."]
+[node name="Obstacles" type="Node3D" parent="NavigationRegion3D" unique_id=704024420]
 
-[node name="FenceLaneA" type="StaticBody3D" parent="Obstacles"]
+[node name="FenceLaneA" type="StaticBody3D" parent="NavigationRegion3D/Obstacles" unique_id=574831794]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.75, -6)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Obstacles/FenceLaneA"]
-mesh = SubResource("BoxMesh_fence")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Obstacles/FenceLaneA" unique_id=1878927162]
 material_override = SubResource("StandardMaterial3D_fence")
+mesh = SubResource("BoxMesh_fence")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Obstacles/FenceLaneA"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacles/FenceLaneA" unique_id=903433508]
 shape = SubResource("BoxShape3D_fence")
 
-[node name="FenceLaneB" type="StaticBody3D" parent="Obstacles"]
+[node name="FenceLaneB" type="StaticBody3D" parent="NavigationRegion3D/Obstacles" unique_id=2068323487]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.75, -6)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Obstacles/FenceLaneB"]
-mesh = SubResource("BoxMesh_fence")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Obstacles/FenceLaneB" unique_id=1620246954]
 material_override = SubResource("StandardMaterial3D_fence")
+mesh = SubResource("BoxMesh_fence")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Obstacles/FenceLaneB"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacles/FenceLaneB" unique_id=324383121]
 shape = SubResource("BoxShape3D_fence")
 
-[node name="Objective" type="Node3D" parent="."]
+[node name="Objective" type="Node3D" parent="." unique_id=281504465]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 12)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Objective"]
-mesh = SubResource("SphereMesh_objective")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Objective" unique_id=916345286]
 material_override = SubResource("StandardMaterial3D_objective")
+mesh = SubResource("SphereMesh_objective")
 
-[node name="Lanes" type="Node3D" parent="."]
+[node name="Lanes" type="Node3D" parent="." unique_id=124541586]
 
-[node name="LaneA" type="Node3D" parent="Lanes"]
+[node name="LaneA" type="Node3D" parent="Lanes" unique_id=385720669]
 
-[node name="Spawn" type="Marker3D" parent="Lanes/LaneA"]
+[node name="Spawn" type="Marker3D" parent="Lanes/LaneA" unique_id=635544662 node_paths=PackedStringArray("Target") groups=["enemy_spawners"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.1, -14)
+script = ExtResource("1_enemyspawner")
+Id = "LaneA"
+Target = NodePath("../../../Objective")
 
-[node name="Waypoint1" type="Marker3D" parent="Lanes/LaneA"]
+[node name="Waypoint1" type="Marker3D" parent="Lanes/LaneA" unique_id=917635156]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.1, -2)
 
-[node name="Waypoint2" type="Marker3D" parent="Lanes/LaneA"]
+[node name="Waypoint2" type="Marker3D" parent="Lanes/LaneA" unique_id=863612364]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.1, 10)
 
-[node name="LaneB" type="Node3D" parent="Lanes"]
+[node name="LaneB" type="Node3D" parent="Lanes" unique_id=1808231694]
 
-[node name="Spawn" type="Marker3D" parent="Lanes/LaneB"]
+[node name="Spawn" type="Marker3D" parent="Lanes/LaneB" unique_id=824124468 node_paths=PackedStringArray("Target") groups=["enemy_spawners"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.1, -14)
+script = ExtResource("1_enemyspawner")
+Id = "LaneB"
+Target = NodePath("../../../Objective")
 
-[node name="Waypoint1" type="Marker3D" parent="Lanes/LaneB"]
+[node name="Waypoint1" type="Marker3D" parent="Lanes/LaneB" unique_id=1243995094]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.1, -2)
 
-[node name="Waypoint2" type="Marker3D" parent="Lanes/LaneB"]
+[node name="Waypoint2" type="Marker3D" parent="Lanes/LaneB" unique_id=338347423]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.1, 10)
 
-[node name="MergePoint" type="Marker3D" parent="Lanes"]
+[node name="MergePoint" type="Marker3D" parent="Lanes" unique_id=1524848044]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 12)
 
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.643, -0.766, 0, 0.766, 0.643, 0, 26, 26)
+[node name="WaveController" type="Node" parent="." unique_id=196385774]
+script = ExtResource("2_wavecontroller")
+Waves = Array[ExtResource("3_j60wy")]([SubResource("Resource_s42qg")])
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1977804088]
+transform = Transform3D(1, 0, 0, 0, 0.6548339, 0.7557729, 0, -0.7557729, 0.6548339, 0, 20.45935, 18.034107)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=367131371]
 transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46452135, -2.0641685, 7.890005, 0)
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1525073669]
 environment = SubResource("Environment_default")
