@@ -4,6 +4,7 @@ public partial class ProjectileCastEffect : Node
 {
     [Export] public PackedScene ProjectileScene { get; private set; }
     [Export] public float SpreadAngleDegrees { get; private set; } = 15f;
+    [Export] public ProjectileHitEffect HitEffect { get; private set; }
 
     public void Cast(ProjectileCastContext context, Node3D spawnPoint)
     {
@@ -17,6 +18,7 @@ public partial class ProjectileCastEffect : Node
 
             Projectile projectile = ProjectileScene.Instantiate<Projectile>();
             projectile.Initialize(context);
+            projectile.HitEffect = HitEffect;
             spawnPoint.GetTree().CurrentScene.AddChild(projectile);
 
             projectile.GlobalTransform = spawnPoint.GlobalTransform;

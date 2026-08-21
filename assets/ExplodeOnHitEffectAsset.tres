@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="ExplodeOnHitEffect" format=3 uid="uid://celj6elfxqa2c"]
+
+[ext_resource type="Script" uid="uid://d3k371t00tn0y" path="res://scripts/data/HitEffects/ExplodeOnHitEffect.cs" id="1_kxll2"]
+
+[resource]
+script = ExtResource("1_kxll2")
+metadata/_custom_type_script = "uid://d3k371t00tn0y"

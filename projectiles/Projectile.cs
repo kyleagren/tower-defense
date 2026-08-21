@@ -3,14 +3,19 @@ using System.Collections.Generic;
 
 public partial class Projectile : Area3D
 {
-    private float damage;
+    public float Damage { get; private set; }
+    public float Radius { get; private set; }
+    public ProjectileHitEffect HitEffect { get; set; }
+
     private int pierceRemaining;
     private float speed = 20f;
+    private bool hasExpired;
     private HashSet<Node3D> alreadyHit = new HashSet<Node3D>();
 
     public void Initialize(ProjectileCastContext context)
     {
-        damage = context.Damage;
+        Damage = context.Damage;
+        Radius = context.Radius;
         pierceRemaining = context.PierceCount;
     }
 
@@ -26,16 +31,17 @@ public partial class Projectile : Area3D
 
     private void OnBodyEntered(Node3D body)
     {
-        if (alreadyHit.Contains(body))
+        if (hasExpired || alreadyHit.Contains(body))
         {
             return;
         }
 
         alreadyHit.Add(body);
-        GD.Print($"Hit {body.Name} for {damage} damage.");
+        HitEffect?.OnHit(this, body);
 
         if (pierceRemaining <= 0)
         {
+            hasExpired = true;
             QueueFree();
         }
         else

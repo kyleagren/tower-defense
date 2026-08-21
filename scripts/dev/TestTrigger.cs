@@ -16,6 +16,11 @@ public partial class TestTrigger : Node3D
         fireballInstance = new SpellInstance(FireballSpell);
     }
 
+    public override void _Process(double delta)
+    {
+        fireballInstance.TickCooldown((float)delta);
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event.IsActionPressed("cast_spell"))
@@ -50,11 +55,18 @@ public partial class TestTrigger : Node3D
 
     private void CastFireball()
     {
+        if (fireballInstance.IsOnCooldown)
+        {
+            return;
+        }
+
         SpellCastContext context = fireballInstance.Resolve();
 
         if (context is ProjectileCastContext projectileContext)
         {
             ProjectileCastEffect.Cast(projectileContext, SpawnPoint);
         }
+
+        fireballInstance.StartCooldown(context.Cooldown);
     }
 }
