@@ -2,12 +2,12 @@
 
 [ext_resource type="Script" uid="uid://ipjifq2it0s6" path="res://TestTrigger.cs" id="1_bl13t"]
 [ext_resource type="PackedScene" uid="uid://3w41p5p76ydb" path="res://target_dummy/TargetDummy.tscn" id="2_iyx0m"]
-[ext_resource type="Resource" uid="uid://dv6iw2uxlrvt6" path="res://assets/FireballSpellAsset.tres" id="2_jcd4p"]
-[ext_resource type="Resource" uid="uid://rjkfa4u5o50r" path="res://assets/MultiProjectileRuneAsset.tres" id="3_lpvoh"]
-[ext_resource type="Resource" uid="uid://btebjiitbt4qx" path="res://assets/NovaProjectileRuneAsset.tres" id="4_at5dv"]
+[ext_resource type="Resource" uid="uid://dv6iw2uxlrvt6" path="res://assets/FireballSpell.tres" id="2_jcd4p"]
+[ext_resource type="Resource" uid="uid://rjkfa4u5o50r" path="res://assets/MultiProjectileRune.tres" id="3_lpvoh"]
+[ext_resource type="Resource" uid="uid://btebjiitbt4qx" path="res://assets/NovaProjectileRune.tres" id="4_at5dv"]
 [ext_resource type="Script" uid="uid://o2blj4y1pgho" path="res://scripts/cast_effects/ProjectileCastEffect.cs" id="5_jcd4p"]
 [ext_resource type="PackedScene" uid="uid://cpv6numl77c7" path="res://projectiles/Projectile.tscn" id="6_uacia"]
-[ext_resource type="Resource" uid="uid://celj6elfxqa2c" path="res://assets/ExplodeOnHitEffectAsset.tres" id="8_jcd4p"]
+[ext_resource type="Resource" uid="uid://celj6elfxqa2c" path="res://assets/ExplodeOnHitEffect.tres" id="8_jcd4p"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_s42qg"]
 

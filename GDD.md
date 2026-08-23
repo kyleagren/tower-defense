@@ -132,5 +132,6 @@ These are genuine unresolved gaps, not yet answered:
 * Exact lane count and its interaction with the economy.
 * Specific low-poly art style/visual identity.
 * How a single mage covers more than one objective point on multi-crystal/multi-shell maps — one idea floated (spectral projection to multiple locations at once), not decided.
+* Wave-end safety net: a wave should auto-end (transition to build phase) after a timeout even if enemies remain, in case one gets stuck on the navmesh and never reaches the objective — not yet implemented.
 
 For the reasoning behind every decision above, and a record of what was tried and rejected along the way, see the design journal (README.md).

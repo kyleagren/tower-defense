@@ -4,6 +4,12 @@ using System.Threading.Tasks;
 
 public partial class WaveController : Node
 {
+    public enum WavePhase
+    {
+        Build,
+        Wave
+    }
+
     [Export] public Godot.Collections.Array<WaveDefinition> Waves { get; private set; } = new();
     [Export] public float SpawnInterval = 0.3f;
 
@@ -11,7 +17,7 @@ public partial class WaveController : Node
 
     private Dictionary<string, EnemySpawner> spawnersById;
     private int nextWaveIndex;
-    private bool waveInProgress;
+    private WavePhase currentPhase = WavePhase.Build;
 
     public override void _Ready()
     {
@@ -36,7 +42,7 @@ public partial class WaveController : Node
 
     public void StartNextWave()
     {
-        if (waveInProgress || nextWaveIndex >= Waves.Count)
+        if (currentPhase != WavePhase.Build || nextWaveIndex >= Waves.Count)
         {
             return;
         }
@@ -49,7 +55,8 @@ public partial class WaveController : Node
 
     private async Task RunWave(WaveDefinition wave)
     {
-        waveInProgress = true;
+        currentPhase = WavePhase.Wave;
+        EventBus.Instance.EmitSignal(EventBus.SignalName.WavePhaseChanged, (int)WavePhase.Wave);
 
         Dictionary<string, List<WaveSpawnEntry>> entriesBySpawner = new Dictionary<string, List<WaveSpawnEntry>>();
 
@@ -73,7 +80,8 @@ public partial class WaveController : Node
 
         await Task.WhenAll(spawnerTasks);
 
-        waveInProgress = false;
+        currentPhase = WavePhase.Build;
+        EventBus.Instance.EmitSignal(EventBus.SignalName.WavePhaseChanged, (int)WavePhase.Build);
     }
 
     private async Task RunSpawnerQueue(string spawnerId, List<WaveSpawnEntry> entries)

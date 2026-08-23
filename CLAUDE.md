@@ -8,6 +8,7 @@
 ## Don't let tooling limitations bias technical decisions
 
 - If the correct/idiomatic solution to something requires an editor-only step (e.g. baking a navmesh by hand, dragging a node reference in the inspector, wiring an exported array), don't quietly substitute a code-based workaround just to avoid that step. Flag it, explain the tradeoff, and give clear step-by-step editor instructions instead — let the human decide, don't route around your own limitations by default.
+- Try to rely to the Godot Official Documentation to determine the best method of doing things.
 
 ## Project context
 

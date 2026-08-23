@@ -2,9 +2,10 @@
 
 [ext_resource type="Script" uid="uid://c6jpbpp1tql77" path="res://scripts/systems/EnemySpawner.cs" id="1_enemyspawner"]
 [ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://scripts/systems/WaveController.cs" id="2_wavecontroller"]
-[ext_resource type="PackedScene" path="res://enemies/Enemy.tscn" id="3_enemyscene"]
+[ext_resource type="PackedScene" uid="uid://ql2bmt2vm1o6" path="res://enemies/Enemy.tscn" id="3_enemyscene"]
 [ext_resource type="Script" uid="uid://dpq7f55mr60l1" path="res://scripts/data/Waves/WaveDefinition.cs" id="3_j60wy"]
 [ext_resource type="Script" uid="uid://458lchfiacb7" path="res://scripts/data/Waves/WaveSpawnEntry.cs" id="4_qgxqk"]
+[ext_resource type="Script" uid="uid://bp87ojgy31wot" path="res://scripts/systems/DefendableObjective.cs" id="6_objective"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-4.5, 0.3, -7, -4.25, 0.3, -6, -1, 0.3, -6, -1, 0.3, -14.25, -19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, 1.25, 0.3, -5.75, 4.5, 0.3, -5.75, 4.75, 0.3, -7, 1.25, 0.3, -14.25, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, -4.75, 0.3, -4.75, -1, 0.3, 9.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5, 0, 0.3, 14.5, 0, 0.3, 9.75, 4.75, 0.3, -4.75, 1.25, 0.3, 9.25, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5)
@@ -60,6 +61,9 @@ emission_energy_multiplier = 0.5
 [sub_resource type="SphereMesh" id="SphereMesh_objective"]
 radius = 1.1
 height = 2.2
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_objective"]
+radius = 2.0
 
 [sub_resource type="Resource" id="Resource_o4vi7"]
 script = ExtResource("4_qgxqk")
@@ -170,12 +174,17 @@ mesh = SubResource("BoxMesh_fence")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacles/FenceLaneB" unique_id=324383121]
 shape = SubResource("BoxShape3D_fence")
 
-[node name="Objective" type="Node3D" parent="." unique_id=281504465]
+[node name="Objective" type="Area3D" parent="." unique_id=281504465]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 12)
+collision_mask = 2
+script = ExtResource("6_objective")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Objective" unique_id=916345286]
 material_override = SubResource("StandardMaterial3D_objective")
 mesh = SubResource("SphereMesh_objective")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Objective" unique_id=2046577188]
+shape = SubResource("SphereShape3D_objective")
 
 [node name="Lanes" type="Node3D" parent="." unique_id=124541586]
 
@@ -187,12 +196,6 @@ script = ExtResource("1_enemyspawner")
 Id = "LaneA"
 Target = NodePath("../../../Objective")
 
-[node name="Waypoint1" type="Marker3D" parent="Lanes/LaneA" unique_id=917635156]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.1, -2)
-
-[node name="Waypoint2" type="Marker3D" parent="Lanes/LaneA" unique_id=863612364]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.1, 10)
-
 [node name="LaneB" type="Node3D" parent="Lanes" unique_id=1808231694]
 
 [node name="Spawn" type="Marker3D" parent="Lanes/LaneB" unique_id=824124468 node_paths=PackedStringArray("Target") groups=["enemy_spawners"]]
@@ -200,15 +203,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.1, -14)
 script = ExtResource("1_enemyspawner")
 Id = "LaneB"
 Target = NodePath("../../../Objective")
-
-[node name="Waypoint1" type="Marker3D" parent="Lanes/LaneB" unique_id=1243995094]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.1, -2)
-
-[node name="Waypoint2" type="Marker3D" parent="Lanes/LaneB" unique_id=338347423]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.1, 10)
-
-[node name="MergePoint" type="Marker3D" parent="Lanes" unique_id=1524848044]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 12)
 
 [node name="WaveController" type="Node" parent="." unique_id=196385774]
 script = ExtResource("2_wavecontroller")

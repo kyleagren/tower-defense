@@ -210,7 +210,7 @@ High-priority TBDs:
 * Excess match-currency sink — spending on the player-death respawn timer (Section 2) is one good confirmed use; the spell-table crafting mechanic (Section 4, decided) is now a second, always-available sink, which likely resolves this TBD, though it's worth confirming after some playtesting that the two together actually absorb excess currency across a typical match.
 * Ice wall spell: regrowing wall vs. proximity trap vs. trigger-chain combo wall (or some combination) — not yet decided (see Section 3a).
 * Sniper vs. assassin differentiation (deferred, see Section 2).
-* Should duplicate rune types be allowed on one Spell? (Surfaced during implementation of Rune/MultiProjectileRune, Section 11.) E.g. can a spell have two Multi-Projectile runes stacked, or is one of each type max? Not decided — worth resolving once Spell exists and there's a real rune list to enforce it on. Leaning toward disallowing duplicates, consistent with the project's general theme of rewarding diverse combinations over stacking the same modifier repeatedly (echoes the talisman-variety reasoning in Section 3a), but this is a lean, not a decision.
+* Duplicate rune types on one Spell (decided): disallowed. `SpellInstance.TryAttachRune` rejects a second rune of a type already attached — consistent with the project's general theme of rewarding diverse combinations over stacking the same modifier repeatedly (echoes the talisman-variety reasoning in Section 3a).
 
 Other open items:
 
@@ -228,6 +228,7 @@ Other open items:
 * Repair mechanic specifics for disabled towers (Section 3a) — how repair is triggered, whether it costs a resource, how long it takes.
 * Whether "disabled" towers show up on the minimap alongside monster/spawn info (Section 1a) — natural extension, not yet decided.
 * Exact talisman buff slot count (Section 3a) — one vs. two, leaning one but not finalized.
+* Wave-end stuck-enemy timeout (surfaced during WaveController implementation): "wave complete" currently only means all spawners finished spawning, not that all enemies are gone. Once a build phase gates on wave-end (Section 10/11 implementation), a single enemy stuck on the runtime-baked navmesh (see `NavigationBaker.cs`'s own TODO about the temporary runtime bake) could hang the wave indefinitely and block the player from ever reaching build phase. Fix direction: a max-duration timeout on the wave that forces the transition to build phase regardless of remaining enemies. Not yet implemented, just flagged.
 
 ## 10. Development Sequencing Notes (practical planning, not design content)
 
@@ -243,6 +244,17 @@ Other open items:
 ## 11. Preliminary Class/Object Architecture (early sketch, not final)
 
 Not a commitment — a first pass at what objects the codebase will likely need, to think through composition/inheritance shape before writing code. Expect this to change once the first spike test is built.
+
+**Cast pipeline, at a glance** (quick reference for tracing a cast through the actual classes — see the detailed bullets below for the full reasoning behind each one):
+
+1. **`Spell`** (e.g. `FireballSpell`) — the immutable definition. Base stats and tags for one skill. Lives once, shared by every tower using it.
+2. **`SpellInstance`** — one per placed tower. Wraps a reference to a shared `Spell` plus that tower's own attached `Rune` list and cooldown state. This is "the tower's loadout," not a projectile.
+3. **`SpellInstance.Resolve()`** — on cast, applies every attached `Rune` on top of the `Spell`'s base values and produces a **`SpellCastContext`** (or the `ProjectileCastContext` subtype) — a plain data snapshot of the final resolved stats for this one cast. Transient; discarded after the cast reads it.
+4. **`ProjectileCastEffect.Cast(context, spawnPoint)`** — reads the resolved context and spawns world objects to match it (e.g. `context.ProjectileCount` separate projectiles for a Nova cast).
+5. **`Projectile`** — the actual flying object. Fully independent once spawned: its own damage, radius, pierce count, hit-tracking. Doesn't reference the `SpellInstance` or its siblings.
+6. **`ProjectileHitEffect`** (e.g. `ExplodeOnHitEffect`) — reacts when a `Projectile` hits something. This is also the right extension point for future on-hit behavior (e.g. splitting into new projectiles on impact) since each `Projectile` already carries its own independent state by this point.
+
+In short: `Spell` → `SpellInstance` (per tower) → resolve into a `Context` (per cast) → `CastEffect` spawns `Projectile`s (per world object) → `HitEffect` reacts (per hit). Each arrow is a hand-off to a new, independent thing — nothing downstream reaches back upstream.
 
 * Spell — the unified "recipe" concept: base skill data (damage, speed, tags) plus applied Rune modifiers and event hooks. Independent of how it manifests in the world.
   * Correction (surfaced during implementation): Spell must be split into an immutable definition and a separate, per-instance runtime wrapper. Since Spell is a Resource, many towers referencing the same Spell asset would share the exact same object in memory — if `attachedRunes` lived directly on Spell, attaching a rune to one tower's spell would incorrectly affect every other tower sharing that same asset. Fix: Spell stays a pure, immutable Resource (tags, base stats, `CreateBaseContext()`), with no rune list on it at all. A new plain class, SpellInstance (not a Resource), wraps a reference to a shared Spell definition plus its own private `attachedRunes` list, and owns `TryAttachRune`/`DetachRune`/`Resolve` (moved off of Spell itself). Each tower gets its own SpellInstance wrapping a shared Spell definition — rune loadouts stay independent per tower while stats/tags stay safely shared. This also means `Spell.CreateBaseContext()` had to become public instead of protected, since SpellInstance is a separate class calling it rather than a subclass — a small, deliberate loosening of encapsulation traded for solving the shared-mutation bug.
