@@ -75,7 +75,7 @@ public partial class WaveController : Node
 
         foreach (KeyValuePair<string, List<WaveSpawnEntry>> pair in entriesBySpawner)
         {
-            spawnerTasks.Add(RunSpawnerQueue(pair.Key, pair.Value));
+            spawnerTasks.Add(RunSpawnerQueue(pair.Key, pair.Value, wave.RandomizeSpawnOrder));
         }
 
         await Task.WhenAll(spawnerTasks);
@@ -84,7 +84,7 @@ public partial class WaveController : Node
         EventBus.Instance.EmitSignal(EventBus.SignalName.WavePhaseChanged, (int)WavePhase.Build);
     }
 
-    private async Task RunSpawnerQueue(string spawnerId, List<WaveSpawnEntry> entries)
+    private async Task RunSpawnerQueue(string spawnerId, List<WaveSpawnEntry> entries, bool randomizeOrder)
     {
         if (!spawnersById.TryGetValue(spawnerId, out EnemySpawner spawner))
         {
@@ -92,13 +92,29 @@ public partial class WaveController : Node
             return;
         }
 
+        List<PackedScene> spawnQueue = new List<PackedScene>();
+
         foreach (WaveSpawnEntry entry in entries)
         {
             for (int i = 0; i < entry.Count; i++)
             {
-                spawner.Spawn(entry.EnemyScene);
-                await ToSignal(GetTree().CreateTimer(SpawnInterval), "timeout");
+                spawnQueue.Add(entry.EnemyScene);
             }
+        }
+
+        if (randomizeOrder)
+        {
+            for (int i = spawnQueue.Count - 1; i > 0; i--)
+            {
+                int j = GD.RandRange(0, i);
+                (spawnQueue[i], spawnQueue[j]) = (spawnQueue[j], spawnQueue[i]);
+            }
+        }
+
+        foreach (PackedScene enemyScene in spawnQueue)
+        {
+            spawner.Spawn(enemyScene);
+            await ToSignal(GetTree().CreateTimer(SpawnInterval), "timeout");
         }
     }
 }
