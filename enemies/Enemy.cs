@@ -14,6 +14,7 @@ public partial class Enemy : CharacterBody3D
     [Export] public float LegSwingAmplitude = 0.5f;
     [Export] public float ArmSwingAmplitude = 0.2f;
     [Export] public float RagdollCleanupDelay = 5.0f;
+    [Export] public float MaxHealth = 30f;
 
     private int legLBoneIdx;
     private int legRBoneIdx;
@@ -21,6 +22,9 @@ public partial class Enemy : CharacterBody3D
     private int armRBoneIdx;
     private float walkTime;
     private bool isDead;
+    private float currentHealth;
+
+    public bool IsDead => isDead;
 
     public override void _Ready()
     {
@@ -29,12 +33,30 @@ public partial class Enemy : CharacterBody3D
         armLBoneIdx = Skeleton.FindBone("Arm.L");
         armRBoneIdx = Skeleton.FindBone("Arm.R");
 
+        currentHealth = MaxHealth;
+        AddToGroup("enemies");
+
         SetPhysicalBonesCollision(0, 0);
     }
 
     public void SetTarget(Vector3 targetPosition)
     {
         NavAgent.TargetPosition = targetPosition;
+    }
+
+    public void TakeDamage(float amount, Vector3 knockbackImpulse = default)
+    {
+        if (isDead)
+        {
+            return;
+        }
+
+        currentHealth -= amount;
+
+        if (currentHealth <= 0f)
+        {
+            Die(knockbackImpulse);
+        }
     }
 
     public void Die(Vector3 knockbackImpulse)

@@ -18,7 +18,7 @@ public partial class TestTrigger : Node3D
 
     public override void _Process(double delta)
     {
-        fireballInstance.TickCooldown((float)delta);
+        fireballInstance.Tick((float)delta);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -55,7 +55,7 @@ public partial class TestTrigger : Node3D
 
     private void CastFireball()
     {
-        if (fireballInstance.IsOnCooldown)
+        if (!fireballInstance.CanCast)
         {
             return;
         }
@@ -67,6 +67,6 @@ public partial class TestTrigger : Node3D
             ProjectileCastEffect.Cast(projectileContext, SpawnPoint);
         }
 
-        fireballInstance.StartCooldown(context.Cooldown);
+        fireballInstance.StartCast(context.CastTime, context.Cooldown);
     }
 }

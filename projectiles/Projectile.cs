@@ -3,8 +3,11 @@ using System.Collections.Generic;
 
 public partial class Projectile : Area3D
 {
+    [Export] public MeshInstance3D MeshInstance { get; private set; }
+
     public float Damage { get; private set; }
     public float Radius { get; private set; }
+    public float KnockbackForce { get; private set; }
     public ProjectileHitEffect HitEffect { get; set; }
 
     private int pierceRemaining;
@@ -16,7 +19,17 @@ public partial class Projectile : Area3D
     {
         Damage = context.Damage;
         Radius = context.Radius;
+        KnockbackForce = context.KnockbackForce;
         pierceRemaining = context.PierceCount;
+
+        StandardMaterial3D material = new StandardMaterial3D
+        {
+            AlbedoColor = context.Color,
+            EmissionEnabled = true,
+            Emission = context.Color,
+            EmissionEnergyMultiplier = 1.5f
+        };
+        MeshInstance.MaterialOverride = material;
     }
 
     public override void _Ready()
@@ -37,6 +50,13 @@ public partial class Projectile : Area3D
         }
 
         alreadyHit.Add(body);
+
+        if (body is Enemy enemy)
+        {
+            Vector3 knockback = -GlobalTransform.Basis.Z * KnockbackForce;
+            enemy.TakeDamage(Damage, knockback);
+        }
+
         HitEffect?.OnHit(this, body);
 
         if (pierceRemaining <= 0)

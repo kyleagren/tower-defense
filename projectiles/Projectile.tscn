@@ -6,8 +6,11 @@
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_s42qg"]
 
-[node name="Area3D" type="Area3D" unique_id=1062189900]
+[node name="Area3D" type="Area3D" unique_id=1062189900 node_paths=PackedStringArray("MeshInstance")]
+collision_layer = 1
+collision_mask = 3
 script = ExtResource("1_eeyek")
+MeshInstance = NodePath("MeshInstance3D")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2106799628]
 mesh = SubResource("SphereMesh_s42qg")

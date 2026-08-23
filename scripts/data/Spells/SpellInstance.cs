@@ -3,31 +3,34 @@ using System.Linq;
 
 public class SpellInstance
 {
-    // a definition is which Spell this instance is using. 
+    // a definition is which Spell this instance is using.
     private readonly Spell definition;
     private List<Rune> attachedRunes = new List<Rune>();
 
     public IReadOnlyList<Rune> AttachedRunes => attachedRunes;
 
+    private float castTimeRemaining;
     private float cooldownRemaining;
+
+    public bool IsCasting => castTimeRemaining > 0f;
     public bool IsOnCooldown => cooldownRemaining > 0f;
+    public bool CanCast => !IsCasting && !IsOnCooldown;
 
     public SpellInstance(Spell definition)
     {
         this.definition = definition;
     }
 
-    public void TickCooldown(float delta, float recoveryRate = 1f)
+    public void Tick(float delta, float recoveryRate = 1f)
     {
-        if (cooldownRemaining > 0f)
+        if (castTimeRemaining > 0f)
+        {
+            castTimeRemaining -= delta * recoveryRate;
+        }
+        else if (cooldownRemaining > 0f)
         {
             cooldownRemaining -= delta * recoveryRate;
         }
-    }
-
-    public void StartCooldown(float cooldownDuration)
-    {
-        cooldownRemaining = cooldownDuration;
     }
 
     public SpellCastContext Resolve()
@@ -38,6 +41,12 @@ public class SpellInstance
             rune.Apply(context);
         }
         return context;
+    }
+
+    public void StartCast(float castTime, float cooldown)
+    {
+        castTimeRemaining = castTime;
+        cooldownRemaining = cooldown;
     }
 
     public bool TryAttachRune(Rune rune)

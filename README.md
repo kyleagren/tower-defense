@@ -211,6 +211,7 @@ High-priority TBDs:
 * Ice wall spell: regrowing wall vs. proximity trap vs. trigger-chain combo wall (or some combination) — not yet decided (see Section 3a).
 * Sniper vs. assassin differentiation (deferred, see Section 2).
 * Duplicate rune types on one Spell (decided): disallowed. `SpellInstance.TryAttachRune` rejects a second rune of a type already attached — consistent with the project's general theme of rewarding diverse combinations over stacking the same modifier repeatedly (echoes the talisman-variety reasoning in Section 3a).
+* Line of sight for Rituals (surfaced during first working Ritual/targeting implementation): a Ritual saw and hit an enemy through a wall, since `FindNearestEnemyInRange` only checks distance, not occlusion. Not yet decided how to handle — a raycast check against world geometry before targeting is the likely direction, but this also opens a design question (should some spells/runes ignore line of sight as a build option?) rather than being purely a bug to silently patch.
 
 Other open items:
 
