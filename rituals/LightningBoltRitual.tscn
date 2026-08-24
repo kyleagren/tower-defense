@@ -1,0 +1,35 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://rituals/Ritual.cs" id="1_ritual"]
+[ext_resource type="Resource" path="res://assets/LightningBoltSpell.tres" id="2_lightning"]
+[ext_resource type="Script" path="res://scripts/cast_effects/InstantHitCastEffect.cs" id="3_instanthit"]
+[ext_resource type="PackedScene" path="res://effects/ArcVisual.tscn" id="4_arcvisual"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lightning"]
+top_radius = 0.35
+bottom_radius = 0.5
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lightning"]
+albedo_color = Color(0.15, 0.35, 0.6, 1)
+emission_enabled = true
+emission = Color(0.3, 0.6, 1, 1)
+emission_energy_multiplier = 0.6
+
+[node name="LightningBoltRitual" type="Node3D" node_paths=PackedStringArray("CastEffect", "SpawnPoint")]
+script = ExtResource("1_ritual")
+Spell = ExtResource("2_lightning")
+CastEffect = NodePath("InstantHitCastEffect")
+SpawnPoint = NodePath("SpawnPoint")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+mesh = SubResource("CylinderMesh_lightning")
+material_override = SubResource("StandardMaterial3D_lightning")
+
+[node name="SpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 0)
+
+[node name="InstantHitCastEffect" type="Node" parent="."]
+script = ExtResource("3_instanthit")
+ArcVisualScene = ExtResource("4_arcvisual")

@@ -14,7 +14,7 @@ public partial class Enemy : CharacterBody3D
     [Export] public float LegSwingAmplitude = 0.5f;
     [Export] public float ArmSwingAmplitude = 0.2f;
     [Export] public float RagdollCleanupDelay = 5.0f;
-    [Export] public float MaxHealth = 30f;
+    [Export] public float MaxHealth = 50f;
 
     private int legLBoneIdx;
     private int legRBoneIdx;

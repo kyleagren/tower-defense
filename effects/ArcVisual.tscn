@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://effects/ArcVisual.cs" id="1_arc"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_arc"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_arc"]
+albedo_color = Color(0.4, 0.7, 1, 1)
+emission_enabled = true
+emission = Color(0.5, 0.8, 1, 1)
+emission_energy_multiplier = 3.0
+
+[node name="ArcVisual" type="Node3D"]
+script = ExtResource("1_arc")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+mesh = SubResource("CylinderMesh_arc")
+material_override = SubResource("StandardMaterial3D_arc")

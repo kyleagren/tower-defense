@@ -3,6 +3,8 @@ using System.Linq;
 
 public class SpellInstance
 {
+    public const int MaxRuneSlots = 4;
+
     // a definition is which Spell this instance is using.
     private readonly Spell definition;
     private List<Rune> attachedRunes = new List<Rune>();
@@ -58,6 +60,8 @@ public class SpellInstance
 
     public bool TryAttachRune(Rune rune)
     {
+        if (attachedRunes.Count >= MaxRuneSlots) return false;
+
         bool hasRequiredTags = rune.RequiredTags.All(tag => definition.Tags.Contains(tag));
         if (!hasRequiredTags) return false;
 

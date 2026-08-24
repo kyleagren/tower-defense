@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="ReturnRune" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/Runes/ReturnRune.cs" id="1_return"]
+
+[resource]
+script = ExtResource("1_return")

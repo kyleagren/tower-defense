@@ -1,16 +1,24 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class Projectile : Area3D
 {
     public float Damage { get; private set; }
     public float Radius { get; private set; }
     public float KnockbackForce { get; private set; }
+    public int ChainCount { get; private set; }
+    public float ChainRange { get; private set; }
+    public Vector3 SpawnPosition { get; set; }
     public ProjectileHitEffect HitEffect { get; set; }
+    public HashSet<Enemy> ReturnHitTracker { get; set; }
 
     private int pierceRemaining;
     private float speed = 20f;
     private bool hasExpired;
+    private bool isReturn;
+    private bool hasReturned;
+    private const float ReturnArrivalDistance = 0.75f;
     private HashSet<Node3D> alreadyHit = new HashSet<Node3D>();
 
     public void Initialize(ProjectileCastContext context)
@@ -18,7 +26,10 @@ public partial class Projectile : Area3D
         Damage = context.Damage;
         Radius = context.Radius;
         KnockbackForce = context.KnockbackForce;
+        ChainCount = context.ChainCount;
+        ChainRange = context.ChainRange;
         pierceRemaining = context.PierceCount;
+        isReturn = context.IsReturn;
     }
 
     public override void _Ready()
@@ -29,17 +40,71 @@ public partial class Projectile : Area3D
     public override void _PhysicsProcess(double delta)
     {
         Position -= Transform.Basis.Z * speed * (float)delta;
+
+        if (hasReturned && GlobalPosition.DistanceSquaredTo(SpawnPosition) < ReturnArrivalDistance * ReturnArrivalDistance)
+        {
+            hasExpired = true;
+            QueueFree();
+        }
     }
 
     private void OnBodyEntered(Node3D body)
     {
-        if (hasExpired || alreadyHit.Contains(body))
+        if (hasExpired)
+        {
+            return;
+        }
+
+        if (hasReturned)
+        {
+            HandleReturnHit(body);
+            return;
+        }
+
+        if (alreadyHit.Contains(body))
         {
             return;
         }
 
         alreadyHit.Add(body);
+        ApplyHit(body);
 
+        if (pierceRemaining > 0)
+        {
+            pierceRemaining--;
+            return;
+        }
+
+        if (body is Enemy hitEnemy && ChainCount > 0 && TryRedirectToChainTarget(hitEnemy))
+        {
+            ChainCount--;
+            return;
+        }
+
+        if (isReturn)
+        {
+            hasReturned = true;
+            LookAt(SpawnPosition, Vector3.Up);
+            return;
+        }
+
+        hasExpired = true;
+        QueueFree();
+    }
+
+    private void HandleReturnHit(Node3D body)
+    {
+        if (body is not Enemy enemy || (ReturnHitTracker != null && ReturnHitTracker.Contains(enemy)))
+        {
+            return;
+        }
+
+        ReturnHitTracker?.Add(enemy);
+        ApplyHit(body);
+    }
+
+    private void ApplyHit(Node3D body)
+    {
         if (body is Enemy enemy)
         {
             Vector3 knockback = -GlobalTransform.Basis.Z * KnockbackForce;
@@ -47,15 +112,17 @@ public partial class Projectile : Area3D
         }
 
         HitEffect?.OnHit(this, body);
+    }
 
-        if (pierceRemaining <= 0)
+    private bool TryRedirectToChainTarget(Enemy hitEnemy)
+    {
+        Enemy next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, alreadyHit.OfType<Enemy>());
+        if (next == null)
         {
-            hasExpired = true;
-            QueueFree();
+            return false;
         }
-        else
-        {
-            pierceRemaining--;
-        }
+
+        LookAt(next.GlobalPosition, Vector3.Up);
+        return true;
     }
 }

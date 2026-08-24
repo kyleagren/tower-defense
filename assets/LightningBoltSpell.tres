@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="LightningBoltSpell" format=3 uid="uid://fv3hj4gxlpy"]
+
+[ext_resource type="Script" uid="uid://cfgeac6xk7lpq" path="res://scripts/data/Spells/LightningBoltSpell.cs" id="1_lightning"]
+
+[resource]
+script = ExtResource("1_lightning")
+BaseChainCount = 2
+BaseCastTime = 0.6
+BaseDamage = 40.0

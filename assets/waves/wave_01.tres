@@ -8,14 +8,14 @@
 script = ExtResource("2_spawnentry")
 SpawnerId = "LaneA"
 EnemyScene = ExtResource("3_enemyscene")
-Count = 6
+Count = 25
 metadata/_custom_type_script = "uid://458lchfiacb7"
 
 [sub_resource type="Resource" id="Resource_laneb"]
 script = ExtResource("2_spawnentry")
 SpawnerId = "LaneB"
 EnemyScene = ExtResource("3_enemyscene")
-Count = 6
+Count = 25
 metadata/_custom_type_script = "uid://458lchfiacb7"
 
 [resource]

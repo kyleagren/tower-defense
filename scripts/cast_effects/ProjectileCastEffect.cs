@@ -1,27 +1,36 @@
 using Godot;
+using System.Collections.Generic;
 
-public partial class ProjectileCastEffect : Node
+public partial class ProjectileCastEffect : CastEffect
 {
     [Export] public float SpreadAngleDegrees { get; private set; } = 15f;
     [Export] public ProjectileHitEffect HitEffect { get; private set; }
 
-    public void Cast(ProjectileCastContext context, Node3D spawnPoint)
+    public override void Cast(SpellCastContext context, Node3D spawnPoint)
     {
-        int count = context.ProjectileCount;
+        if (context is not ProjectileCastContext projectileContext)
+        {
+            return;
+        }
+
+        int count = projectileContext.ProjectileCount;
+        HashSet<Enemy> returnHitTracker = new HashSet<Enemy>();
 
         for (int i = 0; i < count; i++)
         {
-            float angleOffset = context.IsNova
+            float angleOffset = projectileContext.IsNova
                 ? 360f / count * i
                 : ComputeConeAngle(i, count);
 
-            Projectile projectile = context.ProjectileScene.Instantiate<Projectile>();
-            projectile.Initialize(context);
+            Projectile projectile = projectileContext.ProjectileScene.Instantiate<Projectile>();
+            projectile.Initialize(projectileContext);
             projectile.HitEffect = HitEffect;
+            projectile.ReturnHitTracker = returnHitTracker;
             spawnPoint.GetTree().CurrentScene.AddChild(projectile);
 
             projectile.GlobalTransform = spawnPoint.GlobalTransform;
             projectile.RotateY(Mathf.DegToRad(angleOffset));
+            projectile.SpawnPosition = projectile.GlobalPosition;
         }
     }
 

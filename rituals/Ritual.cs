@@ -3,9 +3,8 @@ using Godot;
 public partial class Ritual : Node3D
 {
     [Export] public Spell Spell { get; private set; }
-    [Export] public Rune RuneSlotA { get; private set; }
-    [Export] public Rune RuneSlotB { get; private set; }
-    [Export] public ProjectileCastEffect CastEffect { get; private set; }
+    [Export] public Rune[] RuneSlots { get; private set; } = new Rune[SpellInstance.MaxRuneSlots];
+    [Export] public CastEffect CastEffect { get; private set; }
     [Export] public Node3D SpawnPoint { get; private set; }
     [Export] public float TargetSearchInterval = 0.25f;
 
@@ -17,14 +16,12 @@ public partial class Ritual : Node3D
     {
         spellInstance = new SpellInstance(Spell);
 
-        if (RuneSlotA != null)
+        foreach (Rune rune in RuneSlots)
         {
-            spellInstance.TryAttachRune(RuneSlotA);
-        }
-
-        if (RuneSlotB != null)
-        {
-            spellInstance.TryAttachRune(RuneSlotB);
+            if (rune != null)
+            {
+                spellInstance.TryAttachRune(rune);
+            }
         }
     }
 
@@ -36,7 +33,7 @@ public partial class Ritual : Node3D
         if (searchTimer <= 0f)
         {
             searchTimer = TargetSearchInterval;
-            currentTarget = FindNearestEnemyInRange();
+            currentTarget = EnemyTargeting.FindNearest(GlobalPosition, Spell.BaseRange);
         }
 
         if (currentTarget != null && (!IsInstanceValid(currentTarget) || currentTarget.IsDead))
@@ -50,29 +47,6 @@ public partial class Ritual : Node3D
         }
     }
 
-    private Enemy FindNearestEnemyInRange()
-    {
-        float rangeSquared = Spell.BaseRange * Spell.BaseRange;
-
-        Enemy nearest = null;
-        float nearestDistSq = rangeSquared;
-
-        foreach (Node node in GetTree().GetNodesInGroup("enemies"))
-        {
-            if (node is Enemy enemy && !enemy.IsDead)
-            {
-                float distSq = GlobalPosition.DistanceSquaredTo(enemy.GlobalPosition);
-                if (distSq <= nearestDistSq)
-                {
-                    nearestDistSq = distSq;
-                    nearest = enemy;
-                }
-            }
-        }
-
-        return nearest;
-    }
-
     private void CastAtTarget()
     {
         Vector3 targetPosition = currentTarget.GlobalPosition;
@@ -80,11 +54,7 @@ public partial class Ritual : Node3D
         SpawnPoint.LookAt(levelAimPosition, Vector3.Up);
 
         SpellCastContext context = spellInstance.Resolve();
-
-        if (context is ProjectileCastContext projectileContext)
-        {
-            CastEffect.Cast(projectileContext, SpawnPoint);
-        }
+        CastEffect.Cast(context, SpawnPoint);
 
         spellInstance.StartCast(context.CastTime, context.Cooldown);
     }

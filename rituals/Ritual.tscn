@@ -2,8 +2,6 @@
 
 [ext_resource type="Script" path="res://rituals/Ritual.cs" id="1_ritual"]
 [ext_resource type="Resource" uid="uid://dv6iw2uxlrvt6" path="res://assets/FireballSpell.tres" id="2_fireball"]
-[ext_resource type="Resource" uid="uid://rjkfa4u5o50r" path="res://assets/MultiProjectileRune.tres" id="3_multi"]
-[ext_resource type="Resource" uid="uid://btebjiitbt4qx" path="res://assets/NovaProjectileRune.tres" id="4_nova"]
 [ext_resource type="Script" uid="uid://o2blj4y1pgho" path="res://scripts/cast_effects/ProjectileCastEffect.cs" id="5_casteffect"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_ritual"]
@@ -20,8 +18,6 @@ emission_energy_multiplier = 0.4
 [node name="Ritual" type="Node3D" node_paths=PackedStringArray("CastEffect", "SpawnPoint")]
 script = ExtResource("1_ritual")
 Spell = ExtResource("2_fireball")
-RuneSlotA = ExtResource("3_multi")
-RuneSlotB = ExtResource("4_nova")
 CastEffect = NodePath("ProjectileCastEffect")
 SpawnPoint = NodePath("SpawnPoint")
 

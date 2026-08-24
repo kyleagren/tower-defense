@@ -9,11 +9,11 @@ public partial class BuildMenu : Control
     [Export] public SpellGrid Grid { get; private set; }
 
     private Spell selectedSpell;
-    private readonly Rune[] socketedRunes = new Rune[4];
+    private readonly Rune[] socketedRunes = new Rune[SpellInstance.MaxRuneSlots];
 
     private Control socketScreen;
     private Label centerSpellLabel;
-    private readonly Button[] socketButtons = new Button[4];
+    private readonly Button[] socketButtons = new Button[SpellInstance.MaxRuneSlots];
 
     private Control runePickerScreen;
     private SpellGrid runeGrid;
@@ -144,11 +144,15 @@ public partial class BuildMenu : Control
         runePickerScreen.SetAnchorsPreset(LayoutPreset.FullRect);
         AddChild(runePickerScreen);
 
-        runeGrid = new SpellGrid { Columns = Grid.Columns, Rows = Grid.Rows };
-        runeGrid.AnchorLeft = 0f;
-        runeGrid.AnchorRight = 1f;
-        runeGrid.AnchorTop = 0f;
-        runeGrid.AnchorBottom = 0.88f;
+        runeGrid = new SpellGrid
+        {
+            Columns = Grid.Columns,
+            Rows = Grid.Rows,
+            AnchorLeft = 0f,
+            AnchorRight = 1f,
+            AnchorTop = 0f,
+            AnchorBottom = 0.88f
+        };
         runeGrid.AddThemeConstantOverride("h_separation", 8);
         runeGrid.AddThemeConstantOverride("v_separation", 8);
         runePickerScreen.AddChild(runeGrid);
