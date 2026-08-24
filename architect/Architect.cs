@@ -8,18 +8,32 @@ public partial class Architect : CharacterBody3D
     [Export] public float MinPitchDegrees = -60f;
     [Export] public float MaxPitchDegrees = 10f;
     [Export] public SpringArm3D SpringArm { get; private set; }
+    [Export] public BuildMenu BuildMenu { get; private set; }
 
     private float cameraPitch;
     private float gravity;
+    private bool buildMenuOpen;
 
     public override void _Ready()
     {
         gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
         Input.MouseMode = Input.MouseModeEnum.Captured;
+        BuildMenu.Closed += OnBuildMenuClosed;
     }
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (buildMenuOpen)
+        {
+            return;
+        }
+
+        if (@event.IsActionPressed("open_build_menu"))
+        {
+            OpenBuildMenu();
+            return;
+        }
+
         if (@event is InputEventMouseMotion mouseMotion && Input.MouseMode == Input.MouseModeEnum.Captured)
         {
             RotateY(-mouseMotion.Relative.X * MouseSensitivity);
@@ -40,6 +54,19 @@ public partial class Architect : CharacterBody3D
         }
     }
 
+    private void OpenBuildMenu()
+    {
+        buildMenuOpen = true;
+        Input.MouseMode = Input.MouseModeEnum.Visible;
+        BuildMenu.Open();
+    }
+
+    private void OnBuildMenuClosed()
+    {
+        buildMenuOpen = false;
+        Input.MouseMode = Input.MouseModeEnum.Captured;
+    }
+
     public override void _PhysicsProcess(double delta)
     {
         Vector3 velocity = Velocity;
@@ -48,12 +75,12 @@ public partial class Architect : CharacterBody3D
         {
             velocity.Y -= gravity * (float)delta;
         }
-        else if (Input.IsActionJustPressed("jump"))
+        else if (!buildMenuOpen && Input.IsActionJustPressed("jump"))
         {
             velocity.Y = JumpVelocity;
         }
 
-        Vector2 inputDir = Input.GetVector("move_left", "move_right", "move_forward", "move_back");
+        Vector2 inputDir = buildMenuOpen ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_forward", "move_back");
         Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0f, inputDir.Y)).Normalized();
 
         if (direction != Vector3.Zero)

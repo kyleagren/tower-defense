@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public abstract partial class Spell : Resource
 {
+    public abstract string Name { get; }
     public abstract IReadOnlyList<Tag> Tags { get; }
     public abstract string Description { get; }
 

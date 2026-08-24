@@ -15,6 +15,8 @@ public partial class FireballSpell : Spell
         BaseColor = new Color(1.0f, 0.4f, 0.05f);
     }
 
+    public override string Name => "Fireball";
+
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Projectile, Tag.Fire };
 
     public override string Description => "Hurls a fiery projectile that explodes on impact.";
