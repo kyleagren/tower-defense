@@ -9,13 +9,16 @@ public partial class NovaProjectileRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Projectile };
 
+    public override string Description =>
+        "Splits the spell into a ring of projectiles fired outward in all directions along the horizontal, trading damage for coverage.";
+
     public override void Apply(SpellCastContext context)
     {
         if (context is ProjectileCastContext projectileContext)
         {
             projectileContext.ProjectileCount += ExtraProjectiles;
             projectileContext.IsNova = true;
-            projectileContext.Damage *= DamageMultiplier;
+            projectileContext.MoreDamageMultiplier *= DamageMultiplier;
         }
     }
 }

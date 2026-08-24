@@ -12,7 +12,7 @@
 
 ## Project context
 
-Godot 4 (C#) 3D tower-defense project. `GDD.md` is the current-state design reference; `README.md` is the design journal (reasoning history, rejected alternatives). See both before proposing design changes.
+Godot 4 (C#) 3D tower-defense project. `README.md` is the design reference — current-state design plus enough reasoning to avoid re-litigating settled decisions. See it before proposing design changes.
 
 ## Code style notes (observed from existing scripts)
 

@@ -17,6 +17,8 @@ public partial class FireballSpell : Spell
 
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Projectile, Tag.Fire };
 
+    public override string Description => "Hurls a fiery projectile that explodes on impact.";
+
     public override SpellCastContext CreateBaseContext()
     {
         return new ProjectileCastContext

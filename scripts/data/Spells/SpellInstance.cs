@@ -40,6 +40,9 @@ public class SpellInstance
         {
             rune.Apply(context);
         }
+
+        context.Damage = context.Damage * (1f + context.IncreasedDamagePercent) * context.MoreDamageMultiplier;
+
         return context;
     }
 
