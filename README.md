@@ -54,8 +54,7 @@ Single-player is built first. Invite-a-friend co-op is a hard requirement of the
 
 ## 6. Battlefield Shaping / Crowd Control
 
-* No destructible "blockade" objects — CC (e.g. an ice wall) uses temporary duration-based effects instead of persistent HP objects.
-* **Ice wall (decided):** regrows after a duration. Cooldown starts once the wall breaks or expires.
+* **Ice wall (decided):** a destructible blockade — physically blocks a lane, and enemies that reach it attack it directly (it has HP) rather than routing around. Not a *persistent* blockade though: it also expires passively after a duration cap if never broken, so it can't wall off a lane forever if nothing engages it. Either way (broken by enemies or expired), a regrow cooldown starts, after which the wall reforms.
 * A rune that makes the wall explode on break/trigger is planned.
 
 ## 7. Towers: Damage & Repair
@@ -78,6 +77,8 @@ Philosophy: trade-offs, not gates. Soft pressure (tanky/slow vs. fast/fragile, g
 Roster (initial sketch): Fodder, Ranged Attacker, Tank, Flyer, Sapper (threatens towers), Assassin-type.
 
 Difficulty tiers differentiate via composition and timing, not flat stat multipliers — avoids the "bullet-sponge" problem of higher difficulty just feeling slower.
+
+* **Leash range (decided):** if the player character comes within a small leash range of an enemy, it breaks off its lane advance to chase and attack the player instead. If the player gets far enough away, the enemy gives up and returns to its lane route. Same "break from default movement, act, resume" shape as the ice wall (Section 6) — worth one shared behavior pattern rather than bespoke logic per case. Movement-architecture implication: chasing/returning covers arbitrary positions off the lane, which is the one case that still needs real pathfinding even if lane-following itself moves to fixed waypoints — see Section 15.
 
 ## 10. Itemization & Equipment
 
@@ -144,3 +145,17 @@ Difficulty tiers differentiate via composition and timing, not flat stat multipl
 * Wave-end safety net: a wave should auto-end after a timeout even if enemies remain (e.g. one stuck on the navmesh) — not implemented yet.
 * Non-lethal knockback: `KnockbackForce` currently only applies via the on-death ragdoll launch. A hit that knocks back *without* killing needs a different mechanism (a living enemy is `CharacterBody3D`-driven, not free ragdoll physics) — not designed yet.
 * Ritual line of sight and non-horizontal projectile aiming: both confirmed as needed eventually (Section 5), neither implemented yet.
+* Enemy movement architecture: currently full `NavigationAgent3D`/navmesh per enemy. Fixed waypoints (matching the "fixed-path maps" decision in Section 2) would be cheaper for plain lane-following, but leash-chase/return (Section 9) needs real pathfinding for the arbitrary off-lane positions a chase can end at. Leading candidate is a hybrid — waypoints by default, a one-off path query only for enemies actively returning from a leash — but not committed to yet.
+
+## 16. Vertical Slice Roadmap
+
+Order of operations to get a first playable loop working end to end. Update as steps land so this doesn't get lost again.
+
+1. ~~Level~~ / ~~Enemy~~ / ~~Objective~~ / ~~Tower (`Ritual`) targets and casts at nearest enemy~~ — **done.**
+2. **Architect movement** — a controllable character in the level during prep, no combat, just walk-around + camera.
+3. **Tower placement flow** — Architect selects a tower/spell and places a `Ritual` instance in the world, gated by a hardcoded capacity budget (mana economy comes later).
+4. **Minimal economy** — just enough of `EconomyManager` (capacity used/max, maybe mana accrual) to make placement meaningful (Section 8).
+5. **Prep → Wave transition** — a "Start Wave" action that hooks into `WaveController`, disables the Architect, hands control to the Soldier.
+6. **Soldier character** — basic movement + one attack that damages enemies, closing the "player deals direct damage" requirement (Section 4).
+7. **Wave-end handling** — detect wave clear (or objective destroyed) and either loop back to prep for the next wave or end the match.
+8. **Win/lose state** — objective falls = loss, waves cleared = win. Bare-minimum feedback (console print or scene reload) is enough for a slice — no UI polish needed yet.
