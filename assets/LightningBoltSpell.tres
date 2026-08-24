@@ -4,6 +4,3 @@
 
 [resource]
 script = ExtResource("1_lightning")
-BaseChainCount = 2
-BaseCastTime = 0.6
-BaseDamage = 40.0

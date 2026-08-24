@@ -7,11 +7,11 @@ public abstract partial class Spell : Resource
     public abstract IReadOnlyList<Tag> Tags { get; }
     public abstract string Description { get; }
 
-    [Export] public float BaseRange { get; private set; } = 8f;
-    [Export] public float BaseCastTime { get; protected set; } = 1f;
-    [Export] public float BaseCooldown { get; protected set; } = 0f;
-    [Export] public float BaseDamage { get; protected set; } = 0f;
-    [Export] public float BaseKnockbackForce { get; protected set; } = 0f;
+    public virtual float BaseRange { get; protected set; } = 8f;
+    public virtual float BaseCastTime { get; protected set; } = 1f;
+    public virtual float BaseCooldown { get; protected set; } = 0f;
+    public virtual float BaseDamage { get; protected set; } = 0f;
+    public virtual float BaseKnockbackForce { get; protected set; } = 0f;
 
     public abstract SpellCastContext CreateBaseContext();
 }

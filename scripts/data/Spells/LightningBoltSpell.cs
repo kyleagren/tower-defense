@@ -4,12 +4,9 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class LightningBoltSpell : ChainableSpell
 {
-    public LightningBoltSpell()
-    {
-        BaseDamage = 40f;
-        BaseCastTime = 0.6f;
-        BaseChainCount = 2;
-    }
+    [Export] public override float BaseDamage { get; protected set; } = 40f;
+    [Export] public override float BaseCastTime { get; protected set; } = 0.6f;
+    [Export] public override int BaseChainCount { get; protected set; } = 2;
 
     public override string Name => "Lightning Bolt";
 

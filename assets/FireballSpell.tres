@@ -6,5 +6,4 @@
 [resource]
 script = ExtResource("1_ae04e")
 ProjectileScene = ExtResource("2_projectile")
-BaseKnockbackForce = 20.0
 metadata/_custom_type_script = "uid://bamn5fqu62j5i"

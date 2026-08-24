@@ -4,16 +4,13 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class FireballSpell : ChainableSpell
 {
+    [Export] public PackedScene ProjectileScene { get; private set; }
     [Export] public int BaseProjectileCount { get; private set; } = 1;
     [Export] public float BaseRadius { get; private set; } = 0.3f;
-    [Export] public PackedScene ProjectileScene { get; private set; }
 
-    public FireballSpell()
-    {
-        BaseDamage = 100f;
-        BaseCastTime = 1.5f;
-        BaseKnockbackForce = 5f;
-    }
+    [Export] public override float BaseDamage { get; protected set; } = 100f;
+    [Export] public override float BaseCastTime { get; protected set; } = 1.5f;
+    [Export] public override float BaseKnockbackForce { get; protected set; } = 20f;
 
     public override string Name => "Fireball";
 
