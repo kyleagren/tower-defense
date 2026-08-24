@@ -26,6 +26,7 @@ Single-player is built first. Invite-a-friend co-op is a hard requirement of the
 ## 3. Player-Character & Meta-Progression
 
 * The Architect gains persistent XP, tied to difficulty cleared (not matches played, to avoid grinding easy content into disproportionate power). XP unlocks a talisman slot — a passive, global buff applied to all towers. **One slot for now.**
+* **Spell unlocks (decided):** new base Spells unlock as the Architect levels up on the same persistent XP track, rather than via per-map completion — keeps spell pacing tied to overall progression instead of needing its own separate per-map tracking system.
 * Talismans drop with a randomized, tier-equal stat budget (e.g. Level 3: +30 to all stats plus a random ~90 bonus to one stat) — no talisman within a tier is objectively best, only best for a given build.
 * Guardrail: this must never let the player's overall power outstrip the towers' — towers stay the dominant source of defensive strength regardless of meta-progression.
 * Rewards scale with performance (objective health remaining, waves survived cleanly, time taken), not just clearing — exact magnitudes TBD.
@@ -49,6 +50,7 @@ Single-player is built first. Invite-a-friend co-op is a hard requirement of the
 * Elemental reactions (Genshin "swirl"-style — bonus effect when a second element hits an already-elemented target) and trigger-chaining (PoE "Cast on X"-style — one skill's on-activate/on-break event fires a second skill) are both planned, reusing the same event-hook pattern.
 * Runes are permanently available at low tier; higher tiers drop and are allocated across limited slots per tower. Towers don't level or scale in power within a match. Duplicate rune types on one Spell are disallowed (enforced in code).
 * Targeting: base skills have a natural default target priority (a Fireball leans toward ground targets); a dedicated targeting rune can override it. Player presence is never a targeting fallback — multiple lanes mean the player can only be in one place at a time.
+* **Player interaction model (decided):** tower placement and aiming use a center-screen reticle + raycast into the world, not a screen-space mouse cursor. Keeps mouse and controller input unified under one system (no separate cursor-based UI to build for controller players) — full controller support is a requirement, not an afterthought.
 * Some towers will eventually need line-of-sight raycasting — not implemented yet (currently pure distance checks, so a tower can shoot through walls).
 * Player-buff towers (e.g. a "Buff Totem") buff the player instead of attacking — **range-based** (player must stand near it to benefit), costs capacity like any other tower.
 
@@ -146,6 +148,10 @@ Difficulty tiers differentiate via composition and timing, not flat stat multipl
 * Non-lethal knockback: `KnockbackForce` currently only applies via the on-death ragdoll launch. A hit that knocks back *without* killing needs a different mechanism (a living enemy is `CharacterBody3D`-driven, not free ragdoll physics) — not designed yet.
 * Ritual line of sight and non-horizontal projectile aiming: both confirmed as needed eventually (Section 5), neither implemented yet.
 * Enemy movement architecture: currently full `NavigationAgent3D`/navmesh per enemy. Fixed waypoints (matching the "fixed-path maps" decision in Section 2) would be cheaper for plain lane-following, but leash-chase/return (Section 9) needs real pathfinding for the arbitrary off-lane positions a chase can end at. Leading candidate is a hybrid — waypoints by default, a one-off path query only for enemies actively returning from a leash — but not committed to yet.
+* **Rune/spell iconography — undecided between two directions:**
+  * *Procedural sigil generation:* 30 anchor points evenly spaced on a circle (26 letters + 4, one per rune slot). A spell or rune's name maps its letters to points and connects them in sequence, generating a unique glyph without hand-drawing one per rune. When a rune is socketed, its glyph is anchored through its slot's dedicated marker point and overlaid on the spell's own glyph — so a fully-built tower's sigil is a compound of the spell's glyph plus each attached rune's glyph layered together (chosen over an alternative where each rune reroutes a single shared path, since overlay is order-independent and each rune's glyph is cacheable on its own). Socketing a rune would animate in — a stroke-reveal "growing outward" effect via `Line2D` + `Tween`, segments staggered slightly rather than growing in lockstep, easing into place at the anchor point.
+  * *Functional iconography:* instead of (or blended with) letter-based glyphs, hand-draw a small fixed set of primitive strokes tied to mechanical tags/categories (a projectile-pattern primitive, an AoE-radius primitive, a duration/DoT primitive, etc.) and procedurally compose those per rune based on which tags it touches — same overlay/animation system, but the player can learn to read a tower's build at a glance instead of memorizing arbitrary shapes. Trades some of the procedural version's novelty for legibility, without reintroducing a "hand-drawn icon per rune" art bottleneck that would work against Section 12's data-driven/scalable-content principle (primitives are reused across every rune sharing a tag, not authored per rune).
+  * Not needed for the vertical slice — revisit once core gameplay is playable.
 
 ## 16. Vertical Slice Roadmap
 
@@ -153,9 +159,23 @@ Order of operations to get a first playable loop working end to end. Update as s
 
 1. ~~Level~~ / ~~Enemy~~ / ~~Objective~~ / ~~Tower (`Ritual`) targets and casts at nearest enemy~~ — **done.**
 2. **Architect movement** — a controllable character in the level during prep, no combat, just walk-around + camera.
-3. **Tower placement flow** — Architect selects a tower/spell and places a `Ritual` instance in the world, gated by a hardcoded capacity budget (mana economy comes later).
+3. **Tower placement flow** — Architect selects a tower/spell and places a `Ritual` instance in the world, gated by a hardcoded capacity budget (mana economy comes later). UI flow specced in Section 17.
 4. **Minimal economy** — just enough of `EconomyManager` (capacity used/max, maybe mana accrual) to make placement meaningful (Section 8).
 5. **Prep → Wave transition** — a "Start Wave" action that hooks into `WaveController`, disables the Architect, hands control to the Soldier.
 6. **Soldier character** — basic movement + one attack that damages enemies, closing the "player deals direct damage" requirement (Section 4).
 7. **Wave-end handling** — detect wave clear (or objective destroyed) and either loop back to prep for the next wave or end the match.
 8. **Win/lose state** — objective falls = loss, waves cleared = win. Bare-minimum feedback (console print or scene reload) is enough for a slice — no UI polish needed yet.
+
+## 17. UI: Tower Construction & Deployment
+
+`Q` drives two distinct flows that behave nothing alike — designed as two separate systems rather than one flexible menu, since they sit under opposite time pressure (prep vs. wave phase, Section 2).
+
+* **Architect, prep phase — construction menu (decided):** `Q` opens a full-screen overlay: tag-filterable grid of available spells → select one → rune socket screen (4 sockets, one per corner, for now) → confirm → placement (reticle + raycast, Section 5). No time pressure, so this can be a rich browsing experience.
+  * Socket state persists across backing out and returning to the socket screen for the same spell (an accidental cancel shouldn't lose 3 already-placed runes) — sockets only clear if the underlying spell selection itself changes.
+  * A rune already socketed elsewhere on the same spell shows greyed out, sorted to the back of the list, with a short message explaining why — makes the existing one-per-type rule (Section 5) visible instead of silently rejecting the drop.
+  * A per-rune "unsocket" action, plus a separate "clear all runes" bind gated behind a confirmation prompt (guards against wiping a near-finished build by accident).
+  * Short rune description text (label + one-line effect, e.g. "+8 Proj — projectiles fire in a circle") lives as data on the `Rune` resource itself, not hardcoded per-rune in UI code.
+  * Renders as a blocking overlay over the opening player's view. Since Section 11 has both co-op players able to build simultaneously, a true whole-game pause won't work — overlay likely needs to be scoped per-player (split-screen or similar); exact mechanism still open.
+* **Any player, mid-wave — token deployment (decided):** `Q` opens an instant radial/hotbar pick among the player's up to 3 pre-crafted tokens (Section 2) — no browsing, no rune sockets, since a token's loadout was already locked in during prep. Optimized for speed under pressure, not depth.
+* **Favorites/loadouts vs. tokens — distinct concepts:** a favorite is a saved spell+rune preset that speeds up normal construction (skip re-picking a common combination). A token is the separate, already-decided reactive mid-wave deployable. Same underlying data shape (spell + rune set), different purpose and moment of use — keep the vocabulary distinct so the two don't get conflated in implementation.
+* **Navigation (decided):** built gamepad-first, not mouse-first-then-retrofit — discrete grid focus navigation (Godot's `Control`/`GridContainer` focus-neighbor system) rather than hover-based, with tag filters on their own input path (e.g. shoulder buttons cycling filters) so they don't collide with grid navigation.

@@ -34,7 +34,7 @@ public partial class WaveController : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo && keyEvent.Keycode == Key.Space)
+        if (@event.IsActionPressed("start_wave"))
         {
             StartNextWave();
         }

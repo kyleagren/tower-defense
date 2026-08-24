@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://ckffmp54fx7dx"]
+
+[ext_resource type="Script" uid="uid://bajfmf8p2bmbb" path="res://architect/Architect.cs" id="1_yt6xr"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_s42qg"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_s42qg"]
+radius = 0.4
+height = 1.8
+
+[node name="Architect" type="CharacterBody3D" unique_id=65489996 node_paths=PackedStringArray("SpringArm")]
+collision_layer = 8
+script = ExtResource("1_yt6xr")
+SpringArm = NodePath("SpringArm3D")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=606992868]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_s42qg")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=558886257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_s42qg")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="." unique_id=1933663469]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+spring_length = 5.0
+
+[node name="Camera3D" type="Camera3D" parent="SpringArm3D" unique_id=1057255661]
+current = true
