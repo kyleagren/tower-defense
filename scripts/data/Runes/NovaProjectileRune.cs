@@ -7,6 +7,8 @@ public partial class NovaProjectileRune : Rune
     [Export] public int ExtraProjectiles { get; private set; } = 7;
     [Export] public float DamageMultiplier { get; private set; } = 0.7f;
 
+    public override string Name => "Nova";
+
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Projectile };
 
     public override string Description =>

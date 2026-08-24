@@ -1,4 +1,6 @@
-# Tower Defense — Design Reference
+# Runewarder — Design Reference
+
+*(Working title — open to change.)*
 
 Current state of the design, plus just enough "why" to avoid re-litigating settled decisions. Not a full history — see git log for that. Update this doc as decisions change; it's meant to stay short enough to actually read.
 

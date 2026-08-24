@@ -2,5 +2,5 @@ using Godot;
 
 public partial class SpellGrid : GridContainer
 {
-    [Export] public int Rows { get; private set; } = 4;
+    [Export] public int Rows { get; set; } = 4;
 }
