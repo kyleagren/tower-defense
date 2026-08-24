@@ -17,16 +17,17 @@ public partial class InstantHitCastEffect : CastEffect
             return;
         }
 
-        Vector3 knockback = (target.GlobalPosition - spawnPoint.GlobalPosition).Normalized() * instantContext.KnockbackForce;
+        Vector3 targetPoint = target.GetJitteredCenterMass(0.25f);
+        Vector3 knockback = (targetPoint - spawnPoint.GlobalPosition).Normalized() * instantContext.KnockbackForce;
         target.TakeDamage(instantContext.Damage, knockback);
 
         if (ArcVisualScene != null)
         {
             ArcVisual visual = ArcVisualScene.Instantiate<ArcVisual>();
             GetTree().CurrentScene.AddChild(visual);
-            visual.Show(spawnPoint.GlobalPosition, target.GlobalPosition);
+            visual.Show(spawnPoint.GlobalPosition, targetPoint);
         }
 
-        ChainResolver.ResolveChain(target, instantContext.Damage, instantContext.KnockbackForce, instantContext.ChainCount, instantContext.ChainRange, ArcVisualScene);
+        ChainResolver.ResolveChain(target, targetPoint, instantContext.Damage, instantContext.KnockbackForce, instantContext.ChainCount, instantContext.ChainRange, ArcVisualScene);
     }
 }

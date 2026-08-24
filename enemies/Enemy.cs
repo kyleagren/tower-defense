@@ -15,6 +15,7 @@ public partial class Enemy : CharacterBody3D
     [Export] public float ArmSwingAmplitude = 0.2f;
     [Export] public float RagdollCleanupDelay = 5.0f;
     [Export] public float MaxHealth = 50f;
+    [Export] public float CenterMassHeight = 1f;
 
     private int legLBoneIdx;
     private int legRBoneIdx;
@@ -25,6 +26,18 @@ public partial class Enemy : CharacterBody3D
     private float currentHealth;
 
     public bool IsDead => isDead;
+    public Vector3 CenterMass => GlobalPosition + Vector3.Up * CenterMassHeight;
+
+    public Vector3 GetJitteredCenterMass(float jitterAmount)
+    {
+        Vector3 jitter = new Vector3(
+            (float)GD.RandRange(-jitterAmount, jitterAmount),
+            (float)GD.RandRange(-jitterAmount, jitterAmount),
+            (float)GD.RandRange(-jitterAmount, jitterAmount)
+        );
+
+        return CenterMass + jitter;
+    }
 
     public override void _Ready()
     {
