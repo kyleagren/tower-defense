@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 public partial class Projectile : Area3D
 {
-    [Export] public MeshInstance3D MeshInstance { get; private set; }
-
     public float Damage { get; private set; }
     public float Radius { get; private set; }
     public float KnockbackForce { get; private set; }
@@ -21,15 +19,6 @@ public partial class Projectile : Area3D
         Radius = context.Radius;
         KnockbackForce = context.KnockbackForce;
         pierceRemaining = context.PierceCount;
-
-        StandardMaterial3D material = new StandardMaterial3D
-        {
-            AlbedoColor = context.Color,
-            EmissionEnabled = true,
-            Emission = context.Color,
-            EmissionEnergyMultiplier = 1.5f
-        };
-        MeshInstance.MaterialOverride = material;
     }
 
     public override void _Ready()

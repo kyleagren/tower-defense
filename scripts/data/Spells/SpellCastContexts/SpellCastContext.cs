@@ -1,5 +1,3 @@
-using Godot;
-
 public abstract class SpellCastContext
 {
     public float Range;
@@ -9,5 +7,4 @@ public abstract class SpellCastContext
     public float IncreasedDamagePercent;
     public float MoreDamageMultiplier = 1f;
     public float KnockbackForce;
-    public Color Color;
 }

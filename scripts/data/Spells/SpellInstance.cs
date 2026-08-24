@@ -6,6 +6,7 @@ public class SpellInstance
     // a definition is which Spell this instance is using.
     private readonly Spell definition;
     private List<Rune> attachedRunes = new List<Rune>();
+    private SpellCastContext cachedContext;
 
     public IReadOnlyList<Rune> AttachedRunes => attachedRunes;
 
@@ -35,15 +36,18 @@ public class SpellInstance
 
     public SpellCastContext Resolve()
     {
-        SpellCastContext context = definition.CreateBaseContext();
-        foreach (Rune rune in attachedRunes)
+        if (cachedContext == null)
         {
-            rune.Apply(context);
+            cachedContext = definition.CreateBaseContext();
+            foreach (Rune rune in attachedRunes)
+            {
+                rune.Apply(cachedContext);
+            }
+
+            cachedContext.Damage = cachedContext.Damage * (1f + cachedContext.IncreasedDamagePercent) * cachedContext.MoreDamageMultiplier;
         }
 
-        context.Damage = context.Damage * (1f + context.IncreasedDamagePercent) * context.MoreDamageMultiplier;
-
-        return context;
+        return cachedContext;
     }
 
     public void StartCast(float castTime, float cooldown)
@@ -57,15 +61,25 @@ public class SpellInstance
         bool hasRequiredTags = rune.RequiredTags.All(tag => definition.Tags.Contains(tag));
         if (!hasRequiredTags) return false;
 
+        bool hasRequiredAnyTag = rune.RequiredAnyTags.Count == 0 || rune.RequiredAnyTags.Any(tag => definition.Tags.Contains(tag));
+        if (!hasRequiredAnyTag) return false;
+
         bool alreadyHasThisType = attachedRunes.Any(r => r.GetType() == rune.GetType());
         if (alreadyHasThisType) return false;
 
         attachedRunes.Add(rune);
+        cachedContext = null;
         return true;
     }
 
     public bool DetachRune(Rune rune)
     {
-        return attachedRunes.Remove(rune);
+        bool removed = attachedRunes.Remove(rune);
+        if (removed)
+        {
+            cachedContext = null;
+        }
+
+        return removed;
     }
 }

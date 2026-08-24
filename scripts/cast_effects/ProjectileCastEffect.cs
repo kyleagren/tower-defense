@@ -2,7 +2,6 @@ using Godot;
 
 public partial class ProjectileCastEffect : Node
 {
-    [Export] public PackedScene ProjectileScene { get; private set; }
     [Export] public float SpreadAngleDegrees { get; private set; } = 15f;
     [Export] public ProjectileHitEffect HitEffect { get; private set; }
 
@@ -16,7 +15,7 @@ public partial class ProjectileCastEffect : Node
                 ? 360f / count * i
                 : ComputeConeAngle(i, count);
 
-            Projectile projectile = ProjectileScene.Instantiate<Projectile>();
+            Projectile projectile = context.ProjectileScene.Instantiate<Projectile>();
             projectile.Initialize(context);
             projectile.HitEffect = HitEffect;
             spawnPoint.GetTree().CurrentScene.AddChild(projectile);

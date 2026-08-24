@@ -4,6 +4,7 @@ public enum Tag
     AoE,
     Duration,
     Trigger,
+    Chaining,
     Fire,
     Lightning,
     Cold
