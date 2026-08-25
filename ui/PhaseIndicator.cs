@@ -10,6 +10,11 @@ public partial class PhaseIndicator : Control
         UpdateText(WaveController.GamePhase.Build);
     }
 
+    public override void _ExitTree()
+    {
+        EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
+    }
+
     private void OnGamePhaseChanged(WaveController.GamePhase phase)
     {
         UpdateText(phase);

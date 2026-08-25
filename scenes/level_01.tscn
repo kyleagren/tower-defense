@@ -4,10 +4,14 @@
 [ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://scripts/systems/WaveController.cs" id="2_wavecontroller"]
 [ext_resource type="Script" uid="uid://dpq7f55mr60l1" path="res://scripts/data/waves/WaveDefinition.cs" id="3_j60wy"]
 [ext_resource type="Script" uid="uid://bp87ojgy31wot" path="res://scripts/systems/DefendableObjective.cs" id="6_objective"]
+[ext_resource type="Resource" uid="uid://8n4t86g6r2wp" path="res://assets/waves/wave_02.tres" id="7_px6rj"]
 [ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://characters/architect/Architect.tscn" id="7_t0ybu"]
 [ext_resource type="Resource" uid="uid://nco3nmkc8shy" path="res://assets/waves/wave_01.tres" id="7_wave01"]
+[ext_resource type="Resource" uid="uid://dw62crdfa2u3" path="res://assets/waves/wave_03.tres" id="8_2ucnx"]
 [ext_resource type="Script" uid="uid://n00sya71wwu3" path="res://ui/PhaseIndicator.cs" id="9_phaseindicator"]
 [ext_resource type="PackedScene" path="res://characters/soldier/Soldier.tscn" id="10_soldier"]
+[ext_resource type="Script" uid="uid://ci5j2r32p0w77" path="res://scripts/systems/GameOverHandler.cs" id="11_gameoverhandler"]
+[ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="12_healthbar"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
@@ -151,11 +155,12 @@ mesh = SubResource("BoxMesh_fence")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacles/FenceLaneB" unique_id=324383121]
 shape = SubResource("BoxShape3D_fence")
 
-[node name="Objective" type="Area3D" parent="." unique_id=281504465]
+[node name="Objective" type="Area3D" parent="." unique_id=281504465 node_paths=PackedStringArray("HealthBar")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 12)
 collision_mask = 2
 script = ExtResource("6_objective")
 KnockbackAngleJitterDegrees = 20.0
+HealthBar = NodePath("HealthBar3D")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Objective" unique_id=916345286]
 material_override = SubResource("StandardMaterial3D_objective")
@@ -169,6 +174,9 @@ collision_layer = 17
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Objective/StaticBody3D" unique_id=305892027]
 shape = SubResource("SphereShape3D_objective_solid")
+
+[node name="HealthBar3D" parent="Objective" unique_id=1599200350 instance=ExtResource("12_healthbar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
 
 [node name="Lanes" type="Node3D" parent="." unique_id=124541586]
 
@@ -190,7 +198,10 @@ Target = NodePath("../../../Objective")
 
 [node name="WaveController" type="Node" parent="." unique_id=196385774]
 script = ExtResource("2_wavecontroller")
-Waves = Array[ExtResource("3_j60wy")]([ExtResource("7_wave01")])
+Waves = Array[ExtResource("3_j60wy")]([ExtResource("7_wave01"), ExtResource("7_px6rj"), ExtResource("8_2ucnx")])
+
+[node name="GameOverHandler" type="Node" parent="." unique_id=2015070701]
+script = ExtResource("11_gameoverhandler")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=367131371]
 transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46452135, -2.0641685, 7.890005, 0)
@@ -198,11 +209,11 @@ transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1525073669]
 environment = SubResource("Environment_default")
 
-[node name="Architect" parent="." unique_id=65489996 instance=ExtResource("7_t0ybu") node_paths=PackedStringArray("Soldier")]
+[node name="Architect" parent="." unique_id=65489996 node_paths=PackedStringArray("Soldier") instance=ExtResource("7_t0ybu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 7.6874204)
 Soldier = NodePath("../Soldier")
 
-[node name="Soldier" parent="." instance=ExtResource("10_soldier") node_paths=PackedStringArray("Architect")]
+[node name="Soldier" parent="." unique_id=1563622236 node_paths=PackedStringArray("Architect") instance=ExtResource("10_soldier")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 4.6874204)
 Architect = NodePath("../Architect")
 

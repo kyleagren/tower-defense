@@ -11,6 +11,11 @@ public partial class Soldier : PlayerCharacter
         SetActive(false);
     }
 
+    public override void _ExitTree()
+    {
+        EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
+    }
+
     private void OnGamePhaseChanged(WaveController.GamePhase phase)
     {
         bool shouldBeActive = phase == WaveController.GamePhase.Combat;

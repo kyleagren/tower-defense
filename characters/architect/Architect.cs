@@ -18,6 +18,11 @@ public partial class Architect : PlayerCharacter
         SetActive(true);
     }
 
+    public override void _ExitTree()
+    {
+        EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
         if (buildMenuOpen || !active)

@@ -19,6 +19,24 @@ public partial class TowerPlacer : Node
     private static readonly StandardMaterial3D ValidMaterial = CreateGhostMaterial(new Color(0.2f, 1f, 0.3f, 0.5f));
     private static readonly StandardMaterial3D InvalidMaterial = CreateGhostMaterial(new Color(1f, 0.2f, 0.2f, 0.5f));
 
+    public override void _Ready()
+    {
+        EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
+    }
+
+    public override void _ExitTree()
+    {
+        EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
+    }
+
+    private void OnGamePhaseChanged(WaveController.GamePhase phase)
+    {
+        if (phase == WaveController.GamePhase.Combat && IsPlacing)
+        {
+            CancelPlacement();
+        }
+    }
+
     public void BeginPlacement(Spell spell, Godot.Collections.Array<Rune> runes)
     {
         if (IsPlacing)

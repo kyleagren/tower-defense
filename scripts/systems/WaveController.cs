@@ -89,6 +89,11 @@ public partial class WaveController : Node
 
         currentPhase = GamePhase.Build;
         EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Build);
+
+        if (nextWaveIndex >= Waves.Count)
+        {
+            EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, true);
+        }
     }
 
     private async Task RunSpawnerQueue(string spawnerId, List<WaveSpawnEntry> entries, bool randomizeOrder)
