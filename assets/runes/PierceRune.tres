@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="PierceRune" format=3]
+
+[ext_resource type="Script" uid="uid://dv3uy7iehdsm5" path="res://scripts/data/runes/PierceRune.cs" id="1_pierce"]
+
+[resource]
+script = ExtResource("1_pierce")

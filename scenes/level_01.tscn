@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c6jpbpp1tql77" path="res://scripts/systems/EnemySpawner.cs" id="1_enemyspawner"]
 [ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://scripts/systems/WaveController.cs" id="2_wavecontroller"]
-[ext_resource type="Script" uid="uid://dpq7f55mr60l1" path="res://scripts/data/Waves/WaveDefinition.cs" id="3_j60wy"]
+[ext_resource type="Script" uid="uid://dpq7f55mr60l1" path="res://scripts/data/waves/WaveDefinition.cs" id="3_j60wy"]
 [ext_resource type="Script" uid="uid://bp87ojgy31wot" path="res://scripts/systems/DefendableObjective.cs" id="6_objective"]
 [ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://architect/Architect.tscn" id="7_t0ybu"]
 [ext_resource type="Resource" uid="uid://nco3nmkc8shy" path="res://assets/waves/wave_01.tres" id="7_wave01"]

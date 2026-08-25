@@ -1,10 +1,10 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://rituals/Ritual.cs" id="1_ritual"]
-[ext_resource type="Resource" uid="uid://dv6iw2uxlrvt6" path="res://assets/FireballSpell.tres" id="2_fireball"]
+[ext_resource type="Script" uid="uid://bacs6w4uhrpe1" path="res://rituals/Ritual.cs" id="1_ritual"]
+[ext_resource type="Resource" uid="uid://dv6iw2uxlrvt6" path="res://assets/spells/FireballSpell.tres" id="2_fireball"]
 [ext_resource type="Script" uid="uid://o2blj4y1pgho" path="res://scripts/cast_effects/ProjectileCastEffect.cs" id="5_casteffect"]
-[ext_resource type="Script" path="res://scripts/cast_effects/InstantHitCastEffect.cs" id="6_instanthit"]
-[ext_resource type="PackedScene" path="res://effects/ArcVisual.tscn" id="7_arcvisual"]
+[ext_resource type="Script" uid="uid://b76any0nq6lkw" path="res://scripts/cast_effects/InstantHitCastEffect.cs" id="6_instanthit"]
+[ext_resource type="PackedScene" path="res://visual_effects/ArcVisual.tscn" id="7_arcvisual"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_ritual"]
 top_radius = 0.35
