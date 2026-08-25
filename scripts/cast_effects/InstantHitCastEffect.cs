@@ -19,7 +19,8 @@ public partial class InstantHitCastEffect : CastEffect
 
         Vector3 targetPoint = target.GetJitteredCenterMass(0.25f);
         Vector3 knockback = (targetPoint - spawnPoint.GlobalPosition).Normalized() * instantContext.KnockbackForce;
-        target.TakeDamage(instantContext.Damage, knockback);
+        float firstHitDamage = instantContext.Damage * Mathf.Pow(1f + instantContext.MoreDamagePerRemainingChain, instantContext.ChainCount);
+        target.TakeDamage(firstHitDamage, knockback);
 
         if (ArcVisualScene != null)
         {
@@ -28,6 +29,6 @@ public partial class InstantHitCastEffect : CastEffect
             visual.Show(spawnPoint.GlobalPosition, targetPoint);
         }
 
-        ChainResolver.ResolveChain(target, targetPoint, instantContext.Damage, instantContext.KnockbackForce, instantContext.ChainCount, instantContext.ChainRange, ArcVisualScene);
+        ChainResolver.ResolveChain(target, targetPoint, instantContext.Damage, instantContext.KnockbackForce, instantContext.ChainCount, instantContext.ChainRange, instantContext.MoreDamagePerRemainingChain, ArcVisualScene);
     }
 }

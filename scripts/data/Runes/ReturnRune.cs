@@ -4,6 +4,8 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class ReturnRune : Rune
 {
+    [Export] public float DamageMultiplier { get; private set; } = 0.6f;
+
     public override string Name => "Return";
 
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Projectile };
@@ -15,6 +17,7 @@ public partial class ReturnRune : Rune
         if (context is ProjectileCastContext projectileContext)
         {
             projectileContext.IsReturn = true;
+            projectileContext.MoreDamageMultiplier *= DamageMultiplier;
         }
     }
 }

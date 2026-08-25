@@ -103,6 +103,7 @@ public partial class Projectile : Area3D
         if (ChainCount > 0 && TryRedirectToChainTarget(hitEnemy))
         {
             ChainCount--;
+            Damage *= ChainResolver.DamageFalloffPerChain;
             return;
         }
 

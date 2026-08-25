@@ -3,7 +3,9 @@ using System.Collections.Generic;
 
 public static class ChainResolver
 {
-    public static void ResolveChain(Enemy firstTarget, Vector3 firstTargetPoint, float damage, float knockbackForce, int chainCount, float chainRange, PackedScene arcVisualScene = null)
+    public const float DamageFalloffPerChain = 0.9f;
+
+    public static void ResolveChain(Enemy firstTarget, Vector3 firstTargetPoint, float damage, float knockbackForce, int chainCount, float chainRange, float moreDamagePerRemainingChain = 0f, PackedScene arcVisualScene = null)
     {
         Enemy current = firstTarget;
         Vector3 currentPoint = firstTargetPoint;
@@ -17,9 +19,12 @@ public static class ChainResolver
                 break;
             }
 
+            int remainingChains = chainCount - (i + 1);
+            float currentDamage = damage * Mathf.Pow(DamageFalloffPerChain, i + 1) * Mathf.Pow(1f + moreDamagePerRemainingChain, remainingChains);
+
             Vector3 nextPoint = next.GetJitteredCenterMass(0.25f);
             Vector3 knockback = (nextPoint - currentPoint).Normalized() * knockbackForce;
-            next.TakeDamage(damage, knockback);
+            next.TakeDamage(currentDamage, knockback);
             SpawnArcVisual(arcVisualScene, currentPoint, nextPoint);
 
             hit.Add(next);

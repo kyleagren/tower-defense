@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public partial class MultiProjectileRune : Rune
 {
     [Export] public int ExtraProjectiles { get; private set; } = 2;
-    [Export] public float DamageMultiplier { get; private set; } = 0.9f;
+    [Export] public float DamageMultiplier { get; private set; } = 0.8f;
 
     public override string Name => "Multiple Projectile";
 

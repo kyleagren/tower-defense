@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public partial class ChainRune : Rune
 {
     [Export] public int ExtraChains { get; private set; } = 3;
+    [Export] public float DamageMultiplier { get; private set; } = 0.8f;
 
     public override string Name => "Chain";
 
@@ -18,6 +19,7 @@ public partial class ChainRune : Rune
         if (context is ChainableSpellCastContext chainable)
         {
             chainable.ChainCount += ExtraChains;
+            chainable.MoreDamageMultiplier *= DamageMultiplier;
         }
     }
 }
