@@ -2,8 +2,9 @@
 
 ## Before creating or modifying files
 
-- **Code files** (`.cs`, and similar): show the full suggested code in the conversation first, and wait for it to be reviewed/approved before creating or editing the actual file.
-- **Scene files** (`.tscn`) and other structural/data files: a plain-language explanation of what will be created or changed is sufficient before proceeding — no need to paste raw file contents first. Hand-authoring these directly (rather than giving editor instructions) is fine once given the go-ahead.
+- **Code files** (`.cs`, and similar): show the full suggested code, then stop — do not call Edit/Write in the same turn. Wait for an explicit reply approving it (e.g. "yes," "go ahead," "looks good") in a separate message before creating or editing the actual file. Silence, a follow-up question, or moving on to a new topic is not approval.
+- **Scene files** (`.tscn`) and other structural/data files: a plain-language explanation of what will be created or changed is sufficient instead of pasting full raw content — but the same rule applies otherwise: explain, then stop and wait for an explicit go-ahead before writing. Hand-authoring these directly (rather than giving editor instructions) is fine once that go-ahead is given.
+- If it's ambiguous whether approval was actually given, ask rather than assume.
 
 ## Don't let tooling limitations bias technical decisions
 

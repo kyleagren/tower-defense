@@ -5,15 +5,19 @@ using System.Linq;
 public partial class BuildMenu : Control
 {
     [Signal] public delegate void ClosedEventHandler();
+    [Signal] public delegate void ConfirmedEventHandler(Spell spell, Godot.Collections.Array<Rune> runes);
 
     [Export] public SpellGrid Grid { get; private set; }
+    [Export] public Control MenuRegion { get; private set; }
+    [Export] public Label DescriptionTitleLabel { get; private set; }
+    [Export] public Label DescriptionBodyLabel { get; private set; }
 
     private Spell selectedSpell;
-    private readonly Rune[] socketedRunes = new Rune[SpellInstance.MaxRuneSlots];
+    private readonly Rune[] socketedRunes = new Rune[GameRules.MaxRuneSlots];
 
     private Control socketScreen;
     private Label centerSpellLabel;
-    private readonly Button[] socketButtons = new Button[SpellInstance.MaxRuneSlots];
+    private readonly Button[] socketButtons = new Button[GameRules.MaxRuneSlots];
 
     private Control runePickerScreen;
     private SpellGrid runeGrid;
@@ -40,7 +44,7 @@ public partial class BuildMenu : Control
             if (i < spells.Count)
             {
                 Spell spell = spells[i];
-                Button button = CreateTileButton(spell.Name);
+                Button button = CreateTileButton(spell.Name, spell.Name, spell.Description);
                 button.Pressed += () => OnSpellSelected(spell);
                 Grid.AddChild(button);
             }
@@ -69,7 +73,7 @@ public partial class BuildMenu : Control
     {
         socketScreen = new Control { Visible = false };
         socketScreen.SetAnchorsPreset(LayoutPreset.FullRect);
-        AddChild(socketScreen);
+        MenuRegion.AddChild(socketScreen);
 
         centerSpellLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
         centerSpellLabel.AddThemeFontSizeOverride("font_size", 28);
@@ -82,17 +86,25 @@ public partial class BuildMenu : Control
             Button socketButton = new Button();
             CenterOnAnchor(socketButton, SocketAnchors[i], new Vector2(160f, 100f));
             socketButton.Pressed += () => ShowRunePicker(socketIndex);
+            socketButton.MouseEntered += () => ShowSocketDescription(socketIndex);
+            socketButton.FocusEntered += () => ShowSocketDescription(socketIndex);
             socketScreen.AddChild(socketButton);
             socketButtons[i] = socketButton;
         }
 
         Button clearAllButton = new Button { Text = "Clear All" };
-        clearAllButton.SetAnchorsPreset(LayoutPreset.CenterBottom);
+        CenterOnAnchor(clearAllButton, new Vector2(0.5f, 0.95f), new Vector2(140f, 50f));
+        clearAllButton.AddThemeStyleboxOverride("normal", ClearAllButtonStyle);
+        clearAllButton.AddThemeStyleboxOverride("hover", ClearAllButtonHoverStyle);
+        clearAllButton.AddThemeStyleboxOverride("pressed", ClearAllButtonPressedStyle);
         clearAllButton.Pressed += () => clearAllDialog.PopupCentered();
         socketScreen.AddChild(clearAllButton);
 
         Button confirmButton = new Button { Text = "Confirm" };
-        confirmButton.SetAnchorsPreset(LayoutPreset.CenterTop);
+        CenterOnAnchor(confirmButton, new Vector2(0.5f, 0.05f), new Vector2(140f, 50f));
+        confirmButton.AddThemeStyleboxOverride("normal", ConfirmButtonStyle);
+        confirmButton.AddThemeStyleboxOverride("hover", ConfirmButtonHoverStyle);
+        confirmButton.AddThemeStyleboxOverride("pressed", ConfirmButtonPressedStyle);
         confirmButton.Pressed += OnConfirmPressed;
         socketScreen.AddChild(confirmButton);
 
@@ -108,6 +120,7 @@ public partial class BuildMenu : Control
         socketScreen.Visible = true;
 
         RefreshSocketScreen();
+        ShowDescription(selectedSpell?.Name, selectedSpell?.Description);
         socketButtons[0].GrabFocus();
     }
 
@@ -117,7 +130,26 @@ public partial class BuildMenu : Control
 
         for (int i = 0; i < socketButtons.Length; i++)
         {
+            bool isEmpty = socketedRunes[i] == null;
             socketButtons[i].Text = socketedRunes[i]?.Name ?? "Empty";
+
+            socketButtons[i].AddThemeStyleboxOverride("normal", isEmpty ? EmptySocketStyle : NormalTileStyle);
+            socketButtons[i].AddThemeStyleboxOverride("hover", isEmpty ? EmptySocketHoverStyle : HoverTileStyle);
+            socketButtons[i].AddThemeStyleboxOverride("pressed", isEmpty ? EmptySocketPressedStyle : PressedTileStyle);
+        }
+    }
+
+    private void ShowSocketDescription(int socketIndex)
+    {
+        Rune rune = socketedRunes[socketIndex];
+
+        if (rune != null)
+        {
+            ShowDescription(rune.Name, rune.Description);
+        }
+        else
+        {
+            ShowDescription(selectedSpell?.Name, selectedSpell?.Description);
         }
     }
 
@@ -133,8 +165,8 @@ public partial class BuildMenu : Control
 
     private void OnConfirmPressed()
     {
-        string runeNames = string.Join(", ", socketedRunes.Where(r => r != null).Select(r => r.Name));
-        GD.Print($"Built: {selectedSpell?.Name} [{runeNames}]");
+        Godot.Collections.Array<Rune> confirmedRunes = new Godot.Collections.Array<Rune>(socketedRunes.Where(r => r != null));
+        EmitSignal(SignalName.Confirmed, selectedSpell, confirmedRunes);
         Close();
     }
 
@@ -142,7 +174,7 @@ public partial class BuildMenu : Control
     {
         runePickerScreen = new Control { Visible = false };
         runePickerScreen.SetAnchorsPreset(LayoutPreset.FullRect);
-        AddChild(runePickerScreen);
+        MenuRegion.AddChild(runePickerScreen);
 
         runeGrid = new SpellGrid
         {
@@ -188,12 +220,12 @@ public partial class BuildMenu : Control
                 bool isCurrentSocketRune = rune == currentSocketRune;
                 bool disabled = IsSocketedElsewhere(rune, socketIndex);
 
-                Button button = CreateTileButton(rune.Name);
+                Button button = CreateTileButton(rune.Name, rune.Name, rune.Description);
                 button.Disabled = disabled;
 
                 if (isCurrentSocketRune)
                 {
-                    button.Modulate = new Color(1f, 0.85f, 0.3f);
+                    button.AddThemeStyleboxOverride("normal", CurrentSocketTileStyle);
                     button.Pressed += () => OnRuneSelected(null);
                 }
                 else if (!disabled)
@@ -212,6 +244,8 @@ public partial class BuildMenu : Control
         Grid.Visible = false;
         socketScreen.Visible = false;
         runePickerScreen.Visible = true;
+
+        ShowDescription(currentSocketRune?.Name, currentSocketRune?.Description);
     }
 
     private bool IsSocketedElsewhere(Rune rune, int socketIndex)
@@ -233,7 +267,7 @@ public partial class BuildMenu : Control
         ShowSocketScreen();
     }
 
-    private static Button CreateTileButton(string text)
+    private Button CreateTileButton(string buttonText, string descriptionTitle, string descriptionBody)
     {
         Button button = new Button
         {
@@ -244,7 +278,7 @@ public partial class BuildMenu : Control
 
         Label label = new Label
         {
-            Text = text,
+            Text = buttonText,
             HorizontalAlignment = HorizontalAlignment.Center,
             MouseFilter = MouseFilterEnum.Ignore
         };
@@ -252,7 +286,59 @@ public partial class BuildMenu : Control
         label.SetAnchorsPreset(LayoutPreset.TopWide);
         button.AddChild(label);
 
+        button.AddThemeStyleboxOverride("normal", NormalTileStyle);
+        button.AddThemeStyleboxOverride("hover", HoverTileStyle);
+        button.AddThemeStyleboxOverride("pressed", PressedTileStyle);
+        button.AddThemeStyleboxOverride("disabled", DisabledTileStyle);
+
+        button.MouseEntered += () => ShowDescription(descriptionTitle, descriptionBody);
+        button.FocusEntered += () => ShowDescription(descriptionTitle, descriptionBody);
+
         return button;
+    }
+
+    private static readonly StyleBoxFlat NormalTileStyle = CreateTileStyle(new Color(0.25f, 0.45f, 0.65f));
+    private static readonly StyleBoxFlat HoverTileStyle = CreateTileStyle(new Color(0.32f, 0.55f, 0.78f));
+    private static readonly StyleBoxFlat PressedTileStyle = CreateTileStyle(new Color(0.18f, 0.32f, 0.48f));
+    private static readonly StyleBoxFlat DisabledTileStyle = CreateTileStyle(new Color(0.18f, 0.18f, 0.18f));
+    private static readonly StyleBoxFlat CurrentSocketTileStyle = CreateTileStyle(new Color(0.75f, 0.6f, 0.15f));
+    private static readonly StyleBoxFlat ConfirmButtonStyle = CreateTileStyle(new Color(0.2f, 0.55f, 0.25f));
+    private static readonly StyleBoxFlat ConfirmButtonHoverStyle = CreateTileStyle(new Color(0.28f, 0.68f, 0.32f));
+    private static readonly StyleBoxFlat ConfirmButtonPressedStyle = CreateTileStyle(new Color(0.15f, 0.4f, 0.18f));
+    private static readonly StyleBoxFlat ClearAllButtonStyle = CreateTileStyle(new Color(0.6f, 0.2f, 0.2f));
+    private static readonly StyleBoxFlat ClearAllButtonHoverStyle = CreateTileStyle(new Color(0.72f, 0.28f, 0.28f));
+    private static readonly StyleBoxFlat ClearAllButtonPressedStyle = CreateTileStyle(new Color(0.45f, 0.15f, 0.15f));
+    private static readonly StyleBoxFlat EmptySocketStyle = CreateBorderedTileStyle(new Color(0.15f, 0.15f, 0.15f), new Color(0.25f, 0.45f, 0.65f));
+    private static readonly StyleBoxFlat EmptySocketHoverStyle = CreateBorderedTileStyle(new Color(0.2f, 0.2f, 0.2f), new Color(0.32f, 0.55f, 0.78f));
+    private static readonly StyleBoxFlat EmptySocketPressedStyle = CreateBorderedTileStyle(new Color(0.1f, 0.1f, 0.1f), new Color(0.18f, 0.32f, 0.48f));
+
+    private static StyleBoxFlat CreateTileStyle(Color color)
+    {
+        return new StyleBoxFlat
+        {
+            BgColor = color,
+            CornerRadiusTopLeft = 6,
+            CornerRadiusTopRight = 6,
+            CornerRadiusBottomLeft = 6,
+            CornerRadiusBottomRight = 6
+        };
+    }
+
+    private static StyleBoxFlat CreateBorderedTileStyle(Color bgColor, Color borderColor)
+    {
+        StyleBoxFlat style = CreateTileStyle(bgColor);
+        style.BorderColor = borderColor;
+        style.BorderWidthLeft = 3;
+        style.BorderWidthRight = 3;
+        style.BorderWidthTop = 3;
+        style.BorderWidthBottom = 3;
+        return style;
+    }
+
+    private void ShowDescription(string title, string body)
+    {
+        DescriptionTitleLabel.Text = title ?? "";
+        DescriptionBodyLabel.Text = body ?? "";
     }
 
     private static readonly Vector2[] SocketAnchors =
@@ -302,6 +388,8 @@ public partial class BuildMenu : Control
         {
             (Grid.GetChild(0) as Control)?.GrabFocus();
         }
+
+        ShowDescription(null, null);
     }
 
     public override void _UnhandledInput(InputEvent @event)

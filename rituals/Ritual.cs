@@ -1,10 +1,12 @@
 using Godot;
+using System.Collections.Generic;
 
 public partial class Ritual : Node3D
 {
     [Export] public Spell Spell { get; private set; }
-    [Export] public Rune[] RuneSlots { get; private set; } = new Rune[SpellInstance.MaxRuneSlots];
-    [Export] public CastEffect CastEffect { get; private set; }
+    [Export] public Rune[] RuneSlots { get; private set; } = new Rune[GameRules.MaxRuneSlots];
+    [Export] public ProjectileCastEffect ProjectileEffect { get; private set; }
+    [Export] public InstantHitCastEffect InstantHitEffect { get; private set; }
     [Export] public Node3D SpawnPoint { get; private set; }
     [Export] public float TargetSearchInterval = 0.25f;
 
@@ -14,9 +16,15 @@ public partial class Ritual : Node3D
 
     public override void _Ready()
     {
-        spellInstance = new SpellInstance(Spell);
+        Configure(Spell, RuneSlots);
+    }
 
-        foreach (Rune rune in RuneSlots)
+    public void Configure(Spell spell, IReadOnlyList<Rune> runes)
+    {
+        Spell = spell;
+        spellInstance = new SpellInstance(spell);
+
+        foreach (Rune rune in runes)
         {
             if (rune != null)
             {
@@ -54,7 +62,15 @@ public partial class Ritual : Node3D
         SpawnPoint.LookAt(levelAimPosition, Vector3.Up);
 
         SpellCastContext context = spellInstance.Resolve();
-        CastEffect.Cast(context, SpawnPoint);
+
+        CastEffect effect = context switch
+        {
+            ProjectileCastContext => ProjectileEffect,
+            InstantHitCastContext => InstantHitEffect,
+            _ => null
+        };
+
+        effect?.Cast(context, SpawnPoint);
 
         spellInstance.StartCast(context.CastTime, context.Cooldown);
     }
