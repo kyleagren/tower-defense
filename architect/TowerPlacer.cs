@@ -72,6 +72,7 @@ public partial class TowerPlacer : Node
 
         PhysicsDirectSpaceState3D spaceState = Architect.GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(rayStart, rayEnd);
+        query.CollisionMask = 1; // World only — ignore towers/obstacles so the ghost always lands at true ground height
 
         Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
 
@@ -89,11 +90,23 @@ public partial class TowerPlacer : Node
         {
             Shape = ghostCollisionShape.Shape,
             Transform = ghostCollisionShape.GlobalTransform,
-            CollisionMask = 16
+            CollisionMask = 16,
+            CollideWithBodies = true,
+            CollideWithAreas = false
         };
 
         Godot.Collections.Array<Godot.Collections.Dictionary> overlaps = spaceState.IntersectShape(query);
         isValidPlacement = overlaps.Count == 0;
+
+        if (Input.IsActionJustPressed("confirm_placement"))
+        {
+            GD.Print($"Placement check: {overlaps.Count} overlaps found, isValidPlacement={isValidPlacement}");
+            foreach (Godot.Collections.Dictionary overlap in overlaps)
+            {
+                Node colliderNode = overlap["collider"].As<Node>();
+                GD.Print($"  overlapping: {colliderNode?.Name} ({colliderNode?.GetType().Name})");
+            }
+        }
 
         ghostMesh.MaterialOverride = isValidPlacement ? ValidMaterial : InvalidMaterial;
     }

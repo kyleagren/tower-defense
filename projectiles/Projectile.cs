@@ -19,6 +19,7 @@ public partial class Projectile : Area3D
     private bool isReturn;
     private bool hasReturned;
     private const float ReturnArrivalDistance = 0.75f;
+    private const float MaxReturnDistance = 10f;
     private HashSet<Node3D> alreadyHit = new HashSet<Node3D>();
 
     public void Initialize(ProjectileCastContext context)
@@ -40,6 +41,12 @@ public partial class Projectile : Area3D
     public override void _PhysicsProcess(double delta)
     {
         Position -= Transform.Basis.Z * speed * (float)delta;
+
+        if (isReturn && !hasReturned && GlobalPosition.DistanceSquaredTo(SpawnPosition) > MaxReturnDistance * MaxReturnDistance)
+        {
+            hasReturned = true;
+            LookAt(SpawnPosition, Vector3.Up);
+        }
 
         if (hasReturned && GlobalPosition.DistanceSquaredTo(SpawnPosition) < ReturnArrivalDistance * ReturnArrivalDistance)
         {
@@ -69,13 +76,27 @@ public partial class Projectile : Area3D
         alreadyHit.Add(body);
         ApplyHit(body);
 
+        if (body is not Enemy hitEnemy)
+        {
+            if (isReturn)
+            {
+                hasReturned = true;
+                LookAt(SpawnPosition, Vector3.Up);
+                return;
+            }
+
+            hasExpired = true;
+            QueueFree();
+            return;
+        }
+
         if (pierceRemaining > 0)
         {
             pierceRemaining--;
             return;
         }
 
-        if (body is Enemy hitEnemy && ChainCount > 0 && TryRedirectToChainTarget(hitEnemy))
+        if (ChainCount > 0 && TryRedirectToChainTarget(hitEnemy))
         {
             ChainCount--;
             return;
@@ -94,7 +115,14 @@ public partial class Projectile : Area3D
 
     private void HandleReturnHit(Node3D body)
     {
-        if (body is not Enemy enemy || (ReturnHitTracker != null && ReturnHitTracker.Contains(enemy)))
+        if (body is not Enemy enemy)
+        {
+            hasExpired = true;
+            QueueFree();
+            return;
+        }
+
+        if (ReturnHitTracker != null && ReturnHitTracker.Contains(enemy))
         {
             return;
         }
