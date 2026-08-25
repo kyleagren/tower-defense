@@ -8,4 +8,5 @@ public class ProjectileCastContext : ChainableSpellCastContext
     public bool IsNova;
     public bool IsReturn;
     public PackedScene ProjectileScene;
+    public ProjectileHitEffect HitEffect;
 }

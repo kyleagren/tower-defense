@@ -87,8 +87,7 @@ public partial class Projectile : Area3D
                 return;
             }
 
-            hasExpired = true;
-            QueueFree();
+            Expire(body);
             return;
         }
 
@@ -114,16 +113,14 @@ public partial class Projectile : Area3D
             return;
         }
 
-        hasExpired = true;
-        QueueFree();
+        Expire(body);
     }
 
     private void HandleReturnHit(Node3D body)
     {
         if (body is not Enemy enemy)
         {
-            hasExpired = true;
-            QueueFree();
+            Expire(body);
             return;
         }
 
@@ -143,8 +140,18 @@ public partial class Projectile : Area3D
             Vector3 ragdollImpulse = -GlobalTransform.Basis.Z * RagdollForce;
             enemy.TakeDamage(Damage, ragdollImpulse);
         }
+    }
 
-        HitEffect?.OnHit(this, body);
+    private void Expire(Node3D lastHitBody)
+    {
+        hasExpired = true;
+
+        if (!isReturn)
+        {
+            HitEffect?.OnHit(this, lastHitBody);
+        }
+
+        QueueFree();
     }
 
     private bool TryRedirectToChainTarget(Enemy hitEnemy)

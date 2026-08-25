@@ -7,6 +7,7 @@ public partial class FireballSpell : ChainableSpell
     [Export] public PackedScene ProjectileScene { get; private set; }
     [Export] public int BaseProjectileCount { get; private set; } = 1;
     [Export] public float BaseRadius { get; private set; } = 0.3f;
+    [Export] public ProjectileHitEffect HitEffect { get; private set; }
 
     [Export] public override float BaseDamage { get; protected set; } = 100f;
     [Export] public override float BaseCastTime { get; protected set; } = 1.5f;
@@ -32,7 +33,8 @@ public partial class FireballSpell : ChainableSpell
             Radius = BaseRadius,
             ProjectileScene = ProjectileScene,
             ChainCount = BaseChainCount,
-            ChainRange = BaseChainRange
+            ChainRange = BaseChainRange,
+            HitEffect = HitEffect
         };
     }
 }

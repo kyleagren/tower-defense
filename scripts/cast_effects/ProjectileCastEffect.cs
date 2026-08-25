@@ -4,7 +4,6 @@ using System.Collections.Generic;
 public partial class ProjectileCastEffect : CastEffect
 {
     [Export] public float SpreadAngleDegrees { get; private set; } = 15f;
-    [Export] public ProjectileHitEffect HitEffect { get; private set; }
 
     public override void Cast(SpellCastContext context, Node3D spawnPoint)
     {
@@ -25,7 +24,7 @@ public partial class ProjectileCastEffect : CastEffect
 
             Projectile projectile = projectileContext.ProjectileScene.Instantiate<Projectile>();
             projectile.Initialize(projectileContext);
-            projectile.HitEffect = HitEffect;
+            projectile.HitEffect = projectileContext.HitEffect;
             projectile.ReturnHitTracker = returnHitTracker;
             projectile.ChainHitTracker = chainHitTracker;
             spawnPoint.GetTree().CurrentScene.AddChild(projectile);

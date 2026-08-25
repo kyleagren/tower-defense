@@ -4,10 +4,12 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class ExplodeOnHitEffect : ProjectileHitEffect
 {
+    [Export] public float ExplosionRadius = 3f;
+
     public override void OnHit(Projectile projectile, Node3D body)
     {
         PhysicsDirectSpaceState3D spaceState = projectile.GetWorld3D().DirectSpaceState;
-        SphereShape3D explosionShape = new SphereShape3D { Radius = projectile.Radius };
+        SphereShape3D explosionShape = new SphereShape3D { Radius = ExplosionRadius };
         PhysicsShapeQueryParameters3D query = new PhysicsShapeQueryParameters3D
         {
             Shape = explosionShape,
@@ -17,20 +19,24 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
         };
 
         Godot.Collections.Array<Godot.Collections.Dictionary> results = spaceState.IntersectShape(query);
-        HashSet<Node3D> hitBodies = new HashSet<Node3D>();
+        HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
 
         foreach (Godot.Collections.Dictionary result in results)
         {
             if (result.TryGetValue("collider", out Variant colliderVariant)
-                && colliderVariant.Obj is Node3D hitBody)
+                && colliderVariant.Obj is Enemy enemy
+                && enemy != body)
             {
-                hitBodies.Add(hitBody);
+                hitEnemies.Add(enemy);
             }
         }
 
-        foreach (Node3D hitBody in hitBodies)
+        Vector3 explosionCenter = projectile.GlobalPosition;
+
+        foreach (Enemy enemy in hitEnemies)
         {
-            GD.Print($"Hit {hitBody.Name} for {projectile.Damage} damage.");
+            Vector3 ragdollImpulse = (enemy.GlobalPosition - explosionCenter).Normalized() * projectile.RagdollForce;
+            enemy.TakeDamage(projectile.Damage, ragdollImpulse);
         }
     }
 }
