@@ -157,6 +157,8 @@ Difficulty tiers differentiate via composition and timing, not flat stat multipl
 
 * Sniper vs. Assassin differentiation — both will ship, exact difference not yet designed.
 * Full scope of the elemental tag system — more elements beyond Fire/Lightning/Cold/Wind, and how conversion runes work.
+* Damage roll ranges (PoE-style min/max per hit) vs. flat deterministic damage — undecided. Current multiplicative stacking (chain falloff, remaining-chain bonus, rune "more" multipliers) already makes exact breakpoints hard to hand-calculate, which weakens the "ranges hurt planning" argument against them.
+* Critical hit system — not yet designed; floated alongside the roll-range question above, since crits and damage ranges tend to pair naturally.
 * Equipment mod pool: contents, weighting, drop sourcing.
 * Specific low-poly art style/visual identity — not urgent yet, will matter for silhouette readability once designs are more concrete.
 * Wave-end safety net: a wave should auto-end after a timeout even if enemies remain (e.g. one stuck on the navmesh) — not implemented yet.
