@@ -2,8 +2,8 @@ using Godot;
 
 public partial class DefendableObjective : Area3D
 {
-    [Export] public float KnockbackForce = 200.0f;
-    [Export] public float KnockbackAngleJitterDegrees = 5.0f;
+    [Export] public float RagdollForce = 200.0f;
+    [Export] public float RagdollAngleJitterDegrees = 20.0f;
     [Export] public float MaxHealth = 100f;
     [Export] public float DamagePerHit = 10f;
     [Export] public HealthBar3D HealthBar { get; private set; }
@@ -27,12 +27,12 @@ public partial class DefendableObjective : Area3D
 
         if (body is Enemy enemy)
         {
-            Vector3 knockbackDirection = (enemy.GlobalPosition - GlobalPosition).Normalized();
+            Vector3 ragdollDirection = (enemy.GlobalPosition - GlobalPosition).Normalized();
 
-            float jitterRadians = Mathf.DegToRad((float)GD.RandRange(-KnockbackAngleJitterDegrees, KnockbackAngleJitterDegrees));
-            knockbackDirection = knockbackDirection.Rotated(Vector3.Up, jitterRadians);
+            float jitterRadians = Mathf.DegToRad((float)GD.RandRange(-RagdollAngleJitterDegrees, RagdollAngleJitterDegrees));
+            ragdollDirection = ragdollDirection.Rotated(Vector3.Up, jitterRadians);
 
-            enemy.Die(knockbackDirection * KnockbackForce);
+            enemy.Die(ragdollDirection * RagdollForce);
 
             currentHealth -= DamagePerHit;
             HealthBar.SetFraction(currentHealth / MaxHealth);

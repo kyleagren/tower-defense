@@ -161,7 +161,7 @@ shape = SubResource("BoxShape3D_fence")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 12)
 collision_mask = 2
 script = ExtResource("6_objective")
-KnockbackAngleJitterDegrees = 20.0
+RagdollAngleJitterDegrees = 20.0
 HealthBar = NodePath("HealthBar3D")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Objective" unique_id=916345286]

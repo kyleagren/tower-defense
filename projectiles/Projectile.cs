@@ -6,7 +6,7 @@ public partial class Projectile : Area3D
 {
     public float Damage { get; private set; }
     public float Radius { get; private set; }
-    public float KnockbackForce { get; private set; }
+    public float RagdollForce { get; private set; }
     public int ChainCount { get; private set; }
     public float ChainRange { get; private set; }
     public Vector3 SpawnPosition { get; set; }
@@ -27,7 +27,7 @@ public partial class Projectile : Area3D
     {
         Damage = context.Damage;
         Radius = context.Radius;
-        KnockbackForce = context.KnockbackForce;
+        RagdollForce = context.RagdollForce;
         ChainCount = context.ChainCount;
         ChainRange = context.ChainRange;
         pierceRemaining = context.PierceCount;
@@ -140,8 +140,8 @@ public partial class Projectile : Area3D
     {
         if (body is Enemy enemy)
         {
-            Vector3 knockback = -GlobalTransform.Basis.Z * KnockbackForce;
-            enemy.TakeDamage(Damage, knockback);
+            Vector3 ragdollImpulse = -GlobalTransform.Basis.Z * RagdollForce;
+            enemy.TakeDamage(Damage, ragdollImpulse);
         }
 
         HitEffect?.OnHit(this, body);

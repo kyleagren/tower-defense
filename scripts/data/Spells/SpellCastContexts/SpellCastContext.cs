@@ -6,5 +6,5 @@ public abstract class SpellCastContext
     public float Damage;
     public float IncreasedDamagePercent;
     public float MoreDamageMultiplier = 1f;
-    public float KnockbackForce;
+    public float RagdollForce;
 }

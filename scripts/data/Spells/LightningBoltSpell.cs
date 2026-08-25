@@ -24,7 +24,7 @@ public partial class LightningBoltSpell : ChainableSpell
             CastTime = BaseCastTime,
             Cooldown = BaseCooldown,
             Damage = BaseDamage,
-            KnockbackForce = BaseKnockbackForce,
+            RagdollForce = BaseRagdollForce,
             ChainCount = BaseChainCount,
             ChainRange = BaseChainRange,
             MoreDamagePerRemainingChain = MoreDamagePerRemainingChain

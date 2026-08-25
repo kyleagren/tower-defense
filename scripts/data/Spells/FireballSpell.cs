@@ -10,7 +10,7 @@ public partial class FireballSpell : ChainableSpell
 
     [Export] public override float BaseDamage { get; protected set; } = 100f;
     [Export] public override float BaseCastTime { get; protected set; } = 1.5f;
-    [Export] public override float BaseKnockbackForce { get; protected set; } = 20f;
+    [Export] public override float BaseRagdollForce { get; protected set; } = 20f;
     [Export] public override int BudgetCost { get; protected set; } = 10;
 
     public override string Name => "Fireball";
@@ -27,7 +27,7 @@ public partial class FireballSpell : ChainableSpell
             CastTime = BaseCastTime,
             Cooldown = BaseCooldown,
             Damage = BaseDamage,
-            KnockbackForce = BaseKnockbackForce,
+            RagdollForce = BaseRagdollForce,
             ProjectileCount = BaseProjectileCount,
             Radius = BaseRadius,
             ProjectileScene = ProjectileScene,

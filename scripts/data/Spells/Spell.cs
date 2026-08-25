@@ -11,7 +11,7 @@ public abstract partial class Spell : Resource
     public virtual float BaseCastTime { get; protected set; } = 1f;
     public virtual float BaseCooldown { get; protected set; } = 0f;
     public virtual float BaseDamage { get; protected set; } = 0f;
-    public virtual float BaseKnockbackForce { get; protected set; } = 0f;
+    public virtual float BaseRagdollForce { get; protected set; } = 0f;
     public virtual int BudgetCost { get; protected set; } = 10;
 
     public abstract SpellCastContext CreateBaseContext();

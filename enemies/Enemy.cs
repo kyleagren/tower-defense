@@ -58,7 +58,7 @@ public partial class Enemy : CharacterBody3D
         NavAgent.TargetPosition = targetPosition;
     }
 
-    public void TakeDamage(float amount, Vector3 knockbackImpulse = default)
+    public void TakeDamage(float amount, Vector3 ragdollImpulse = default)
     {
         if (isDead)
         {
@@ -69,11 +69,11 @@ public partial class Enemy : CharacterBody3D
 
         if (currentHealth <= 0f)
         {
-            Die(knockbackImpulse);
+            Die(ragdollImpulse);
         }
     }
 
-    public void Die(Vector3 knockbackImpulse)
+    public void Die(Vector3 ragdollImpulse)
     {
         if (isDead)
         {
@@ -89,7 +89,7 @@ public partial class Enemy : CharacterBody3D
         SetPhysicalBonesCollision(4, 1);
 
         BoneSimulator.PhysicalBonesStartSimulation();
-        _ = ApplyKnockbackNextPhysicsFrame(knockbackImpulse);
+        _ = ApplyRagdollImpulseNextPhysicsFrame(ragdollImpulse);
 
         GetTree().CreateTimer(RagdollCleanupDelay).Timeout += QueueFree;
     }
@@ -106,7 +106,7 @@ public partial class Enemy : CharacterBody3D
         }
     }
 
-    private async Task ApplyKnockbackNextPhysicsFrame(Vector3 impulse)
+    private async Task ApplyRagdollImpulseNextPhysicsFrame(Vector3 impulse)
     {
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         RootPhysicalBone.ApplyCentralImpulse(impulse);
