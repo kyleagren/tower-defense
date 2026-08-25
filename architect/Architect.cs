@@ -14,6 +14,7 @@ public partial class Architect : CharacterBody3D
     private float cameraPitch;
     private float gravity;
     private bool buildMenuOpen;
+    private bool wavePhaseActive;
 
     public override void _Ready()
     {
@@ -21,11 +22,12 @@ public partial class Architect : CharacterBody3D
         Input.MouseMode = Input.MouseModeEnum.Captured;
         BuildMenu.Closed += OnBuildMenuClosed;
         BuildMenu.Confirmed += OnBuildMenuConfirmed;
+        EventBus.Instance.WavePhaseChanged += OnWavePhaseChanged;
     }
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (buildMenuOpen)
+        if (buildMenuOpen || wavePhaseActive)
         {
             return;
         }
@@ -74,6 +76,11 @@ public partial class Architect : CharacterBody3D
         TowerPlacer.BeginPlacement(spell, runes);
     }
 
+    private void OnWavePhaseChanged(WaveController.WavePhase phase)
+    {
+        wavePhaseActive = phase == WaveController.WavePhase.Wave;
+    }
+
     public override void _PhysicsProcess(double delta)
     {
         Vector3 velocity = Velocity;
@@ -82,12 +89,12 @@ public partial class Architect : CharacterBody3D
         {
             velocity.Y -= gravity * (float)delta;
         }
-        else if (!buildMenuOpen && Input.IsActionJustPressed("jump"))
+        else if (!buildMenuOpen && !wavePhaseActive && Input.IsActionJustPressed("jump"))
         {
             velocity.Y = JumpVelocity;
         }
 
-        Vector2 inputDir = buildMenuOpen ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_forward", "move_back");
+        Vector2 inputDir = (buildMenuOpen || wavePhaseActive) ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_forward", "move_back");
         Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0f, inputDir.Y)).Normalized();
 
         if (direction != Vector3.Zero)
