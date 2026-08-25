@@ -189,7 +189,6 @@ Target = NodePath("../../../Objective")
 [node name="WaveController" type="Node" parent="." unique_id=196385774]
 script = ExtResource("2_wavecontroller")
 Waves = Array[ExtResource("3_j60wy")]([ExtResource("7_wave01")])
-DebugRepeatWave = true
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=367131371]
 transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46452135, -2.0641685, 7.890005, 0)
