@@ -9,6 +9,7 @@ public partial class Architect : CharacterBody3D
     [Export] public float MaxPitchDegrees = 10f;
     [Export] public SpringArm3D SpringArm { get; private set; }
     [Export] public BuildMenu BuildMenu { get; private set; }
+    [Export] public TowerPlacer TowerPlacer { get; private set; }
 
     private float cameraPitch;
     private float gravity;
@@ -19,6 +20,7 @@ public partial class Architect : CharacterBody3D
         gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
         Input.MouseMode = Input.MouseModeEnum.Captured;
         BuildMenu.Closed += OnBuildMenuClosed;
+        BuildMenu.Confirmed += OnBuildMenuConfirmed;
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -46,7 +48,7 @@ public partial class Architect : CharacterBody3D
             SpringArm.Rotation = new Vector3(cameraPitch, 0f, 0f);
         }
 
-        if (@event.IsActionPressed("ui_cancel"))
+        if (@event.IsActionPressed("ui_cancel") && !TowerPlacer.IsPlacing)
         {
             Input.MouseMode = Input.MouseMode == Input.MouseModeEnum.Captured
                 ? Input.MouseModeEnum.Visible
@@ -65,6 +67,11 @@ public partial class Architect : CharacterBody3D
     {
         buildMenuOpen = false;
         Input.MouseMode = Input.MouseModeEnum.Captured;
+    }
+
+    private void OnBuildMenuConfirmed(Spell spell, Godot.Collections.Array<Rune> runes)
+    {
+        TowerPlacer.BeginPlacement(spell, runes);
     }
 
     public override void _PhysicsProcess(double delta)

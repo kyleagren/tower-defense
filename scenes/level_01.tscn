@@ -90,6 +90,7 @@ shape = SubResource("BoxShape3D_ground")
 
 [node name="WallNorth" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=143044077]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -15.5)
+collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallNorth" unique_id=1877919501]
 material_override = SubResource("StandardMaterial3D_wall")
@@ -100,6 +101,7 @@ shape = SubResource("BoxShape3D_wall_ns")
 
 [node name="WallSouth" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=1539600664]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 15.5)
+collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallSouth" unique_id=937932479]
 material_override = SubResource("StandardMaterial3D_wall")
@@ -110,6 +112,7 @@ shape = SubResource("BoxShape3D_wall_ns")
 
 [node name="WallEast" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=1779068082]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 1.5, 0)
+collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallEast" unique_id=902569249]
 material_override = SubResource("StandardMaterial3D_wall")
@@ -120,6 +123,7 @@ shape = SubResource("BoxShape3D_wall_ew")
 
 [node name="WallWest" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=2005571862]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 1.5, 0)
+collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallWest" unique_id=106579811]
 material_override = SubResource("StandardMaterial3D_wall")
@@ -130,6 +134,7 @@ shape = SubResource("BoxShape3D_wall_ew")
 
 [node name="WallCenter" type="StaticBody3D" parent="NavigationRegion3D/Boundary" unique_id=1429035798]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3)
+collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Boundary/WallCenter" unique_id=2013672262]
 material_override = SubResource("StandardMaterial3D_wall")
@@ -142,6 +147,7 @@ shape = SubResource("BoxShape3D_wall_center")
 
 [node name="FenceLaneA" type="StaticBody3D" parent="NavigationRegion3D/Obstacles" unique_id=574831794]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.75, -6)
+collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Obstacles/FenceLaneA" unique_id=1878927162]
 material_override = SubResource("StandardMaterial3D_fence")
@@ -152,6 +158,7 @@ shape = SubResource("BoxShape3D_fence")
 
 [node name="FenceLaneB" type="StaticBody3D" parent="NavigationRegion3D/Obstacles" unique_id=2068323487]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.75, -6)
+collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Obstacles/FenceLaneB" unique_id=1620246954]
 material_override = SubResource("StandardMaterial3D_fence")
