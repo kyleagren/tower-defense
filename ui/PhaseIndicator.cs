@@ -4,10 +4,14 @@ public partial class PhaseIndicator : Control
 {
     [Export] public Label PhaseLabel { get; private set; }
 
+    private EconomyManager economy;
+    private WaveController.GamePhase currentPhase = WaveController.GamePhase.Build;
+
     public override void _Ready()
     {
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        UpdateText(WaveController.GamePhase.Build);
+        economy = GetTree().CurrentScene.GetNode<EconomyManager>("EconomyManager");
+        UpdateText();
     }
 
     public override void _ExitTree()
@@ -15,13 +19,19 @@ public partial class PhaseIndicator : Control
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
     }
 
-    private void OnGamePhaseChanged(WaveController.GamePhase phase)
+    public override void _Process(double delta)
     {
-        UpdateText(phase);
+        UpdateText();
     }
 
-    private void UpdateText(WaveController.GamePhase phase)
+    private void OnGamePhaseChanged(WaveController.GamePhase phase)
     {
-        PhaseLabel.Text = phase == WaveController.GamePhase.Combat ? "Combat Phase" : "Build Phase";
+        currentPhase = phase;
+    }
+
+    private void UpdateText()
+    {
+        string phaseText = currentPhase == WaveController.GamePhase.Combat ? "Combat Phase" : "Build Phase";
+        PhaseLabel.Text = $"{phaseText} — Budget: {economy.Budget} | Towers: {economy.CapacityUsed}/{economy.MaxCapacity}";
     }
 }

@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://ci5j2r32p0w77" path="res://scripts/systems/GameOverHandler.cs" id="11_gameoverhandler"]
 [ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="12_healthbar"]
 [ext_resource type="PackedScene" path="res://ui/Crosshair.tscn" id="13_crosshair"]
+[ext_resource type="Script" path="res://scripts/systems/EconomyManager.cs" id="14_economymanager"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
@@ -200,6 +201,9 @@ Target = NodePath("../../../Objective")
 [node name="WaveController" type="Node" parent="." unique_id=196385774]
 script = ExtResource("2_wavecontroller")
 Waves = Array[ExtResource("3_j60wy")]([ExtResource("7_wave01"), ExtResource("7_px6rj"), ExtResource("8_2ucnx")])
+
+[node name="EconomyManager" type="Node" parent="."]
+script = ExtResource("14_economymanager")
 
 [node name="GameOverHandler" type="Node" parent="." unique_id=2015070701]
 script = ExtResource("11_gameoverhandler")

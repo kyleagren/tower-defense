@@ -19,9 +19,12 @@ public partial class TowerPlacer : Node
     private static readonly StandardMaterial3D ValidMaterial = CreateGhostMaterial(new Color(0.2f, 1f, 0.3f, 0.5f));
     private static readonly StandardMaterial3D InvalidMaterial = CreateGhostMaterial(new Color(1f, 0.2f, 0.2f, 0.5f));
 
+    private EconomyManager economy;
+
     public override void _Ready()
     {
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
+        economy = GetTree().CurrentScene.GetNode<EconomyManager>("EconomyManager");
     }
 
     public override void _ExitTree()
@@ -115,7 +118,7 @@ public partial class TowerPlacer : Node
         };
 
         Godot.Collections.Array<Godot.Collections.Dictionary> overlaps = spaceState.IntersectShape(query);
-        isValidPlacement = overlaps.Count == 0;
+        isValidPlacement = overlaps.Count == 0 && economy.CanAfford(pendingSpell, pendingRunes.Count);
 
         ghostMesh.MaterialOverride = isValidPlacement ? ValidMaterial : InvalidMaterial;
     }
@@ -126,6 +129,9 @@ public partial class TowerPlacer : Node
         GetTree().CurrentScene.AddChild(placed);
         placed.GlobalTransform = ghost.GlobalTransform;
         placed.Configure(pendingSpell, pendingRunes);
+
+        int cost = economy.SpendOnTower(pendingSpell, pendingRunes.Count);
+        placed.SetBudgetCost(cost);
 
         EndPlacement();
     }

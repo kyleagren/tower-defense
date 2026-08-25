@@ -14,6 +14,7 @@ public partial class Ritual : Node3D
     private SpellInstance spellInstance;
     private Enemy currentTarget;
     private float searchTimer;
+    private int budgetCost;
 
     public override void _Ready()
     {
@@ -23,6 +24,11 @@ public partial class Ritual : Node3D
     public void Repair()
     {
         GD.Print($"Repairing {Spell?.Name} tower...");
+    }
+
+    public void SetBudgetCost(int cost)
+    {
+        budgetCost = cost;
     }
 
     public void Destroy()
@@ -42,6 +48,8 @@ public partial class Ritual : Node3D
                 entry.Quantity++;
             }
         }
+
+        GetTree().CurrentScene.GetNode<EconomyManager>("EconomyManager").RefundTower(budgetCost);
 
         QueueFree();
     }

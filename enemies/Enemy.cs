@@ -16,6 +16,7 @@ public partial class Enemy : CharacterBody3D
     [Export] public float RagdollCleanupDelay = 5.0f;
     [Export] public float MaxHealth = 50f;
     [Export] public float CenterMassHeight = 1f;
+    [Export] public int Reward = 2;
 
     private int legLBoneIdx;
     private int legRBoneIdx;
@@ -80,6 +81,7 @@ public partial class Enemy : CharacterBody3D
         }
 
         isDead = true;
+        EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, Reward);
 
         SetPhysicsProcess(false);
         BodyCollision.Disabled = true;

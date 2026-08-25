@@ -25,10 +25,13 @@ public partial class BuildMenu : Control
 
     private ConfirmationDialog clearAllDialog;
 
+    private EconomyManager economy;
+
     private IEnumerable<Rune> AllRunes => SaveManager.Instance.Data.KnownRunes.Select(entry => entry.Rune);
 
     public override void _Ready()
     {
+        economy = GetTree().CurrentScene.GetNode<EconomyManager>("EconomyManager");
         PopulateSpellGrid();
         BuildSocketScreen();
         BuildRunePickerScreen();
@@ -44,7 +47,7 @@ public partial class BuildMenu : Control
             if (i < spells.Count)
             {
                 Spell spell = spells[i];
-                Button button = CreateTileButton(spell.Name, spell.Name, spell.Description);
+                Button button = CreateTileButton($"{spell.Name}\nCost: {spell.BudgetCost}", spell.Name, spell.Description);
                 button.Pressed += () => OnSpellSelected(spell);
                 Grid.AddChild(button);
             }
@@ -126,7 +129,9 @@ public partial class BuildMenu : Control
 
     private void RefreshSocketScreen()
     {
-        centerSpellLabel.Text = selectedSpell?.Name ?? "";
+        int runeCount = socketedRunes.Count(r => r != null);
+        int cost = selectedSpell != null ? economy.GetTowerCost(selectedSpell, runeCount) : 0;
+        centerSpellLabel.Text = $"{selectedSpell?.Name}\nCost: {cost} / Budget: {economy.Budget}";
 
         for (int i = 0; i < socketButtons.Length; i++)
         {
@@ -220,7 +225,7 @@ public partial class BuildMenu : Control
                 bool isCurrentSocketRune = rune == currentSocketRune;
                 bool disabled = IsSocketedElsewhere(rune, socketIndex);
 
-                Button button = CreateTileButton(rune.Name, rune.Name, rune.Description);
+                Button button = CreateTileButton($"{rune.Name}\n+{economy.BudgetPerRune}", rune.Name, rune.Description);
                 button.Disabled = disabled;
 
                 if (isCurrentSocketRune)

@@ -7,6 +7,7 @@ public partial class EventBus : Node
     [Signal] public delegate void GamePhaseChangedEventHandler(WaveController.GamePhase phase);
     [Signal] public delegate void PlacementModeChangedEventHandler(bool isActive);
     [Signal] public delegate void GameEndedEventHandler(bool victory);
+    [Signal] public delegate void EnemyKilledEventHandler(int reward);
 
     public override void _Ready()
     {

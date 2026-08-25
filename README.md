@@ -55,6 +55,18 @@ Single-player is built first. Invite-a-friend co-op is a hard requirement of the
 * **Player interaction model (decided):** tower placement and aiming use a center-screen reticle + raycast into the world, not a screen-space mouse cursor. Keeps mouse and controller input unified under one system (no separate cursor-based UI to build for controller players) — full controller support is a requirement, not an afterthought.
 * Some towers will eventually need line-of-sight raycasting — not implemented yet (currently pure distance checks, so a tower can shoot through walls).
 * Player-buff towers (e.g. a "Buff Totem") buff the player instead of attacking — **range-based** (player must stand near it to benefit), costs capacity like any other tower.
+* **Tower visual direction (decided):** If every tower is fundamentally magical, you don't necessarily need to change the tower's physical shape for every spell.
+  Imagine the base tower is basically:
+  a floating magical structure with a central energy core
+  Then the spell determines things like:
+  * the color of the energy
+  * the shape of the central rune
+  * the geometry of the crystal/energy
+  * the symbols orbiting the tower
+  * the behavior of the rune circle
+  * the particles emanating from it
+
+  So a fire spell might have angular, rapidly rotating fragments and a turbulent core, while an ice spell has crystalline structures and slow orbiting runes.
 
 ## 6. Battlefield Shaping / Crowd Control
 
