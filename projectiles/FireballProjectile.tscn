@@ -3,11 +3,11 @@
 [ext_resource type="Script" uid="uid://fj4eqt7o5kjn" path="res://projectiles/Projectile.cs" id="1_eeyek"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_s42qg"]
-radius = 0.333333
-height = 0.666667
+radius = 0.2
+height = 0.4
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_s42qg"]
-radius = 0.333333
+radius = 0.2
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_proj01"]
 albedo_color = Color(1, 0.4, 0.05, 1)

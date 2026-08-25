@@ -17,6 +17,7 @@ public partial class Enemy : CharacterBody3D
     [Export] public float MaxHealth = 50f;
     [Export] public float CenterMassHeight = 1f;
     [Export] public int Reward = 2;
+    [Export] public HealthBar3D HealthBar { get; private set; }
 
     private int legLBoneIdx;
     private int legRBoneIdx;
@@ -49,6 +50,8 @@ public partial class Enemy : CharacterBody3D
 
         currentHealth = MaxHealth;
         AddToGroup("enemies");
+        HealthBar.SetFraction(1f);
+        HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
 
         SetPhysicalBonesCollision(0, 0);
     }
@@ -66,6 +69,7 @@ public partial class Enemy : CharacterBody3D
         }
 
         currentHealth -= amount;
+        HealthBar.SetFraction(currentHealth / MaxHealth);
 
         if (currentHealth <= 0f)
         {
@@ -81,6 +85,7 @@ public partial class Enemy : CharacterBody3D
         }
 
         isDead = true;
+        HealthBar.Visible = false;
         EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, Reward);
 
         SetPhysicsProcess(false);

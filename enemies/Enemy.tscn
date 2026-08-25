@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://ql2bmt2vm1o6"]
 
 [ext_resource type="Script" uid="uid://b1ye8nqwpuoox" path="res://enemies/Enemy.cs" id="1_enemy"]
+[ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="2_healthbar"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_enemy"]
 radius = 0.4
@@ -45,7 +46,7 @@ height = 0.8
 radius = 0.08
 height = 0.8
 
-[node name="Enemy" type="CharacterBody3D" unique_id=1298715792 node_paths=PackedStringArray("NavAgent", "Skeleton", "BodyCollision", "BoneSimulator", "RootPhysicalBone")]
+[node name="Enemy" type="CharacterBody3D" unique_id=1298715792 node_paths=PackedStringArray("NavAgent", "Skeleton", "BodyCollision", "BoneSimulator", "RootPhysicalBone", "HealthBar")]
 collision_layer = 2
 collision_mask = 35
 script = ExtResource("1_enemy")
@@ -54,6 +55,7 @@ Skeleton = NodePath("Skeleton3D")
 BodyCollision = NodePath("CollisionShape3D")
 BoneSimulator = NodePath("Skeleton3D/PhysicalBoneSimulator3D")
 RootPhysicalBone = NodePath("Skeleton3D/PhysicalBoneSimulator3D/Physical Bone Body")
+HealthBar = NodePath("HealthBar3D")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1656125769]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
@@ -62,6 +64,10 @@ shape = SubResource("CapsuleShape3D_enemy")
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=685095856]
 height = 1.8
 radius = 0.4
+
+[node name="HealthBar3D" parent="." instance=ExtResource("2_healthbar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+FillColor = Color(0.9, 0.15, 0.1, 1)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="." unique_id=2067215496]
 bones/0/name = "Body"

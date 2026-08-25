@@ -5,6 +5,17 @@ public partial class HealthBar3D : Node3D
     [Export] public MeshInstance3D Fill { get; private set; }
     [Export] public MeshInstance3D Empty { get; private set; }
     [Export] public float BarWidth = 1f;
+    [Export] public Color FillColor = new Color(0.2f, 0.9f, 0.2f, 1f);
+    [Export] public Color EmptyColor = new Color(0.15f, 0.05f, 0.05f, 1f);
+
+    public override void _Ready()
+    {
+        Fill.Mesh = (QuadMesh)((QuadMesh)Fill.Mesh).Duplicate(true);
+        Empty.Mesh = (QuadMesh)((QuadMesh)Empty.Mesh).Duplicate(true);
+
+        ((StandardMaterial3D)((QuadMesh)Fill.Mesh).Material).AlbedoColor = FillColor;
+        ((StandardMaterial3D)((QuadMesh)Empty.Mesh).Material).AlbedoColor = EmptyColor;
+    }
 
     public override void _Process(double delta)
     {

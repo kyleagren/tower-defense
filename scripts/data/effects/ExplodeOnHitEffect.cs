@@ -5,9 +5,19 @@ using System.Collections.Generic;
 public partial class ExplodeOnHitEffect : ProjectileHitEffect
 {
     [Export] public float ExplosionRadius = 3f;
+    [Export] public PackedScene VisualScene { get; private set; }
 
     public override void OnHit(Projectile projectile, Node3D body)
     {
+        Vector3 explosionCenter = projectile.GlobalPosition;
+
+        if (VisualScene != null)
+        {
+            ExplosionVisual visual = VisualScene.Instantiate<ExplosionVisual>();
+            projectile.GetTree().CurrentScene.AddChild(visual);
+            visual.Show(explosionCenter, ExplosionRadius);
+        }
+
         PhysicsDirectSpaceState3D spaceState = projectile.GetWorld3D().DirectSpaceState;
         SphereShape3D explosionShape = new SphereShape3D { Radius = ExplosionRadius };
         PhysicsShapeQueryParameters3D query = new PhysicsShapeQueryParameters3D
@@ -30,8 +40,6 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
                 hitEnemies.Add(enemy);
             }
         }
-
-        Vector3 explosionCenter = projectile.GlobalPosition;
 
         foreach (Enemy enemy in hitEnemies)
         {
