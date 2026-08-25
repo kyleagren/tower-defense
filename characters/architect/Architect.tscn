@@ -34,7 +34,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 mesh = SubResource("CapsuleMesh_s42qg")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="." unique_id=1933663469]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.8, 0)
 spring_length = 5.0
 
 [node name="Camera3D" type="Camera3D" parent="SpringArm3D" unique_id=1057255661]
@@ -47,7 +47,7 @@ script = ExtResource("3_towerplacer")
 Architect = NodePath("..")
 RitualScene = ExtResource("4_ritualscene")
 
-[node name="TowerInteractor" type="Node" parent="." unique_id=1141137759 node_paths=PackedStringArray("Owner")]
+[node name="TowerInteractor" type="Node" parent="." unique_id=1141137759 node_paths=PackedStringArray("Character")]
 script = ExtResource("5_k6jo8")
-Owner = NodePath("..")
+Character = NodePath("..")
 PromptScene = ExtResource("6_8tgsg")

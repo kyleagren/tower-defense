@@ -2,7 +2,7 @@ using Godot;
 
 public partial class TowerPlacer : Node
 {
-    [Export] public Node3D Architect { get; private set; }
+    [Export] public PlayerCharacter Architect { get; private set; }
     [Export] public PackedScene RitualScene { get; private set; }
     [Export] public float PlacementDistance = GameRules.TowerReach;
     [Export] public float GroundRaycastRange = 10f;
@@ -82,8 +82,9 @@ public partial class TowerPlacer : Node
 
     private void UpdateGhostPosition()
     {
-        Vector3 forward = -Architect.GlobalTransform.Basis.Z;
-        Vector3 aheadPoint = Architect.GlobalPosition + forward * PlacementDistance;
+        Vector3 origin = Architect.GlobalPosition + Vector3.Up * Architect.SpringArm.Position.Y;
+        Vector3 forward = -Architect.Camera.GlobalTransform.Basis.Z;
+        Vector3 aheadPoint = origin + forward * PlacementDistance;
 
         Vector3 rayStart = aheadPoint + Vector3.Up * GroundRaycastRange;
         Vector3 rayEnd = aheadPoint - Vector3.Up * GroundRaycastRange;
