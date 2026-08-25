@@ -3,8 +3,8 @@
 [ext_resource type="Script" path="res://ui/HealthBar3D.cs" id="1_healthbar"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_empty"]
+shading_mode = 0
 albedo_color = Color(0.15, 0.05, 0.05, 1)
-billboard_mode = 1
 no_depth_test = true
 cull_mode = 2
 
@@ -13,8 +13,8 @@ material = SubResource("StandardMaterial3D_empty")
 size = Vector2(1, 0.12)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fill"]
+shading_mode = 0
 albedo_color = Color(0.2, 0.9, 0.2, 1)
-billboard_mode = 1
 no_depth_test = true
 cull_mode = 2
 
