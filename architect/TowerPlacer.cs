@@ -21,6 +21,11 @@ public partial class TowerPlacer : Node
 
     public void BeginPlacement(Spell spell, Godot.Collections.Array<Rune> runes)
     {
+        if (IsPlacing)
+        {
+            return;
+        }
+
         pendingSpell = spell;
         pendingRunes = runes;
 

@@ -30,7 +30,7 @@ public partial class Architect : CharacterBody3D
             return;
         }
 
-        if (@event.IsActionPressed("open_build_menu"))
+        if (@event.IsActionPressed("open_build_menu") && !TowerPlacer.IsPlacing)
         {
             OpenBuildMenu();
             return;
