@@ -22,13 +22,13 @@ public partial class SaveManager : Node
         else
         {
             Data = new PlayerSaveData();
-            Data.KnownSpells.Add(GD.Load<Spell>("res://assets/FireballSpell.tres"));
-            Data.KnownSpells.Add(GD.Load<Spell>("res://assets/LightningBoltSpell.tres"));
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/MultiProjectileRune.tres"), Unlimited = true });
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/NovaProjectileRune.tres"), Unlimited = true });
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/ChainRune.tres"), Unlimited = true });
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/PierceRune.tres"), Unlimited = true });
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/ReturnRune.tres"), Unlimited = true });
+            Data.KnownSpells.Add(GD.Load<Spell>("res://assets/spells/FireballSpell.tres"));
+            Data.KnownSpells.Add(GD.Load<Spell>("res://assets/spells/LightningBoltSpell.tres"));
+            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/MultiProjectileRune.tres"), Unlimited = true });
+            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/NovaProjectileRune.tres"), Unlimited = true });
+            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/ChainRune.tres"), Unlimited = true });
+            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/PierceRune.tres"), Unlimited = true });
+            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/ReturnRune.tres"), Unlimited = true });
             Save();
         }
     }

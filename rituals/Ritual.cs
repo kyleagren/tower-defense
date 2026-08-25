@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class Ritual : Node3D
 {
@@ -17,6 +18,32 @@ public partial class Ritual : Node3D
     public override void _Ready()
     {
         Configure(Spell, RuneSlots);
+    }
+
+    public void Repair()
+    {
+        GD.Print($"Repairing {Spell?.Name} tower...");
+    }
+
+    public void Destroy()
+    {
+        foreach (Rune rune in RuneSlots)
+        {
+            if (rune == null)
+            {
+                continue;
+            }
+
+            RuneInventoryEntry entry = SaveManager.Instance.Data.KnownRunes
+                .FirstOrDefault(e => e.Rune == rune);
+
+            if (entry != null && !entry.Unlimited)
+            {
+                entry.Quantity++;
+            }
+        }
+
+        QueueFree();
     }
 
     public void Configure(Spell spell, IReadOnlyList<Rune> runes)

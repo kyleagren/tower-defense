@@ -4,7 +4,7 @@ public partial class TowerPlacer : Node
 {
     [Export] public Node3D Architect { get; private set; }
     [Export] public PackedScene RitualScene { get; private set; }
-    [Export] public float PlacementDistance = 4f;
+    [Export] public float PlacementDistance = GameRules.TowerReach;
     [Export] public float GroundRaycastRange = 10f;
 
     public bool IsPlacing { get; private set; }

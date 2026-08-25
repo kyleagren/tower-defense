@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/InteractionPrompt.cs" id="1_prompt"]
+
+[node name="InteractionPrompt" type="Node3D" node_paths=PackedStringArray("Label")]
+visible = false
+script = ExtResource("1_prompt")
+Label = NodePath("Label3D")
+
+[node name="Label3D" type="Label3D" parent="."]
+billboard = 1
+font_size = 48
+outline_size = 8
+no_depth_test = true

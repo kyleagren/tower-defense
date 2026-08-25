@@ -67,6 +67,7 @@ Single-player is built first. Invite-a-friend co-op is a hard requirement of the
 * Rare case (true destruction): attached runes return to the player's inventory, never lost.
 * The Sapper enemy archetype is the one that meaningfully threatens towers — a visible, prioritizable threat, not universal collateral risk.
 * Disabled towers show on the minimap.
+* **Repair/Destroy interaction (decided):** both reuse the same reticle + raycast targeting as tower placement (Section 5), capped to roughly the same interaction range — not usable from across the map. When a tower is in view, a contextual world-space prompt appears near it ("Repair" / "Destroy"). Repair is a single press — frequent and low-stakes, matching its role as the common case above. Destroy is hold-to-confirm (~1s) with a progress indicator on that same prompt, rather than a separate confirmation dialog, so it doesn't break gameplay flow — cancels if released early or if the raycast loses the tower. Chosen over a Dungeon-Defenders-style persistent "mode" toggle specifically to avoid mode-confusion risk on the harder-to-reverse action.
 
 ## 8. Economy
 
