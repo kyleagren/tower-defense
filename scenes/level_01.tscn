@@ -6,6 +6,8 @@
 [ext_resource type="Script" uid="uid://bp87ojgy31wot" path="res://scripts/systems/DefendableObjective.cs" id="6_objective"]
 [ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://architect/Architect.tscn" id="7_t0ybu"]
 [ext_resource type="Resource" uid="uid://nco3nmkc8shy" path="res://assets/waves/wave_01.tres" id="7_wave01"]
+[ext_resource type="Script" uid="uid://dovulq6nb5bop" path="res://scripts/dev/DebugFlyCamera.cs" id="8_debugflycam"]
+[ext_resource type="Script" uid="uid://n00sya71wwu3" path="res://ui/PhaseIndicator.cs" id="9_phaseindicator"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
@@ -198,3 +200,37 @@ environment = SubResource("Environment_default")
 
 [node name="Architect" parent="." unique_id=65489996 instance=ExtResource("7_t0ybu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 7.6874204)
+
+[node name="DebugFlyCamera" type="Camera3D" parent="." unique_id=602454933]
+transform = Transform3D(1, 0, 0, 0, 0.64278764, 0.76604444, 0, -0.76604444, 0.64278764, 0, 14, -10)
+script = ExtResource("8_debugflycam")
+
+[node name="PhaseIndicator" type="Control" parent="." unique_id=756900810 node_paths=PackedStringArray("PhaseLabel")]
+layout_mode = 3
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 56.0
+grow_horizontal = 2
+script = ExtResource("9_phaseindicator")
+PhaseLabel = NodePath("Label")
+
+[node name="Background" type="ColorRect" parent="PhaseIndicator" unique_id=677710620]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Label" type="Label" parent="PhaseIndicator" unique_id=251870458]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 24
+text = "Build Phase"
+horizontal_alignment = 1
+vertical_alignment = 1

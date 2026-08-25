@@ -7,9 +7,30 @@ public partial class DebugFlyCamera : Camera3D
     [Export] public float MouseSensitivity = 0.003f;
 
     private bool mouseCaptured;
+    private bool active;
+
+    public override void _Ready()
+    {
+        EventBus.Instance.WavePhaseChanged += OnWavePhaseChanged;
+    }
+
+    private void OnWavePhaseChanged(WaveController.WavePhase phase)
+    {
+        active = phase == WaveController.WavePhase.Wave;
+
+        if (active)
+        {
+            Current = true;
+        }
+    }
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (!active)
+        {
+            return;
+        }
+
         if (@event is InputEventMouseButton mouseButton && mouseButton.ButtonIndex == MouseButton.Right)
         {
             mouseCaptured = mouseButton.Pressed;
@@ -25,6 +46,11 @@ public partial class DebugFlyCamera : Camera3D
 
     public override void _Process(double delta)
     {
+        if (!active)
+        {
+            return;
+        }
+
         Vector3 direction = Vector3.Zero;
 
         if (Input.IsKeyPressed(Key.W)) direction -= Transform.Basis.Z;

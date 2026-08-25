@@ -13,13 +13,15 @@ height = 1.8
 radius = 0.4
 height = 1.8
 
-[node name="Architect" type="CharacterBody3D" unique_id=65489996 node_paths=PackedStringArray("SpringArm", "BuildMenu", "TowerPlacer")]
+[node name="Architect" type="CharacterBody3D" unique_id=65489996 node_paths=PackedStringArray("SpringArm", "BuildMenu", "TowerPlacer", "BodyMesh", "ArchitectCamera")]
 collision_layer = 8
 collision_mask = 33
 script = ExtResource("1_yt6xr")
 SpringArm = NodePath("SpringArm3D")
 BuildMenu = NodePath("BuildMenu")
 TowerPlacer = NodePath("TowerPlacer")
+BodyMesh = NodePath("MeshInstance3D")
+ArchitectCamera = NodePath("SpringArm3D/Camera3D")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=606992868]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)

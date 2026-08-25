@@ -10,6 +10,8 @@ public partial class Architect : CharacterBody3D
     [Export] public SpringArm3D SpringArm { get; private set; }
     [Export] public BuildMenu BuildMenu { get; private set; }
     [Export] public TowerPlacer TowerPlacer { get; private set; }
+    [Export] public MeshInstance3D BodyMesh { get; private set; }
+    [Export] public Camera3D ArchitectCamera { get; private set; }
 
     private float cameraPitch;
     private float gravity;
@@ -79,6 +81,13 @@ public partial class Architect : CharacterBody3D
     private void OnWavePhaseChanged(WaveController.WavePhase phase)
     {
         wavePhaseActive = phase == WaveController.WavePhase.Wave;
+        BodyMesh.Visible = !wavePhaseActive;
+
+        if (!wavePhaseActive)
+        {
+            ArchitectCamera.Current = true;
+            Input.MouseMode = Input.MouseModeEnum.Captured;
+        }
     }
 
     public override void _PhysicsProcess(double delta)
