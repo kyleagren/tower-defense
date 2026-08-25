@@ -15,6 +15,7 @@ public partial class ProjectileCastEffect : CastEffect
 
         int count = projectileContext.ProjectileCount;
         HashSet<Enemy> returnHitTracker = new HashSet<Enemy>();
+        HashSet<Enemy> chainHitTracker = new HashSet<Enemy>();
 
         for (int i = 0; i < count; i++)
         {
@@ -26,6 +27,7 @@ public partial class ProjectileCastEffect : CastEffect
             projectile.Initialize(projectileContext);
             projectile.HitEffect = HitEffect;
             projectile.ReturnHitTracker = returnHitTracker;
+            projectile.ChainHitTracker = chainHitTracker;
             spawnPoint.GetTree().CurrentScene.AddChild(projectile);
 
             projectile.GlobalTransform = spawnPoint.GlobalTransform;

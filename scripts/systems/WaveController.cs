@@ -12,6 +12,7 @@ public partial class WaveController : Node
 
     [Export] public Godot.Collections.Array<WaveDefinition> Waves { get; private set; } = new();
     [Export] public float SpawnInterval = 0.3f;
+    [Export] public bool DebugRepeatWave = false;
 
     private const string SpawnerGroup = "enemy_spawners";
 
@@ -48,7 +49,11 @@ public partial class WaveController : Node
         }
 
         WaveDefinition wave = Waves[nextWaveIndex];
-        nextWaveIndex++;
+
+        if (!DebugRepeatWave)
+        {
+            nextWaveIndex++;
+        }
 
         _ = RunWave(wave);
     }

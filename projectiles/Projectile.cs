@@ -12,6 +12,7 @@ public partial class Projectile : Area3D
     public Vector3 SpawnPosition { get; set; }
     public ProjectileHitEffect HitEffect { get; set; }
     public HashSet<Enemy> ReturnHitTracker { get; set; }
+    public HashSet<Enemy> ChainHitTracker { get; set; }
 
     private int pierceRemaining;
     private float speed = 20f;
@@ -42,7 +43,8 @@ public partial class Projectile : Area3D
     {
         Position -= Transform.Basis.Z * speed * (float)delta;
 
-        if (isReturn && !hasReturned && GlobalPosition.DistanceSquaredTo(SpawnPosition) > MaxReturnDistance * MaxReturnDistance)
+        if (isReturn && !hasReturned && alreadyHit.Count == 0
+            && GlobalPosition.DistanceSquaredTo(SpawnPosition) > MaxReturnDistance * MaxReturnDistance)
         {
             hasReturned = true;
             LookAt(SpawnPosition, Vector3.Up);
@@ -89,6 +91,8 @@ public partial class Projectile : Area3D
             QueueFree();
             return;
         }
+
+        ChainHitTracker?.Add(hitEnemy);
 
         if (pierceRemaining > 0)
         {
@@ -144,12 +148,23 @@ public partial class Projectile : Area3D
 
     private bool TryRedirectToChainTarget(Enemy hitEnemy)
     {
-        Enemy next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, alreadyHit.OfType<Enemy>());
+        IEnumerable<Enemy> ownHits = alreadyHit.OfType<Enemy>();
+
+        Enemy next = null;
+
+        if (ChainHitTracker != null)
+        {
+            next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, ownHits.Concat(ChainHitTracker));
+        }
+
+        next ??= EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, ownHits);
+
         if (next == null)
         {
             return false;
         }
 
+        ChainHitTracker?.Add(next);
         LookAt(next.GlobalPosition, Vector3.Up);
         return true;
     }
