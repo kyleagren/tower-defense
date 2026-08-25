@@ -4,10 +4,10 @@
 [ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://scripts/systems/WaveController.cs" id="2_wavecontroller"]
 [ext_resource type="Script" uid="uid://dpq7f55mr60l1" path="res://scripts/data/waves/WaveDefinition.cs" id="3_j60wy"]
 [ext_resource type="Script" uid="uid://bp87ojgy31wot" path="res://scripts/systems/DefendableObjective.cs" id="6_objective"]
-[ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://architect/Architect.tscn" id="7_t0ybu"]
+[ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://characters/architect/Architect.tscn" id="7_t0ybu"]
 [ext_resource type="Resource" uid="uid://nco3nmkc8shy" path="res://assets/waves/wave_01.tres" id="7_wave01"]
-[ext_resource type="Script" uid="uid://dovulq6nb5bop" path="res://scripts/dev/DebugFlyCamera.cs" id="8_debugflycam"]
 [ext_resource type="Script" uid="uid://n00sya71wwu3" path="res://ui/PhaseIndicator.cs" id="9_phaseindicator"]
+[ext_resource type="PackedScene" path="res://characters/soldier/Soldier.tscn" id="10_soldier"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
@@ -198,12 +198,13 @@ transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1525073669]
 environment = SubResource("Environment_default")
 
-[node name="Architect" parent="." unique_id=65489996 instance=ExtResource("7_t0ybu")]
+[node name="Architect" parent="." unique_id=65489996 instance=ExtResource("7_t0ybu") node_paths=PackedStringArray("Soldier")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 7.6874204)
+Soldier = NodePath("../Soldier")
 
-[node name="DebugFlyCamera" type="Camera3D" parent="." unique_id=602454933]
-transform = Transform3D(1, 0, 0, 0, 0.64278764, 0.76604444, 0, -0.76604444, 0.64278764, 0, 14, -10)
-script = ExtResource("8_debugflycam")
+[node name="Soldier" parent="." instance=ExtResource("10_soldier") node_paths=PackedStringArray("Architect")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 4.6874204)
+Architect = NodePath("../Architect")
 
 [node name="PhaseIndicator" type="Control" parent="." unique_id=756900810 node_paths=PackedStringArray("PhaseLabel")]
 layout_mode = 3

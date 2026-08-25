@@ -2,7 +2,7 @@ using Godot;
 
 public partial class TowerInteractor : Node
 {
-    [Export] public Node3D Architect { get; private set; }
+    [Export] public PlayerCharacter Owner { get; private set; }
     [Export] public float InteractionRange = GameRules.TowerReach;
     [Export] public PackedScene PromptScene { get; private set; }
     [Export] public float DestroyHoldDuration = 1f;
@@ -26,6 +26,14 @@ public partial class TowerInteractor : Node
 
     public override void _PhysicsProcess(double delta)
     {
+        if (!Owner.IsActive)
+        {
+            TargetedTower = null;
+            destroyHoldTime = 0f;
+            prompt.HidePrompt();
+            return;
+        }
+
         TargetedTower = FindTowerAhead();
 
         if (TargetedTower == null)
@@ -69,7 +77,7 @@ public partial class TowerInteractor : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (TargetedTower == null)
+        if (!Owner.IsActive || TargetedTower == null)
         {
             return;
         }
@@ -82,11 +90,11 @@ public partial class TowerInteractor : Node
 
     private Ritual FindTowerAhead()
     {
-        Vector3 origin = Architect.GlobalPosition;
-        Vector3 forward = -Architect.GlobalTransform.Basis.Z;
+        Vector3 origin = Owner.GlobalPosition;
+        Vector3 forward = -Owner.GlobalTransform.Basis.Z;
         Vector3 end = origin + forward * InteractionRange;
 
-        PhysicsDirectSpaceState3D spaceState = Architect.GetWorld3D().DirectSpaceState;
+        PhysicsDirectSpaceState3D spaceState = Owner.GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
         query.CollisionMask = 32; // Towers layer only
 

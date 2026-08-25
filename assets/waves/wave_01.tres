@@ -20,5 +20,5 @@ metadata/_custom_type_script = "uid://458lchfiacb7"
 
 [resource]
 script = ExtResource("1_wavedef")
-Entries = [SubResource("Resource_lanea"), SubResource("Resource_laneb")]
+Entries = Array[ExtResource("2_spawnentry")]([SubResource("Resource_lanea"), SubResource("Resource_laneb")])
 metadata/_custom_type_script = "uid://dpq7f55mr60l1"

@@ -6,17 +6,17 @@ public partial class PhaseIndicator : Control
 
     public override void _Ready()
     {
-        EventBus.Instance.WavePhaseChanged += OnWavePhaseChanged;
-        UpdateText(WaveController.WavePhase.Build);
+        EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
+        UpdateText(WaveController.GamePhase.Build);
     }
 
-    private void OnWavePhaseChanged(WaveController.WavePhase phase)
+    private void OnGamePhaseChanged(WaveController.GamePhase phase)
     {
         UpdateText(phase);
     }
 
-    private void UpdateText(WaveController.WavePhase phase)
+    private void UpdateText(WaveController.GamePhase phase)
     {
-        PhaseLabel.Text = phase == WaveController.WavePhase.Wave ? "Combat Phase" : "Build Phase";
+        PhaseLabel.Text = phase == WaveController.GamePhase.Combat ? "Combat Phase" : "Build Phase";
     }
 }

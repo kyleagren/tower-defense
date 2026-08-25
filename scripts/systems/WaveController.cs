@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 
 public partial class WaveController : Node
 {
-    public enum WavePhase
+    public enum GamePhase
     {
         Build,
-        Wave
+        Combat
     }
 
     [Export] public Godot.Collections.Array<WaveDefinition> Waves { get; private set; } = new();
@@ -19,7 +19,7 @@ public partial class WaveController : Node
 
     private Dictionary<string, EnemySpawner> spawnersById;
     private int nextWaveIndex;
-    private WavePhase currentPhase = WavePhase.Build;
+    private GamePhase currentPhase = GamePhase.Build;
 
     public override void _Ready()
     {
@@ -44,7 +44,7 @@ public partial class WaveController : Node
 
     public void StartNextWave()
     {
-        if (currentPhase != WavePhase.Build || nextWaveIndex >= Waves.Count)
+        if (currentPhase != GamePhase.Build || nextWaveIndex >= Waves.Count)
         {
             return;
         }
@@ -57,8 +57,8 @@ public partial class WaveController : Node
 
     private async Task RunWave(WaveDefinition wave)
     {
-        currentPhase = WavePhase.Wave;
-        EventBus.Instance.EmitSignal(EventBus.SignalName.WavePhaseChanged, (int)WavePhase.Wave);
+        currentPhase = GamePhase.Combat;
+        EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Combat);
 
         Dictionary<string, List<WaveSpawnEntry>> entriesBySpawner = new Dictionary<string, List<WaveSpawnEntry>>();
 
@@ -87,8 +87,8 @@ public partial class WaveController : Node
             await ToSignal(GetTree().CreateTimer(EnemyCheckInterval), "timeout");
         }
 
-        currentPhase = WavePhase.Build;
-        EventBus.Instance.EmitSignal(EventBus.SignalName.WavePhaseChanged, (int)WavePhase.Build);
+        currentPhase = GamePhase.Build;
+        EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Build);
     }
 
     private async Task RunSpawnerQueue(string spawnerId, List<WaveSpawnEntry> entries, bool randomizeOrder)
