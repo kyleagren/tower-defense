@@ -1,6 +1,12 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://o210wvy66vdy"]
 
 [ext_resource type="Script" uid="uid://fj4eqt7o5kjn" path="res://projectiles/Projectile.cs" id="1_eeyek"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_proj01"]
+albedo_color = Color(1, 0.4, 0.05, 1)
+emission_enabled = true
+emission = Color(1, 0.4, 0.05, 1)
+emission_energy_multiplier = 1.5
 
 [sub_resource type="SphereMesh" id="SphereMesh_s42qg"]
 radius = 0.2
@@ -9,20 +15,13 @@ height = 0.4
 [sub_resource type="SphereShape3D" id="SphereShape3D_s42qg"]
 radius = 0.2
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_proj01"]
-albedo_color = Color(1, 0.4, 0.05, 1)
-emission_enabled = true
-emission = Color(1, 0.4, 0.05, 1)
-emission_energy_multiplier = 1.5
-
 [node name="Area3D" type="Area3D" unique_id=1062189900]
-collision_layer = 1
 collision_mask = 3
 script = ExtResource("1_eeyek")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2106799628]
-mesh = SubResource("SphereMesh_s42qg")
 material_override = SubResource("StandardMaterial3D_proj01")
+mesh = SubResource("SphereMesh_s42qg")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=89428427]
 shape = SubResource("SphereShape3D_s42qg")

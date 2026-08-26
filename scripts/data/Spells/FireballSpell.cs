@@ -2,7 +2,7 @@ using Godot;
 using System.Collections.Generic;
 
 [GlobalClass]
-public partial class FireballSpell : ChainableSpell
+public partial class FireballSpell : Spell
 {
     [Export] public PackedScene ProjectileScene { get; private set; }
     [Export] public int BaseProjectileCount { get; private set; } = 1;
@@ -32,8 +32,6 @@ public partial class FireballSpell : ChainableSpell
             ProjectileCount = BaseProjectileCount,
             Radius = BaseRadius,
             ProjectileScene = ProjectileScene,
-            ChainCount = BaseChainCount,
-            ChainRange = BaseChainRange,
             HitEffect = HitEffect
         };
     }

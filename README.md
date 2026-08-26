@@ -159,7 +159,7 @@ Difficulty tiers differentiate via composition and timing, not flat stat multipl
 * Full scope of the elemental tag system — more elements beyond Fire/Lightning/Cold/Wind, and how conversion runes work.
 * Damage roll ranges (PoE-style min/max per hit) vs. flat deterministic damage — undecided. Current multiplicative stacking (chain falloff, remaining-chain bonus, rune "more" multipliers) already makes exact breakpoints hard to hand-calculate, which weakens the "ranges hurt planning" argument against them.
 * Critical hit system — not yet designed; floated alongside the roll-range question above, since crits and damage ranges tend to pair naturally.
-* **FireballSpell wrongly extends `ChainableSpell`** (a leftover from the commit that first added chain/pierce/return, not a deliberate choice) — it should just extend `Spell`. Fireball is only meant to chain via a socketed `ChainRune`, never inherently, and functionally nothing currently relies on the `ChainableSpell` inheritance (Fireball's own `BaseChainCount` is unset/0, and `ChainRune`'s eligibility is tag-based, not inheritance-based) — so this is safe to unravel. The one thing to watch: `ChainRune` never sets `ChainRange`, only `ChainCount`, so `FireballSpell` needs its own local (non-inherited) `BaseChainRange` export before removing the `ChainableSpell` base, or a runed Fireball would have chains but zero reach.
+* **`ChainableSpell` usage (decided):** reserved for spells where chaining is inherent to the spell's identity (e.g. `LightningBoltSpell`), not for projectiles that merely *can* chain if a `ChainRune` is socketed. `FireballSpell` now extends `Spell` directly and declares nothing about chaining — `ChainRune`'s tag gate (`Chaining` or `Projectile`) and the fact that `ProjectileCastContext`/`InstantHitCastContext` already extend `ChainableSpellCastContext` are enough to make any projectile or instant-hit spell rune-chainable for free, matching how `PierceRune`/`ReturnRune` already work. To close the gap this used to paper over (`ChainRune` only ever set `ChainCount`, never `ChainRange`), `ChainRune` now carries its own `FallbackChainRange` and applies it non-destructively via `Mathf.Max`, so a rune-granted chain always has reach without ever shrinking a spell's own inherent range.
 * **ExplosionRadius placement — undecided.** Currently `FireballSpell` owns a reference to its own `HitEffect` resource (`ExplodeOnHitEffect.tres`), and the radius lives on that resource — which already means different spells could each reference their own resource instance with independent radii. Open question: keep it this way, or make `ExplosionRadius` a literal property on `FireballSpell` itself, threaded through `ProjectileCastContext` so `ExplodeOnHitEffect` reads it from the cast instead of owning its own value.
 * Equipment mod pool: contents, weighting, drop sourcing.
 * Specific low-poly art style/visual identity — not urgent yet, will matter for silhouette readability once designs are more concrete.
@@ -178,13 +178,15 @@ Difficulty tiers differentiate via composition and timing, not flat stat multipl
 Order of operations to get a first playable loop working end to end. Update as steps land so this doesn't get lost again.
 
 1. ~~Level~~ / ~~Enemy~~ / ~~Objective~~ / ~~Tower (`Ritual`) targets and casts at nearest enemy~~ — **done.**
-2. **Architect movement** — a controllable character in the level during prep, no combat, just walk-around + camera.
-3. **Tower placement flow** — Architect selects a tower/spell and places a `Ritual` instance in the world, gated by a hardcoded capacity budget (mana economy comes later). UI flow specced in Section 17.
-4. **Minimal economy** — just enough of `EconomyManager` (capacity used/max, maybe mana accrual) to make placement meaningful (Section 8).
-5. **Prep → Wave transition** — a "Start Wave" action that hooks into `WaveController`, disables the Architect, hands control to the Soldier.
-6. **Soldier character** — basic movement + one attack that damages enemies, closing the "player deals direct damage" requirement (Section 4).
-7. **Wave-end handling** — detect wave clear (or objective destroyed) and either loop back to prep for the next wave or end the match.
-8. **Win/lose state** — objective falls = loss, waves cleared = win. Bare-minimum feedback (console print or scene reload) is enough for a slice — no UI polish needed yet.
+2. ~~Architect movement~~ — a controllable character in the level during prep, no combat, just walk-around + camera. **done.**
+3. ~~Tower placement flow~~ — Architect selects a tower/spell and places a `Ritual` instance in the world, gated by budget/capacity (`EconomyManager`). UI flow specced in Section 17. **done.**
+4. ~~Minimal economy~~ — `EconomyManager` (budget, capacity used/max, per-tower cost, refund on destroy) makes placement meaningful (Section 8). **done.**
+5. ~~Prep → Wave transition~~ — `WaveController`'s `GamePhaseChanged` signal disables the Architect and hands control to the Soldier via `PlayerCharacter.HandoffFrom()`. **done.**
+6. ~~Soldier character~~ — movement + hitscan attack that damages enemies, closing the "player deals direct damage" requirement (Section 4). **done.**
+7. ~~Wave-end handling~~ — `WaveController` waits for the `"enemies"` group to empty before flipping back to Build phase. A stuck-enemy safety-net timeout is still open (Section 15). **done.**
+8. ~~Win/lose state~~ — `GameOverHandler` reloads the scene on `EventBus.GameEnded` (objective destroyed = loss, all waves cleared = win). Still just a console print + reload, no UI polish — fine for a slice. **done.**
+
+Vertical slice is now feature-complete end to end. Next real milestone isn't on this list yet — worth deciding what that is (more roster/enemy variety? itemization? co-op scaffolding?) rather than silently picking one.
 
 ## 17. UI: Tower Construction & Deployment
 
