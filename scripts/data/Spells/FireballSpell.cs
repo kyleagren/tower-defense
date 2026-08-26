@@ -16,7 +16,7 @@ public partial class FireballSpell : Spell
 
     public override string Name => "Fireball";
 
-    public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Projectile, Tag.Fire };
+    public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Projectile, Tag.Fire, Tag.AoE };
 
     public override string Description => "Hurls a fiery projectile that explodes on impact.";
 

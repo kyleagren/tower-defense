@@ -29,6 +29,7 @@ public partial class SaveManager : Node
             Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/ChainRune.tres"), Unlimited = true });
             Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/PierceRune.tres"), Unlimited = true });
             Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/ReturnRune.tres"), Unlimited = true });
+            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/IncreasedAreaRune.tres"), Unlimited = true });
             Save();
         }
     }

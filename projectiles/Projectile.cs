@@ -9,6 +9,7 @@ public partial class Projectile : Area3D
 
     public float Damage { get; private set; }
     public float Radius { get; private set; }
+    public float AreaMultiplier { get; private set; }
     public float RagdollForce { get; private set; }
     public int ChainCount { get; private set; }
     public float ChainRange { get; private set; }
@@ -30,7 +31,8 @@ public partial class Projectile : Area3D
     public void Initialize(ProjectileCastContext context)
     {
         Damage = context.Damage;
-        Radius = context.Radius;
+        AreaMultiplier = context.AreaMultiplier;
+        Radius = context.Radius * AreaMultiplier;
         RagdollForce = context.RagdollForce;
         ChainCount = context.ChainCount;
         ChainRange = context.ChainRange;

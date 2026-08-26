@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="IncreasedAreaRune" format=3 uid="uid://cpujcj5iqfwya"]
+
+[ext_resource type="Script" uid="uid://b8rvx2s0wkahv" path="res://scripts/data/runes/IncreasedAreaRune.cs" id="1_area"]
+
+[resource]
+script = ExtResource("1_area")

@@ -11,12 +11,13 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
     public override void OnHit(Projectile projectile, Node3D body)
     {
         Vector3 explosionCenter = projectile.GlobalPosition;
+        float radius = ExplosionRadius * projectile.AreaMultiplier;
 
         if (VisualScene != null)
         {
             ExplosionVisual visual = VisualScene.Instantiate<ExplosionVisual>();
             projectile.GetTree().CurrentScene.AddChild(visual);
-            visual.Show(explosionCenter, ExplosionRadius);
+            visual.Show(explosionCenter, radius);
         }
 
         if (body is Enemy directHitEnemy)
@@ -27,7 +28,7 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
         }
 
         PhysicsDirectSpaceState3D spaceState = projectile.GetWorld3D().DirectSpaceState;
-        SphereShape3D explosionShape = new SphereShape3D { Radius = ExplosionRadius };
+        SphereShape3D explosionShape = new SphereShape3D { Radius = radius };
         PhysicsShapeQueryParameters3D query = new PhysicsShapeQueryParameters3D
         {
             Shape = explosionShape,
