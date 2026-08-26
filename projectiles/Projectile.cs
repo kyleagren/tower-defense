@@ -16,6 +16,7 @@ public partial class Projectile : Area3D
     public ProjectileHitEffect HitEffect { get; set; }
     public HashSet<Enemy> ReturnHitTracker { get; set; }
     public HashSet<Enemy> ChainHitTracker { get; set; }
+    public Vector3 LastRagdollImpulse { get; private set; }
 
     private int pierceRemaining;
     private float speed = 20f;
@@ -143,6 +144,7 @@ public partial class Projectile : Area3D
         if (body is Enemy enemy)
         {
             Vector3 ragdollImpulse = -GlobalTransform.Basis.Z * RagdollForce;
+            LastRagdollImpulse = ragdollImpulse;
             enemy.TakeDamage(Damage, ragdollImpulse);
         }
     }

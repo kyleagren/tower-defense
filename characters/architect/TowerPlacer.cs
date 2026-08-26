@@ -18,6 +18,7 @@ public partial class TowerPlacer : Node
 
     private static readonly StandardMaterial3D ValidMaterial = CreateGhostMaterial(new Color(0.2f, 1f, 0.3f, 0.5f));
     private static readonly StandardMaterial3D InvalidMaterial = CreateGhostMaterial(new Color(1f, 0.2f, 0.2f, 0.5f));
+    private static readonly StandardMaterial3D RangeMaterial = CreateGhostMaterial(new Color(0.3f, 0.6f, 1f, 0.25f));
 
     private EconomyManager economy;
 
@@ -58,6 +59,24 @@ public partial class TowerPlacer : Node
         ghostMesh = ghost.GetNode<MeshInstance3D>("MeshInstance3D");
         ghostCollisionShape = ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
         ghostCollisionShape.Disabled = true;
+
+        SpellInstance previewInstance = new SpellInstance(spell);
+        foreach (Rune rune in runes)
+        {
+            if (rune != null)
+            {
+                previewInstance.TryAttachRune(rune);
+            }
+        }
+        float effectiveRange = previewInstance.Resolve().Range;
+
+        MeshInstance3D rangeIndicator = new MeshInstance3D
+        {
+            Mesh = new CylinderMesh { TopRadius = effectiveRange, BottomRadius = effectiveRange, Height = 0.05f },
+            MaterialOverride = RangeMaterial,
+            Position = new Vector3(0f, 0.03f, 0f)
+        };
+        ghost.AddChild(rangeIndicator);
 
         IsPlacing = true;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, true);

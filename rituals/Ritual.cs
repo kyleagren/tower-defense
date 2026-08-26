@@ -73,15 +73,20 @@ public partial class Ritual : Node3D
         spellInstance.Tick((float)delta);
 
         searchTimer -= (float)delta;
-        if (searchTimer <= 0f)
-        {
-            searchTimer = TargetSearchInterval;
-            currentTarget = EnemyTargeting.FindNearest(GlobalPosition, Spell.BaseRange);
-        }
+
+        bool hadTarget = currentTarget != null;
 
         if (currentTarget != null && (!IsInstanceValid(currentTarget) || currentTarget.IsDead))
         {
             currentTarget = null;
+        }
+
+        bool justLostTarget = hadTarget && currentTarget == null;
+
+        if (searchTimer <= 0f || justLostTarget)
+        {
+            searchTimer = TargetSearchInterval;
+            currentTarget = EnemyTargeting.FindNearest(GlobalPosition, Spell.BaseRange);
         }
 
         if (currentTarget != null && spellInstance.CanCast)

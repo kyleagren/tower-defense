@@ -13,7 +13,7 @@ public partial class Enemy : CharacterBody3D
     [Export] public float WalkCycleFrequency = 6.0f;
     [Export] public float LegSwingAmplitude = 0.5f;
     [Export] public float ArmSwingAmplitude = 0.2f;
-    [Export] public float RagdollCleanupDelay = 5.0f;
+    [Export] public float RagdollCleanupDelay = 2f;
     [Export] public float MaxHealth = 50f;
     [Export] public float CenterMassHeight = 1f;
     [Export] public int Reward = 2;
@@ -115,6 +115,16 @@ public partial class Enemy : CharacterBody3D
     {
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         RootPhysicalBone.ApplyCentralImpulse(impulse);
+    }
+
+    public void ApplyExtraRagdollImpulse(Vector3 impulse)
+    {
+        if (!isDead)
+        {
+            return;
+        }
+
+        _ = ApplyRagdollImpulseNextPhysicsFrame(impulse);
     }
 
     public override void _PhysicsProcess(double delta)
