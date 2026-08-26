@@ -1,4 +1,5 @@
 using Godot;
+using System.Linq;
 
 public partial class SaveManager : Node
 {
@@ -15,23 +16,56 @@ public partial class SaveManager : Node
 
     public void Load()
     {
-        if (ResourceLoader.Exists(SavePath))
+        Data = ResourceLoader.Exists(SavePath)
+            ? ResourceLoader.Load<PlayerSaveData>(SavePath)
+            : new PlayerSaveData();
+
+        if (EnsureDefaultContent())
         {
-            Data = ResourceLoader.Load<PlayerSaveData>(SavePath);
-        }
-        else
-        {
-            Data = new PlayerSaveData();
-            Data.KnownSpells.Add(GD.Load<Spell>("res://assets/spells/FireballSpell.tres"));
-            Data.KnownSpells.Add(GD.Load<Spell>("res://assets/spells/LightningBoltSpell.tres"));
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/MultiProjectileRune.tres"), Unlimited = true });
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/NovaProjectileRune.tres"), Unlimited = true });
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/ChainRune.tres"), Unlimited = true });
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/PierceRune.tres"), Unlimited = true });
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/ReturnRune.tres"), Unlimited = true });
-            Data.KnownRunes.Add(new RuneInventoryEntry { Rune = GD.Load<Rune>("res://assets/runes/IncreasedAreaRune.tres"), Unlimited = true });
             Save();
         }
+    }
+
+    private bool EnsureDefaultContent()
+    {
+        bool changed = false;
+
+        changed |= EnsureKnownSpell("res://assets/spells/FireballSpell.tres");
+        changed |= EnsureKnownSpell("res://assets/spells/LightningBoltSpell.tres");
+        changed |= EnsureKnownRune("res://assets/runes/MultiProjectileRune.tres");
+        changed |= EnsureKnownRune("res://assets/runes/NovaProjectileRune.tres");
+        changed |= EnsureKnownRune("res://assets/runes/ChainRune.tres");
+        changed |= EnsureKnownRune("res://assets/runes/PierceRune.tres");
+        changed |= EnsureKnownRune("res://assets/runes/ReturnRune.tres");
+        changed |= EnsureKnownRune("res://assets/runes/IncreasedAreaRune.tres");
+
+        return changed;
+    }
+
+    private bool EnsureKnownSpell(string path)
+    {
+        Spell spell = GD.Load<Spell>(path);
+
+        if (Data.KnownSpells.Any(known => known == spell))
+        {
+            return false;
+        }
+
+        Data.KnownSpells.Add(spell);
+        return true;
+    }
+
+    private bool EnsureKnownRune(string path)
+    {
+        Rune rune = GD.Load<Rune>(path);
+
+        if (Data.KnownRunes.Any(entry => entry.Rune == rune))
+        {
+            return false;
+        }
+
+        Data.KnownRunes.Add(new RuneInventoryEntry { Rune = rune, Unlimited = true });
+        return true;
     }
 
     public void Save()
