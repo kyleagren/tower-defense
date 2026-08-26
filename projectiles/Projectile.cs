@@ -4,6 +4,9 @@ using System.Linq;
 
 public partial class Projectile : Area3D
 {
+    [Export] public MeshInstance3D BodyMesh { get; private set; }
+    [Export] public CollisionShape3D BodyCollision { get; private set; }
+
     public float Damage { get; private set; }
     public float Radius { get; private set; }
     public float RagdollForce { get; private set; }
@@ -37,6 +40,8 @@ public partial class Projectile : Area3D
     public override void _Ready()
     {
         BodyEntered += OnBodyEntered;
+        BodyMesh.Scale = Vector3.One * Radius;
+        BodyCollision.Scale = Vector3.One * Radius;
     }
 
     public override void _PhysicsProcess(double delta)

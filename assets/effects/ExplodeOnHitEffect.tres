@@ -1,9 +1,0 @@
-[gd_resource type="Resource" script_class="ExplodeOnHitEffect" format=3 uid="uid://celj6elfxqa2c"]
-
-[ext_resource type="Script" uid="uid://d3k371t00tn0y" path="res://scripts/data/effects/ExplodeOnHitEffect.cs" id="1_kxll2"]
-[ext_resource type="PackedScene" path="res://visual_effects/ExplosionVisual.tscn" id="2_visual"]
-
-[resource]
-script = ExtResource("1_kxll2")
-VisualScene = ExtResource("2_visual")
-metadata/_custom_type_script = "uid://d3k371t00tn0y"

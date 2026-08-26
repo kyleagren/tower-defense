@@ -9,15 +9,17 @@ emission = Color(1, 0.4, 0.05, 1)
 emission_energy_multiplier = 1.5
 
 [sub_resource type="SphereMesh" id="SphereMesh_s42qg"]
-radius = 0.2
-height = 0.4
+radius = 1.0
+height = 2.0
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_s42qg"]
-radius = 0.2
+radius = 1.0
 
-[node name="Area3D" type="Area3D" unique_id=1062189900]
+[node name="Area3D" type="Area3D" unique_id=1062189900 node_paths=PackedStringArray("BodyMesh", "BodyCollision")]
 collision_mask = 3
 script = ExtResource("1_eeyek")
+BodyMesh = NodePath("MeshInstance3D")
+BodyCollision = NodePath("CollisionShape3D")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2106799628]
 material_override = SubResource("StandardMaterial3D_proj01")
