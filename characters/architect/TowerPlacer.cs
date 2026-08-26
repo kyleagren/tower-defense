@@ -85,9 +85,10 @@ public partial class TowerPlacer : Node
 
     private void UpdateGhostPosition()
     {
-        Vector3 origin = Architect.GlobalPosition + Vector3.Up * Architect.SpringArm.Position.Y;
+        Vector3 origin = Architect.Camera.GlobalPosition;
         Vector3 forward = -Architect.Camera.GlobalTransform.Basis.Z;
-        Vector3 aheadPoint = origin + forward * PlacementDistance;
+        float cameraSetback = origin.DistanceTo(Architect.GlobalPosition);
+        Vector3 aheadPoint = origin + forward * (PlacementDistance + cameraSetback);
 
         Vector3 rayStart = aheadPoint + Vector3.Up * GroundRaycastRange;
         Vector3 rayEnd = aheadPoint - Vector3.Up * GroundRaycastRange;
