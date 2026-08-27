@@ -7,6 +7,7 @@ public partial class FireballSpell : Spell
     [Export] public PackedScene ProjectileScene { get; private set; }
     [Export] public int BaseProjectileCount { get; private set; } = 1;
     [Export] public float BaseRadius { get; private set; } = 0.2f;
+    [Export] public float BaseSpeed { get; private set; } = 20f;
     [Export] public ProjectileHitEffect HitEffect { get; private set; }
 
     [Export] public override float BaseFireDamage { get; protected set; } = 100f;
@@ -31,6 +32,7 @@ public partial class FireballSpell : Spell
             {
                 ProjectileCount = BaseProjectileCount,
                 Radius = BaseRadius,
+                Speed = BaseSpeed,
                 ProjectileScene = ProjectileScene,
                 HitEffect = HitEffect
             },

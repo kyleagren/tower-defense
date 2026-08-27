@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="ProjectileSpeedRune" format=3 uid="uid://cl5bn4lbqrdfs"]
+
+[ext_resource type="Script" uid="uid://cr2obdpjbejc6" path="res://scripts/data/runes/ProjectileSpeedRune.cs" id="1_projectilespeed"]
+
+[resource]
+script = ExtResource("1_projectilespeed")

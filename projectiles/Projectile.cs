@@ -20,7 +20,7 @@ public partial class Projectile : Area3D
     public Vector3 LastRagdollImpulse { get; private set; }
 
     private int pierceRemaining;
-    private float speed = 20f;
+    private float speed;
     private bool hasExpired;
     private bool isReturn;
     private bool hasReturned;
@@ -38,6 +38,7 @@ public partial class Projectile : Area3D
         ChainRange = context.Chain?.ChainRange ?? 0f;
         pierceRemaining = context.Projectile.PierceCount;
         isReturn = context.Projectile.IsReturn;
+        speed = context.Projectile.Speed;
     }
 
     public override void _Ready()

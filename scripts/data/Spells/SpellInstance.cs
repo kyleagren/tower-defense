@@ -52,6 +52,11 @@ public class SpellInstance
             {
                 cachedContext.Area.AreaMultiplier = cachedContext.Area.AreaMultiplier * (1f + cachedContext.Area.IncreasedAreaPercent) * cachedContext.Area.MoreAreaMultiplier;
             }
+
+            if (cachedContext.Projectile != null)
+            {
+                cachedContext.Projectile.Speed = cachedContext.Projectile.Speed * (1f + cachedContext.Projectile.IncreasedSpeedPercent) * cachedContext.Projectile.MoreSpeedMultiplier;
+            }
         }
 
         return cachedContext;
