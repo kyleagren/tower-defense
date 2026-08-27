@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 public partial class Enemy : CharacterBody3D
 {
     [Export] public float Speed = 3.5f;
+    [Export] public float RotationSpeed = 10f;
     [Export] public NavigationAgent3D NavAgent { get; private set; }
     [Export] public Skeleton3D Skeleton { get; private set; }
     [Export] public CollisionShape3D BodyCollision { get; private set; }
@@ -25,6 +26,7 @@ public partial class Enemy : CharacterBody3D
     private int armRBoneIdx;
     private float walkTime;
     private bool isDead;
+    private bool hasFacedInitialDirection;
     private float currentHealth;
 
     public bool IsDead => isDead;
@@ -150,7 +152,47 @@ public partial class Enemy : CharacterBody3D
         Velocity = direction * Speed;
         MoveAndSlide();
 
+        RotateTowardsMovement(direction, delta);
         AnimateWalkCycle(1.0, delta);
+    }
+
+    private static Basis? ComputeFacingBasis(Vector3 direction)
+    {
+        Vector3 flatDirection = new Vector3(direction.X, 0f, direction.Z);
+        if (flatDirection.LengthSquared() < 0.0001f)
+        {
+            return null;
+        }
+
+        return Basis.LookingAt(flatDirection, Vector3.Up);
+    }
+
+    public void SetInitialFacing(Vector3 direction)
+    {
+        Basis? facingBasis = ComputeFacingBasis(direction);
+        if (facingBasis.HasValue)
+        {
+            Basis = facingBasis.Value;
+            hasFacedInitialDirection = true;
+        }
+    }
+
+    private void RotateTowardsMovement(Vector3 direction, double delta)
+    {
+        Basis? targetBasis = ComputeFacingBasis(direction);
+        if (!targetBasis.HasValue)
+        {
+            return;
+        }
+
+        if (!hasFacedInitialDirection)
+        {
+            hasFacedInitialDirection = true;
+            Basis = targetBasis.Value;
+            return;
+        }
+
+        Basis = Basis.Slerp(targetBasis.Value, Mathf.Min(1f, (float)delta * RotationSpeed));
     }
 
     private void AnimateWalkCycle(double moveAmount, double delta)
