@@ -15,10 +15,8 @@ public partial class ForkRune : Rune
 
     public override void Apply(SpellCastContext context)
     {
-        if (context is ChainableSpellCastContext chainable)
-        {
-            chainable.ForkCount += ExtraForks;
-            chainable.MoreDamageMultiplier *= DamageMultiplier;
-        }
+        context.Chain ??= new ChainCastData();
+        context.Chain.ForkCount += ExtraForks;
+        context.MoreDamageMultiplier *= DamageMultiplier;
     }
 }

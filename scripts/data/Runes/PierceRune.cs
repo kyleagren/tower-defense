@@ -14,9 +14,9 @@ public partial class PierceRune : Rune
 
     public override void Apply(SpellCastContext context)
     {
-        if (context is ProjectileCastContext projectileContext)
+        if (context.Projectile != null)
         {
-            projectileContext.PierceCount += ExtraPierce;
+            context.Projectile.PierceCount += ExtraPierce;
         }
     }
 }

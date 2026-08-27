@@ -14,10 +14,10 @@ public partial class ReturnRune : Rune
 
     public override void Apply(SpellCastContext context)
     {
-        if (context is ProjectileCastContext projectileContext)
+        if (context.Projectile != null)
         {
-            projectileContext.IsReturn = true;
-            projectileContext.MoreDamageMultiplier *= DamageMultiplier;
+            context.Projectile.IsReturn = true;
+            context.MoreDamageMultiplier *= DamageMultiplier;
         }
     }
 }

@@ -1,4 +1,4 @@
-public abstract class SpellCastContext
+public class SpellCastContext
 {
     public float Range;
     public float CastTime;
@@ -7,6 +7,12 @@ public abstract class SpellCastContext
     public float IncreasedDamagePercent;
     public float MoreDamageMultiplier = 1f;
     public float RagdollForce;
-    public float AreaMultiplier = 1f;
+    public float IncreasedRangePercent;
+    public float MoreRangeMultiplier = 1f;
     public float CastSpeedMultiplier = 1f;
+
+    public ProjectileCastData Projectile;
+    public ChainCastData Chain;
+    public AreaCastData Area;
+    public InstantHitCastData InstantHit;
 }

@@ -6,8 +6,6 @@ public partial class Ritual : Node3D
 {
     [Export] public Spell Spell { get; private set; }
     [Export] public Rune[] RuneSlots { get; private set; } = new Rune[GameRules.MaxRuneSlots];
-    [Export] public ProjectileCastEffect ProjectileEffect { get; private set; }
-    [Export] public InstantHitCastEffect InstantHitEffect { get; private set; }
     [Export] public Node3D SpawnPoint { get; private set; }
     [Export] public float TargetSearchInterval = 0.25f;
 
@@ -15,9 +13,11 @@ public partial class Ritual : Node3D
     private Enemy currentTarget;
     private float searchTimer;
     private int budgetCost;
+    private List<CastEffect> castEffects;
 
     public override void _Ready()
     {
+        castEffects = GetChildren().OfType<CastEffect>().ToList();
         Configure(Spell, RuneSlots);
     }
 
@@ -86,7 +86,7 @@ public partial class Ritual : Node3D
         if (searchTimer <= 0f || justLostTarget)
         {
             searchTimer = TargetSearchInterval;
-            currentTarget = EnemyTargeting.FindNearest(GlobalPosition, Spell.BaseRange);
+            currentTarget = EnemyTargeting.FindNearest(GlobalPosition, spellInstance.Resolve().Range);
         }
 
         if (currentTarget != null && spellInstance.CanCast)
@@ -102,14 +102,7 @@ public partial class Ritual : Node3D
         SpawnPoint.LookAt(levelAimPosition, Vector3.Up);
 
         SpellCastContext context = spellInstance.Resolve();
-
-        CastEffect effect = context switch
-        {
-            ProjectileCastContext => ProjectileEffect,
-            InstantHitCastContext => InstantHitEffect,
-            _ => null
-        };
-
+        CastEffect effect = castEffects.FirstOrDefault(e => e.CanHandle(context));
         effect?.Cast(context, SpawnPoint);
 
         spellInstance.StartCast(context.CastTime, context.Cooldown);

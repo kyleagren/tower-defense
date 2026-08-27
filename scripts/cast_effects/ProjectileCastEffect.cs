@@ -5,26 +5,29 @@ public partial class ProjectileCastEffect : CastEffect
 {
     [Export] public float SpreadAngleDegrees { get; private set; } = 15f;
 
+    public override bool CanHandle(SpellCastContext context) => context.Projectile != null;
+
     public override void Cast(SpellCastContext context, Node3D spawnPoint)
     {
-        if (context is not ProjectileCastContext projectileContext)
+        if (context.Projectile == null)
         {
             return;
         }
 
-        int count = projectileContext.ProjectileCount;
+        ProjectileCastData projectileData = context.Projectile;
+        int count = projectileData.ProjectileCount;
         HashSet<Enemy> returnHitTracker = new HashSet<Enemy>();
         HashSet<Enemy> chainHitTracker = new HashSet<Enemy>();
 
         for (int i = 0; i < count; i++)
         {
-            float angleOffset = projectileContext.IsNova
+            float angleOffset = projectileData.IsNova
                 ? 360f / count * i
                 : ComputeConeAngle(i, count);
 
-            Projectile projectile = projectileContext.ProjectileScene.Instantiate<Projectile>();
-            projectile.Initialize(projectileContext);
-            projectile.HitEffect = projectileContext.HitEffect;
+            Projectile projectile = projectileData.ProjectileScene.Instantiate<Projectile>();
+            projectile.Initialize(context);
+            projectile.HitEffect = projectileData.HitEffect;
             projectile.ReturnHitTracker = returnHitTracker;
             projectile.ChainHitTracker = chainHitTracker;
             spawnPoint.GetTree().CurrentScene.AddChild(projectile);

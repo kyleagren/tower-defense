@@ -28,16 +28,16 @@ public partial class Projectile : Area3D
     private const float MaxReturnDistance = 10f;
     private HashSet<Node3D> alreadyHit = new HashSet<Node3D>();
 
-    public void Initialize(ProjectileCastContext context)
+    public void Initialize(SpellCastContext context)
     {
         Damage = context.Damage;
-        AreaMultiplier = context.AreaMultiplier;
-        Radius = context.Radius * AreaMultiplier;
+        AreaMultiplier = context.Area?.AreaMultiplier ?? 1f;
+        Radius = context.Projectile.Radius * AreaMultiplier;
         RagdollForce = context.RagdollForce;
-        ChainCount = context.ChainCount;
-        ChainRange = context.ChainRange;
-        pierceRemaining = context.PierceCount;
-        isReturn = context.IsReturn;
+        ChainCount = context.Chain?.ChainCount ?? 0;
+        ChainRange = context.Chain?.ChainRange ?? 0f;
+        pierceRemaining = context.Projectile.PierceCount;
+        isReturn = context.Projectile.IsReturn;
     }
 
     public override void _Ready()

@@ -1,9 +1,9 @@
 using Godot;
 
-public class ProjectileCastContext : ChainableSpellCastContext
+public class ProjectileCastData
 {
     public float Radius;
-    public int ProjectileCount;
+    public int ProjectileCount = 1;
     public int PierceCount;
     public bool IsNova;
     public bool IsReturn;

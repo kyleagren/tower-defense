@@ -21,11 +21,9 @@ emission_energy_multiplier = 0.4
 radius = 0.5
 height = 1.6
 
-[node name="Ritual" type="Node3D" node_paths=PackedStringArray("ProjectileEffect", "InstantHitEffect", "SpawnPoint")]
+[node name="Ritual" type="Node3D" node_paths=PackedStringArray("SpawnPoint")]
 script = ExtResource("1_ritual")
 Spell = ExtResource("2_fireball")
-ProjectileEffect = NodePath("ProjectileCastEffect")
-InstantHitEffect = NodePath("InstantHitCastEffect")
 SpawnPoint = NodePath("SpawnPoint")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]

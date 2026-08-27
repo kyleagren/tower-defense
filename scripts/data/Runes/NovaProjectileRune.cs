@@ -16,11 +16,11 @@ public partial class NovaProjectileRune : Rune
 
     public override void Apply(SpellCastContext context)
     {
-        if (context is ProjectileCastContext projectileContext)
+        if (context.Projectile != null)
         {
-            projectileContext.ProjectileCount += ExtraProjectiles;
-            projectileContext.IsNova = true;
-            projectileContext.MoreDamageMultiplier *= DamageMultiplier;
+            context.Projectile.ProjectileCount += ExtraProjectiles;
+            context.Projectile.IsNova = true;
+            context.MoreDamageMultiplier *= DamageMultiplier;
         }
     }
 }

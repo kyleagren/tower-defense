@@ -6,19 +6,18 @@ public partial class InstantHitCastEffect : CastEffect
     [Export] public PackedScene ArcVisualScene { get; private set; }
     [Export] public float ForkPointRatio { get; private set; } = 0.3f;
 
+    public override bool CanHandle(SpellCastContext context) => context.InstantHit != null;
+
     public override void Cast(SpellCastContext context, Node3D spawnPoint)
     {
-        if (context is not InstantHitCastContext instantContext)
-        {
-            return;
-        }
+        ChainCastData chain = context.Chain ?? new ChainCastData();
 
         HashSet<Enemy> initialTargets = new HashSet<Enemy>();
         List<Enemy> targets = new List<Enemy>();
 
-        for (int i = 0; i <= instantContext.ForkCount; i++)
+        for (int i = 0; i <= chain.ForkCount; i++)
         {
-            Enemy target = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, instantContext.Range, initialTargets);
+            Enemy target = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range, initialTargets);
             if (target == null)
             {
                 break;
@@ -44,20 +43,20 @@ public partial class InstantHitCastEffect : CastEffect
 
         foreach (Enemy target in targets)
         {
-            StrikeTarget(instantContext, spawnPoint, visualOrigin, target);
+            StrikeTarget(context, chain, spawnPoint, visualOrigin, target);
         }
     }
 
-    private void StrikeTarget(InstantHitCastContext instantContext, Node3D spawnPoint, Vector3 visualOrigin, Enemy target)
+    private void StrikeTarget(SpellCastContext context, ChainCastData chain, Node3D spawnPoint, Vector3 visualOrigin, Enemy target)
     {
         Vector3 targetPoint = target.GetJitteredCenterMass(0.25f);
-        Vector3 ragdollImpulse = (targetPoint - spawnPoint.GlobalPosition).Normalized() * instantContext.RagdollForce;
-        DamagePacket firstHitDamage = instantContext.Damage * Mathf.Pow(1f + instantContext.MoreDamagePerRemainingChain, instantContext.ChainCount);
+        Vector3 ragdollImpulse = (targetPoint - spawnPoint.GlobalPosition).Normalized() * context.RagdollForce;
+        DamagePacket firstHitDamage = context.Damage * Mathf.Pow(1f + chain.MoreDamagePerRemainingChain, chain.ChainCount);
         target.TakeDamage(firstHitDamage, ragdollImpulse);
 
         SpawnArcVisual(visualOrigin, targetPoint);
 
-        ChainResolver.ResolveChain(target, targetPoint, instantContext.Damage, instantContext.RagdollForce, instantContext.ChainCount, instantContext.ChainRange, instantContext.MoreDamagePerRemainingChain, ArcVisualScene);
+        ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce, chain.ChainCount, chain.ChainRange, chain.MoreDamagePerRemainingChain, ArcVisualScene);
     }
 
     private void SpawnArcVisual(Vector3 from, Vector3 to)

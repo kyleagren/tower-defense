@@ -46,6 +46,12 @@ public class SpellInstance
 
             cachedContext.Damage = cachedContext.Damage * (1f + cachedContext.IncreasedDamagePercent) * cachedContext.MoreDamageMultiplier;
             cachedContext.CastTime /= cachedContext.CastSpeedMultiplier;
+            cachedContext.Range = cachedContext.Range * (1f + cachedContext.IncreasedRangePercent) * cachedContext.MoreRangeMultiplier;
+
+            if (cachedContext.Area != null)
+            {
+                cachedContext.Area.AreaMultiplier = cachedContext.Area.AreaMultiplier * (1f + cachedContext.Area.IncreasedAreaPercent) * cachedContext.Area.MoreAreaMultiplier;
+            }
         }
 
         return cachedContext;

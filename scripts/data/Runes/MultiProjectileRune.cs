@@ -16,10 +16,10 @@ public partial class MultiProjectileRune : Rune
 
     public override void Apply(SpellCastContext context)
     {
-        if (context is ProjectileCastContext projectileContext)
+        if (context.Projectile != null)
         {
-            projectileContext.ProjectileCount += ExtraProjectiles;
-            projectileContext.MoreDamageMultiplier *= DamageMultiplier;
+            context.Projectile.ProjectileCount += ExtraProjectiles;
+            context.MoreDamageMultiplier *= DamageMultiplier;
         }
     }
 }

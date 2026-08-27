@@ -17,11 +17,9 @@ public partial class ChainRune : Rune
 
     public override void Apply(SpellCastContext context)
     {
-        if (context is ChainableSpellCastContext chainable)
-        {
-            chainable.ChainCount += ExtraChains;
-            chainable.ChainRange = Mathf.Max(chainable.ChainRange, FallbackChainRange);
-            chainable.MoreDamageMultiplier *= DamageMultiplier;
-        }
+        context.Chain ??= new ChainCastData();
+        context.Chain.ChainCount += ExtraChains;
+        context.Chain.ChainRange = Mathf.Max(context.Chain.ChainRange, FallbackChainRange);
+        context.MoreDamageMultiplier *= DamageMultiplier;
     }
 }

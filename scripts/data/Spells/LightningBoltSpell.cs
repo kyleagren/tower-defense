@@ -11,23 +11,25 @@ public partial class LightningBoltSpell : ChainableSpell
     [Export] public override float MoreDamagePerRemainingChain { get; protected set; } = 0.15f;
 
     public override string Name => "Lightning Bolt";
-
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Chaining, Tag.Lightning };
-
     public override string Description => "Instantly strikes the nearest enemy, arcing to nearby foes.";
 
     public override SpellCastContext CreateBaseContext()
     {
-        return new InstantHitCastContext
+        return new SpellCastContext
         {
             Range = BaseRange,
             CastTime = BaseCastTime,
             Cooldown = BaseCooldown,
             Damage = BaseDamage,
             RagdollForce = BaseRagdollForce,
-            ChainCount = BaseChainCount,
-            ChainRange = BaseChainRange,
-            MoreDamagePerRemainingChain = MoreDamagePerRemainingChain
+            InstantHit = new InstantHitCastData(),
+            Chain = new ChainCastData
+            {
+                ChainCount = BaseChainCount,
+                ChainRange = BaseChainRange,
+                MoreDamagePerRemainingChain = MoreDamagePerRemainingChain
+            }
         };
     }
 }

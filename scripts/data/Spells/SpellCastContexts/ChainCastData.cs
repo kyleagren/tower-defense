@@ -1,4 +1,4 @@
-public abstract class ChainableSpellCastContext : SpellCastContext
+public class ChainCastData
 {
     public int ChainCount;
     public float ChainRange;

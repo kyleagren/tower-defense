@@ -4,7 +4,7 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class IncreasedAreaRune : Rune
 {
-    [Export] public float AreaMultiplier { get; private set; } = 1.3f;
+    [Export] public float IncreasedAreaPercent { get; private set; } = 0.3f;
 
     public override string Name => "Increased Area";
 
@@ -14,6 +14,7 @@ public partial class IncreasedAreaRune : Rune
 
     public override void Apply(SpellCastContext context)
     {
-        context.AreaMultiplier *= AreaMultiplier;
+        context.Area ??= new AreaCastData();
+        context.Area.IncreasedAreaPercent += IncreasedAreaPercent;
     }
 }
