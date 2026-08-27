@@ -61,14 +61,14 @@ public partial class Enemy : CharacterBody3D
         NavAgent.TargetPosition = targetPosition;
     }
 
-    public void TakeDamage(float amount, Vector3 ragdollImpulse = default)
+    public void TakeDamage(DamagePacket amount, Vector3 ragdollImpulse = default)
     {
         if (isDead)
         {
             return;
         }
 
-        currentHealth -= amount;
+        currentHealth -= amount.Total;
         HealthBar.SetFraction(currentHealth / MaxHealth);
 
         if (currentHealth <= 0f)

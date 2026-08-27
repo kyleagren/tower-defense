@@ -7,7 +7,7 @@ public partial class Projectile : Area3D
     [Export] public MeshInstance3D BodyMesh { get; private set; }
     [Export] public CollisionShape3D BodyCollision { get; private set; }
 
-    public float Damage { get; private set; }
+    public DamagePacket Damage { get; private set; }
     public float Radius { get; private set; }
     public float AreaMultiplier { get; private set; }
     public float RagdollForce { get; private set; }

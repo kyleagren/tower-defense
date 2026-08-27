@@ -19,7 +19,7 @@ public partial class InstantHitCastEffect : CastEffect
 
         Vector3 targetPoint = target.GetJitteredCenterMass(0.25f);
         Vector3 ragdollImpulse = (targetPoint - spawnPoint.GlobalPosition).Normalized() * instantContext.RagdollForce;
-        float firstHitDamage = instantContext.Damage * Mathf.Pow(1f + instantContext.MoreDamagePerRemainingChain, instantContext.ChainCount);
+        DamagePacket firstHitDamage = instantContext.Damage * Mathf.Pow(1f + instantContext.MoreDamagePerRemainingChain, instantContext.ChainCount);
         target.TakeDamage(firstHitDamage, ragdollImpulse);
 
         if (ArcVisualScene != null)

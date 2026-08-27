@@ -6,6 +6,8 @@ public enum Tag
     Trigger,
     Chaining,
     Fire,
+    Water,
+    Cold,
     Lightning,
-    Cold
+    Wind
 }

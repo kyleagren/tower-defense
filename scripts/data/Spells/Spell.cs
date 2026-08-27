@@ -10,9 +10,24 @@ public abstract partial class Spell : Resource
     public virtual float BaseRange { get; protected set; } = 8f;
     public virtual float BaseCastTime { get; protected set; } = 1f;
     public virtual float BaseCooldown { get; protected set; } = 0f;
-    public virtual float BaseDamage { get; protected set; } = 0f;
+    public virtual float BasePhysicalDamage { get; protected set; } = 0f;
+    public virtual float BaseFireDamage { get; protected set; } = 0f;
+    public virtual float BaseWaterDamage { get; protected set; } = 0f;
+    public virtual float BaseColdDamage { get; protected set; } = 0f;
+    public virtual float BaseLightningDamage { get; protected set; } = 0f;
+    public virtual float BaseWindDamage { get; protected set; } = 0f;
     public virtual float BaseRagdollForce { get; protected set; } = 0f;
     public virtual int BudgetCost { get; protected set; } = 10;
+
+    public DamagePacket BaseDamage => new DamagePacket
+    {
+        Physical = BasePhysicalDamage,
+        Fire = BaseFireDamage,
+        Water = BaseWaterDamage,
+        Cold = BaseColdDamage,
+        Lightning = BaseLightningDamage,
+        Wind = BaseWindDamage
+    };
 
     public abstract SpellCastContext CreateBaseContext();
 }

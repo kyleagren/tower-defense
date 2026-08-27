@@ -90,7 +90,7 @@ public partial class Soldier : PlayerCharacter
 
         if (result["collider"].As<Node3D>() is Enemy enemy)
         {
-            enemy.TakeDamage(AttackDamage);
+            enemy.TakeDamage(new DamagePacket { Physical = AttackDamage });
         }
 
         if (ImpactScene != null)
