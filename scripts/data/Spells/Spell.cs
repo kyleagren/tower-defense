@@ -21,12 +21,12 @@ public abstract partial class Spell : Resource
 
     public DamagePacket BaseDamage => new DamagePacket
     {
-        Physical = BasePhysicalDamage,
-        Fire = BaseFireDamage,
-        Water = BaseWaterDamage,
-        Cold = BaseColdDamage,
-        Lightning = BaseLightningDamage,
-        Wind = BaseWindDamage
+        PhysicalDamage = BasePhysicalDamage,
+        FireDamage = BaseFireDamage,
+        WaterDamage = BaseWaterDamage,
+        ColdDamage = BaseColdDamage,
+        LightningDamage = BaseLightningDamage,
+        WindDamage = BaseWindDamage
     };
 
     public abstract SpellCastContext CreateBaseContext();

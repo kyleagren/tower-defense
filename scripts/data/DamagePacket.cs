@@ -1,13 +1,13 @@
 public struct DamagePacket
 {
-    public float Physical;
-    public float Fire;
-    public float Water;
-    public float Cold;
-    public float Lightning;
-    public float Wind;
+    public float PhysicalDamage;
+    public float FireDamage;
+    public float WaterDamage;
+    public float ColdDamage;
+    public float LightningDamage;
+    public float WindDamage;
 
-    public readonly float Total => Physical + Fire + Water + Cold + Lightning + Wind;
+    public readonly float Total => PhysicalDamage + FireDamage + WaterDamage + ColdDamage + LightningDamage + WindDamage;
 
     public readonly Tag? DominantElement
     {
@@ -16,10 +16,10 @@ public struct DamagePacket
             Tag? highest = null;
             float highestAmount = 0f;
 
-            if (Fire > highestAmount) { highest = Tag.Fire; highestAmount = Fire; }
-            if (Water > highestAmount) { highest = Tag.Water; highestAmount = Water; }
-            if (Cold > highestAmount) { highest = Tag.Cold; highestAmount = Cold; }
-            if (Lightning > highestAmount) { highest = Tag.Lightning; highestAmount = Lightning; }
+            if (FireDamage > highestAmount) { highest = Tag.Fire; highestAmount = FireDamage; }
+            if (WaterDamage > highestAmount) { highest = Tag.Water; highestAmount = WaterDamage; }
+            if (ColdDamage > highestAmount) { highest = Tag.Cold; highestAmount = ColdDamage; }
+            if (LightningDamage > highestAmount) { highest = Tag.Lightning; highestAmount = LightningDamage; }
 
             return highest;
         }
@@ -29,12 +29,12 @@ public struct DamagePacket
     {
         return new DamagePacket
         {
-            Physical = packet.Physical * scalar,
-            Fire = packet.Fire * scalar,
-            Water = packet.Water * scalar,
-            Cold = packet.Cold * scalar,
-            Lightning = packet.Lightning * scalar,
-            Wind = packet.Wind * scalar
+            PhysicalDamage = packet.PhysicalDamage * scalar,
+            FireDamage = packet.FireDamage * scalar,
+            WaterDamage = packet.WaterDamage * scalar,
+            ColdDamage = packet.ColdDamage * scalar,
+            LightningDamage = packet.LightningDamage * scalar,
+            WindDamage = packet.WindDamage * scalar
         };
     }
 }
