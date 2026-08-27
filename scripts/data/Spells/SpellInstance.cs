@@ -45,6 +45,7 @@ public class SpellInstance
             }
 
             cachedContext.Damage = cachedContext.Damage * (1f + cachedContext.IncreasedDamagePercent) * cachedContext.MoreDamageMultiplier;
+            cachedContext.CastTime /= cachedContext.CastSpeedMultiplier;
         }
 
         return cachedContext;

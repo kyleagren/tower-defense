@@ -8,4 +8,5 @@ public abstract class SpellCastContext
     public float MoreDamageMultiplier = 1f;
     public float RagdollForce;
     public float AreaMultiplier = 1f;
+    public float CastSpeedMultiplier = 1f;
 }

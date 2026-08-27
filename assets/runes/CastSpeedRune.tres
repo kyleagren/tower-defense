@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="CastSpeedRune" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/runes/CastSpeedRune.cs" id="1_castspeed"]
+
+[resource]
+script = ExtResource("1_castspeed")
