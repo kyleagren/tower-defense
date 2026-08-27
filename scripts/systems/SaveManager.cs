@@ -39,6 +39,7 @@ public partial class SaveManager : Node
         changed |= EnsureKnownRune("res://assets/runes/ReturnRune.tres");
         changed |= EnsureKnownRune("res://assets/runes/IncreasedAreaRune.tres");
         changed |= EnsureKnownRune("res://assets/runes/CastSpeedRune.tres");
+        changed |= EnsureKnownRune("res://assets/runes/ForkRune.tres");
 
         return changed;
     }
