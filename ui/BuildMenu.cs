@@ -39,7 +39,7 @@ public partial class BuildMenu : Control
 
     private void PopulateSpellGrid()
     {
-        var spells = SaveManager.Instance.Data.KnownSpells;
+        List<Spell> spells = SaveManager.Instance.Data.KnownSpells.OrderBy(spell => spell.Name).ToList();
         int pageSize = Grid.Columns * Grid.Rows;
 
         for (int i = 0; i < pageSize; i++)
@@ -213,6 +213,7 @@ public partial class BuildMenu : Control
         List<Rune> compatibleRunes = AllRunes
             .Where(rune => rune.RequiredTags.All(tag => selectedSpell.Tags.Contains(tag)))
             .OrderBy(rune => IsSocketedElsewhere(rune, socketIndex))
+            .ThenBy(rune => rune.Name)
             .ToList();
 
         int pageSize = runeGrid.Columns * runeGrid.Rows;
