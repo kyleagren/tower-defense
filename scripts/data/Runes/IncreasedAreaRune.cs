@@ -6,7 +6,7 @@ public partial class IncreasedAreaRune : Rune
 {
     [Export] public float IncreasedAreaPercent { get; private set; } = 0.3f;
 
-    public override string Name => "Increased Area";
+    public override string Name => "Expand";
 
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.AoE };
 

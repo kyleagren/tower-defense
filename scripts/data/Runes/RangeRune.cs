@@ -7,7 +7,7 @@ public partial class RangeRune : Rune
 {
     [Export] public float IncreasedRangePercent { get; private set; } = 0.3f;
 
-    public override string Name => "Reach";
+    public override string Name => "Extend";
 
     public override IReadOnlyList<Tag> RequiredTags => Array.Empty<Tag>();
 
