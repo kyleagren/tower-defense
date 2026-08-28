@@ -27,6 +27,17 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
             directHitEnemy.ApplyExtraRagdollImpulse(bonusImpulse);
         }
 
+        HashSet<Enemy> hitEnemies = FindEnemiesInRadius(projectile, explosionCenter, radius, body);
+
+        foreach (Enemy enemy in hitEnemies)
+        {
+            Vector3 ragdollImpulse = (enemy.GlobalPosition - explosionCenter).Normalized() * projectile.RagdollForce * RagdollForceMultiplier;
+            enemy.TakeDamage(projectile.Damage, ragdollImpulse);
+        }
+    }
+
+    private static HashSet<Enemy> FindEnemiesInRadius(Projectile projectile, Vector3 center, float radius, Node3D excludeBody)
+    {
         PhysicsDirectSpaceState3D spaceState = projectile.GetWorld3D().DirectSpaceState;
         SphereShape3D explosionShape = new SphereShape3D { Radius = radius };
         PhysicsShapeQueryParameters3D query = new PhysicsShapeQueryParameters3D
@@ -44,16 +55,12 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
         {
             if (result.TryGetValue("collider", out Variant colliderVariant)
                 && colliderVariant.Obj is Enemy enemy
-                && enemy != body)
+                && enemy != excludeBody)
             {
                 hitEnemies.Add(enemy);
             }
         }
 
-        foreach (Enemy enemy in hitEnemies)
-        {
-            Vector3 ragdollImpulse = (enemy.GlobalPosition - explosionCenter).Normalized() * projectile.RagdollForce * RagdollForceMultiplier;
-            enemy.TakeDamage(projectile.Damage, ragdollImpulse);
-        }
+        return hitEnemies;
     }
 }

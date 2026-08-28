@@ -43,7 +43,7 @@ public static class ChainResolver
         }
     }
 
-    private static void SpawnArcVisual(PackedScene arcVisualScene, Vector3 from, Vector3 to)
+    public static void SpawnArcVisual(PackedScene arcVisualScene, Vector3 from, Vector3 to)
     {
         if (arcVisualScene == null)
         {

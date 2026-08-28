@@ -42,6 +42,11 @@ public static class EnemyTargeting
 
     private static bool Contains(IEnumerable<Enemy> collection, Enemy value)
     {
+        if (collection is ICollection<Enemy> hashCollection)
+        {
+            return hashCollection.Contains(value);
+        }
+
         foreach (Enemy enemy in collection)
         {
             if (enemy == value) return true;

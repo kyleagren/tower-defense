@@ -52,11 +52,13 @@ public partial class RoutePreviewEffect : Node3D
     {
         if (phase == WaveController.GamePhase.Build)
         {
+            SetProcess(true);
             pulseTimer.Start();
             Pulse();
         }
         else
         {
+            SetProcess(false);
             pulseTimer.Stop();
         }
     }

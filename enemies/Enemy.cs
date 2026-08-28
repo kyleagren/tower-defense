@@ -95,6 +95,7 @@ public partial class Enemy : CharacterBody3D
 
         isDead = true;
         HealthBar.Visible = false;
+        HealthBar.SetProcess(false);
         EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, Reward);
 
         SetPhysicsProcess(false);

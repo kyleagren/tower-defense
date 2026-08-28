@@ -49,7 +49,7 @@ public partial class Ritual : Node3D
             }
         }
 
-        GetTree().CurrentScene.GetNode<EconomyManager>("EconomyManager").RefundTower(budgetCost);
+        EconomyManager.Instance.RefundTower(budgetCost);
 
         QueueFree();
     }

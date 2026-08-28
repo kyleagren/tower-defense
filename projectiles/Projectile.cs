@@ -87,21 +87,18 @@ public partial class Projectile : Area3D
         alreadyHit.Add(body);
         ApplyHit(body);
 
-        if (body is not Enemy hitEnemy)
+        if (body is Enemy hitEnemy)
         {
-            if (isReturn)
-            {
-                hasReturned = true;
-                LookAt(SpawnPosition, Vector3.Up);
-                return;
-            }
-
-            Expire(body);
+            ChainHitTracker?.Add(hitEnemy);
+            ResolveOutcomeAfterEnemyHit(hitEnemy);
             return;
         }
 
-        ChainHitTracker?.Add(hitEnemy);
+        ResolveOutcomeAfterNonEnemyHit(body);
+    }
 
+    private void ResolveOutcomeAfterEnemyHit(Enemy hitEnemy)
+    {
         if (pierceRemaining > 0)
         {
             pierceRemaining--;
@@ -115,6 +112,18 @@ public partial class Projectile : Area3D
             return;
         }
 
+        if (isReturn)
+        {
+            hasReturned = true;
+            LookAt(SpawnPosition, Vector3.Up);
+            return;
+        }
+
+        Expire(hitEnemy);
+    }
+
+    private void ResolveOutcomeAfterNonEnemyHit(Node3D body)
+    {
         if (isReturn)
         {
             hasReturned = true;

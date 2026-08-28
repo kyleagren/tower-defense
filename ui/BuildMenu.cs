@@ -31,7 +31,7 @@ public partial class BuildMenu : Control
 
     public override void _Ready()
     {
-        economy = GetTree().CurrentScene.GetNode<EconomyManager>("EconomyManager");
+        economy = EconomyManager.Instance;
         PopulateSpellGrid();
         BuildSocketScreen();
         BuildRunePickerScreen();
@@ -210,11 +210,7 @@ public partial class BuildMenu : Control
             child.QueueFree();
         }
 
-        List<Rune> compatibleRunes = AllRunes
-            .Where(rune => rune.RequiredTags.All(tag => selectedSpell.Tags.Contains(tag)))
-            .OrderBy(rune => IsSocketedElsewhere(rune, socketIndex))
-            .ThenBy(rune => rune.Name)
-            .ToList();
+        List<Rune> compatibleRunes = GetCompatibleRunes(socketIndex);
 
         int pageSize = runeGrid.Columns * runeGrid.Rows;
 
@@ -252,6 +248,15 @@ public partial class BuildMenu : Control
         runePickerScreen.Visible = true;
 
         ShowDescription(currentSocketRune?.Name, currentSocketRune?.Description);
+    }
+
+    private List<Rune> GetCompatibleRunes(int socketIndex)
+    {
+        return AllRunes
+            .Where(rune => rune.RequiredTags.All(tag => selectedSpell.Tags.Contains(tag)))
+            .OrderBy(rune => IsSocketedElsewhere(rune, socketIndex))
+            .ThenBy(rune => rune.Name)
+            .ToList();
     }
 
     private bool IsSocketedElsewhere(Rune rune, int socketIndex)

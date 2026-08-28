@@ -25,7 +25,7 @@ public partial class TowerPlacer : Node
     public override void _Ready()
     {
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        economy = GetTree().CurrentScene.GetNode<EconomyManager>("EconomyManager");
+        economy = EconomyManager.Instance;
     }
 
     public override void _ExitTree()
@@ -60,23 +60,8 @@ public partial class TowerPlacer : Node
         ghostCollisionShape = ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
         ghostCollisionShape.Disabled = true;
 
-        SpellInstance previewInstance = new SpellInstance(spell);
-        foreach (Rune rune in runes)
-        {
-            if (rune != null)
-            {
-                previewInstance.TryAttachRune(rune);
-            }
-        }
-        float effectiveRange = previewInstance.Resolve().Range;
-
-        MeshInstance3D rangeIndicator = new MeshInstance3D
-        {
-            Mesh = new CylinderMesh { TopRadius = effectiveRange, BottomRadius = effectiveRange, Height = 0.05f },
-            MaterialOverride = RangeMaterial,
-            Position = new Vector3(0f, 0.03f, 0f)
-        };
-        ghost.AddChild(rangeIndicator);
+        float effectiveRange = ComputePreviewRange(spell, runes);
+        ghost.AddChild(BuildRangeIndicator(effectiveRange));
 
         IsPlacing = true;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, true);
@@ -104,10 +89,7 @@ public partial class TowerPlacer : Node
 
     private void UpdateGhostPosition()
     {
-        Vector3 origin = Architect.Camera.GlobalPosition;
-        Vector3 forward = -Architect.Camera.GlobalTransform.Basis.Z;
-        float cameraSetback = origin.DistanceTo(Architect.GlobalPosition);
-        Vector3 aheadPoint = origin + forward * (PlacementDistance + cameraSetback);
+        Vector3 aheadPoint = Architect.GetCameraAimPoint(PlacementDistance);
 
         Vector3 rayStart = aheadPoint + Vector3.Up * GroundRaycastRange;
         Vector3 rayEnd = aheadPoint - Vector3.Up * GroundRaycastRange;
@@ -167,6 +149,30 @@ public partial class TowerPlacer : Node
         ghost = null;
         IsPlacing = false;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, false);
+    }
+
+    private static float ComputePreviewRange(Spell spell, Godot.Collections.Array<Rune> runes)
+    {
+        SpellInstance previewInstance = new SpellInstance(spell);
+        foreach (Rune rune in runes)
+        {
+            if (rune != null)
+            {
+                previewInstance.TryAttachRune(rune);
+            }
+        }
+
+        return previewInstance.Resolve().Range;
+    }
+
+    private static MeshInstance3D BuildRangeIndicator(float range)
+    {
+        return new MeshInstance3D
+        {
+            Mesh = new CylinderMesh { TopRadius = range, BottomRadius = range, Height = 0.05f },
+            MaterialOverride = RangeMaterial,
+            Position = new Vector3(0f, 0.03f, 0f)
+        };
     }
 
     private static StandardMaterial3D CreateGhostMaterial(Color color)

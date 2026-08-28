@@ -91,9 +91,7 @@ public partial class TowerInteractor : Node
     private Ritual FindTowerAhead()
     {
         Vector3 origin = Character.Camera.GlobalPosition;
-        Vector3 forward = -Character.Camera.GlobalTransform.Basis.Z;
-        float cameraSetback = origin.DistanceTo(Character.GlobalPosition);
-        Vector3 end = origin + forward * (InteractionRange + cameraSetback);
+        Vector3 end = Character.GetCameraAimPoint(InteractionRange);
 
         PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);

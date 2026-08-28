@@ -22,6 +22,14 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
     }
 
+    public Vector3 GetCameraAimPoint(float distance)
+    {
+        Vector3 origin = Camera.GlobalPosition;
+        Vector3 forward = -Camera.GlobalTransform.Basis.Z;
+        float cameraSetback = origin.DistanceTo(GlobalPosition);
+        return origin + forward * (distance + cameraSetback);
+    }
+
     public void HandoffFrom(PlayerCharacter previous)
     {
         GlobalPosition = previous.GlobalPosition;
