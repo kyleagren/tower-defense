@@ -77,11 +77,11 @@ public partial class InstantHitCastEffect : CastEffect
         Vector3 ragdollImpulse = (targetPoint - spawnPoint.GlobalPosition).Normalized() * context.RagdollForce;
         float firstHitMultiplier = chain.DamageModifier?.GetMultiplier(chain.ChainCount) ?? 1f;
         DamagePacket firstHitDamage = context.Damage * firstHitMultiplier;
-        target.TakeDamage(firstHitDamage, ragdollImpulse);
+        target.TakeDamage(firstHitDamage, ragdollImpulse, reaction: context.Reaction);
 
         ChainResolver.SpawnArcVisual(ArcVisualScene, visualOrigin, targetPoint);
 
-        ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce, chain.ChainCount, chain.ChainRange, chain.DamageModifier, ArcVisualScene, chainTracker);
+        ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce, chain.ChainCount, chain.ChainRange, chain.DamageModifier, context.Reaction, ArcVisualScene, chainTracker);
     }
 
     private static float SideOf(Vector3 origin, Vector3 referenceDir, Vector3 point)

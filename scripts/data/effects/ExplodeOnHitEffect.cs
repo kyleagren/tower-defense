@@ -32,7 +32,7 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
         foreach (Enemy enemy in hitEnemies)
         {
             Vector3 ragdollImpulse = (enemy.GlobalPosition - explosionCenter).Normalized() * projectile.RagdollForce * RagdollForceMultiplier;
-            enemy.TakeDamage(projectile.Damage, ragdollImpulse);
+            enemy.TakeDamage(projectile.Damage, ragdollImpulse, reaction: projectile.Reaction);
         }
     }
 

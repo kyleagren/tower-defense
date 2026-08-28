@@ -18,6 +18,7 @@ public partial class Projectile : Area3D
     public HashSet<Enemy> ReturnHitTracker { get; set; }
     public HashSet<Enemy> ChainHitTracker { get; set; }
     public Vector3 LastRagdollImpulse { get; private set; }
+    public ReactionRune Reaction { get; private set; }
 
     private int pierceRemaining;
     private float speed;
@@ -39,6 +40,7 @@ public partial class Projectile : Area3D
         pierceRemaining = context.Projectile.PierceCount;
         isReturn = context.Projectile.IsReturn;
         speed = context.Projectile.Speed;
+        Reaction = context.Reaction;
     }
 
     public override void _Ready()
@@ -157,7 +159,7 @@ public partial class Projectile : Area3D
         {
             Vector3 ragdollImpulse = -GlobalTransform.Basis.Z * RagdollForce;
             LastRagdollImpulse = ragdollImpulse;
-            enemy.TakeDamage(Damage, ragdollImpulse);
+            enemy.TakeDamage(Damage, ragdollImpulse, reaction: Reaction);
         }
     }
 

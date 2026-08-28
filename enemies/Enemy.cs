@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 public partial class Enemy : CharacterBody3D
@@ -28,6 +29,7 @@ public partial class Enemy : CharacterBody3D
     private bool isDead;
     private bool hasFacedInitialDirection;
     private float currentHealth;
+    private List<Ailment> ailments = new List<Ailment>();
 
     public bool IsDead => isDead;
     public Tag? Status { get; private set; }
@@ -64,26 +66,36 @@ public partial class Enemy : CharacterBody3D
         NavAgent.TargetPosition = targetPosition;
     }
 
-    public void TakeDamage(DamagePacket amount, Vector3 ragdollImpulse = default)
+    public void TakeDamage(DamagePacket amount, Vector3 ragdollImpulse = default, bool updateStatus = true, ReactionRune reaction = null)
     {
         if (isDead)
         {
             return;
         }
 
+        reaction?.OnHit(this, amount);
+
         currentHealth -= amount.Total;
         HealthBar.SetFraction(currentHealth / MaxHealth);
 
-        Tag? dominantElement = amount.DominantElement;
-        if (dominantElement.HasValue)
+        if (updateStatus)
         {
-            Status = dominantElement;
+            Tag? dominantElement = amount.DominantElement;
+            if (dominantElement.HasValue)
+            {
+                Status = dominantElement;
+            }
         }
 
         if (currentHealth <= 0f)
         {
             Die(ragdollImpulse);
         }
+    }
+
+    public void ApplyAilment(Ailment ailment)
+    {
+        ailments.Add(ailment);
     }
 
     public void Die(Vector3 ragdollImpulse)
@@ -139,6 +151,8 @@ public partial class Enemy : CharacterBody3D
 
     public override void _PhysicsProcess(double delta)
     {
+        TickAilments((float)delta);
+
         if (NavAgent.IsNavigationFinished())
         {
             Velocity = Vector3.Zero;
@@ -155,6 +169,17 @@ public partial class Enemy : CharacterBody3D
 
         RotateTowardsMovement(direction, delta);
         AnimateWalkCycle(1.0, delta);
+    }
+
+    private void TickAilments(float delta)
+    {
+        for (int i = ailments.Count - 1; i >= 0; i--)
+        {
+            if (!ailments[i].Tick(this, delta))
+            {
+                ailments.RemoveAt(i);
+            }
+        }
     }
 
     private static Basis? ComputeFacingBasis(Vector3 direction)

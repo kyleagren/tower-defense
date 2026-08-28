@@ -15,4 +15,5 @@ public class SpellCastContext
     public ChainCastData Chain;
     public AreaCastData Area;
     public InstantHitCastData InstantHit;
+    public ReactionRune Reaction;
 }
