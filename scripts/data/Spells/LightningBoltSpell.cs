@@ -8,7 +8,7 @@ public partial class LightningBoltSpell : ChainableSpell
     [Export] public override float BaseCastTime { get; protected set; } = 0.6f;
     [Export] public override int BaseChainCount { get; protected set; } = 2;
     [Export] public override int BudgetCost { get; protected set; } = 10;
-    [Export] public override float MoreDamagePerRemainingChain { get; protected set; } = 0.15f;
+    [Export] public override ChainDamageModifier DamageModifier { get; protected set; }
 
     public override string Name => "Lightning Bolt";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Chaining, Tag.Lightning };
@@ -28,7 +28,7 @@ public partial class LightningBoltSpell : ChainableSpell
             {
                 ChainCount = BaseChainCount,
                 ChainRange = BaseChainRange,
-                MoreDamagePerRemainingChain = MoreDamagePerRemainingChain
+                DamageModifier = DamageModifier
             }
         };
     }

@@ -2,6 +2,6 @@ public class ChainCastData
 {
     public int ChainCount;
     public float ChainRange;
-    public float MoreDamagePerRemainingChain;
+    public ChainDamageModifier DamageModifier;
     public int ForkCount;
 }

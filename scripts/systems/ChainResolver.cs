@@ -6,7 +6,7 @@ public static class ChainResolver
 {
     public const float DamageFalloffPerChain = 0.9f;
 
-    public static void ResolveChain(Enemy firstTarget, Vector3 firstTargetPoint, DamagePacket damage, float ragdollForce, int chainCount, float chainRange, float moreDamagePerRemainingChain = 0f, PackedScene arcVisualScene = null, HashSet<Enemy> sharedChainTracker = null)
+    public static void ResolveChain(Enemy firstTarget, Vector3 firstTargetPoint, DamagePacket damage, float ragdollForce, int chainCount, float chainRange, ChainDamageModifier damageModifier = null, PackedScene arcVisualScene = null, HashSet<Enemy> sharedChainTracker = null)
     {
         Enemy current = firstTarget;
         Vector3 currentPoint = firstTargetPoint;
@@ -29,7 +29,8 @@ public static class ChainResolver
             }
 
             int remainingChains = chainCount - (i + 1);
-            DamagePacket currentDamage = damage * Mathf.Pow(DamageFalloffPerChain, i + 1) * Mathf.Pow(1f + moreDamagePerRemainingChain, remainingChains);
+            float multiplier = damageModifier?.GetMultiplier(remainingChains) ?? 1f;
+            DamagePacket currentDamage = damage * Mathf.Pow(DamageFalloffPerChain, i + 1) * multiplier;
 
             Vector3 nextPoint = next.GetJitteredCenterMass(0.25f);
             Vector3 ragdollImpulse = (nextPoint - currentPoint).Normalized() * ragdollForce;
