@@ -17,6 +17,25 @@ material = SubResource("StandardMaterial3D_soldier")
 radius = 0.4
 height = 1.8
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rifle"]
+albedo_color = Color(0.15, 0.15, 0.17, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rifle_body"]
+material = SubResource("StandardMaterial3D_rifle")
+size = Vector3(0.08, 0.1, 0.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rifle_barrel"]
+material = SubResource("StandardMaterial3D_rifle")
+size = Vector3(0.04, 0.04, 0.35)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rifle_stock"]
+material = SubResource("StandardMaterial3D_rifle")
+size = Vector3(0.06, 0.12, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rifle_magazine"]
+material = SubResource("StandardMaterial3D_rifle")
+size = Vector3(0.05, 0.2, 0.06)
+
 [node name="Soldier" type="CharacterBody3D" node_paths=PackedStringArray("SpringArm", "Camera", "BodyMesh")]
 collision_layer = 8
 collision_mask = 33
@@ -40,6 +59,24 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.8, 0)
 spring_length = 5.0
 
 [node name="Camera3D" type="Camera3D" parent="SpringArm3D"]
+
+[node name="Rifle" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 1.15, -0.25)
+
+[node name="Body" type="MeshInstance3D" parent="Rifle"]
+mesh = SubResource("BoxMesh_rifle_body")
+
+[node name="Barrel" type="MeshInstance3D" parent="Rifle"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.35)
+mesh = SubResource("BoxMesh_rifle_barrel")
+
+[node name="Stock" type="MeshInstance3D" parent="Rifle"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0.25)
+mesh = SubResource("BoxMesh_rifle_stock")
+
+[node name="Magazine" type="MeshInstance3D" parent="Rifle"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.13, -0.05)
+mesh = SubResource("BoxMesh_rifle_magazine")
 
 [node name="TowerInteractor" type="Node" parent="." node_paths=PackedStringArray("Character")]
 script = ExtResource("2_towerinteractor")
