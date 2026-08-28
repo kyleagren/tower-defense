@@ -1,0 +1,55 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/sigils/TagSigilPreview.cs" id="1_tagsigilpreview"]
+[ext_resource type="Script" path="res://ui/sigils/TagAnchorDisplay.cs" id="2_taganchordisplay"]
+[ext_resource type="Script" path="res://ui/sigils/TagSigilCandidatePanel.cs" id="3_candidatepanel"]
+
+[node name="TagSigilPreview" type="Control" node_paths=PackedStringArray("TagButtonRow", "AnchorDisplay", "CandidatePanelA", "CandidatePanelB", "CandidatePanelC", "CandidatePanelD")]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_tagsigilpreview")
+TagButtonRow = NodePath("TagButtonRow")
+AnchorDisplay = NodePath("AnchorDisplay")
+CandidatePanelA = NodePath("CandidateRow/CandidatePanelA")
+CandidatePanelB = NodePath("CandidateRow/CandidatePanelB")
+CandidatePanelC = NodePath("CandidateRow/CandidatePanelC")
+CandidatePanelD = NodePath("CandidateRow/CandidatePanelD")
+
+[node name="TagButtonRow" type="HBoxContainer" parent="."]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 900.0
+offset_bottom = 52.0
+
+[node name="AnchorDisplay" type="Control" parent="."]
+script = ExtResource("2_taganchordisplay")
+offset_left = 100.0
+offset_top = 80.0
+offset_right = 500.0
+offset_bottom = 480.0
+
+[node name="CandidateRow" type="HBoxContainer" parent="."]
+offset_left = 20.0
+offset_top = 500.0
+offset_right = 900.0
+offset_bottom = 660.0
+
+[node name="CandidatePanelA" type="Control" parent="CandidateRow"]
+custom_minimum_size = Vector2(200, 160)
+script = ExtResource("3_candidatepanel")
+strategy = 0
+
+[node name="CandidatePanelB" type="Control" parent="CandidateRow"]
+custom_minimum_size = Vector2(200, 160)
+script = ExtResource("3_candidatepanel")
+strategy = 1
+
+[node name="CandidatePanelC" type="Control" parent="CandidateRow"]
+custom_minimum_size = Vector2(200, 160)
+script = ExtResource("3_candidatepanel")
+strategy = 2
+
+[node name="CandidatePanelD" type="Control" parent="CandidateRow"]
+custom_minimum_size = Vector2(200, 160)
+script = ExtResource("3_candidatepanel")
+strategy = 3
