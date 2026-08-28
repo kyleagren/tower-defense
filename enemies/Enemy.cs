@@ -21,6 +21,27 @@ public partial class Enemy : CharacterBody3D
     [Export] public int Reward = 2;
     [Export] public HealthBar3D HealthBar { get; private set; }
 
+    // TODO placeholder: remove once there's a real way to display an enemy's element/ailments (Section 15 iconography).
+    private static readonly Dictionary<Tag, StandardMaterial3D> StatusMaterials = new Dictionary<Tag, StandardMaterial3D>
+    {
+        { Tag.Fire, CreateOverlayMaterial(new Color(1f, 0.5f, 0f)) },
+        { Tag.Water, CreateOverlayMaterial(new Color(0.05f, 0.15f, 0.55f)) },
+        { Tag.Cold, CreateOverlayMaterial(new Color(0.75f, 0.95f, 1f)) },
+        { Tag.Lightning, CreateOverlayMaterial(new Color(1f, 0.9f, 0.1f)) }
+    };
+
+    private static readonly StandardMaterial3D BurnFlashMaterial = CreateOverlayMaterial(new Color(0.5f, 0f, 0f));
+    private const float BurnFlashDuration = 0.1f;
+
+    private static StandardMaterial3D CreateOverlayMaterial(Color color)
+    {
+        return new StandardMaterial3D
+        {
+            AlbedoColor = color,
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
+        };
+    }
+
     private int legLBoneIdx;
     private int legRBoneIdx;
     private int armLBoneIdx;
@@ -30,6 +51,9 @@ public partial class Enemy : CharacterBody3D
     private bool hasFacedInitialDirection;
     private float currentHealth;
     private List<Ailment> ailments = new List<Ailment>();
+    // TODO placeholder: remove alongside StatusMaterials/BurnFlashMaterial above.
+    private List<MeshInstance3D> meshInstances = new List<MeshInstance3D>();
+    private float burnFlashTimer;
 
     public bool IsDead => isDead;
     public Tag? Status { get; private set; }
@@ -59,6 +83,7 @@ public partial class Enemy : CharacterBody3D
         HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
 
         SetPhysicalBonesCollision(0, 0);
+        CollectMeshInstances(Skeleton);
     }
 
     public void SetTarget(Vector3 targetPosition)
@@ -152,6 +177,7 @@ public partial class Enemy : CharacterBody3D
     public override void _PhysicsProcess(double delta)
     {
         TickAilments((float)delta);
+        UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
 
         if (NavAgent.IsNavigationFinished())
         {
@@ -179,6 +205,55 @@ public partial class Enemy : CharacterBody3D
             {
                 ailments.RemoveAt(i);
             }
+        }
+    }
+
+    // TODO placeholder block: remove this method and CollectMeshInstances once there's a real way to display an enemy's element/ailments.
+    private void UpdateElementalVisual(float delta)
+    {
+        bool isBurning = ailments.Exists(ailment => ailment is BurnAilment);
+
+        if (isBurning)
+        {
+            burnFlashTimer += delta;
+            if (burnFlashTimer >= 1f)
+            {
+                burnFlashTimer -= 1f;
+            }
+        }
+        else
+        {
+            burnFlashTimer = 0f;
+        }
+
+        bool isFlashing = isBurning && burnFlashTimer < BurnFlashDuration;
+
+        Material overlay = null;
+        if (isFlashing)
+        {
+            overlay = BurnFlashMaterial;
+        }
+        else if (Status.HasValue && StatusMaterials.TryGetValue(Status.Value, out StandardMaterial3D statusMaterial))
+        {
+            overlay = statusMaterial;
+        }
+
+        foreach (MeshInstance3D meshInstance in meshInstances)
+        {
+            meshInstance.MaterialOverlay = overlay;
+        }
+    }
+
+    private void CollectMeshInstances(Node node)
+    {
+        foreach (Node child in node.GetChildren())
+        {
+            if (child is MeshInstance3D meshInstance)
+            {
+                meshInstances.Add(meshInstance);
+            }
+
+            CollectMeshInstances(child);
         }
     }
 

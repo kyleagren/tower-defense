@@ -65,8 +65,8 @@ shape = SubResource("CapsuleShape3D_enemy")
 height = 1.8
 radius = 0.4
 
-[node name="HealthBar3D" parent="." instance=ExtResource("2_healthbar")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+[node name="HealthBar3D" parent="." unique_id=213996391 instance=ExtResource("2_healthbar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 FillColor = Color(0.9, 0.15, 0.1, 1)
 
 [node name="Skeleton3D" type="Skeleton3D" parent="." unique_id=2067215496]
@@ -214,9 +214,9 @@ mesh = SubResource("BoxMesh_leg")
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 1.1, 0)
 joint_offset = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.3)
 body_offset = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.3, 0)
-bone_name = "Body"
 linear_damp = 2.0
 angular_damp = 6.0
+bone_name = "Body"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Skeleton3D/PhysicalBoneSimulator3D/Physical Bone Body" unique_id=2077841275]
 transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0)
@@ -227,9 +227,9 @@ transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 1.5500001, 0)
 joint_type = 1
 joint_offset = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.14999998)
 body_offset = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.14999998, 0)
-bone_name = "Head"
 linear_damp = 2.0
 angular_damp = 6.0
+bone_name = "Head"
 joint_constraints/bias = 0.3
 joint_constraints/damping = 1.0
 joint_constraints/impulse_clamp = 0.0
@@ -243,9 +243,9 @@ transform = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, 0.325, 1.025, 0)
 joint_type = 1
 joint_offset = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.27499998)
 body_offset = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, 0, -0.27499998, 0)
-bone_name = "Arm.L"
 linear_damp = 2.0
 angular_damp = 6.0
+bone_name = "Arm.L"
 joint_constraints/bias = 0.3
 joint_constraints/damping = 1.0
 joint_constraints/impulse_clamp = 0.0
@@ -259,9 +259,9 @@ transform = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, -0.325, 1.025, 0)
 joint_type = 1
 joint_offset = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.27499998)
 body_offset = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, 0, -0.27499998, 0)
-bone_name = "Arm.R"
 linear_damp = 2.0
 angular_damp = 6.0
+bone_name = "Arm.R"
 joint_constraints/bias = 0.3
 joint_constraints/damping = 1.0
 joint_constraints/impulse_clamp = 0.0
@@ -275,9 +275,9 @@ transform = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, 0.15, 0.4, 0)
 joint_type = 1
 joint_offset = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.4)
 body_offset = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, 0, -0.4, 0)
-bone_name = "Leg.L"
 linear_damp = 2.0
 angular_damp = 6.0
+bone_name = "Leg.L"
 joint_constraints/bias = 0.3
 joint_constraints/damping = 1.0
 joint_constraints/impulse_clamp = 0.0
@@ -291,9 +291,9 @@ transform = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, -0.15, 0.4, 0)
 joint_type = 1
 joint_offset = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.4)
 body_offset = Transform3D(-1, 0, 0, 0, 0, 1, 0, 1, 0, 0, -0.4, 0)
-bone_name = "Leg.R"
 linear_damp = 2.0
 angular_damp = 6.0
+bone_name = "Leg.R"
 joint_constraints/bias = 0.3
 joint_constraints/damping = 1.0
 joint_constraints/impulse_clamp = 0.0
