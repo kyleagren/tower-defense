@@ -5,5 +5,5 @@ public abstract partial class ReactionRune : Rune
         context.Reaction = this;
     }
 
-    public abstract void OnHit(Enemy target, DamagePacket incomingDamage);
+    public abstract bool OnHit(Enemy target, DamagePacket incomingDamage);
 }

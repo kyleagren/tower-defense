@@ -14,7 +14,7 @@ public partial class IgnitionRune : ReactionRune
 
     public override string Description => "When Fire and Lightning damage cross paths on the same enemy, ignites them into a burning Ailment.";
 
-    public override void OnHit(Enemy target, DamagePacket incomingDamage)
+    public override bool OnHit(Enemy target, DamagePacket incomingDamage)
     {
         Tag? incomingElement = incomingDamage.DominantElement;
         Tag? existingStatus = target.Status;
@@ -27,5 +27,7 @@ public partial class IgnitionRune : ReactionRune
         {
             target.ApplyAilment(new BurnAilment(incomingDamage.Total * BurnDamagePercent, BurnDuration));
         }
+
+        return isFireLightningPair;
     }
 }

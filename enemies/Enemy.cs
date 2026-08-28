@@ -98,17 +98,24 @@ public partial class Enemy : CharacterBody3D
             return;
         }
 
-        reaction?.OnHit(this, amount);
+        bool reactionTriggered = reaction?.OnHit(this, amount) ?? false;
 
         _currentHealth -= amount.Total;
         HealthBar.SetFraction(_currentHealth / MaxHealth);
 
         if (updateStatus)
         {
-            Tag? dominantElement = amount.DominantElement;
-            if (dominantElement.HasValue)
+            if (reactionTriggered)
             {
-                Status = dominantElement;
+                Status = null;
+            }
+            else
+            {
+                Tag? dominantElement = amount.DominantElement;
+                if (dominantElement.HasValue)
+                {
+                    Status = dominantElement;
+                }
             }
         }
 
