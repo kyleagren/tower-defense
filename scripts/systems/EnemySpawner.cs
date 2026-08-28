@@ -6,7 +6,7 @@ public partial class EnemySpawner : Node3D
     [Export] public string Id { get; private set; }
     [Export] public Node3D Target { get; private set; }
 
-    private Vector3 initialDirection = Vector3.Forward;
+    private Vector3 _initialDirection = Vector3.Forward;
 
     public override async void _Ready()
     {
@@ -18,7 +18,7 @@ public partial class EnemySpawner : Node3D
         Enemy enemy = enemyScene.Instantiate<Enemy>();
         GetParent().AddChild(enemy);
         enemy.GlobalPosition = GlobalPosition;
-        enemy.SetInitialFacing(initialDirection);
+        enemy.SetInitialFacing(_initialDirection);
         enemy.SetTarget(Target.GlobalPosition);
     }
 
@@ -50,7 +50,7 @@ public partial class EnemySpawner : Node3D
             return false;
         }
 
-        initialDirection = (pathPoints[1] - pathPoints[0]).Normalized();
+        _initialDirection = (pathPoints[1] - pathPoints[0]).Normalized();
         return true;
     }
 }

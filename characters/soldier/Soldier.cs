@@ -8,7 +8,7 @@ public partial class Soldier : PlayerCharacter
     [Export] public float FireRate = 6f;
     [Export] public PackedScene ImpactScene { get; private set; }
 
-    private float fireCooldown;
+    private float _fireCooldown;
 
     public override void _Ready()
     {
@@ -62,11 +62,11 @@ public partial class Soldier : PlayerCharacter
         Vector2 inputDir = Input.GetVector("move_left", "move_right", "move_forward", "move_back");
         ApplyGroundMovement(delta, inputDir);
 
-        fireCooldown -= (float)delta;
+        _fireCooldown -= (float)delta;
 
-        if (Input.IsActionPressed("attack") && fireCooldown <= 0f)
+        if (Input.IsActionPressed("attack") && _fireCooldown <= 0f)
         {
-            fireCooldown = 1f / FireRate;
+            _fireCooldown = 1f / FireRate;
             FireShot();
         }
     }

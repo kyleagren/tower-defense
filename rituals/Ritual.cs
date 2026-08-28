@@ -9,15 +9,15 @@ public partial class Ritual : Node3D
     [Export] public Node3D SpawnPoint { get; private set; }
     [Export] public float TargetSearchInterval = 0.25f;
 
-    private SpellInstance spellInstance;
-    private Enemy currentTarget;
-    private float searchTimer;
-    private int budgetCost;
-    private List<CastEffect> castEffects;
+    private SpellInstance _spellInstance;
+    private Enemy _currentTarget;
+    private float _searchTimer;
+    private int _budgetCost;
+    private List<CastEffect> _castEffects;
 
     public override void _Ready()
     {
-        castEffects = GetChildren().OfType<CastEffect>().ToList();
+        _castEffects = GetChildren().OfType<CastEffect>().ToList();
         Configure(Spell, RuneSlots);
     }
 
@@ -28,7 +28,7 @@ public partial class Ritual : Node3D
 
     public void SetBudgetCost(int cost)
     {
-        budgetCost = cost;
+        _budgetCost = cost;
     }
 
     public void Destroy()
@@ -49,7 +49,7 @@ public partial class Ritual : Node3D
             }
         }
 
-        EconomyManager.Instance.RefundTower(budgetCost);
+        EconomyManager.Instance.RefundTower(_budgetCost);
 
         QueueFree();
     }
@@ -57,39 +57,39 @@ public partial class Ritual : Node3D
     public void Configure(Spell spell, IReadOnlyList<Rune> runes)
     {
         Spell = spell;
-        spellInstance = new SpellInstance(spell);
+        _spellInstance = new SpellInstance(spell);
 
         foreach (Rune rune in runes)
         {
             if (rune != null)
             {
-                spellInstance.TryAttachRune(rune);
+                _spellInstance.TryAttachRune(rune);
             }
         }
     }
 
     public override void _Process(double delta)
     {
-        spellInstance.Tick((float)delta);
+        _spellInstance.Tick((float)delta);
 
-        searchTimer -= (float)delta;
+        _searchTimer -= (float)delta;
 
-        bool hadTarget = currentTarget != null;
+        bool hadTarget = _currentTarget != null;
 
-        if (currentTarget != null && (!IsInstanceValid(currentTarget) || currentTarget.IsDead))
+        if (_currentTarget != null && (!IsInstanceValid(_currentTarget) || _currentTarget.IsDead))
         {
-            currentTarget = null;
+            _currentTarget = null;
         }
 
-        bool justLostTarget = hadTarget && currentTarget == null;
+        bool justLostTarget = hadTarget && _currentTarget == null;
 
-        if (searchTimer <= 0f || justLostTarget)
+        if (_searchTimer <= 0f || justLostTarget)
         {
-            searchTimer = TargetSearchInterval;
-            currentTarget = EnemyTargeting.FindNearest(GlobalPosition, spellInstance.Resolve().Range);
+            _searchTimer = TargetSearchInterval;
+            _currentTarget = EnemyTargeting.FindNearest(GlobalPosition, _spellInstance.Resolve().Range);
         }
 
-        if (currentTarget != null && spellInstance.CanCast)
+        if (_currentTarget != null && _spellInstance.CanCast)
         {
             CastAtTarget();
         }
@@ -97,14 +97,14 @@ public partial class Ritual : Node3D
 
     private void CastAtTarget()
     {
-        Vector3 targetPosition = currentTarget.GlobalPosition;
+        Vector3 targetPosition = _currentTarget.GlobalPosition;
         Vector3 levelAimPosition = new Vector3(targetPosition.X, SpawnPoint.GlobalPosition.Y, targetPosition.Z);
         SpawnPoint.LookAt(levelAimPosition, Vector3.Up);
 
-        SpellCastContext context = spellInstance.Resolve();
-        CastEffect effect = castEffects.FirstOrDefault(e => e.CanHandle(context));
+        SpellCastContext context = _spellInstance.Resolve();
+        CastEffect effect = _castEffects.FirstOrDefault(e => e.CanHandle(context));
         effect?.Cast(context, SpawnPoint);
 
-        spellInstance.StartCast(context.CastTime, context.Cooldown);
+        _spellInstance.StartCast(context.CastTime, context.Cooldown);
     }
 }

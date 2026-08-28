@@ -8,7 +8,7 @@ public partial class ArcVisual : Node3D
     [Export] public Mesh SegmentMesh;
     [Export] public Material SegmentMaterial;
 
-    private static readonly Transform3D MeshCorrection = new Transform3D(
+    private static readonly Transform3D _meshCorrection = new Transform3D(
         new Vector3(1, 0, 0),
         new Vector3(0, 0, -1),
         new Vector3(0, 1, 0),
@@ -56,7 +56,7 @@ public partial class ArcVisual : Node3D
         {
             Mesh = SegmentMesh,
             MaterialOverride = SegmentMaterial,
-            Transform = MeshCorrection
+            Transform = _meshCorrection
         };
         wrapper.AddChild(meshInstance);
 

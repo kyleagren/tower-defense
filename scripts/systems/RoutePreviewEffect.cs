@@ -15,16 +15,16 @@ public partial class RoutePreviewEffect : Node3D
 
     private const string SpawnerGroup = "enemy_spawners";
 
-    private List<PathFollow3D[]> routes = new List<PathFollow3D[]>();
-    private Timer pulseTimer;
+    private List<PathFollow3D[]> _routes = new List<PathFollow3D[]>();
+    private Timer _pulseTimer;
 
     public override async void _Ready()
     {
         await BuildRoutesWithRetry();
 
-        pulseTimer = new Timer { WaitTime = PulseInterval };
-        pulseTimer.Timeout += Pulse;
-        AddChild(pulseTimer);
+        _pulseTimer = new Timer { WaitTime = PulseInterval };
+        _pulseTimer.Timeout += Pulse;
+        AddChild(_pulseTimer);
 
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         OnGamePhaseChanged(WaveController.GamePhase.Build);
@@ -37,7 +37,7 @@ public partial class RoutePreviewEffect : Node3D
 
     public override void _Process(double delta)
     {
-        foreach (PathFollow3D[] segments in routes)
+        foreach (PathFollow3D[] segments in _routes)
         {
             float leadProgress = segments[0].ProgressRatio;
 
@@ -53,13 +53,13 @@ public partial class RoutePreviewEffect : Node3D
         if (phase == WaveController.GamePhase.Build)
         {
             SetProcess(true);
-            pulseTimer.Start();
+            _pulseTimer.Start();
             Pulse();
         }
         else
         {
             SetProcess(false);
-            pulseTimer.Stop();
+            _pulseTimer.Stop();
         }
     }
 
@@ -71,7 +71,7 @@ public partial class RoutePreviewEffect : Node3D
 
             BuildRoutes();
 
-            if (routes.Count > 0)
+            if (_routes.Count > 0)
             {
                 return;
             }
@@ -120,7 +120,7 @@ public partial class RoutePreviewEffect : Node3D
                 segments[i] = segFollower;
             }
 
-            routes.Add(segments);
+            _routes.Add(segments);
         }
     }
 
@@ -146,7 +146,7 @@ public partial class RoutePreviewEffect : Node3D
 
     private void Pulse()
     {
-        foreach (PathFollow3D[] segments in routes)
+        foreach (PathFollow3D[] segments in _routes)
         {
             foreach (PathFollow3D segment in segments)
             {

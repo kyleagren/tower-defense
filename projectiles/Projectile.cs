@@ -20,14 +20,14 @@ public partial class Projectile : Area3D
     public Vector3 LastRagdollImpulse { get; private set; }
     public ReactionRune Reaction { get; private set; }
 
-    private int pierceRemaining;
-    private float speed;
-    private bool hasExpired;
-    private bool isReturn;
-    private bool hasReturned;
+    private int _pierceRemaining;
+    private float _speed;
+    private bool _hasExpired;
+    private bool _isReturn;
+    private bool _hasReturned;
     private const float ReturnArrivalDistance = 0.75f;
     private const float MaxReturnDistance = 10f;
-    private HashSet<Node3D> alreadyHit = new HashSet<Node3D>();
+    private HashSet<Node3D> _alreadyHit = new HashSet<Node3D>();
 
     public void Initialize(SpellCastContext context)
     {
@@ -37,9 +37,9 @@ public partial class Projectile : Area3D
         RagdollForce = context.RagdollForce;
         ChainCount = context.Chain?.ChainCount ?? 0;
         ChainRange = context.Chain?.ChainRange ?? 0f;
-        pierceRemaining = context.Projectile.PierceCount;
-        isReturn = context.Projectile.IsReturn;
-        speed = context.Projectile.Speed;
+        _pierceRemaining = context.Projectile.PierceCount;
+        _isReturn = context.Projectile.IsReturn;
+        _speed = context.Projectile.Speed;
         Reaction = context.Reaction;
     }
 
@@ -52,41 +52,41 @@ public partial class Projectile : Area3D
 
     public override void _PhysicsProcess(double delta)
     {
-        Position -= Transform.Basis.Z * speed * (float)delta;
+        Position -= Transform.Basis.Z * _speed * (float)delta;
 
-        if (isReturn && !hasReturned && alreadyHit.Count == 0
+        if (_isReturn && !_hasReturned && _alreadyHit.Count == 0
             && GlobalPosition.DistanceSquaredTo(SpawnPosition) > MaxReturnDistance * MaxReturnDistance)
         {
-            hasReturned = true;
+            _hasReturned = true;
             LookAt(SpawnPosition, Vector3.Up);
         }
 
-        if (hasReturned && GlobalPosition.DistanceSquaredTo(SpawnPosition) < ReturnArrivalDistance * ReturnArrivalDistance)
+        if (_hasReturned && GlobalPosition.DistanceSquaredTo(SpawnPosition) < ReturnArrivalDistance * ReturnArrivalDistance)
         {
-            hasExpired = true;
+            _hasExpired = true;
             QueueFree();
         }
     }
 
     private void OnBodyEntered(Node3D body)
     {
-        if (hasExpired)
+        if (_hasExpired)
         {
             return;
         }
 
-        if (hasReturned)
+        if (_hasReturned)
         {
             HandleReturnHit(body);
             return;
         }
 
-        if (alreadyHit.Contains(body))
+        if (_alreadyHit.Contains(body))
         {
             return;
         }
 
-        alreadyHit.Add(body);
+        _alreadyHit.Add(body);
         ApplyHit(body);
 
         if (body is Enemy hitEnemy)
@@ -101,9 +101,9 @@ public partial class Projectile : Area3D
 
     private void ResolveOutcomeAfterEnemyHit(Enemy hitEnemy)
     {
-        if (pierceRemaining > 0)
+        if (_pierceRemaining > 0)
         {
-            pierceRemaining--;
+            _pierceRemaining--;
             return;
         }
 
@@ -114,9 +114,9 @@ public partial class Projectile : Area3D
             return;
         }
 
-        if (isReturn)
+        if (_isReturn)
         {
-            hasReturned = true;
+            _hasReturned = true;
             LookAt(SpawnPosition, Vector3.Up);
             return;
         }
@@ -126,9 +126,9 @@ public partial class Projectile : Area3D
 
     private void ResolveOutcomeAfterNonEnemyHit(Node3D body)
     {
-        if (isReturn)
+        if (_isReturn)
         {
-            hasReturned = true;
+            _hasReturned = true;
             LookAt(SpawnPosition, Vector3.Up);
             return;
         }
@@ -165,9 +165,9 @@ public partial class Projectile : Area3D
 
     private void Expire(Node3D lastHitBody)
     {
-        hasExpired = true;
+        _hasExpired = true;
 
-        if (!isReturn)
+        if (!_isReturn)
         {
             HitEffect?.OnHit(this, lastHitBody);
         }
@@ -177,7 +177,7 @@ public partial class Projectile : Area3D
 
     private bool TryRedirectToChainTarget(Enemy hitEnemy)
     {
-        IEnumerable<Enemy> ownHits = alreadyHit.OfType<Enemy>();
+        IEnumerable<Enemy> ownHits = _alreadyHit.OfType<Enemy>();
 
         Enemy next = null;
 

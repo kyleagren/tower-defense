@@ -6,7 +6,7 @@ public partial class Architect : PlayerCharacter
     [Export] public TowerPlacer TowerPlacer { get; private set; }
     [Export] public PlayerCharacter Soldier { get; private set; }
 
-    private bool buildMenuOpen;
+    private bool _buildMenuOpen;
 
     public override void _Ready()
     {
@@ -25,7 +25,7 @@ public partial class Architect : PlayerCharacter
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (buildMenuOpen || !active)
+        if (_buildMenuOpen || !active)
         {
             return;
         }
@@ -49,14 +49,14 @@ public partial class Architect : PlayerCharacter
 
     private void OpenBuildMenu()
     {
-        buildMenuOpen = true;
+        _buildMenuOpen = true;
         Input.MouseMode = Input.MouseModeEnum.Visible;
         BuildMenu.Open();
     }
 
     private void OnBuildMenuClosed()
     {
-        buildMenuOpen = false;
+        _buildMenuOpen = false;
         Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 
@@ -84,7 +84,7 @@ public partial class Architect : PlayerCharacter
             return;
         }
 
-        Vector2 inputDir = buildMenuOpen ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_forward", "move_back");
-        ApplyGroundMovement(delta, inputDir, allowJump: !buildMenuOpen);
+        Vector2 inputDir = _buildMenuOpen ? Vector2.Zero : Input.GetVector("move_left", "move_right", "move_forward", "move_back");
+        ApplyGroundMovement(delta, inputDir, allowJump: !_buildMenuOpen);
     }
 }

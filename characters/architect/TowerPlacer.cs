@@ -9,23 +9,23 @@ public partial class TowerPlacer : Node
 
     public bool IsPlacing { get; private set; }
 
-    private Ritual ghost;
-    private MeshInstance3D ghostMesh;
-    private CollisionShape3D ghostCollisionShape;
-    private Spell pendingSpell;
-    private Godot.Collections.Array<Rune> pendingRunes;
-    private bool isValidPlacement;
+    private Ritual _ghost;
+    private MeshInstance3D _ghostMesh;
+    private CollisionShape3D _ghostCollisionShape;
+    private Spell _pendingSpell;
+    private Godot.Collections.Array<Rune> _pendingRunes;
+    private bool _isValidPlacement;
 
-    private static readonly StandardMaterial3D ValidMaterial = CreateGhostMaterial(new Color(0.2f, 1f, 0.3f, 0.5f));
-    private static readonly StandardMaterial3D InvalidMaterial = CreateGhostMaterial(new Color(1f, 0.2f, 0.2f, 0.5f));
-    private static readonly StandardMaterial3D RangeMaterial = CreateGhostMaterial(new Color(0.3f, 0.6f, 1f, 0.25f));
+    private static readonly StandardMaterial3D _validMaterial = CreateGhostMaterial(new Color(0.2f, 1f, 0.3f, 0.5f));
+    private static readonly StandardMaterial3D _invalidMaterial = CreateGhostMaterial(new Color(1f, 0.2f, 0.2f, 0.5f));
+    private static readonly StandardMaterial3D _rangeMaterial = CreateGhostMaterial(new Color(0.3f, 0.6f, 1f, 0.25f));
 
-    private EconomyManager economy;
+    private EconomyManager _economy;
 
     public override void _Ready()
     {
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        economy = EconomyManager.Instance;
+        _economy = EconomyManager.Instance;
     }
 
     public override void _ExitTree()
@@ -48,20 +48,20 @@ public partial class TowerPlacer : Node
             return;
         }
 
-        pendingSpell = spell;
-        pendingRunes = runes;
+        _pendingSpell = spell;
+        _pendingRunes = runes;
 
-        ghost = RitualScene.Instantiate<Ritual>();
-        GetTree().CurrentScene.AddChild(ghost);
-        ghost.SetProcess(false);
-        ghost.SetPhysicsProcess(false);
+        _ghost = RitualScene.Instantiate<Ritual>();
+        GetTree().CurrentScene.AddChild(_ghost);
+        _ghost.SetProcess(false);
+        _ghost.SetPhysicsProcess(false);
 
-        ghostMesh = ghost.GetNode<MeshInstance3D>("MeshInstance3D");
-        ghostCollisionShape = ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
-        ghostCollisionShape.Disabled = true;
+        _ghostMesh = _ghost.GetNode<MeshInstance3D>("MeshInstance3D");
+        _ghostCollisionShape = _ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
+        _ghostCollisionShape.Disabled = true;
 
         float effectiveRange = ComputePreviewRange(spell, runes);
-        ghost.AddChild(BuildRangeIndicator(effectiveRange));
+        _ghost.AddChild(BuildRangeIndicator(effectiveRange));
 
         IsPlacing = true;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, true);
@@ -77,7 +77,7 @@ public partial class TowerPlacer : Node
         UpdateGhostPosition();
         UpdateGhostValidity();
 
-        if (Input.IsActionJustPressed("confirm_placement") && isValidPlacement)
+        if (Input.IsActionJustPressed("confirm_placement") && _isValidPlacement)
         {
             ConfirmPlacement();
         }
@@ -102,7 +102,7 @@ public partial class TowerPlacer : Node
 
         if (result.Count > 0)
         {
-            ghost.GlobalPosition = (Vector3)result["position"];
+            _ghost.GlobalPosition = (Vector3)result["position"];
         }
     }
 
@@ -112,27 +112,27 @@ public partial class TowerPlacer : Node
 
         PhysicsShapeQueryParameters3D query = new PhysicsShapeQueryParameters3D
         {
-            Shape = ghostCollisionShape.Shape,
-            Transform = ghostCollisionShape.GlobalTransform,
+            Shape = _ghostCollisionShape.Shape,
+            Transform = _ghostCollisionShape.GlobalTransform,
             CollisionMask = 16,
             CollideWithBodies = true,
             CollideWithAreas = false
         };
 
         Godot.Collections.Array<Godot.Collections.Dictionary> overlaps = spaceState.IntersectShape(query);
-        isValidPlacement = overlaps.Count == 0 && economy.CanAfford(pendingSpell, pendingRunes.Count);
+        _isValidPlacement = overlaps.Count == 0 && _economy.CanAfford(_pendingSpell, _pendingRunes.Count);
 
-        ghostMesh.MaterialOverride = isValidPlacement ? ValidMaterial : InvalidMaterial;
+        _ghostMesh.MaterialOverride = _isValidPlacement ? _validMaterial : _invalidMaterial;
     }
 
     private void ConfirmPlacement()
     {
         Ritual placed = RitualScene.Instantiate<Ritual>();
         GetTree().CurrentScene.AddChild(placed);
-        placed.GlobalTransform = ghost.GlobalTransform;
-        placed.Configure(pendingSpell, pendingRunes);
+        placed.GlobalTransform = _ghost.GlobalTransform;
+        placed.Configure(_pendingSpell, _pendingRunes);
 
-        int cost = economy.SpendOnTower(pendingSpell, pendingRunes.Count);
+        int cost = _economy.SpendOnTower(_pendingSpell, _pendingRunes.Count);
         placed.SetBudgetCost(cost);
 
         EndPlacement();
@@ -145,8 +145,8 @@ public partial class TowerPlacer : Node
 
     private void EndPlacement()
     {
-        ghost.QueueFree();
-        ghost = null;
+        _ghost.QueueFree();
+        _ghost = null;
         IsPlacing = false;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, false);
     }
@@ -170,7 +170,7 @@ public partial class TowerPlacer : Node
         return new MeshInstance3D
         {
             Mesh = new CylinderMesh { TopRadius = range, BottomRadius = range, Height = 0.05f },
-            MaterialOverride = RangeMaterial,
+            MaterialOverride = _rangeMaterial,
             Position = new Vector3(0f, 0.03f, 0f)
         };
     }

@@ -8,19 +8,19 @@ public partial class DefendableObjective : Area3D
     [Export] public float DamagePerHit = 10f;
     [Export] public HealthBar3D HealthBar { get; private set; }
 
-    private float currentHealth;
-    private bool destroyed;
+    private float _currentHealth;
+    private bool _destroyed;
 
     public override void _Ready()
     {
-        currentHealth = MaxHealth;
+        _currentHealth = MaxHealth;
         BodyEntered += OnBodyEntered;
         HealthBar.SetFraction(1f);
     }
 
     private void OnBodyEntered(Node3D body)
     {
-        if (destroyed)
+        if (_destroyed)
         {
             return;
         }
@@ -34,12 +34,12 @@ public partial class DefendableObjective : Area3D
 
             enemy.Die(ragdollDirection * RagdollForce);
 
-            currentHealth -= DamagePerHit;
-            HealthBar.SetFraction(currentHealth / MaxHealth);
+            _currentHealth -= DamagePerHit;
+            HealthBar.SetFraction(_currentHealth / MaxHealth);
 
-            if (currentHealth <= 0f)
+            if (_currentHealth <= 0f)
             {
-                destroyed = true;
+                _destroyed = true;
                 EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, false);
             }
         }

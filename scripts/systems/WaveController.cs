@@ -17,19 +17,19 @@ public partial class WaveController : Node
     private const string SpawnerGroup = "enemy_spawners";
     private const string EnemyGroup = "enemies";
 
-    private Dictionary<string, EnemySpawner> spawnersById;
-    private int nextWaveIndex;
-    private GamePhase currentPhase = GamePhase.Build;
+    private Dictionary<string, EnemySpawner> _spawnersById;
+    private int _nextWaveIndex;
+    private GamePhase _currentPhase = GamePhase.Build;
 
     public override void _Ready()
     {
-        spawnersById = new Dictionary<string, EnemySpawner>();
+        _spawnersById = new Dictionary<string, EnemySpawner>();
 
         foreach (Node node in GetTree().GetNodesInGroup(SpawnerGroup))
         {
             if (node is EnemySpawner spawner)
             {
-                spawnersById[spawner.Id] = spawner;
+                _spawnersById[spawner.Id] = spawner;
             }
         }
     }
@@ -44,20 +44,20 @@ public partial class WaveController : Node
 
     public void StartNextWave()
     {
-        if (currentPhase != GamePhase.Build || nextWaveIndex >= Waves.Count)
+        if (_currentPhase != GamePhase.Build || _nextWaveIndex >= Waves.Count)
         {
             return;
         }
 
-        WaveDefinition wave = Waves[nextWaveIndex];
-        nextWaveIndex++;
+        WaveDefinition wave = Waves[_nextWaveIndex];
+        _nextWaveIndex++;
 
         _ = RunWave(wave);
     }
 
     private async Task RunWave(WaveDefinition wave)
     {
-        currentPhase = GamePhase.Combat;
+        _currentPhase = GamePhase.Combat;
         EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Combat);
 
         Dictionary<string, List<WaveSpawnEntry>> entriesBySpawner = new Dictionary<string, List<WaveSpawnEntry>>();
@@ -87,10 +87,10 @@ public partial class WaveController : Node
             await ToSignal(GetTree().CreateTimer(EnemyCheckInterval), "timeout");
         }
 
-        currentPhase = GamePhase.Build;
+        _currentPhase = GamePhase.Build;
         EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Build);
 
-        if (nextWaveIndex >= Waves.Count)
+        if (_nextWaveIndex >= Waves.Count)
         {
             EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, true);
         }
@@ -98,7 +98,7 @@ public partial class WaveController : Node
 
     private async Task RunSpawnerQueue(string spawnerId, List<WaveSpawnEntry> entries, bool randomizeOrder)
     {
-        if (!spawnersById.TryGetValue(spawnerId, out EnemySpawner spawner))
+        if (!_spawnersById.TryGetValue(spawnerId, out EnemySpawner spawner))
         {
             GD.PushWarning($"WaveController: no spawner found with id \"{spawnerId}\".");
             return;

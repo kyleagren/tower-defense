@@ -4,15 +4,15 @@ public partial class InteractionPrompt : Node3D
 {
     [Export] public Label3D Label { get; private set; }
 
-    private string currentText;
+    private string _currentText;
 
     public void ShowPrompt(Vector3 worldPosition, string text)
     {
         GlobalPosition = worldPosition;
 
-        if (text != currentText)
+        if (text != _currentText)
         {
-            currentText = text;
+            _currentText = text;
             Label.Text = text;
         }
 

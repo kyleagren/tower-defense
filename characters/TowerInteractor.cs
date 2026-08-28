@@ -9,19 +9,19 @@ public partial class TowerInteractor : Node
 
     public Ritual TargetedTower { get; private set; }
 
-    private InteractionPrompt prompt;
-    private string promptText;
-    private float destroyHoldTime;
+    private InteractionPrompt _prompt;
+    private string _promptText;
+    private float _destroyHoldTime;
 
     public override void _Ready()
     {
-        prompt = PromptScene.Instantiate<InteractionPrompt>();
-        GetTree().CurrentScene.CallDeferred(Node.MethodName.AddChild, prompt);
-        prompt.HidePrompt();
+        _prompt = PromptScene.Instantiate<InteractionPrompt>();
+        GetTree().CurrentScene.CallDeferred(Node.MethodName.AddChild, _prompt);
+        _prompt.HidePrompt();
 
         string repairKey = InputPromptHelper.GetActionKeyName("repair_tower");
         string destroyKey = InputPromptHelper.GetActionKeyName("destroy_tower");
-        promptText = $"Press {repairKey} to Repair\nHold {destroyKey} to Destroy";
+        _promptText = $"Press {repairKey} to Repair\nHold {destroyKey} to Destroy";
     }
 
     public override void _PhysicsProcess(double delta)
@@ -29,8 +29,8 @@ public partial class TowerInteractor : Node
         if (!Character.IsActive)
         {
             TargetedTower = null;
-            destroyHoldTime = 0f;
-            prompt.HidePrompt();
+            _destroyHoldTime = 0f;
+            _prompt.HidePrompt();
             return;
         }
 
@@ -38,40 +38,40 @@ public partial class TowerInteractor : Node
 
         if (TargetedTower == null)
         {
-            destroyHoldTime = 0f;
-            prompt.HidePrompt();
+            _destroyHoldTime = 0f;
+            _prompt.HidePrompt();
             return;
         }
 
         if (Input.IsActionPressed("destroy_tower"))
         {
-            destroyHoldTime += (float)delta;
+            _destroyHoldTime += (float)delta;
 
-            if (destroyHoldTime >= DestroyHoldDuration)
+            if (_destroyHoldTime >= DestroyHoldDuration)
             {
                 Ritual tower = TargetedTower;
                 TargetedTower = null;
-                destroyHoldTime = 0f;
-                prompt.HidePrompt();
+                _destroyHoldTime = 0f;
+                _prompt.HidePrompt();
                 tower.Destroy();
                 return;
             }
         }
         else
         {
-            destroyHoldTime = 0f;
+            _destroyHoldTime = 0f;
         }
 
         Vector3 promptPosition = TargetedTower.GlobalPosition + Vector3.Up * 0.3f;
 
-        if (destroyHoldTime > 0f)
+        if (_destroyHoldTime > 0f)
         {
-            int percent = Mathf.RoundToInt(destroyHoldTime / DestroyHoldDuration * 100f);
-            prompt.ShowPrompt(promptPosition, $"Destroying... {percent}%");
+            int percent = Mathf.RoundToInt(_destroyHoldTime / DestroyHoldDuration * 100f);
+            _prompt.ShowPrompt(promptPosition, $"Destroying... {percent}%");
         }
         else
         {
-            prompt.ShowPrompt(promptPosition, promptText);
+            _prompt.ShowPrompt(promptPosition, _promptText);
         }
     }
 

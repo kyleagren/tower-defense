@@ -12,26 +12,26 @@ public partial class BuildMenu : Control
     [Export] public Label DescriptionTitleLabel { get; private set; }
     [Export] public Label DescriptionBodyLabel { get; private set; }
 
-    private Spell selectedSpell;
-    private readonly Rune[] socketedRunes = new Rune[GameRules.MaxRuneSlots];
+    private Spell _selectedSpell;
+    private readonly Rune[] _socketedRunes = new Rune[GameRules.MaxRuneSlots];
 
-    private Control socketScreen;
-    private Label centerSpellLabel;
-    private readonly Button[] socketButtons = new Button[GameRules.MaxRuneSlots];
+    private Control _socketScreen;
+    private Label _centerSpellLabel;
+    private readonly Button[] _socketButtons = new Button[GameRules.MaxRuneSlots];
 
-    private Control runePickerScreen;
-    private SpellGrid runeGrid;
-    private int socketBeingAssigned = -1;
+    private Control _runePickerScreen;
+    private SpellGrid _runeGrid;
+    private int _socketBeingAssigned = -1;
 
-    private ConfirmationDialog clearAllDialog;
+    private ConfirmationDialog _clearAllDialog;
 
-    private EconomyManager economy;
+    private EconomyManager _economy;
 
     private IEnumerable<Rune> AllRunes => SaveManager.Instance.Data.KnownRunes.Select(entry => entry.Rune);
 
     public override void _Ready()
     {
-        economy = EconomyManager.Instance;
+        _economy = EconomyManager.Instance;
         PopulateSpellGrid();
         BuildSocketScreen();
         BuildRunePickerScreen();
@@ -60,93 +60,93 @@ public partial class BuildMenu : Control
 
     private void OnSpellSelected(Spell spell)
     {
-        if (spell != selectedSpell)
+        if (spell != _selectedSpell)
         {
-            for (int i = 0; i < socketedRunes.Length; i++)
+            for (int i = 0; i < _socketedRunes.Length; i++)
             {
-                socketedRunes[i] = null;
+                _socketedRunes[i] = null;
             }
         }
 
-        selectedSpell = spell;
+        _selectedSpell = spell;
         ShowSocketScreen();
     }
 
     private void BuildSocketScreen()
     {
-        socketScreen = new Control { Visible = false };
-        socketScreen.SetAnchorsPreset(LayoutPreset.FullRect);
-        MenuRegion.AddChild(socketScreen);
+        _socketScreen = new Control { Visible = false };
+        _socketScreen.SetAnchorsPreset(LayoutPreset.FullRect);
+        MenuRegion.AddChild(_socketScreen);
 
-        centerSpellLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
-        centerSpellLabel.AddThemeFontSizeOverride("font_size", 28);
-        centerSpellLabel.SetAnchorsPreset(LayoutPreset.Center);
-        socketScreen.AddChild(centerSpellLabel);
+        _centerSpellLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
+        _centerSpellLabel.AddThemeFontSizeOverride("font_size", 28);
+        _centerSpellLabel.SetAnchorsPreset(LayoutPreset.Center);
+        _socketScreen.AddChild(_centerSpellLabel);
 
-        for (int i = 0; i < socketButtons.Length; i++)
+        for (int i = 0; i < _socketButtons.Length; i++)
         {
             int socketIndex = i;
             Button socketButton = new Button();
-            CenterOnAnchor(socketButton, SocketAnchors[i], new Vector2(160f, 100f));
+            CenterOnAnchor(socketButton, _socketAnchors[i], new Vector2(160f, 100f));
             socketButton.Pressed += () => ShowRunePicker(socketIndex);
             socketButton.MouseEntered += () => ShowSocketDescription(socketIndex);
             socketButton.FocusEntered += () => ShowSocketDescription(socketIndex);
-            socketScreen.AddChild(socketButton);
-            socketButtons[i] = socketButton;
+            _socketScreen.AddChild(socketButton);
+            _socketButtons[i] = socketButton;
         }
 
         Button clearAllButton = new Button { Text = "Clear All" };
         CenterOnAnchor(clearAllButton, new Vector2(0.5f, 0.95f), new Vector2(140f, 50f));
-        clearAllButton.AddThemeStyleboxOverride("normal", ClearAllButtonStyle);
-        clearAllButton.AddThemeStyleboxOverride("hover", ClearAllButtonHoverStyle);
-        clearAllButton.AddThemeStyleboxOverride("pressed", ClearAllButtonPressedStyle);
-        clearAllButton.Pressed += () => clearAllDialog.PopupCentered();
-        socketScreen.AddChild(clearAllButton);
+        clearAllButton.AddThemeStyleboxOverride("normal", _clearAllButtonStyle);
+        clearAllButton.AddThemeStyleboxOverride("hover", _clearAllButtonHoverStyle);
+        clearAllButton.AddThemeStyleboxOverride("pressed", _clearAllButtonPressedStyle);
+        clearAllButton.Pressed += () => _clearAllDialog.PopupCentered();
+        _socketScreen.AddChild(clearAllButton);
 
         Button confirmButton = new Button { Text = "Confirm" };
         CenterOnAnchor(confirmButton, new Vector2(0.5f, 0.05f), new Vector2(140f, 50f));
-        confirmButton.AddThemeStyleboxOverride("normal", ConfirmButtonStyle);
-        confirmButton.AddThemeStyleboxOverride("hover", ConfirmButtonHoverStyle);
-        confirmButton.AddThemeStyleboxOverride("pressed", ConfirmButtonPressedStyle);
+        confirmButton.AddThemeStyleboxOverride("normal", _confirmButtonStyle);
+        confirmButton.AddThemeStyleboxOverride("hover", _confirmButtonHoverStyle);
+        confirmButton.AddThemeStyleboxOverride("pressed", _confirmButtonPressedStyle);
         confirmButton.Pressed += OnConfirmPressed;
-        socketScreen.AddChild(confirmButton);
+        _socketScreen.AddChild(confirmButton);
 
-        clearAllDialog = new ConfirmationDialog { DialogText = "Remove all socketed runes?" };
-        clearAllDialog.Confirmed += OnClearAllConfirmed;
-        socketScreen.AddChild(clearAllDialog);
+        _clearAllDialog = new ConfirmationDialog { DialogText = "Remove all socketed runes?" };
+        _clearAllDialog.Confirmed += OnClearAllConfirmed;
+        _socketScreen.AddChild(_clearAllDialog);
     }
 
     private void ShowSocketScreen()
     {
         Grid.Visible = false;
-        runePickerScreen.Visible = false;
-        socketScreen.Visible = true;
+        _runePickerScreen.Visible = false;
+        _socketScreen.Visible = true;
 
         RefreshSocketScreen();
-        ShowDescription(selectedSpell?.Name, selectedSpell?.Description);
-        socketButtons[0].GrabFocus();
+        ShowDescription(_selectedSpell?.Name, _selectedSpell?.Description);
+        _socketButtons[0].GrabFocus();
     }
 
     private void RefreshSocketScreen()
     {
-        int runeCount = socketedRunes.Count(r => r != null);
-        int cost = selectedSpell != null ? economy.GetTowerCost(selectedSpell, runeCount) : 0;
-        centerSpellLabel.Text = $"{selectedSpell?.Name}\nCost: {cost} / Budget: {economy.Budget}";
+        int runeCount = _socketedRunes.Count(r => r != null);
+        int cost = _selectedSpell != null ? _economy.GetTowerCost(_selectedSpell, runeCount) : 0;
+        _centerSpellLabel.Text = $"{_selectedSpell?.Name}\nCost: {cost} / Budget: {_economy.Budget}";
 
-        for (int i = 0; i < socketButtons.Length; i++)
+        for (int i = 0; i < _socketButtons.Length; i++)
         {
-            bool isEmpty = socketedRunes[i] == null;
-            socketButtons[i].Text = socketedRunes[i]?.Name ?? "Empty";
+            bool isEmpty = _socketedRunes[i] == null;
+            _socketButtons[i].Text = _socketedRunes[i]?.Name ?? "Empty";
 
-            socketButtons[i].AddThemeStyleboxOverride("normal", isEmpty ? EmptySocketStyle : NormalTileStyle);
-            socketButtons[i].AddThemeStyleboxOverride("hover", isEmpty ? EmptySocketHoverStyle : HoverTileStyle);
-            socketButtons[i].AddThemeStyleboxOverride("pressed", isEmpty ? EmptySocketPressedStyle : PressedTileStyle);
+            _socketButtons[i].AddThemeStyleboxOverride("normal", isEmpty ? _emptySocketStyle : _normalTileStyle);
+            _socketButtons[i].AddThemeStyleboxOverride("hover", isEmpty ? _emptySocketHoverStyle : _hoverTileStyle);
+            _socketButtons[i].AddThemeStyleboxOverride("pressed", isEmpty ? _emptySocketPressedStyle : _pressedTileStyle);
         }
     }
 
     private void ShowSocketDescription(int socketIndex)
     {
-        Rune rune = socketedRunes[socketIndex];
+        Rune rune = _socketedRunes[socketIndex];
 
         if (rune != null)
         {
@@ -154,15 +154,15 @@ public partial class BuildMenu : Control
         }
         else
         {
-            ShowDescription(selectedSpell?.Name, selectedSpell?.Description);
+            ShowDescription(_selectedSpell?.Name, _selectedSpell?.Description);
         }
     }
 
     private void OnClearAllConfirmed()
     {
-        for (int i = 0; i < socketedRunes.Length; i++)
+        for (int i = 0; i < _socketedRunes.Length; i++)
         {
-            socketedRunes[i] = null;
+            _socketedRunes[i] = null;
         }
 
         RefreshSocketScreen();
@@ -170,18 +170,18 @@ public partial class BuildMenu : Control
 
     private void OnConfirmPressed()
     {
-        Godot.Collections.Array<Rune> confirmedRunes = new Godot.Collections.Array<Rune>(socketedRunes.Where(r => r != null));
-        EmitSignal(SignalName.Confirmed, selectedSpell, confirmedRunes);
+        Godot.Collections.Array<Rune> confirmedRunes = new Godot.Collections.Array<Rune>(_socketedRunes.Where(r => r != null));
+        EmitSignal(SignalName.Confirmed, _selectedSpell, confirmedRunes);
         Close();
     }
 
     private void BuildRunePickerScreen()
     {
-        runePickerScreen = new Control { Visible = false };
-        runePickerScreen.SetAnchorsPreset(LayoutPreset.FullRect);
-        MenuRegion.AddChild(runePickerScreen);
+        _runePickerScreen = new Control { Visible = false };
+        _runePickerScreen.SetAnchorsPreset(LayoutPreset.FullRect);
+        MenuRegion.AddChild(_runePickerScreen);
 
-        runeGrid = new SpellGrid
+        _runeGrid = new SpellGrid
         {
             Columns = Grid.Columns,
             Rows = Grid.Rows,
@@ -190,29 +190,29 @@ public partial class BuildMenu : Control
             AnchorTop = 0f,
             AnchorBottom = 0.88f
         };
-        runeGrid.AddThemeConstantOverride("h_separation", 8);
-        runeGrid.AddThemeConstantOverride("v_separation", 8);
-        runePickerScreen.AddChild(runeGrid);
+        _runeGrid.AddThemeConstantOverride("h_separation", 8);
+        _runeGrid.AddThemeConstantOverride("v_separation", 8);
+        _runePickerScreen.AddChild(_runeGrid);
 
         Button unsocketButton = new Button { Text = "Unsocket" };
         unsocketButton.SetAnchorsPreset(LayoutPreset.CenterBottom);
         unsocketButton.Pressed += () => OnRuneSelected(null);
-        runePickerScreen.AddChild(unsocketButton);
+        _runePickerScreen.AddChild(unsocketButton);
     }
 
     private void ShowRunePicker(int socketIndex)
     {
-        socketBeingAssigned = socketIndex;
-        Rune currentSocketRune = socketedRunes[socketIndex];
+        _socketBeingAssigned = socketIndex;
+        Rune currentSocketRune = _socketedRunes[socketIndex];
 
-        foreach (Node child in runeGrid.GetChildren())
+        foreach (Node child in _runeGrid.GetChildren())
         {
             child.QueueFree();
         }
 
         List<Rune> compatibleRunes = GetCompatibleRunes(socketIndex);
 
-        int pageSize = runeGrid.Columns * runeGrid.Rows;
+        int pageSize = _runeGrid.Columns * _runeGrid.Rows;
 
         for (int i = 0; i < pageSize; i++)
         {
@@ -222,12 +222,12 @@ public partial class BuildMenu : Control
                 bool isCurrentSocketRune = rune == currentSocketRune;
                 bool disabled = IsSocketedElsewhere(rune, socketIndex);
 
-                Button button = CreateTileButton($"{rune.Name}\n+{economy.BudgetPerRune}", rune.Name, rune.Description);
+                Button button = CreateTileButton($"{rune.Name}\n+{_economy.BudgetPerRune}", rune.Name, rune.Description);
                 button.Disabled = disabled;
 
                 if (isCurrentSocketRune)
                 {
-                    button.AddThemeStyleboxOverride("normal", CurrentSocketTileStyle);
+                    button.AddThemeStyleboxOverride("normal", _currentSocketTileStyle);
                     button.Pressed += () => OnRuneSelected(null);
                 }
                 else if (!disabled)
@@ -235,17 +235,17 @@ public partial class BuildMenu : Control
                     button.Pressed += () => OnRuneSelected(rune);
                 }
 
-                runeGrid.AddChild(button);
+                _runeGrid.AddChild(button);
             }
             else
             {
-                runeGrid.AddChild(CreateSpacer());
+                _runeGrid.AddChild(CreateSpacer());
             }
         }
 
         Grid.Visible = false;
-        socketScreen.Visible = false;
-        runePickerScreen.Visible = true;
+        _socketScreen.Visible = false;
+        _runePickerScreen.Visible = true;
 
         ShowDescription(currentSocketRune?.Name, currentSocketRune?.Description);
     }
@@ -253,7 +253,7 @@ public partial class BuildMenu : Control
     private List<Rune> GetCompatibleRunes(int socketIndex)
     {
         return AllRunes
-            .Where(rune => rune.RequiredTags.All(tag => selectedSpell.Tags.Contains(tag)))
+            .Where(rune => rune.RequiredTags.All(tag => _selectedSpell.Tags.Contains(tag)))
             .OrderBy(rune => IsSocketedElsewhere(rune, socketIndex))
             .ThenBy(rune => rune.Name)
             .ToList();
@@ -261,9 +261,9 @@ public partial class BuildMenu : Control
 
     private bool IsSocketedElsewhere(Rune rune, int socketIndex)
     {
-        for (int i = 0; i < socketedRunes.Length; i++)
+        for (int i = 0; i < _socketedRunes.Length; i++)
         {
-            if (i != socketIndex && socketedRunes[i] == rune)
+            if (i != socketIndex && _socketedRunes[i] == rune)
             {
                 return true;
             }
@@ -274,7 +274,7 @@ public partial class BuildMenu : Control
 
     private void OnRuneSelected(Rune rune)
     {
-        socketedRunes[socketBeingAssigned] = rune;
+        _socketedRunes[_socketBeingAssigned] = rune;
         ShowSocketScreen();
     }
 
@@ -297,10 +297,10 @@ public partial class BuildMenu : Control
         label.SetAnchorsPreset(LayoutPreset.TopWide);
         button.AddChild(label);
 
-        button.AddThemeStyleboxOverride("normal", NormalTileStyle);
-        button.AddThemeStyleboxOverride("hover", HoverTileStyle);
-        button.AddThemeStyleboxOverride("pressed", PressedTileStyle);
-        button.AddThemeStyleboxOverride("disabled", DisabledTileStyle);
+        button.AddThemeStyleboxOverride("normal", _normalTileStyle);
+        button.AddThemeStyleboxOverride("hover", _hoverTileStyle);
+        button.AddThemeStyleboxOverride("pressed", _pressedTileStyle);
+        button.AddThemeStyleboxOverride("disabled", _disabledTileStyle);
 
         button.MouseEntered += () => ShowDescription(descriptionTitle, descriptionBody);
         button.FocusEntered += () => ShowDescription(descriptionTitle, descriptionBody);
@@ -308,20 +308,20 @@ public partial class BuildMenu : Control
         return button;
     }
 
-    private static readonly StyleBoxFlat NormalTileStyle = CreateTileStyle(new Color(0.25f, 0.45f, 0.65f));
-    private static readonly StyleBoxFlat HoverTileStyle = CreateTileStyle(new Color(0.32f, 0.55f, 0.78f));
-    private static readonly StyleBoxFlat PressedTileStyle = CreateTileStyle(new Color(0.18f, 0.32f, 0.48f));
-    private static readonly StyleBoxFlat DisabledTileStyle = CreateTileStyle(new Color(0.18f, 0.18f, 0.18f));
-    private static readonly StyleBoxFlat CurrentSocketTileStyle = CreateTileStyle(new Color(0.75f, 0.6f, 0.15f));
-    private static readonly StyleBoxFlat ConfirmButtonStyle = CreateTileStyle(new Color(0.2f, 0.55f, 0.25f));
-    private static readonly StyleBoxFlat ConfirmButtonHoverStyle = CreateTileStyle(new Color(0.28f, 0.68f, 0.32f));
-    private static readonly StyleBoxFlat ConfirmButtonPressedStyle = CreateTileStyle(new Color(0.15f, 0.4f, 0.18f));
-    private static readonly StyleBoxFlat ClearAllButtonStyle = CreateTileStyle(new Color(0.6f, 0.2f, 0.2f));
-    private static readonly StyleBoxFlat ClearAllButtonHoverStyle = CreateTileStyle(new Color(0.72f, 0.28f, 0.28f));
-    private static readonly StyleBoxFlat ClearAllButtonPressedStyle = CreateTileStyle(new Color(0.45f, 0.15f, 0.15f));
-    private static readonly StyleBoxFlat EmptySocketStyle = CreateBorderedTileStyle(new Color(0.15f, 0.15f, 0.15f), new Color(0.25f, 0.45f, 0.65f));
-    private static readonly StyleBoxFlat EmptySocketHoverStyle = CreateBorderedTileStyle(new Color(0.2f, 0.2f, 0.2f), new Color(0.32f, 0.55f, 0.78f));
-    private static readonly StyleBoxFlat EmptySocketPressedStyle = CreateBorderedTileStyle(new Color(0.1f, 0.1f, 0.1f), new Color(0.18f, 0.32f, 0.48f));
+    private static readonly StyleBoxFlat _normalTileStyle = CreateTileStyle(new Color(0.25f, 0.45f, 0.65f));
+    private static readonly StyleBoxFlat _hoverTileStyle = CreateTileStyle(new Color(0.32f, 0.55f, 0.78f));
+    private static readonly StyleBoxFlat _pressedTileStyle = CreateTileStyle(new Color(0.18f, 0.32f, 0.48f));
+    private static readonly StyleBoxFlat _disabledTileStyle = CreateTileStyle(new Color(0.18f, 0.18f, 0.18f));
+    private static readonly StyleBoxFlat _currentSocketTileStyle = CreateTileStyle(new Color(0.75f, 0.6f, 0.15f));
+    private static readonly StyleBoxFlat _confirmButtonStyle = CreateTileStyle(new Color(0.2f, 0.55f, 0.25f));
+    private static readonly StyleBoxFlat _confirmButtonHoverStyle = CreateTileStyle(new Color(0.28f, 0.68f, 0.32f));
+    private static readonly StyleBoxFlat _confirmButtonPressedStyle = CreateTileStyle(new Color(0.15f, 0.4f, 0.18f));
+    private static readonly StyleBoxFlat _clearAllButtonStyle = CreateTileStyle(new Color(0.6f, 0.2f, 0.2f));
+    private static readonly StyleBoxFlat _clearAllButtonHoverStyle = CreateTileStyle(new Color(0.72f, 0.28f, 0.28f));
+    private static readonly StyleBoxFlat _clearAllButtonPressedStyle = CreateTileStyle(new Color(0.45f, 0.15f, 0.15f));
+    private static readonly StyleBoxFlat _emptySocketStyle = CreateBorderedTileStyle(new Color(0.15f, 0.15f, 0.15f), new Color(0.25f, 0.45f, 0.65f));
+    private static readonly StyleBoxFlat _emptySocketHoverStyle = CreateBorderedTileStyle(new Color(0.2f, 0.2f, 0.2f), new Color(0.32f, 0.55f, 0.78f));
+    private static readonly StyleBoxFlat _emptySocketPressedStyle = CreateBorderedTileStyle(new Color(0.1f, 0.1f, 0.1f), new Color(0.18f, 0.32f, 0.48f));
 
     private static StyleBoxFlat CreateTileStyle(Color color)
     {
@@ -352,7 +352,7 @@ public partial class BuildMenu : Control
         DescriptionBodyLabel.Text = body ?? "";
     }
 
-    private static readonly Vector2[] SocketAnchors =
+    private static readonly Vector2[] _socketAnchors =
     {
         new Vector2(0.25f, 0.25f),
         new Vector2(0.75f, 0.25f),
@@ -392,8 +392,8 @@ public partial class BuildMenu : Control
     private void ShowSpellGrid()
     {
         Grid.Visible = true;
-        socketScreen.Visible = false;
-        runePickerScreen.Visible = false;
+        _socketScreen.Visible = false;
+        _runePickerScreen.Visible = false;
 
         if (Grid.GetChildCount() > 0)
         {
@@ -419,11 +419,11 @@ public partial class BuildMenu : Control
 
     private void GoBack()
     {
-        if (runePickerScreen.Visible)
+        if (_runePickerScreen.Visible)
         {
             ShowSocketScreen();
         }
-        else if (socketScreen.Visible)
+        else if (_socketScreen.Visible)
         {
             ShowSpellGrid();
         }

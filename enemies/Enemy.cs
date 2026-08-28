@@ -22,7 +22,7 @@ public partial class Enemy : CharacterBody3D
     [Export] public HealthBar3D HealthBar { get; private set; }
 
     // TODO placeholder: remove once there's a real way to display an enemy's element/ailments (Section 15 iconography).
-    private static readonly Dictionary<Tag, StandardMaterial3D> StatusMaterials = new Dictionary<Tag, StandardMaterial3D>
+    private static readonly Dictionary<Tag, StandardMaterial3D> _statusMaterials = new Dictionary<Tag, StandardMaterial3D>
     {
         { Tag.Fire, CreateOverlayMaterial(new Color(1f, 0.5f, 0f)) },
         { Tag.Water, CreateOverlayMaterial(new Color(0.05f, 0.15f, 0.55f)) },
@@ -30,7 +30,7 @@ public partial class Enemy : CharacterBody3D
         { Tag.Lightning, CreateOverlayMaterial(new Color(1f, 0.9f, 0.1f)) }
     };
 
-    private static readonly StandardMaterial3D BurnFlashMaterial = CreateOverlayMaterial(new Color(0.5f, 0f, 0f));
+    private static readonly StandardMaterial3D _burnFlashMaterial = CreateOverlayMaterial(new Color(0.5f, 0f, 0f));
     private const float BurnFlashDuration = 0.1f;
 
     private static StandardMaterial3D CreateOverlayMaterial(Color color)
@@ -42,20 +42,20 @@ public partial class Enemy : CharacterBody3D
         };
     }
 
-    private int legLBoneIdx;
-    private int legRBoneIdx;
-    private int armLBoneIdx;
-    private int armRBoneIdx;
-    private float walkTime;
-    private bool isDead;
-    private bool hasFacedInitialDirection;
-    private float currentHealth;
-    private List<Ailment> ailments = new List<Ailment>();
+    private int _legLBoneIdx;
+    private int _legRBoneIdx;
+    private int _armLBoneIdx;
+    private int _armRBoneIdx;
+    private float _walkTime;
+    private bool _isDead;
+    private bool _hasFacedInitialDirection;
+    private float _currentHealth;
+    private List<Ailment> _ailments = new List<Ailment>();
     // TODO placeholder: remove alongside StatusMaterials/BurnFlashMaterial above.
-    private List<MeshInstance3D> meshInstances = new List<MeshInstance3D>();
-    private float burnFlashTimer;
+    private List<MeshInstance3D> _meshInstances = new List<MeshInstance3D>();
+    private float _burnFlashTimer;
 
-    public bool IsDead => isDead;
+    public bool IsDead => _isDead;
     public Tag? Status { get; private set; }
     public Vector3 CenterMass => GlobalPosition + Vector3.Up * CenterMassHeight;
 
@@ -72,12 +72,12 @@ public partial class Enemy : CharacterBody3D
 
     public override void _Ready()
     {
-        legLBoneIdx = Skeleton.FindBone("Leg.L");
-        legRBoneIdx = Skeleton.FindBone("Leg.R");
-        armLBoneIdx = Skeleton.FindBone("Arm.L");
-        armRBoneIdx = Skeleton.FindBone("Arm.R");
+        _legLBoneIdx = Skeleton.FindBone("Leg.L");
+        _legRBoneIdx = Skeleton.FindBone("Leg.R");
+        _armLBoneIdx = Skeleton.FindBone("Arm.L");
+        _armRBoneIdx = Skeleton.FindBone("Arm.R");
 
-        currentHealth = MaxHealth;
+        _currentHealth = MaxHealth;
         AddToGroup("enemies");
         HealthBar.SetFraction(1f);
         HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
@@ -93,15 +93,15 @@ public partial class Enemy : CharacterBody3D
 
     public void TakeDamage(DamagePacket amount, Vector3 ragdollImpulse = default, bool updateStatus = true, ReactionRune reaction = null)
     {
-        if (isDead)
+        if (_isDead)
         {
             return;
         }
 
         reaction?.OnHit(this, amount);
 
-        currentHealth -= amount.Total;
-        HealthBar.SetFraction(currentHealth / MaxHealth);
+        _currentHealth -= amount.Total;
+        HealthBar.SetFraction(_currentHealth / MaxHealth);
 
         if (updateStatus)
         {
@@ -112,7 +112,7 @@ public partial class Enemy : CharacterBody3D
             }
         }
 
-        if (currentHealth <= 0f)
+        if (_currentHealth <= 0f)
         {
             Die(ragdollImpulse);
         }
@@ -122,25 +122,25 @@ public partial class Enemy : CharacterBody3D
     {
         if (ailment is BurnAilment newBurn)
         {
-            BurnAilment existingBurn = ailments.Find(a => a is BurnAilment) as BurnAilment;
+            BurnAilment existingBurn = _ailments.Find(a => a is BurnAilment) as BurnAilment;
             if (existingBurn != null)
             {
                 newBurn.MergeFrom(existingBurn);
-                ailments.Remove(existingBurn);
+                _ailments.Remove(existingBurn);
             }
         }
 
-        ailments.Add(ailment);
+        _ailments.Add(ailment);
     }
 
     public void Die(Vector3 ragdollImpulse)
     {
-        if (isDead)
+        if (_isDead)
         {
             return;
         }
 
-        isDead = true;
+        _isDead = true;
         HealthBar.Visible = false;
         HealthBar.SetProcess(false);
         EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, Reward);
@@ -176,7 +176,7 @@ public partial class Enemy : CharacterBody3D
 
     public void ApplyExtraRagdollImpulse(Vector3 impulse)
     {
-        if (!isDead)
+        if (!_isDead)
         {
             return;
         }
@@ -209,11 +209,11 @@ public partial class Enemy : CharacterBody3D
 
     private void TickAilments(float delta)
     {
-        for (int i = ailments.Count - 1; i >= 0; i--)
+        for (int i = _ailments.Count - 1; i >= 0; i--)
         {
-            if (!ailments[i].Tick(this, delta))
+            if (!_ailments[i].Tick(this, delta))
             {
-                ailments.RemoveAt(i);
+                _ailments.RemoveAt(i);
             }
         }
     }
@@ -221,34 +221,34 @@ public partial class Enemy : CharacterBody3D
     // TODO placeholder block: remove this method and CollectMeshInstances once there's a real way to display an enemy's element/ailments.
     private void UpdateElementalVisual(float delta)
     {
-        bool isBurning = ailments.Exists(ailment => ailment is BurnAilment);
+        bool isBurning = _ailments.Exists(ailment => ailment is BurnAilment);
 
         if (isBurning)
         {
-            burnFlashTimer += delta;
-            if (burnFlashTimer >= 1f)
+            _burnFlashTimer += delta;
+            if (_burnFlashTimer >= 1f)
             {
-                burnFlashTimer -= 1f;
+                _burnFlashTimer -= 1f;
             }
         }
         else
         {
-            burnFlashTimer = 0f;
+            _burnFlashTimer = 0f;
         }
 
-        bool isFlashing = isBurning && burnFlashTimer < BurnFlashDuration;
+        bool isFlashing = isBurning && _burnFlashTimer < BurnFlashDuration;
 
         Material overlay = null;
         if (isFlashing)
         {
-            overlay = BurnFlashMaterial;
+            overlay = _burnFlashMaterial;
         }
-        else if (Status.HasValue && StatusMaterials.TryGetValue(Status.Value, out StandardMaterial3D statusMaterial))
+        else if (Status.HasValue && _statusMaterials.TryGetValue(Status.Value, out StandardMaterial3D statusMaterial))
         {
             overlay = statusMaterial;
         }
 
-        foreach (MeshInstance3D meshInstance in meshInstances)
+        foreach (MeshInstance3D meshInstance in _meshInstances)
         {
             meshInstance.MaterialOverlay = overlay;
         }
@@ -260,7 +260,7 @@ public partial class Enemy : CharacterBody3D
         {
             if (child is MeshInstance3D meshInstance)
             {
-                meshInstances.Add(meshInstance);
+                _meshInstances.Add(meshInstance);
             }
 
             CollectMeshInstances(child);
@@ -284,7 +284,7 @@ public partial class Enemy : CharacterBody3D
         if (facingBasis.HasValue)
         {
             Basis = facingBasis.Value;
-            hasFacedInitialDirection = true;
+            _hasFacedInitialDirection = true;
         }
     }
 
@@ -296,9 +296,9 @@ public partial class Enemy : CharacterBody3D
             return;
         }
 
-        if (!hasFacedInitialDirection)
+        if (!_hasFacedInitialDirection)
         {
-            hasFacedInitialDirection = true;
+            _hasFacedInitialDirection = true;
             Basis = targetBasis.Value;
             return;
         }
@@ -308,14 +308,14 @@ public partial class Enemy : CharacterBody3D
 
     private void AnimateWalkCycle(double moveAmount, double delta)
     {
-        walkTime += (float)(moveAmount * delta * WalkCycleFrequency);
+        _walkTime += (float)(moveAmount * delta * WalkCycleFrequency);
 
-        float legAngle = LegSwingAmplitude * Mathf.Sin(walkTime) * (float)moveAmount;
-        float armAngle = ArmSwingAmplitude * Mathf.Sin(walkTime) * (float)moveAmount;
+        float legAngle = LegSwingAmplitude * Mathf.Sin(_walkTime) * (float)moveAmount;
+        float armAngle = ArmSwingAmplitude * Mathf.Sin(_walkTime) * (float)moveAmount;
 
-        Skeleton.SetBonePoseRotation(legLBoneIdx, new Quaternion(Vector3.Right, legAngle));
-        Skeleton.SetBonePoseRotation(legRBoneIdx, new Quaternion(Vector3.Right, -legAngle));
-        Skeleton.SetBonePoseRotation(armLBoneIdx, new Quaternion(Vector3.Right, -armAngle));
-        Skeleton.SetBonePoseRotation(armRBoneIdx, new Quaternion(Vector3.Right, armAngle));
+        Skeleton.SetBonePoseRotation(_legLBoneIdx, new Quaternion(Vector3.Right, legAngle));
+        Skeleton.SetBonePoseRotation(_legRBoneIdx, new Quaternion(Vector3.Right, -legAngle));
+        Skeleton.SetBonePoseRotation(_armLBoneIdx, new Quaternion(Vector3.Right, -armAngle));
+        Skeleton.SetBonePoseRotation(_armRBoneIdx, new Quaternion(Vector3.Right, armAngle));
     }
 }

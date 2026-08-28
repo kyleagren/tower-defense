@@ -4,7 +4,7 @@ public partial class PhaseIndicator : Control
 {
     [Export] public Label PhaseLabel { get; private set; }
 
-    private WaveController.GamePhase currentPhase = WaveController.GamePhase.Build;
+    private WaveController.GamePhase _currentPhase = WaveController.GamePhase.Build;
 
     public override void _Ready()
     {
@@ -21,13 +21,13 @@ public partial class PhaseIndicator : Control
 
     private void OnGamePhaseChanged(WaveController.GamePhase phase)
     {
-        currentPhase = phase;
+        _currentPhase = phase;
         UpdateText();
     }
 
     private void UpdateText()
     {
-        string phaseText = currentPhase == WaveController.GamePhase.Combat ? "Combat Phase" : "Build Phase";
+        string phaseText = _currentPhase == WaveController.GamePhase.Combat ? "Combat Phase" : "Build Phase";
         PhaseLabel.Text = $"{phaseText} — Budget: {EconomyManager.Instance.Budget} | Towers: {EconomyManager.Instance.CapacityUsed}/{EconomyManager.Instance.MaxCapacity}";
     }
 }
