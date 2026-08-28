@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/sigils/SigilPreview.cs" id="1_sigilpreview"]
+
+[node name="SigilPreview" type="Control" node_paths=PackedStringArray("SigilLine", "NameInput")]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_sigilpreview")
+SigilLine = NodePath("SigilLine")
+NameInput = NodePath("NameInput")
+
+[node name="NameInput" type="LineEdit" parent="."]
+offset_left = 40.0
+offset_top = 40.0
+offset_right = 440.0
+offset_bottom = 76.0
+placeholder_text = "Rune or spell name..."
+
+[node name="SigilLine" type="Line2D" parent="."]
+width = 3.0
+default_color = Color(1, 0.85, 0.3, 1)
