@@ -30,7 +30,7 @@ public partial class Enemy : CharacterBody3D
     private float currentHealth;
 
     public bool IsDead => isDead;
-    public Tag? Aura { get; private set; }
+    public Tag? Status { get; private set; }
     public Vector3 CenterMass => GlobalPosition + Vector3.Up * CenterMassHeight;
 
     public Vector3 GetJitteredCenterMass(float jitterAmount)
@@ -77,7 +77,7 @@ public partial class Enemy : CharacterBody3D
         Tag? dominantElement = amount.DominantElement;
         if (dominantElement.HasValue)
         {
-            Aura = dominantElement;
+            Status = dominantElement;
         }
 
         if (currentHealth <= 0f)
