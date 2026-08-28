@@ -7,11 +7,15 @@ public partial class Soldier : PlayerCharacter
     [Export] public float AttackRange = 30f;
     [Export] public float FireRate = 6f;
     [Export] public PackedScene ImpactScene { get; private set; }
+    [Export] public Node3D Rifle { get; private set; }
+    [Export] public Node3D MuzzlePoint { get; private set; }
+    [Export] public PackedScene TracerScene { get; private set; }
     [Export] public float NormalFov = 75f;
     [Export] public float AdsFov = 40f;
     [Export] public float NormalSpringLength = 5f;
     [Export] public float AdsSpringLength = 0.5f;
     [Export] public float AdsTransitionSpeed = 10f;
+    [Export] public float AdsSensitivityMultiplier = 0.5f;
 
     private float _fireCooldown;
 
@@ -20,6 +24,7 @@ public partial class Soldier : PlayerCharacter
         base._Ready();
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         SetActive(false);
+        Rifle.Visible = false;
     }
 
     public override void _ExitTree()
@@ -37,6 +42,7 @@ public partial class Soldier : PlayerCharacter
         }
 
         SetActive(shouldBeActive);
+        Rifle.Visible = shouldBeActive;
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -83,10 +89,12 @@ public partial class Soldier : PlayerCharacter
         bool isAiming = Input.IsActionPressed("aim");
         float targetFov = isAiming ? AdsFov : NormalFov;
         float targetSpringLength = isAiming ? AdsSpringLength : NormalSpringLength;
+        float targetSensitivityMultiplier = isAiming ? AdsSensitivityMultiplier : 1f;
         float weight = Mathf.Min(1f, (float)delta * AdsTransitionSpeed);
 
         Camera.Fov = Mathf.Lerp(Camera.Fov, targetFov, weight);
         SpringArm.SpringLength = Mathf.Lerp(SpringArm.SpringLength, targetSpringLength, weight);
+        lookSensitivityMultiplier = Mathf.Lerp(lookSensitivityMultiplier, targetSensitivityMultiplier, weight);
     }
 
     private void FireShot()
@@ -100,22 +108,30 @@ public partial class Soldier : PlayerCharacter
         query.CollisionMask = 2; // Enemies layer only
 
         Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
+        Vector3 tracerEnd = end;
 
-        if (result.Count == 0)
+        if (result.Count > 0)
         {
-            return;
+            tracerEnd = (Vector3)result["position"];
+
+            if (result["collider"].As<Node3D>() is Enemy enemy)
+            {
+                enemy.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+            }
+
+            if (ImpactScene != null)
+            {
+                ImpactFlash impact = ImpactScene.Instantiate<ImpactFlash>();
+                GetTree().CurrentScene.AddChild(impact);
+                impact.Show(tracerEnd);
+            }
         }
 
-        if (result["collider"].As<Node3D>() is Enemy enemy)
+        if (TracerScene != null)
         {
-            enemy.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
-        }
-
-        if (ImpactScene != null)
-        {
-            ImpactFlash impact = ImpactScene.Instantiate<ImpactFlash>();
-            GetTree().CurrentScene.AddChild(impact);
-            impact.Show((Vector3)result["position"]);
+            ArcVisual tracer = TracerScene.Instantiate<ArcVisual>();
+            GetTree().CurrentScene.AddChild(tracer);
+            tracer.Show(MuzzlePoint.GlobalPosition, tracerEnd);
         }
     }
 }

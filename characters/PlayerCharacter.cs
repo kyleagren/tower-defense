@@ -16,6 +16,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     protected float cameraPitch;
     protected float gravity;
     protected bool active;
+    protected float lookSensitivityMultiplier = 1f;
 
     public override void _Ready()
     {
@@ -57,10 +58,12 @@ public abstract partial class PlayerCharacter : CharacterBody3D
             return;
         }
 
-        RotateY(-mouseMotion.Relative.X * MouseSensitivity);
+        float sensitivity = MouseSensitivity * lookSensitivityMultiplier;
+
+        RotateY(-mouseMotion.Relative.X * sensitivity);
 
         cameraPitch = Mathf.Clamp(
-            cameraPitch - mouseMotion.Relative.Y * MouseSensitivity,
+            cameraPitch - mouseMotion.Relative.Y * sensitivity,
             Mathf.DegToRad(MinPitchDegrees),
             Mathf.DegToRad(MaxPitchDegrees));
 

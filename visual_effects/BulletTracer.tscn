@@ -17,8 +17,7 @@ emission_energy_multiplier = 4.0
 [node name="BulletTracer" type="Node3D"]
 script = ExtResource("1_arc")
 Lifetime = 0.05
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
-mesh = SubResource("CylinderMesh_tracer")
-material_override = SubResource("StandardMaterial3D_tracer")
+SegmentCount = 1
+JitterAmount = 0.0
+SegmentMesh = SubResource("CylinderMesh_tracer")
+SegmentMaterial = SubResource("StandardMaterial3D_tracer")
