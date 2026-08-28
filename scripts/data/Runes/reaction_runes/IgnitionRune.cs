@@ -4,8 +4,8 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class IgnitionRune : ReactionRune
 {
-    [Export] public float BurnDamagePerSecond { get; private set; } = 20f;
-    [Export] public float BurnDuration { get; private set; } = 3f;
+    [Export] public float BurnDamagePercent { get; private set; } = 0.5f;
+    [Export] public float BurnDuration { get; private set; } = 4f;
 
     public override string Name => "Ignition";
 
@@ -25,7 +25,7 @@ public partial class IgnitionRune : ReactionRune
 
         if (isFireLightningPair)
         {
-            target.ApplyAilment(new BurnAilment(BurnDamagePerSecond, BurnDuration));
+            target.ApplyAilment(new BurnAilment(incomingDamage.Total * BurnDamagePercent, BurnDuration));
         }
     }
 }

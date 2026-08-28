@@ -120,6 +120,16 @@ public partial class Enemy : CharacterBody3D
 
     public void ApplyAilment(Ailment ailment)
     {
+        if (ailment is BurnAilment newBurn)
+        {
+            BurnAilment existingBurn = ailments.Find(a => a is BurnAilment) as BurnAilment;
+            if (existingBurn != null)
+            {
+                newBurn.MergeFrom(existingBurn);
+                ailments.Remove(existingBurn);
+            }
+        }
+
         ailments.Add(ailment);
     }
 

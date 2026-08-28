@@ -1,12 +1,19 @@
 public class BurnAilment : Ailment
 {
-    private readonly float damagePerSecond;
+    private float damagePerSecond;
     private float remainingDuration;
 
-    public BurnAilment(float damagePerSecond, float duration)
+    public BurnAilment(float totalDamage, float duration)
     {
-        this.damagePerSecond = damagePerSecond;
         remainingDuration = duration;
+        damagePerSecond = duration > 0f ? totalDamage / duration : 0f;
+    }
+
+    public void MergeFrom(BurnAilment previous)
+    {
+        float previousRemainingDamage = previous.damagePerSecond * previous.remainingDuration;
+        float combinedDamage = (damagePerSecond * remainingDuration) + previousRemainingDamage;
+        damagePerSecond = remainingDuration > 0f ? combinedDamage / remainingDuration : 0f;
     }
 
     public override bool Tick(Enemy enemy, float delta)
