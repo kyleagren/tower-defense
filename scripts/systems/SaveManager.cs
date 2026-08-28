@@ -1,9 +1,12 @@
 using Godot;
+using System;
 using System.Linq;
 
 public partial class SaveManager : Node
 {
     private const string SavePath = "user://save_data.tres";
+    private const string SpellsDirectory = "res://assets/spells/";
+    private const string RunesDirectory = "res://assets/runes/";
 
     public static SaveManager Instance { get; private set; }
     public PlayerSaveData Data { get; private set; }
@@ -30,27 +33,39 @@ public partial class SaveManager : Node
     {
         bool changed = false;
 
-        changed |= EnsureKnownSpell("res://assets/spells/FireballSpell.tres");
-        changed |= EnsureKnownSpell("res://assets/spells/LightningBoltSpell.tres");
-        changed |= EnsureKnownRune("res://assets/runes/MultiProjectileRune.tres");
-        changed |= EnsureKnownRune("res://assets/runes/NovaProjectileRune.tres");
-        changed |= EnsureKnownRune("res://assets/runes/ChainRune.tres");
-        changed |= EnsureKnownRune("res://assets/runes/PierceRune.tres");
-        changed |= EnsureKnownRune("res://assets/runes/ReturnRune.tres");
-        changed |= EnsureKnownRune("res://assets/runes/IncreasedAreaRune.tres");
-        changed |= EnsureKnownRune("res://assets/runes/CastSpeedRune.tres");
-        changed |= EnsureKnownRune("res://assets/runes/ForkRune.tres");
-        changed |= EnsureKnownRune("res://assets/runes/RangeRune.tres");
-        changed |= EnsureKnownRune("res://assets/runes/ProjectileSpeedRune.tres");
+        foreach (string path in ListResourceFiles(SpellsDirectory))
+        {
+            changed |= EnsureKnownSpell(path);
+        }
+
+        foreach (string path in ListResourceFiles(RunesDirectory))
+        {
+            changed |= EnsureKnownRune(path);
+        }
 
         return changed;
+    }
+
+    private static string[] ListResourceFiles(string directoryPath)
+    {
+        DirAccess dir = DirAccess.Open(directoryPath);
+
+        if (dir == null)
+        {
+            return Array.Empty<string>();
+        }
+
+        return dir.GetFiles()
+            .Where(fileName => fileName.EndsWith(".tres"))
+            .Select(fileName => directoryPath + fileName)
+            .ToArray();
     }
 
     private bool EnsureKnownSpell(string path)
     {
         Spell spell = GD.Load<Spell>(path);
 
-        if (Data.KnownSpells.Any(known => known == spell))
+        if (spell == null || Data.KnownSpells.Any(known => known == spell))
         {
             return false;
         }
@@ -63,7 +78,7 @@ public partial class SaveManager : Node
     {
         Rune rune = GD.Load<Rune>(path);
 
-        if (Data.KnownRunes.Any(entry => entry.Rune == rune))
+        if (rune == null || Data.KnownRunes.Any(entry => entry.Rune == rune))
         {
             return false;
         }
