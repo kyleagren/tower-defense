@@ -1,11 +1,12 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 
 public static class ChainResolver
 {
     public const float DamageFalloffPerChain = 0.9f;
 
-    public static void ResolveChain(Enemy firstTarget, Vector3 firstTargetPoint, DamagePacket damage, float ragdollForce, int chainCount, float chainRange, float moreDamagePerRemainingChain = 0f, PackedScene arcVisualScene = null)
+    public static void ResolveChain(Enemy firstTarget, Vector3 firstTargetPoint, DamagePacket damage, float ragdollForce, int chainCount, float chainRange, float moreDamagePerRemainingChain = 0f, PackedScene arcVisualScene = null, HashSet<Enemy> sharedChainTracker = null)
     {
         Enemy current = firstTarget;
         Vector3 currentPoint = firstTargetPoint;
@@ -13,7 +14,15 @@ public static class ChainResolver
 
         for (int i = 0; i < chainCount; i++)
         {
-            Enemy next = EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, hit);
+            Enemy next = null;
+
+            if (sharedChainTracker != null)
+            {
+                next = EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, hit.Concat(sharedChainTracker));
+            }
+
+            next ??= EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, hit);
+
             if (next == null)
             {
                 break;
@@ -28,6 +37,7 @@ public static class ChainResolver
             SpawnArcVisual(arcVisualScene, currentPoint, nextPoint);
 
             hit.Add(next);
+            sharedChainTracker?.Add(next);
             current = next;
             currentPoint = nextPoint;
         }

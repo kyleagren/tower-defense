@@ -1,9 +1,10 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 public static class EnemyTargeting
 {
-    public static Enemy FindNearest(Vector3 fromPosition, float range, IEnumerable<Enemy> exclude = null)
+    public static Enemy FindNearest(Vector3 fromPosition, float range, IEnumerable<Enemy> exclude = null, Func<Enemy, bool> predicate = null)
     {
         SceneTree tree = (SceneTree)Engine.GetMainLoop();
         float rangeSquared = range * range;
@@ -19,6 +20,11 @@ public static class EnemyTargeting
             }
 
             if (exclude != null && Contains(exclude, enemy))
+            {
+                continue;
+            }
+
+            if (predicate != null && !predicate(enemy))
             {
                 continue;
             }

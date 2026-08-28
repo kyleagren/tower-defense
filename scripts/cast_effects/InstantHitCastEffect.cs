@@ -15,9 +15,25 @@ public partial class InstantHitCastEffect : CastEffect
         HashSet<Enemy> initialTargets = new HashSet<Enemy>();
         List<Enemy> targets = new List<Enemy>();
 
-        for (int i = 0; i <= chain.ForkCount; i++)
+        Enemy primary = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range, initialTargets);
+        if (primary == null)
         {
-            Enemy target = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range, initialTargets);
+            return;
+        }
+
+        initialTargets.Add(primary);
+        targets.Add(primary);
+
+        Vector3 referenceDir = primary.GlobalPosition - spawnPoint.GlobalPosition;
+
+        for (int i = 1; i <= chain.ForkCount; i++)
+        {
+            float desiredSide = (i % 2 == 1) ? 1f : -1f;
+
+            Enemy target = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range, initialTargets,
+                candidate => SideOf(spawnPoint.GlobalPosition, referenceDir, candidate.GlobalPosition) * desiredSide > 0f);
+            target ??= EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range, initialTargets);
+
             if (target == null)
             {
                 break;
@@ -25,11 +41,6 @@ public partial class InstantHitCastEffect : CastEffect
 
             initialTargets.Add(target);
             targets.Add(target);
-        }
-
-        if (targets.Count == 0)
-        {
-            return;
         }
 
         Vector3 visualOrigin = spawnPoint.GlobalPosition;
@@ -41,13 +52,15 @@ public partial class InstantHitCastEffect : CastEffect
             visualOrigin = forkPoint;
         }
 
+        HashSet<Enemy> chainTracker = new HashSet<Enemy>(targets);
+
         foreach (Enemy target in targets)
         {
-            StrikeTarget(context, chain, spawnPoint, visualOrigin, target);
+            StrikeTarget(context, chain, spawnPoint, visualOrigin, target, chainTracker);
         }
     }
 
-    private void StrikeTarget(SpellCastContext context, ChainCastData chain, Node3D spawnPoint, Vector3 visualOrigin, Enemy target)
+    private void StrikeTarget(SpellCastContext context, ChainCastData chain, Node3D spawnPoint, Vector3 visualOrigin, Enemy target, HashSet<Enemy> chainTracker)
     {
         Vector3 targetPoint = target.GetJitteredCenterMass(0.25f);
         Vector3 ragdollImpulse = (targetPoint - spawnPoint.GlobalPosition).Normalized() * context.RagdollForce;
@@ -56,7 +69,7 @@ public partial class InstantHitCastEffect : CastEffect
 
         SpawnArcVisual(visualOrigin, targetPoint);
 
-        ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce, chain.ChainCount, chain.ChainRange, chain.MoreDamagePerRemainingChain, ArcVisualScene);
+        ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce, chain.ChainCount, chain.ChainRange, chain.MoreDamagePerRemainingChain, ArcVisualScene, chainTracker);
     }
 
     private void SpawnArcVisual(Vector3 from, Vector3 to)
@@ -69,5 +82,11 @@ public partial class InstantHitCastEffect : CastEffect
         ArcVisual visual = ArcVisualScene.Instantiate<ArcVisual>();
         GetTree().CurrentScene.AddChild(visual);
         visual.Show(from, to);
+    }
+
+    private static float SideOf(Vector3 origin, Vector3 referenceDir, Vector3 point)
+    {
+        Vector3 toPoint = point - origin;
+        return referenceDir.X * toPoint.Z - referenceDir.Z * toPoint.X;
     }
 }
