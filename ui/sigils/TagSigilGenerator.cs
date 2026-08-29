@@ -17,24 +17,31 @@ public static class TagSigilGenerator
         return GridPosition(index, center, radius);
     }
 
+    private static int GridColumns => Mathf.CeilToInt(Mathf.Sqrt(AnchorCount));
+
+    private static Vector2 GetGridCoordinates(int index)
+    {
+        int columns = GridColumns;
+        return new Vector2(index % columns, index / columns);
+    }
+
     private static Vector2 GridPosition(int index, Vector2 center, float radius)
     {
-        int columns = Mathf.CeilToInt(Mathf.Sqrt(AnchorCount));
+        int columns = GridColumns;
         int rows = Mathf.CeilToInt((float)AnchorCount / columns);
+        Vector2 coords = GetGridCoordinates(index);
 
-        int col = index % columns;
-        int row = index / columns;
-
-        float x = columns > 1 ? Mathf.Lerp(-radius, radius, (float)col / (columns - 1)) : 0f;
-        float y = rows > 1 ? Mathf.Lerp(-radius, radius, (float)row / (rows - 1)) : 0f;
+        float x = columns > 1 ? Mathf.Lerp(-radius, radius, coords.X / (columns - 1)) : 0f;
+        float y = rows > 1 ? Mathf.Lerp(-radius, radius, coords.Y / (rows - 1)) : 0f;
 
         return center + new Vector2(x, y);
     }
 
-    // Builds up to `panelCount` distinct random pairings of the active tags — each active tag
-    // connects to one random other active tag. A panel whose pairing duplicates an earlier one
-    // (e.g. because there just aren't many distinct layouts possible with only 2-3 active tags)
-    // gets a null entry, so the caller can render it blank instead of repeating a pattern.
+    // Builds up to `panelCount` distinct pairings of the active tags — each active tag connects
+    // to one other active tag, preferring a nearby neighbor and steering around lines it would
+    // otherwise cross. A panel whose pairing duplicates an earlier one (e.g. because there just
+    // aren't many distinct layouts possible with only 2-3 active tags) gets a null entry, so the
+    // caller can render it blank instead of repeating a pattern.
     public static (List<Tag> Active, int[][] PairingsPerPanel) GenerateUniquePairings(IEnumerable<Tag> activeTags, int panelCount)
     {
         List<Tag> active = activeTags.OrderBy(tag => Array.IndexOf(AllTags, tag)).ToList();
@@ -44,6 +51,10 @@ public static class TagSigilGenerator
         {
             return (active, pairings);
         }
+
+        Vector2[] gridCoords = active
+            .Select(tag => GetGridCoordinates(Array.IndexOf(AllTags, tag)))
+            .ToArray();
 
         uint baseSeed = 0;
         foreach (Tag tag in active)
@@ -56,7 +67,7 @@ public static class TagSigilGenerator
         for (int panel = 0; panel < panelCount; panel++)
         {
             uint seed = baseSeed + (uint)panel * 104729u;
-            int[] targets = GeneratePairingTargets(active.Count, seed);
+            int[] targets = GenerateNeighborPairing(gridCoords, seed);
 
             pairings[panel] = seenSignatures.Add(PairingSignature(targets)) ? targets : null;
         }
@@ -64,23 +75,61 @@ public static class TagSigilGenerator
         return (active, pairings);
     }
 
-    private static int[] GeneratePairingTargets(int count, uint seed)
+    // Each dot connects to a randomly chosen NEARBY dot rather than any dot in the whole active
+    // set, and steers away from candidates whose edge would cross a line already placed in this
+    // pairing, so the result reads more like a constellation of local connections than a tangle
+    // of lines crossing the whole board.
+    private static int[] GenerateNeighborPairing(Vector2[] positions, uint seed)
     {
+        const int NeighborPoolSize = 3;
+
+        int count = positions.Length;
         RandomNumberGenerator rng = new RandomNumberGenerator { Seed = seed };
         int[] targets = new int[count];
+        List<(int From, int To)> placedEdges = new List<(int, int)>();
 
-        for (int i = 0; i < count; i++)
+        int[] order = Enumerable.Range(0, count).ToArray();
+        for (int i = order.Length - 1; i > 0; i--)
         {
-            int j = i;
-            while (j == i)
-            {
-                j = rng.RandiRange(0, count - 1);
-            }
-            targets[i] = j;
+            int swapIndex = rng.RandiRange(0, i);
+            (order[i], order[swapIndex]) = (order[swapIndex], order[i]);
+        }
+
+        foreach (int i in order)
+        {
+            List<int> byDistance = Enumerable.Range(0, count)
+                .Where(j => j != i)
+                .OrderBy(j => positions[i].DistanceSquaredTo(positions[j]))
+                .ToList();
+
+            List<int> nonCrossing = byDistance
+                .Where(candidate => !placedEdges.Any(edge =>
+                    edge.From != i && edge.To != i && edge.From != candidate && edge.To != candidate &&
+                    SegmentsIntersect(positions[i], positions[candidate], positions[edge.From], positions[edge.To])))
+                .ToList();
+
+            List<int> pool = nonCrossing.Count > 0 ? nonCrossing : byDistance;
+            int chosen = pool[rng.RandiRange(0, Mathf.Min(NeighborPoolSize, pool.Count) - 1)];
+
+            targets[i] = chosen;
+            placedEdges.Add((i, chosen));
         }
 
         return targets;
     }
+
+    private static bool SegmentsIntersect(Vector2 a1, Vector2 a2, Vector2 b1, Vector2 b2)
+    {
+        float d1 = Cross(b2 - b1, a1 - b1);
+        float d2 = Cross(b2 - b1, a2 - b1);
+        float d3 = Cross(a2 - a1, b1 - a1);
+        float d4 = Cross(a2 - a1, b2 - a1);
+
+        return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+               ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+    }
+
+    private static float Cross(Vector2 a, Vector2 b) => a.X * b.Y - a.Y * b.X;
 
     private static string PairingSignature(int[] targets)
     {

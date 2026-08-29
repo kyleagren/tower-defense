@@ -1,31 +1,60 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class TagSigilCandidatePanel : Control
 {
     [Export] public float Radius = 80f;
     [Export] public Color LineColor = new Color(1f, 0.85f, 0.3f);
-    [Export] public float LineWidth = 3f;
+    [Export] public float LineWidth = 17.5f;
+    [Export] public float FlairLength = 14f;
+    [Export] public float CrossbarWidth = 8f;
+    [Export] public float RampWidth = 10f;
+    [Export] public float JointDiamondSize = 14f;
 
-    private Vector2[] _segments = Array.Empty<Vector2>();
+    private Vector2[] _points = Array.Empty<Vector2>();
+    private (int A, int B)[] _edges = Array.Empty<(int, int)>();
+    private int[] _degree = Array.Empty<int>();
+    private bool[] _flairEligible = Array.Empty<bool>();
 
     public void SetPairing(IReadOnlyList<Tag> active, int[] targets)
     {
         if (targets == null || active.Count < 2)
         {
-            _segments = Array.Empty<Vector2>();
+            _points = Array.Empty<Vector2>();
+            _edges = Array.Empty<(int, int)>();
+            _degree = Array.Empty<int>();
+            _flairEligible = Array.Empty<bool>();
+            QueueRedraw();
+            return;
         }
-        else
-        {
-            Vector2 center = Size / 2f;
-            _segments = new Vector2[active.Count * 2];
 
-            for (int i = 0; i < active.Count; i++)
-            {
-                _segments[i * 2] = TagSigilGenerator.GetAnchorPosition(active[i], center, Radius);
-                _segments[i * 2 + 1] = TagSigilGenerator.GetAnchorPosition(active[targets[i]], center, Radius);
-            }
+        Vector2 center = Size / 2f;
+        _points = active.Select(tag => TagSigilGenerator.GetAnchorPosition(tag, center, Radius)).ToArray();
+
+        HashSet<(int, int)> uniqueEdges = new HashSet<(int, int)>();
+        for (int i = 0; i < targets.Length; i++)
+        {
+            uniqueEdges.Add((Mathf.Min(i, targets[i]), Mathf.Max(i, targets[i])));
+        }
+        _edges = uniqueEdges.ToArray();
+
+        _degree = new int[active.Count];
+        foreach ((int a, int b) in _edges)
+        {
+            _degree[a]++;
+            _degree[b]++;
+        }
+
+        // A dot with no line of its own can still sit exactly on top of some other edge's line
+        // (the grid makes rows/columns/diagonals of active dots common) — exclude those from
+        // flairing too, since a flair there reads as attached to a line it isn't actually part of.
+        _flairEligible = new bool[active.Count];
+        for (int i = 0; i < active.Count; i++)
+        {
+            _flairEligible[i] = _degree[i] == 1 && !_edges.Any(edge =>
+                edge.A != i && edge.B != i && PointLiesOnSegment(_points[i], _points[edge.A], _points[edge.B]));
         }
 
         QueueRedraw();
@@ -33,11 +62,119 @@ public partial class TagSigilCandidatePanel : Control
 
     public override void _Draw()
     {
-        if (_segments.Length < 2)
+        if (_edges.Length == 0)
         {
             return;
         }
 
-        DrawMultiline(_segments, LineColor, LineWidth);
+        foreach ((int a, int b) in _edges)
+        {
+            Vector2 start = _points[a];
+            Vector2 end = _points[b];
+            float edgeLength = start.DistanceTo(end);
+
+            DrawLine(start, end, LineColor, LineWidth);
+
+            if (_flairEligible[a])
+            {
+                DrawFlair(start, (start - end).Normalized(), edgeLength);
+            }
+
+            if (_flairEligible[b])
+            {
+                DrawFlair(end, (end - start).Normalized(), edgeLength);
+            }
+        }
+
+        // Where two or more lines actually meet at an angle, hide the seam under a small
+        // diamond instead of trying to compute a directional flair for a joint with no single
+        // "outward" direction.
+        for (int i = 0; i < _points.Length; i++)
+        {
+            if (_degree[i] >= 2)
+            {
+                DrawJointDiamond(_points[i]);
+            }
+        }
+    }
+
+    private static bool PointLiesOnSegment(Vector2 point, Vector2 a, Vector2 b)
+    {
+        const float DistanceTolerance = 2f;
+        const float EndpointMargin = 0.02f;
+
+        Vector2 ab = b - a;
+        float lengthSquared = ab.LengthSquared();
+        if (lengthSquared < 0.0001f)
+        {
+            return false;
+        }
+
+        float t = (point - a).Dot(ab) / lengthSquared;
+        if (t < EndpointMargin || t > 1f - EndpointMargin)
+        {
+            return false;
+        }
+
+        Vector2 closestPoint = a + ab * t;
+        return point.DistanceTo(closestPoint) <= DistanceTolerance;
+    }
+
+    // A perpendicular crossbar at a loose end, with a curved "ramp" sweeping from a point back
+    // along the main line up to each crossbar tip. The ramp is a quadratic Bezier using the
+    // endpoint itself as the control point, so it's tangent to the main line at the back point
+    // and tangent to the crossbar at the tip — no sharp corner at either join.
+    private void DrawFlair(Vector2 point, Vector2 outwardDirection, float edgeLength)
+    {
+        const float RampReach = 0.6f;
+        const float BackReachMultiplier = 5f;
+
+        Vector2 back = -outwardDirection;
+        Vector2 perp = new Vector2(-outwardDirection.Y, outwardDirection.X);
+
+        Vector2 tipLeft = point + perp * FlairLength;
+        Vector2 tipRight = point - perp * FlairLength;
+
+        // Never let the ramp's back point reach past the far end of its own line — on a tight
+        // grid a short edge would otherwise send the curve shooting out past its other endpoint.
+        float backDistance = Mathf.Min(FlairLength * BackReachMultiplier, edgeLength * 0.9f);
+        Vector2 backPoint = point + back * backDistance;
+
+        // The ramp stops short of the crossbar's outer tips so it dives into the flat bar's
+        // body instead of defining its edge — the crossbar's own straight line is what actually
+        // terminates the shape, giving a flat serif foot instead of a rounded curve tip.
+        Vector2 rampEndLeft = point + perp * FlairLength * RampReach;
+        Vector2 rampEndRight = point - perp * FlairLength * RampReach;
+
+        DrawLine(tipLeft, tipRight, LineColor, CrossbarWidth);
+        DrawRamp(backPoint, point, rampEndLeft);
+        DrawRamp(backPoint, point, rampEndRight);
+    }
+
+    private void DrawRamp(Vector2 from, Vector2 control, Vector2 to)
+    {
+        const int Segments = 10;
+        Vector2[] points = new Vector2[Segments + 1];
+
+        for (int i = 0; i <= Segments; i++)
+        {
+            float t = (float)i / Segments;
+            points[i] = from.Lerp(control, t).Lerp(control.Lerp(to, t), t);
+        }
+
+        DrawPolyline(points, LineColor, RampWidth);
+    }
+
+    private void DrawJointDiamond(Vector2 center)
+    {
+        Vector2[] diamond =
+        {
+            center + new Vector2(0, -JointDiamondSize),
+            center + new Vector2(JointDiamondSize, 0),
+            center + new Vector2(0, JointDiamondSize),
+            center + new Vector2(-JointDiamondSize, 0)
+        };
+
+        DrawColoredPolygon(diamond, LineColor);
     }
 }
