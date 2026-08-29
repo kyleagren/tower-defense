@@ -2,7 +2,6 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 public partial class TagSigilCandidatePanel : Control
 {
@@ -17,14 +16,12 @@ public partial class TagSigilCandidatePanel : Control
     private readonly List<(Vector2 A, Vector2 B, float Width)> _strokes = new List<(Vector2, Vector2, float)>();
     private readonly List<(Vector2 From, Vector2 Control, Vector2 To, float Width)> _curves = new List<(Vector2, Vector2, Vector2, float)>();
     private readonly List<Vector2[]> _polygons = new List<Vector2[]>();
-    private List<string> _activeTagNames = new List<string>();
 
     public void SetPairing(IReadOnlyList<Tag> active, int[] targets)
     {
         _strokes.Clear();
         _curves.Clear();
         _polygons.Clear();
-        _activeTagNames = active.Select(tag => tag.ToString()).ToList();
 
         if (targets == null || active.Count < 2)
         {
@@ -116,53 +113,6 @@ public partial class TagSigilCandidatePanel : Control
         {
             DrawColoredPolygon(polygon, LineColor);
         }
-    }
-
-    public override void _GuiInput(InputEvent @event)
-    {
-        if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
-        {
-            ExportSvg();
-        }
-    }
-
-    private void ExportSvg()
-    {
-        if (_strokes.Count == 0 && _curves.Count == 0 && _polygons.Count == 0)
-        {
-            return;
-        }
-
-        StringBuilder svg = new StringBuilder();
-        svg.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{Size.X:F0}\" height=\"{Size.Y:F0}\" viewBox=\"0 0 {Size.X:F0} {Size.Y:F0}\">\n");
-
-        foreach ((Vector2 a, Vector2 b, float width) in _strokes)
-        {
-            svg.Append($"  <line x1=\"{a.X:F2}\" y1=\"{a.Y:F2}\" x2=\"{b.X:F2}\" y2=\"{b.Y:F2}\" stroke=\"black\" stroke-width=\"{width:F2}\" stroke-linecap=\"butt\"/>\n");
-        }
-
-        foreach ((Vector2 from, Vector2 control, Vector2 to, float width) in _curves)
-        {
-            svg.Append($"  <path d=\"M {from.X:F2},{from.Y:F2} Q {control.X:F2},{control.Y:F2} {to.X:F2},{to.Y:F2}\" stroke=\"black\" stroke-width=\"{width:F2}\" fill=\"none\" stroke-linecap=\"butt\"/>\n");
-        }
-
-        foreach (Vector2[] polygon in _polygons)
-        {
-            string points = string.Join(" ", polygon.Select(p => $"{p.X:F2},{p.Y:F2}"));
-            svg.Append($"  <polygon points=\"{points}\" fill=\"black\"/>\n");
-        }
-
-        svg.Append("</svg>\n");
-
-        string fileName = _activeTagNames.Count > 0
-            ? "sigil_" + string.Join("_", _activeTagNames).ToLowerInvariant() + ".svg"
-            : "sigil.svg";
-        string path = "user://" + fileName;
-
-        using FileAccess file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
-        file.StoreString(svg.ToString());
-
-        GD.Print($"Exported sigil to {ProjectSettings.GlobalizePath(path)}");
     }
 
     private static bool PointLiesOnSegment(Vector2 point, Vector2 a, Vector2 b)
