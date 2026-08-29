@@ -11,7 +11,6 @@ public partial class TagSigilPreview : Control
     [Export] public TagSigilCandidatePanel CandidatePanelD { get; private set; }
 
     private readonly HashSet<Tag> _activeTags = new HashSet<Tag>();
-    private readonly List<Tag> _activationOrder = new List<Tag>();
     private TagSigilCandidatePanel[] _candidatePanels;
 
     public override void _Ready()
@@ -35,19 +34,17 @@ public partial class TagSigilPreview : Control
         if (active)
         {
             _activeTags.Add(tag);
-            _activationOrder.Add(tag);
         }
         else
         {
             _activeTags.Remove(tag);
-            _activationOrder.Remove(tag);
         }
 
         AnchorDisplay.SetActiveTags(_activeTags);
 
         foreach (TagSigilCandidatePanel panel in _candidatePanels)
         {
-            panel.Refresh(_activeTags, _activationOrder);
+            panel.Refresh(_activeTags);
         }
     }
 }

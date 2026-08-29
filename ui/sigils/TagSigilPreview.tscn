@@ -1,12 +1,16 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dv00otfr0yg5k"]
 
-[ext_resource type="Script" path="res://ui/sigils/TagSigilPreview.cs" id="1_tagsigilpreview"]
-[ext_resource type="Script" path="res://ui/sigils/TagAnchorDisplay.cs" id="2_taganchordisplay"]
-[ext_resource type="Script" path="res://ui/sigils/TagSigilCandidatePanel.cs" id="3_candidatepanel"]
+[ext_resource type="Script" uid="uid://c6bhqth2m211p" path="res://ui/sigils/TagSigilPreview.cs" id="1_tagsigilpreview"]
+[ext_resource type="Script" uid="uid://capwvyd14ddd6" path="res://ui/sigils/TagAnchorDisplay.cs" id="2_taganchordisplay"]
+[ext_resource type="Script" uid="uid://dnrvs3mm3hjiw" path="res://ui/sigils/TagSigilCandidatePanel.cs" id="3_candidatepanel"]
 
-[node name="TagSigilPreview" type="Control" node_paths=PackedStringArray("TagButtonRow", "AnchorDisplay", "CandidatePanelA", "CandidatePanelB", "CandidatePanelC", "CandidatePanelD")]
+[node name="TagSigilPreview" type="Control" unique_id=379042831 node_paths=PackedStringArray("TagButtonRow", "AnchorDisplay", "CandidatePanelA", "CandidatePanelB", "CandidatePanelC", "CandidatePanelD")]
+layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_tagsigilpreview")
 TagButtonRow = NodePath("TagButtonRow")
 AnchorDisplay = NodePath("AnchorDisplay")
@@ -15,41 +19,47 @@ CandidatePanelB = NodePath("CandidateRow/CandidatePanelB")
 CandidatePanelC = NodePath("CandidateRow/CandidatePanelC")
 CandidatePanelD = NodePath("CandidateRow/CandidatePanelD")
 
-[node name="TagButtonRow" type="HBoxContainer" parent="."]
+[node name="TagButtonRow" type="HBoxContainer" parent="." unique_id=1644922164]
+layout_mode = 0
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 900.0
 offset_bottom = 52.0
 
-[node name="AnchorDisplay" type="Control" parent="."]
-script = ExtResource("2_taganchordisplay")
+[node name="AnchorDisplay" type="Control" parent="." unique_id=138278648]
+anchors_preset = 0
 offset_left = 100.0
 offset_top = 80.0
 offset_right = 500.0
 offset_bottom = 480.0
+script = ExtResource("2_taganchordisplay")
 
-[node name="CandidateRow" type="HBoxContainer" parent="."]
+[node name="CandidateRow" type="HBoxContainer" parent="." unique_id=65691925]
+layout_mode = 0
 offset_left = 20.0
 offset_top = 500.0
 offset_right = 900.0
 offset_bottom = 660.0
 
-[node name="CandidatePanelA" type="Control" parent="CandidateRow"]
+[node name="CandidatePanelA" type="Control" parent="CandidateRow" unique_id=761624099]
 custom_minimum_size = Vector2(200, 160)
+layout_mode = 2
 script = ExtResource("3_candidatepanel")
-strategy = 0
 
-[node name="CandidatePanelB" type="Control" parent="CandidateRow"]
+[node name="CandidatePanelB" type="Control" parent="CandidateRow" unique_id=1438958659]
 custom_minimum_size = Vector2(200, 160)
+layout_mode = 2
 script = ExtResource("3_candidatepanel")
-strategy = 1
+Seed = 1
 
-[node name="CandidatePanelC" type="Control" parent="CandidateRow"]
+[node name="CandidatePanelC" type="Control" parent="CandidateRow" unique_id=936074984]
 custom_minimum_size = Vector2(200, 160)
+layout_mode = 2
 script = ExtResource("3_candidatepanel")
-strategy = 2
+Seed = 2
 
-[node name="CandidatePanelD" type="Control" parent="CandidateRow"]
+[node name="CandidatePanelD" type="Control" parent="CandidateRow" unique_id=1093769013]
 custom_minimum_size = Vector2(200, 160)
+layout_mode = 2
 script = ExtResource("3_candidatepanel")
-strategy = 3
+Seed = 3

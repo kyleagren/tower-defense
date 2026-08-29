@@ -8,65 +8,89 @@ public static class TagSigilGenerator
     public static readonly Tag[] AllTags = (Tag[])Enum.GetValues(typeof(Tag));
     public static int AnchorCount => AllTags.Length;
 
+    // Fixed grid slot for a tag — the intersections of a square grid (e.g. 3x3 for 9 tags,
+    // like a tic-tac-toe board), sized to fit every possible tag. A tag always owns the same
+    // slot regardless of what else is active.
     public static Vector2 GetAnchorPosition(Tag tag, Vector2 center, float radius)
     {
         int index = Array.IndexOf(AllTags, tag);
-        float angleDegrees = -90f + index * (360f / AnchorCount);
-        float angleRadians = Mathf.DegToRad(angleDegrees);
-        return center + new Vector2(Mathf.Cos(angleRadians), Mathf.Sin(angleRadians)) * radius;
+        return GridPosition(index, center, radius);
     }
 
-    public static Vector2[] AngularOrder(IEnumerable<Tag> activeTags, Vector2 center, float radius)
+    private static Vector2 GridPosition(int index, Vector2 center, float radius)
     {
-        return activeTags
-            .OrderBy(tag => Array.IndexOf(AllTags, tag))
-            .Select(tag => GetAnchorPosition(tag, center, radius))
-            .ToArray();
+        int columns = Mathf.CeilToInt(Mathf.Sqrt(AnchorCount));
+        int rows = Mathf.CeilToInt((float)AnchorCount / columns);
+
+        int col = index % columns;
+        int row = index / columns;
+
+        float x = columns > 1 ? Mathf.Lerp(-radius, radius, (float)col / (columns - 1)) : 0f;
+        float y = rows > 1 ? Mathf.Lerp(-radius, radius, (float)row / (rows - 1)) : 0f;
+
+        return center + new Vector2(x, y);
     }
 
-    public static Vector2[] StarOrder(IEnumerable<Tag> activeTags, Vector2 center, float radius)
+    // Builds up to `panelCount` distinct random pairings of the active tags — each active tag
+    // connects to one random other active tag. A panel whose pairing duplicates an earlier one
+    // (e.g. because there just aren't many distinct layouts possible with only 2-3 active tags)
+    // gets a null entry, so the caller can render it blank instead of repeating a pattern.
+    public static (List<Tag> Active, int[][] PairingsPerPanel) GenerateUniquePairings(IEnumerable<Tag> activeTags, int panelCount)
     {
-        List<Tag> sorted = activeTags.OrderBy(tag => Array.IndexOf(AllTags, tag)).ToList();
-        List<Tag> starOrder = new List<Tag>();
+        List<Tag> active = activeTags.OrderBy(tag => Array.IndexOf(AllTags, tag)).ToList();
+        int[][] pairings = new int[panelCount][];
 
-        for (int i = 0; i < sorted.Count; i += 2)
+        if (active.Count < 2)
         {
-            starOrder.Add(sorted[i]);
-        }
-        for (int i = 1; i < sorted.Count; i += 2)
-        {
-            starOrder.Add(sorted[i]);
+            return (active, pairings);
         }
 
-        return starOrder.Select(tag => GetAnchorPosition(tag, center, radius)).ToArray();
+        uint baseSeed = 0;
+        foreach (Tag tag in active)
+        {
+            baseSeed = baseSeed * 31 + (uint)tag;
+        }
+
+        HashSet<string> seenSignatures = new HashSet<string>();
+
+        for (int panel = 0; panel < panelCount; panel++)
+        {
+            uint seed = baseSeed + (uint)panel * 104729u;
+            int[] targets = GeneratePairingTargets(active.Count, seed);
+
+            pairings[panel] = seenSignatures.Add(PairingSignature(targets)) ? targets : null;
+        }
+
+        return (active, pairings);
     }
 
-    public static Vector2[] ActivationOrder(IEnumerable<Tag> activeTagsInClickOrder, Vector2 center, float radius)
+    private static int[] GeneratePairingTargets(int count, uint seed)
     {
-        return activeTagsInClickOrder
-            .Select(tag => GetAnchorPosition(tag, center, radius))
-            .ToArray();
+        RandomNumberGenerator rng = new RandomNumberGenerator { Seed = seed };
+        int[] targets = new int[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            int j = i;
+            while (j == i)
+            {
+                j = rng.RandiRange(0, count - 1);
+            }
+            targets[i] = j;
+        }
+
+        return targets;
     }
 
-    public static Vector2[] SeededShuffleOrder(IEnumerable<Tag> activeTags, Vector2 center, float radius)
+    private static string PairingSignature(int[] targets)
     {
-        List<Tag> shuffled = activeTags.OrderBy(tag => Array.IndexOf(AllTags, tag)).ToList();
+        SortedSet<(int, int)> edges = new SortedSet<(int, int)>();
 
-        uint seed = 17;
-        foreach (Tag tag in shuffled)
+        for (int i = 0; i < targets.Length; i++)
         {
-            seed = seed * 31 + (uint)tag;
+            edges.Add((Mathf.Min(i, targets[i]), Mathf.Max(i, targets[i])));
         }
 
-        RandomNumberGenerator rng = new RandomNumberGenerator();
-        rng.Seed = seed;
-
-        for (int i = shuffled.Count - 1; i > 0; i--)
-        {
-            int j = (int)(rng.Randf() * (i + 1));
-            (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
-        }
-
-        return shuffled.Select(tag => GetAnchorPosition(tag, center, radius)).ToArray();
+        return string.Join(",", edges.Select(edge => $"{edge.Item1}-{edge.Item2}"));
     }
 }
