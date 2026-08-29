@@ -34,68 +34,68 @@ script = ExtResource("2_taganchordisplay")
 layout_mode = 0
 offset_left = 20.0
 offset_top = 500.0
-offset_right = 900.0
-offset_bottom = 1020.0
+offset_right = 1050.0
+offset_bottom = 1270.0
 theme_override_constants/h_separation = 20
 theme_override_constants/v_separation = 20
 columns = 4
 
 [node name="CandidatePanelA" type="Control" parent="CandidateGrid" unique_id=761624099]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelB" type="Control" parent="CandidateGrid" unique_id=1438958659]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelC" type="Control" parent="CandidateGrid" unique_id=936074984]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelD" type="Control" parent="CandidateGrid" unique_id=1093769013]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelE" type="Control" parent="CandidateGrid" unique_id=2134993421]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelF" type="Control" parent="CandidateGrid" unique_id=130240992]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelG" type="Control" parent="CandidateGrid" unique_id=1270657115]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelH" type="Control" parent="CandidateGrid" unique_id=1448599321]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelI" type="Control" parent="CandidateGrid" unique_id=1583924821]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelJ" type="Control" parent="CandidateGrid" unique_id=44832538]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelK" type="Control" parent="CandidateGrid" unique_id=431543651]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")
 
 [node name="CandidatePanelL" type="Control" parent="CandidateGrid" unique_id=1314814232]
-custom_minimum_size = Vector2(200, 160)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 script = ExtResource("3_candidatepanel")

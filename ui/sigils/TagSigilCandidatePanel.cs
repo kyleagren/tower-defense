@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 public partial class TagSigilCandidatePanel : Control
 {
@@ -13,48 +14,78 @@ public partial class TagSigilCandidatePanel : Control
     [Export] public float RampWidth = 10f;
     [Export] public float JointDiamondSize = 14f;
 
-    private Vector2[] _points = Array.Empty<Vector2>();
-    private (int A, int B)[] _edges = Array.Empty<(int, int)>();
-    private int[] _degree = Array.Empty<int>();
-    private bool[] _flairEligible = Array.Empty<bool>();
+    private readonly List<(Vector2 A, Vector2 B, float Width)> _strokes = new List<(Vector2, Vector2, float)>();
+    private readonly List<(Vector2 From, Vector2 Control, Vector2 To, float Width)> _curves = new List<(Vector2, Vector2, Vector2, float)>();
+    private readonly List<Vector2[]> _polygons = new List<Vector2[]>();
+    private List<string> _activeTagNames = new List<string>();
 
     public void SetPairing(IReadOnlyList<Tag> active, int[] targets)
     {
+        _strokes.Clear();
+        _curves.Clear();
+        _polygons.Clear();
+        _activeTagNames = active.Select(tag => tag.ToString()).ToList();
+
         if (targets == null || active.Count < 2)
         {
-            _points = Array.Empty<Vector2>();
-            _edges = Array.Empty<(int, int)>();
-            _degree = Array.Empty<int>();
-            _flairEligible = Array.Empty<bool>();
             QueueRedraw();
             return;
         }
 
         Vector2 center = Size / 2f;
-        _points = active.Select(tag => TagSigilGenerator.GetAnchorPosition(tag, center, Radius)).ToArray();
+        Vector2[] points = active.Select(tag => TagSigilGenerator.GetAnchorPosition(tag, center, Radius)).ToArray();
 
         HashSet<(int, int)> uniqueEdges = new HashSet<(int, int)>();
         for (int i = 0; i < targets.Length; i++)
         {
             uniqueEdges.Add((Mathf.Min(i, targets[i]), Mathf.Max(i, targets[i])));
         }
-        _edges = uniqueEdges.ToArray();
 
-        _degree = new int[active.Count];
-        foreach ((int a, int b) in _edges)
+        int[] degree = new int[active.Count];
+        foreach ((int a, int b) in uniqueEdges)
         {
-            _degree[a]++;
-            _degree[b]++;
+            degree[a]++;
+            degree[b]++;
         }
 
         // A dot with no line of its own can still sit exactly on top of some other edge's line
         // (the grid makes rows/columns/diagonals of active dots common) — exclude those from
         // flairing too, since a flair there reads as attached to a line it isn't actually part of.
-        _flairEligible = new bool[active.Count];
+        bool[] flairEligible = new bool[active.Count];
         for (int i = 0; i < active.Count; i++)
         {
-            _flairEligible[i] = _degree[i] == 1 && !_edges.Any(edge =>
-                edge.A != i && edge.B != i && PointLiesOnSegment(_points[i], _points[edge.A], _points[edge.B]));
+            flairEligible[i] = degree[i] == 1 && !uniqueEdges.Any(edge =>
+                edge.Item1 != i && edge.Item2 != i && PointLiesOnSegment(points[i], points[edge.Item1], points[edge.Item2]));
+        }
+
+        foreach ((int a, int b) in uniqueEdges)
+        {
+            Vector2 start = points[a];
+            Vector2 end = points[b];
+            float edgeLength = start.DistanceTo(end);
+
+            _strokes.Add((start, end, LineWidth));
+
+            if (flairEligible[a])
+            {
+                BuildFlair(start, (start - end).Normalized(), edgeLength);
+            }
+
+            if (flairEligible[b])
+            {
+                BuildFlair(end, (end - start).Normalized(), edgeLength);
+            }
+        }
+
+        // Where two or more lines actually meet at an angle, hide the seam under a small
+        // diamond instead of trying to compute a directional flair for a joint with no single
+        // "outward" direction.
+        for (int i = 0; i < points.Length; i++)
+        {
+            if (degree[i] >= 2)
+            {
+                _polygons.Add(BuildDiamond(points[i]));
+            }
         }
 
         QueueRedraw();
@@ -62,40 +93,76 @@ public partial class TagSigilCandidatePanel : Control
 
     public override void _Draw()
     {
-        if (_edges.Length == 0)
+        foreach ((Vector2 a, Vector2 b, float width) in _strokes)
+        {
+            DrawLine(a, b, LineColor, width);
+        }
+
+        foreach ((Vector2 from, Vector2 control, Vector2 to, float width) in _curves)
+        {
+            const int Segments = 10;
+            Vector2[] curvePoints = new Vector2[Segments + 1];
+
+            for (int i = 0; i <= Segments; i++)
+            {
+                float t = (float)i / Segments;
+                curvePoints[i] = from.Lerp(control, t).Lerp(control.Lerp(to, t), t);
+            }
+
+            DrawPolyline(curvePoints, LineColor, width);
+        }
+
+        foreach (Vector2[] polygon in _polygons)
+        {
+            DrawColoredPolygon(polygon, LineColor);
+        }
+    }
+
+    public override void _GuiInput(InputEvent @event)
+    {
+        if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
+        {
+            ExportSvg();
+        }
+    }
+
+    private void ExportSvg()
+    {
+        if (_strokes.Count == 0 && _curves.Count == 0 && _polygons.Count == 0)
         {
             return;
         }
 
-        foreach ((int a, int b) in _edges)
+        StringBuilder svg = new StringBuilder();
+        svg.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{Size.X:F0}\" height=\"{Size.Y:F0}\" viewBox=\"0 0 {Size.X:F0} {Size.Y:F0}\">\n");
+
+        foreach ((Vector2 a, Vector2 b, float width) in _strokes)
         {
-            Vector2 start = _points[a];
-            Vector2 end = _points[b];
-            float edgeLength = start.DistanceTo(end);
-
-            DrawLine(start, end, LineColor, LineWidth);
-
-            if (_flairEligible[a])
-            {
-                DrawFlair(start, (start - end).Normalized(), edgeLength);
-            }
-
-            if (_flairEligible[b])
-            {
-                DrawFlair(end, (end - start).Normalized(), edgeLength);
-            }
+            svg.Append($"  <line x1=\"{a.X:F2}\" y1=\"{a.Y:F2}\" x2=\"{b.X:F2}\" y2=\"{b.Y:F2}\" stroke=\"black\" stroke-width=\"{width:F2}\" stroke-linecap=\"butt\"/>\n");
         }
 
-        // Where two or more lines actually meet at an angle, hide the seam under a small
-        // diamond instead of trying to compute a directional flair for a joint with no single
-        // "outward" direction.
-        for (int i = 0; i < _points.Length; i++)
+        foreach ((Vector2 from, Vector2 control, Vector2 to, float width) in _curves)
         {
-            if (_degree[i] >= 2)
-            {
-                DrawJointDiamond(_points[i]);
-            }
+            svg.Append($"  <path d=\"M {from.X:F2},{from.Y:F2} Q {control.X:F2},{control.Y:F2} {to.X:F2},{to.Y:F2}\" stroke=\"black\" stroke-width=\"{width:F2}\" fill=\"none\" stroke-linecap=\"butt\"/>\n");
         }
+
+        foreach (Vector2[] polygon in _polygons)
+        {
+            string points = string.Join(" ", polygon.Select(p => $"{p.X:F2},{p.Y:F2}"));
+            svg.Append($"  <polygon points=\"{points}\" fill=\"black\"/>\n");
+        }
+
+        svg.Append("</svg>\n");
+
+        string fileName = _activeTagNames.Count > 0
+            ? "sigil_" + string.Join("_", _activeTagNames).ToLowerInvariant() + ".svg"
+            : "sigil.svg";
+        string path = "user://" + fileName;
+
+        using FileAccess file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
+        file.StoreString(svg.ToString());
+
+        GD.Print($"Exported sigil to {ProjectSettings.GlobalizePath(path)}");
     }
 
     private static bool PointLiesOnSegment(Vector2 point, Vector2 a, Vector2 b)
@@ -124,7 +191,7 @@ public partial class TagSigilCandidatePanel : Control
     // along the main line up to each crossbar tip. The ramp is a quadratic Bezier using the
     // endpoint itself as the control point, so it's tangent to the main line at the back point
     // and tangent to the crossbar at the tip — no sharp corner at either join.
-    private void DrawFlair(Vector2 point, Vector2 outwardDirection, float edgeLength)
+    private void BuildFlair(Vector2 point, Vector2 outwardDirection, float edgeLength)
     {
         const float RampReach = 0.6f;
         const float BackReachMultiplier = 5f;
@@ -146,35 +213,19 @@ public partial class TagSigilCandidatePanel : Control
         Vector2 rampEndLeft = point + perp * FlairLength * RampReach;
         Vector2 rampEndRight = point - perp * FlairLength * RampReach;
 
-        DrawLine(tipLeft, tipRight, LineColor, CrossbarWidth);
-        DrawRamp(backPoint, point, rampEndLeft);
-        DrawRamp(backPoint, point, rampEndRight);
+        _strokes.Add((tipLeft, tipRight, CrossbarWidth));
+        _curves.Add((backPoint, point, rampEndLeft, RampWidth));
+        _curves.Add((backPoint, point, rampEndRight, RampWidth));
     }
 
-    private void DrawRamp(Vector2 from, Vector2 control, Vector2 to)
+    private Vector2[] BuildDiamond(Vector2 center)
     {
-        const int Segments = 10;
-        Vector2[] points = new Vector2[Segments + 1];
-
-        for (int i = 0; i <= Segments; i++)
-        {
-            float t = (float)i / Segments;
-            points[i] = from.Lerp(control, t).Lerp(control.Lerp(to, t), t);
-        }
-
-        DrawPolyline(points, LineColor, RampWidth);
-    }
-
-    private void DrawJointDiamond(Vector2 center)
-    {
-        Vector2[] diamond =
+        return new[]
         {
             center + new Vector2(0, -JointDiamondSize),
             center + new Vector2(JointDiamondSize, 0),
             center + new Vector2(0, JointDiamondSize),
             center + new Vector2(-JointDiamondSize, 0)
         };
-
-        DrawColoredPolygon(diamond, LineColor);
     }
 }
