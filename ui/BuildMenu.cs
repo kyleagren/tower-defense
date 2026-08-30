@@ -96,7 +96,7 @@ public partial class BuildMenu : Control
         }
 
         Button clearAllButton = new Button { Text = "Clear All" };
-        CenterOnAnchor(clearAllButton, new Vector2(0.5f, 0.95f), new Vector2(140f, 50f));
+        CenterOnAnchor(clearAllButton, new Vector2(1f / 3f, 0.95f), new Vector2(140f, 50f));
         clearAllButton.AddThemeStyleboxOverride("normal", _clearAllButtonStyle);
         clearAllButton.AddThemeStyleboxOverride("hover", _clearAllButtonHoverStyle);
         clearAllButton.AddThemeStyleboxOverride("pressed", _clearAllButtonPressedStyle);
@@ -104,7 +104,7 @@ public partial class BuildMenu : Control
         _socketScreen.AddChild(clearAllButton);
 
         Button confirmButton = new Button { Text = "Confirm" };
-        CenterOnAnchor(confirmButton, new Vector2(0.5f, 0.05f), new Vector2(140f, 50f));
+        CenterOnAnchor(confirmButton, new Vector2(2f / 3f, 0.95f), new Vector2(140f, 50f));
         confirmButton.AddThemeStyleboxOverride("normal", _confirmButtonStyle);
         confirmButton.AddThemeStyleboxOverride("hover", _confirmButtonHoverStyle);
         confirmButton.AddThemeStyleboxOverride("pressed", _confirmButtonPressedStyle);
