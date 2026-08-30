@@ -8,12 +8,9 @@ public partial class DebugToggle : Node
         {
             DebugSettings.ShowEnemyHealthBars = !DebugSettings.ShowEnemyHealthBars;
 
-            foreach (Node node in GetTree().GetNodesInGroup("enemies"))
+            foreach (Enemy enemy in EnemyRegistry.Active)
             {
-                if (node is Enemy enemy && !enemy.IsDead)
-                {
-                    enemy.HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
-                }
+                enemy.HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
             }
         }
     }

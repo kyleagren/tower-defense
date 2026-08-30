@@ -181,16 +181,23 @@ public partial class Projectile : Area3D
 
     private bool TryRedirectToChainTarget(Enemy hitEnemy)
     {
-        IEnumerable<Enemy> ownHits = _alreadyHit.OfType<Enemy>();
+        // Materialized as sets so the exclusion test is a hash lookup — the old lazy OfType/Concat
+        // made EnemyTargeting re-walk the whole sequence for every candidate enemy.
+        HashSet<Enemy> ownHits = new HashSet<Enemy>(_alreadyHit.OfType<Enemy>());
 
-        Enemy next = null;
-
+        HashSet<Enemy> allHits = ownHits;
         if (ChainHitTracker != null)
         {
-            next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, ownHits.Concat(ChainHitTracker));
+            allHits = new HashSet<Enemy>(ownHits);
+            allHits.UnionWith(ChainHitTracker);
         }
 
-        next ??= EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, ownHits);
+        Enemy next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, allHits);
+
+        if (next == null && ChainHitTracker != null)
+        {
+            next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, ownHits);
+        }
 
         if (next == null)
         {

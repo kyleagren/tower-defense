@@ -9,7 +9,6 @@ public partial class WaveController : Node
     [Export] public float EnemyCheckInterval = 0.5f;
 
     private const string SpawnerGroup = "enemy_spawners";
-    private const string EnemyGroup = "enemies";
 
     private Dictionary<string, EnemySpawner> _spawnersById;
     private int _nextWaveIndex;
@@ -76,7 +75,7 @@ public partial class WaveController : Node
 
         await Task.WhenAll(spawnerTasks);
 
-        while (GetTree().GetNodesInGroup(EnemyGroup).Count > 0)
+        while (EnemyRegistry.Active.Count > 0)
         {
             await ToSignal(GetTree().CreateTimer(EnemyCheckInterval), "timeout");
         }

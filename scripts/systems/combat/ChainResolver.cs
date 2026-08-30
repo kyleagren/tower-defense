@@ -1,6 +1,5 @@
 using Godot;
 using System.Collections.Generic;
-using System.Linq;
 
 public static class ChainResolver
 {
@@ -10,18 +9,26 @@ public static class ChainResolver
     {
         Enemy current = firstTarget;
         Vector3 currentPoint = firstTargetPoint;
-        HashSet<Enemy> hit = new HashSet<Enemy> { firstTarget };
+
+        // What this chain has hit.
+        HashSet<Enemy> ownHits = new HashSet<Enemy> { firstTarget };
+
+        // ownHits plus whatever sibling forks/projectiles have hit, built once as a real set
+        // rather than re-concatenated lazily on every jump.
+        HashSet<Enemy> allHits = sharedChainTracker != null
+            ? new HashSet<Enemy>(sharedChainTracker) { firstTarget }
+            : ownHits;
 
         for (int i = 0; i < chainCount; i++)
         {
-            Enemy next = null;
+            Enemy next = EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, allHits);
 
-            if (sharedChainTracker != null)
+            // Nothing untouched in range — allow re-hitting something a sibling chain already
+            // caught rather than dropping the remaining jumps entirely.
+            if (next == null && sharedChainTracker != null)
             {
-                next = EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, hit.Concat(sharedChainTracker));
+                next = EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, ownHits);
             }
-
-            next ??= EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, hit);
 
             if (next == null)
             {
@@ -37,7 +44,8 @@ public static class ChainResolver
             next.TakeDamage(currentDamage, ragdollImpulse, reaction: reaction);
             SpawnArcVisual(arcVisualScene, currentPoint, nextPoint);
 
-            hit.Add(next);
+            ownHits.Add(next);
+            allHits.Add(next);
             sharedChainTracker?.Add(next);
             current = next;
             currentPoint = nextPoint;

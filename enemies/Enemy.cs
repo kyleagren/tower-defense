@@ -79,12 +79,24 @@ public partial class Enemy : CharacterBody3D
         _armRBoneIdx = Skeleton.FindBone("Arm.R");
 
         _currentHealth = MaxHealth;
+
+        // Group membership is for editor / remote-debugger inspection only — code paths that need
+        // living enemies go through EnemyRegistry, which excludes ragdolls.
         AddToGroup("enemies");
+        EnemyRegistry.Register(this);
+
         HealthBar.SetFraction(1f);
         HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
 
         SetPhysicalBonesCollision(0, 0);
         CollectMeshInstances(Skeleton);
+    }
+
+    // Safety net for enemies freed without dying — scene reload, in particular. Unregistering
+    // twice is a no-op, so the Die() path unregistering first is unaffected.
+    public override void _ExitTree()
+    {
+        EnemyRegistry.Unregister(this);
     }
 
     public void SetTarget(Vector3 targetPosition)
@@ -149,6 +161,7 @@ public partial class Enemy : CharacterBody3D
         }
 
         _isDead = true;
+        EnemyRegistry.Unregister(this);
         HealthBar.Visible = false;
         HealthBar.SetProcess(false);
         EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward);
