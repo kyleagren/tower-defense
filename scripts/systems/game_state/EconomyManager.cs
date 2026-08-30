@@ -11,6 +11,7 @@ public partial class EconomyManager : Node
 
     public int Budget { get; private set; }
     public int CapacityUsed { get; private set; }
+    public int GoldEarned { get; private set; }
 
     public event Action BudgetChanged;
 
@@ -26,9 +27,10 @@ public partial class EconomyManager : Node
         EventBus.Instance.EnemyKilled -= OnEnemyKilled;
     }
 
-    private void OnEnemyKilled(int reward)
+    private void OnEnemyKilled(int reward, int goldReward)
     {
         Budget += reward;
+        GoldEarned += goldReward;
         BudgetChanged?.Invoke();
     }
 

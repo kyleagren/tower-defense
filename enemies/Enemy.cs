@@ -18,7 +18,8 @@ public partial class Enemy : CharacterBody3D
     [Export] public float RagdollCleanupDelay = 2f;
     [Export] public float MaxHealth = 100f;
     [Export] public float CenterMassHeight = 1f;
-    [Export] public int Reward = 2;
+    [Export] public int Reward = 1;
+    [Export] public int GoldReward = 1;
     [Export] public HealthBar3D HealthBar { get; private set; }
 
     // TODO placeholder: remove once there's a real way to display an enemy's element/ailments (Section 15 iconography).
@@ -150,7 +151,7 @@ public partial class Enemy : CharacterBody3D
         _isDead = true;
         HealthBar.Visible = false;
         HealthBar.SetProcess(false);
-        EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, Reward);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, Reward, GoldReward);
 
         SetPhysicsProcess(false);
         BodyCollision.Disabled = true;

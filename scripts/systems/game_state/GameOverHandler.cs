@@ -3,6 +3,7 @@ using Godot;
 public partial class GameOverHandler : Node
 {
     [Export] public float ReloadDelay = 3f;
+    [Export] public int GoldPerVictory = 100;
 
     public override void _Ready()
     {
@@ -17,6 +18,14 @@ public partial class GameOverHandler : Node
     private void OnGameEnded(bool victory)
     {
         GD.Print(victory ? "Victory!" : "Defeat...");
+
+        if (victory)
+        {
+            SaveManager.Instance.Data.Gold += GoldPerVictory + EconomyManager.Instance.GoldEarned;
+            SaveManager.Instance.Save();
+            GD.Print($"Gold: {SaveManager.Instance.Data.Gold}");
+        }
+
         GetTree().CreateTimer(ReloadDelay).Timeout += () => GetTree().ReloadCurrentScene();
     }
 }
