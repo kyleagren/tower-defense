@@ -133,7 +133,7 @@ public partial class TowerPlacer : Node
         placed.Configure(_pendingSpell, _pendingRunes);
 
         int cost = _economy.SpendOnTower(_pendingSpell, _pendingRunes.Count);
-        placed.SetBudgetCost(cost);
+        placed.SetManaCost(cost);
 
         EndPlacement();
     }

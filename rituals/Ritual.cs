@@ -12,7 +12,7 @@ public partial class Ritual : Node3D
     private SpellInstance _spellInstance;
     private Enemy _currentTarget;
     private float _searchTimer;
-    private int _budgetCost;
+    private int _manaCost;
     private List<CastEffect> _castEffects;
 
     public override void _Ready()
@@ -26,9 +26,9 @@ public partial class Ritual : Node3D
         GD.Print($"Repairing {Spell?.Name} tower...");
     }
 
-    public void SetBudgetCost(int cost)
+    public void SetManaCost(int cost)
     {
-        _budgetCost = cost;
+        _manaCost = cost;
     }
 
     public void Destroy()
@@ -49,7 +49,7 @@ public partial class Ritual : Node3D
             }
         }
 
-        EconomyManager.Instance.RefundTower(_budgetCost);
+        EconomyManager.Instance.RefundTower(_manaCost);
 
         QueueFree();
     }

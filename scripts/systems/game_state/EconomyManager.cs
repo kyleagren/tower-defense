@@ -5,20 +5,21 @@ public partial class EconomyManager : Node
 {
     public static EconomyManager Instance { get; private set; }
 
-    [Export] public int StartingBudget = 60;
-    [Export] public int BudgetPerRune = 5;
+    [Export] public int StartingMana = 60;
+    [Export] public int ManaPerRune = 5;
     [Export] public int MaxCapacity = 5;
 
-    public int Budget { get; private set; }
+    public int Mana { get; private set; }
     public int CapacityUsed { get; private set; }
     public int GoldEarned { get; private set; }
 
-    public event Action BudgetChanged;
+    public event Action ManaChanged;
+    public event Action GoldEarnedChanged;
 
     public override void _Ready()
     {
         Instance = this;
-        Budget = StartingBudget;
+        Mana = StartingMana;
         EventBus.Instance.EnemyKilled += OnEnemyKilled;
     }
 
@@ -29,34 +30,35 @@ public partial class EconomyManager : Node
 
     private void OnEnemyKilled(int reward, int goldReward)
     {
-        Budget += reward;
+        Mana += reward;
         GoldEarned += goldReward;
-        BudgetChanged?.Invoke();
+        ManaChanged?.Invoke();
+        GoldEarnedChanged?.Invoke();
     }
 
     public int GetTowerCost(Spell spell, int runeCount)
     {
-        return spell.BudgetCost + BudgetPerRune * runeCount;
+        return spell.ManaCost + ManaPerRune * runeCount;
     }
 
     public bool CanAfford(Spell spell, int runeCount)
     {
-        return CapacityUsed < MaxCapacity && Budget >= GetTowerCost(spell, runeCount);
+        return CapacityUsed < MaxCapacity && Mana >= GetTowerCost(spell, runeCount);
     }
 
     public int SpendOnTower(Spell spell, int runeCount)
     {
         int cost = GetTowerCost(spell, runeCount);
-        Budget -= cost;
+        Mana -= cost;
         CapacityUsed++;
-        BudgetChanged?.Invoke();
+        ManaChanged?.Invoke();
         return cost;
     }
 
-    public void RefundTower(int budgetSpent)
+    public void RefundTower(int manaSpent)
     {
-        Budget += budgetSpent;
+        Mana += manaSpent;
         CapacityUsed--;
-        BudgetChanged?.Invoke();
+        ManaChanged?.Invoke();
     }
 }

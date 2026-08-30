@@ -13,7 +13,7 @@ public partial class FireballSpell : Spell
     [Export] public override float BaseFireDamage { get; protected set; } = 100f;
     [Export] public override float BaseCastTime { get; protected set; } = 1.5f;
     [Export] public override float BaseRagdollForce { get; protected set; } = 20f;
-    [Export] public override int BudgetCost { get; protected set; } = 10;
+    [Export] public override int ManaCost { get; protected set; } = 10;
 
     public override string Name => "Fireball";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Projectile, Tag.Fire, Tag.AoE };

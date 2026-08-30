@@ -47,7 +47,7 @@ public partial class BuildMenu : Control
             if (i < spells.Count)
             {
                 Spell spell = spells[i];
-                Button button = CreateTileButton($"{spell.Name}\nCost: {spell.BudgetCost}", spell.Name, spell.Description);
+                Button button = CreateTileButton($"{spell.Name}\nCost: {spell.ManaCost}", spell.Name, spell.Description);
                 button.Pressed += () => OnSpellSelected(spell);
                 Grid.AddChild(button);
             }
@@ -131,7 +131,7 @@ public partial class BuildMenu : Control
     {
         int runeCount = _socketedRunes.Count(r => r != null);
         int cost = _selectedSpell != null ? _economy.GetTowerCost(_selectedSpell, runeCount) : 0;
-        _centerSpellLabel.Text = $"{_selectedSpell?.Name}\nCost: {cost} / Budget: {_economy.Budget}";
+        _centerSpellLabel.Text = $"{_selectedSpell?.Name}\nCost: {cost} / Mana: {_economy.Mana}";
 
         for (int i = 0; i < _socketButtons.Length; i++)
         {
@@ -222,7 +222,7 @@ public partial class BuildMenu : Control
                 bool isCurrentSocketRune = rune == currentSocketRune;
                 bool disabled = IsSocketedElsewhere(rune, socketIndex);
 
-                Button button = CreateTileButton($"{rune.Name}\n+{_economy.BudgetPerRune}", rune.Name, rune.Description);
+                Button button = CreateTileButton($"{rune.Name}\n+{_economy.ManaPerRune}", rune.Name, rune.Description);
                 button.Disabled = disabled;
 
                 if (isCurrentSocketRune)

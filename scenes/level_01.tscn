@@ -230,7 +230,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 4.6874204)
 Architect = NodePath("../Architect")
 AttackDamage = 100.0
 
-[node name="PhaseIndicator" type="Control" parent="." unique_id=756900810 node_paths=PackedStringArray("PhaseLabel")]
+[node name="PhaseIndicator" type="Control" parent="." unique_id=756900810 node_paths=PackedStringArray("PhaseLabel", "GoldLabel")]
 layout_mode = 3
 anchors_preset = 10
 anchor_right = 1.0
@@ -238,6 +238,7 @@ offset_bottom = 56.0
 grow_horizontal = 2
 script = ExtResource("9_phaseindicator")
 PhaseLabel = NodePath("Label")
+GoldLabel = NodePath("GoldLabel")
 
 [node name="Background" type="ColorRect" parent="PhaseIndicator" unique_id=677710620]
 layout_mode = 1
@@ -258,6 +259,21 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 24
 text = "Build Phase"
 horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GoldLabel" type="Label" parent="PhaseIndicator" unique_id=954247237]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -220.0
+offset_right = -20.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_font_sizes/font_size = 24
+text = "Gold: 0"
+horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="Crosshair" parent="." unique_id=1213473900 instance=ExtResource("13_crosshair")]
