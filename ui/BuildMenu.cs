@@ -264,7 +264,7 @@ public partial class BuildMenu : Control
     private List<Rune> GetCompatibleRunes(int socketIndex)
     {
         return AllRunes
-            .Where(rune => rune.RequiredTags.All(tag => _selectedSpell.Tags.Contains(tag)))
+            .Where(rune => rune.IsCompatibleWith(_selectedSpell.Tags))
             .OrderBy(rune => IsSocketedElsewhere(rune, socketIndex))
             .ThenBy(rune => rune.Name)
             .ToList();

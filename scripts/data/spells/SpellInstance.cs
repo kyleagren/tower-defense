@@ -74,12 +74,7 @@ public class SpellInstance
     public bool TryAttachRune(Rune rune)
     {
         if (_attachedRunes.Count >= GameRules.MaxRuneSlots) return false;
-
-        bool hasRequiredTags = rune.RequiredTags.All(tag => _definition.Tags.Contains(tag));
-        if (!hasRequiredTags) return false;
-
-        bool hasRequiredAnyTag = rune.RequiredAnyTags.Count == 0 || rune.RequiredAnyTags.Any(tag => _definition.Tags.Contains(tag));
-        if (!hasRequiredAnyTag) return false;
+        if (!rune.IsCompatibleWith(_definition.Tags)) return false;
 
         bool alreadyHasThisType = _attachedRunes.Any(r => r.GetType() == rune.GetType());
         if (alreadyHasThisType) return false;

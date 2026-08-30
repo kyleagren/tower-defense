@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="IceWallSpell" format=3]
+
+[ext_resource type="Script" uid="uid://d3tcsiow71g6n" path="res://scripts/data/spells/IceWallSpell.cs" id="1_icewallspell"]
+[ext_resource type="PackedScene" path="res://ice_walls/IceWallSegment.tscn" id="2_segment"]
+
+[resource]
+script = ExtResource("1_icewallspell")
+SegmentScene = ExtResource("2_segment")
+metadata/_custom_type_script = "uid://d3tcsiow71g6n"

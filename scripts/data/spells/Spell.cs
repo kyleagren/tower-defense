@@ -19,6 +19,7 @@ public abstract partial class Spell : Resource
     public virtual float BaseRagdollForce { get; protected set; } = 0f;
     public virtual int ManaCost { get; protected set; } = 10;
     public virtual int CapacityCost { get; protected set; } = 10;
+    public virtual bool RequiresTarget => true;
 
     public DamagePacket BaseDamage => new DamagePacket
     {

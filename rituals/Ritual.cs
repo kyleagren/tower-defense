@@ -16,6 +16,9 @@ public partial class Ritual : Node3D
     private int _capacityCost;
     private List<CastEffect> _castEffects;
 
+    public Vector3? WallStart { get; private set; }
+    public Vector3? WallEnd { get; private set; }
+
     public override void _Ready()
     {
         _castEffects = GetChildren().OfType<CastEffect>().ToList();
@@ -31,6 +34,12 @@ public partial class Ritual : Node3D
     {
         _manaCost = manaCost;
         _capacityCost = capacityCost;
+    }
+
+    public void SetWallEndpoints(Vector3 start, Vector3 end)
+    {
+        WallStart = start;
+        WallEnd = end;
     }
 
     public void Destroy()
@@ -91,21 +100,36 @@ public partial class Ritual : Node3D
             _currentTarget = EnemyTargeting.FindNearest(GlobalPosition, _spellInstance.Resolve().Range);
         }
 
-        if (_currentTarget != null && _spellInstance.CanCast)
+        if (_spellInstance.CanCast && CanCastNow())
         {
             CastAtTarget();
         }
     }
 
+    private bool CanCastNow()
+    {
+        SpellCastContext context = _spellInstance.Resolve();
+
+        if (context.CastTrigger != null)
+        {
+            return context.CastTrigger.ShouldCast(this, context);
+        }
+
+        return !Spell.RequiresTarget || _currentTarget != null;
+    }
+
     private void CastAtTarget()
     {
-        Vector3 targetPosition = _currentTarget.GlobalPosition;
-        Vector3 levelAimPosition = new Vector3(targetPosition.X, SpawnPoint.GlobalPosition.Y, targetPosition.Z);
-        SpawnPoint.LookAt(levelAimPosition, Vector3.Up);
+        if (_currentTarget != null)
+        {
+            Vector3 targetPosition = _currentTarget.GlobalPosition;
+            Vector3 levelAimPosition = new Vector3(targetPosition.X, SpawnPoint.GlobalPosition.Y, targetPosition.Z);
+            SpawnPoint.LookAt(levelAimPosition, Vector3.Up);
+        }
 
         SpellCastContext context = _spellInstance.Resolve();
         CastEffect effect = _castEffects.FirstOrDefault(e => e.CanHandle(context));
-        effect?.Cast(context, SpawnPoint);
+        effect?.Cast(context, SpawnPoint, this);
 
         _spellInstance.StartCast(context.CastTime, context.Cooldown);
     }

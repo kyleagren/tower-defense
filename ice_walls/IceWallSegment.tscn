@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://5al4p4timnnr" path="res://ice_walls/IceWallSegment.cs" id="1_icewallsegment"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_icewallsegment"]
+size = Vector3(1, 1, 1)
+
+[node name="IceWallSegment" type="StaticBody3D" node_paths=PackedStringArray("BodyMesh", "BodyCollision")]
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("1_icewallsegment")
+BodyMesh = NodePath("MeshInstance3D")
+BodyCollision = NodePath("CollisionShape3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_icewallsegment")

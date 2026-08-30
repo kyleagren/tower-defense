@@ -22,4 +22,6 @@ public class SpellCastContext
     public AreaCastData Area;
     public InstantHitCastData InstantHit;
     public ReactionRune Reaction;
+    public WallCastData Wall;
+    public CastTrigger CastTrigger;
 }

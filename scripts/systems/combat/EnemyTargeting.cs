@@ -6,6 +6,16 @@ public static class EnemyTargeting
 {
     public static Enemy FindNearest(Vector3 fromPosition, float range, IEnumerable<Enemy> exclude = null, Func<Enemy, bool> predicate = null)
     {
+        return FindNearestByDistance(enemy => fromPosition.DistanceSquaredTo(enemy.GlobalPosition), range, exclude, predicate);
+    }
+
+    public static Enemy FindNearestToSegment(Vector3 segmentStart, Vector3 segmentEnd, float range, IEnumerable<Enemy> exclude = null, Func<Enemy, bool> predicate = null)
+    {
+        return FindNearestByDistance(enemy => GeometryUtils.DistanceSquaredToSegment(enemy.GlobalPosition, segmentStart, segmentEnd), range, exclude, predicate);
+    }
+
+    private static Enemy FindNearestByDistance(Func<Enemy, float> distanceSquaredTo, float range, IEnumerable<Enemy> exclude, Func<Enemy, bool> predicate)
+    {
         SceneTree tree = (SceneTree)Engine.GetMainLoop();
         float rangeSquared = range * range;
 
@@ -29,7 +39,7 @@ public static class EnemyTargeting
                 continue;
             }
 
-            float distSq = fromPosition.DistanceSquaredTo(enemy.GlobalPosition);
+            float distSq = distanceSquaredTo(enemy);
             if (distSq <= nearestDistSq)
             {
                 nearestDistSq = distSq;

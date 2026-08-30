@@ -7,7 +7,7 @@ public partial class ProjectileCastEffect : CastEffect
 
     public override bool CanHandle(SpellCastContext context) => context.Projectile != null;
 
-    public override void Cast(SpellCastContext context, Node3D spawnPoint)
+    public override void Cast(SpellCastContext context, Node3D spawnPoint, Ritual caster)
     {
         if (context.Projectile == null)
         {

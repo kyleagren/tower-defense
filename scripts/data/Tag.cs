@@ -9,5 +9,6 @@ public enum Tag
     Water,
     Cold,
     Lightning,
-    Wind
+    Wind,
+    Wall
 }

@@ -8,7 +8,7 @@ public partial class InstantHitCastEffect : CastEffect
 
     public override bool CanHandle(SpellCastContext context) => context.InstantHit != null;
 
-    public override void Cast(SpellCastContext context, Node3D spawnPoint)
+    public override void Cast(SpellCastContext context, Node3D spawnPoint, Ritual caster)
     {
         ChainCastData chain = context.Chain ?? new ChainCastData();
         List<Enemy> targets = FindTargets(context, chain, spawnPoint);
