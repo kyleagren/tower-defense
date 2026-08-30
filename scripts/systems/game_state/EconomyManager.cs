@@ -15,16 +15,34 @@ public partial class EconomyManager : Node
     public event Action ManaChanged;
     public event Action GoldEarnedChanged;
 
-    public override void _Ready()
+    // Assigned in _EnterTree rather than _Ready: _EnterTree runs top-down across the whole tree
+    // before any node's _Ready, so consumers caching Instance in their own _Ready are safe
+    // regardless of where this node sits in the scene.
+    public override void _EnterTree()
     {
         Instance = this;
-        Mana = StartingMana;
+    }
+
+    public override void _Ready()
+    {
+        ResetForMatch();
         EventBus.Instance.EnemyKilled += OnEnemyKilled;
     }
 
     public override void _ExitTree()
     {
         EventBus.Instance.EnemyKilled -= OnEnemyKilled;
+    }
+
+    // Restores starting match state. Called on load; also the hook a "try again" button can call
+    // to restart a failed match without reloading the scene.
+    public void ResetForMatch()
+    {
+        Mana = StartingMana;
+        CapacityUsed = 0;
+        GoldEarned = 0;
+        ManaChanged?.Invoke();
+        GoldEarnedChanged?.Invoke();
     }
 
     private void OnEnemyKilled(int reward, int goldReward)

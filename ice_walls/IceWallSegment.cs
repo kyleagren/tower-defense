@@ -27,13 +27,14 @@ public partial class IceWallSegment : StaticBody3D
         BodyMesh.MaterialOverride = _iceMaterial;
         BodyMesh.Position = new Vector3(0f, width, 0f);
 
-        if (BodyCollision.Shape is BoxShape3D boxShape)
-        {
-            boxShape.Size = new Vector3(width, width * 2f, width);
-        }
+        // A fresh shape per segment: the one authored in IceWallSegment.tscn is shared by every
+        // instance, so resizing it in place would resize every other segment already standing.
+        BodyCollision.Shape = new BoxShape3D { Size = new Vector3(width, width * 2f, width) };
         BodyCollision.Position = new Vector3(0f, width, 0f);
     }
 
+    // TODO: no callers yet - enemies don't detect or attack walls (README section 16, step 10).
+    // Wire this up with the enemy movement rework, along with the regrow cooldown (section 6).
     public void TakeDamage(float amount)
     {
         if (_isBroken)

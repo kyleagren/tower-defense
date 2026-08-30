@@ -47,7 +47,11 @@ public partial class Projectile : Area3D
     {
         BodyEntered += OnBodyEntered;
         BodyMesh.Scale = Vector3.One * Radius;
-        BodyCollision.Scale = Vector3.One * Radius;
+
+        // A fresh shape per projectile: the one in the projectile scene is shared across every
+        // instance. Sizing the shape is preferred over scaling the CollisionShape3D node, which
+        // Godot advises against. A future non-round projectile changes this line (README 206).
+        BodyCollision.Shape = new SphereShape3D { Radius = Radius };
     }
 
     public override void _PhysicsProcess(double delta)
