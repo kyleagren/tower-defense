@@ -6,8 +6,7 @@ public partial class EconomyManager : Node
     public static EconomyManager Instance { get; private set; }
 
     [Export] public int StartingMana = 60;
-    [Export] public int ManaPerRune = 5;
-    [Export] public int MaxCapacity = 5;
+    [Export] public int MaxCapacity = 1000;
 
     public int Mana { get; private set; }
     public int CapacityUsed { get; private set; }
@@ -36,29 +35,27 @@ public partial class EconomyManager : Node
         GoldEarnedChanged?.Invoke();
     }
 
-    public int GetTowerCost(Spell spell, int runeCount)
+    public bool CanAfford(SpellCastContext context)
     {
-        return spell.ManaCost + ManaPerRune * runeCount;
+        int manaCost = Mathf.CeilToInt(context.ManaCost);
+        int capacityCost = Mathf.CeilToInt(context.CapacityCost);
+        return CapacityUsed + capacityCost <= MaxCapacity && Mana >= manaCost;
     }
 
-    public bool CanAfford(Spell spell, int runeCount)
+    public (int ManaCost, int CapacityCost) SpendOnTower(SpellCastContext context)
     {
-        return CapacityUsed < MaxCapacity && Mana >= GetTowerCost(spell, runeCount);
-    }
-
-    public int SpendOnTower(Spell spell, int runeCount)
-    {
-        int cost = GetTowerCost(spell, runeCount);
-        Mana -= cost;
-        CapacityUsed++;
+        int manaCost = Mathf.CeilToInt(context.ManaCost);
+        int capacityCost = Mathf.CeilToInt(context.CapacityCost);
+        Mana -= manaCost;
+        CapacityUsed += capacityCost;
         ManaChanged?.Invoke();
-        return cost;
+        return (manaCost, capacityCost);
     }
 
-    public void RefundTower(int manaSpent)
+    public void RefundTower(int manaSpent, int capacityCost)
     {
         Mana += manaSpent;
-        CapacityUsed--;
+        CapacityUsed -= capacityCost;
         ManaChanged?.Invoke();
     }
 }

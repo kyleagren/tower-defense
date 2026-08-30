@@ -23,6 +23,8 @@ public partial class LightningBoltSpell : ChainableSpell
             Cooldown = BaseCooldown,
             Damage = BaseDamage,
             RagdollForce = BaseRagdollForce,
+            ManaCost = ManaCost,
+            CapacityCost = CapacityCost,
             InstantHit = new InstantHitCastData(),
             Chain = new ChainCastData
             {

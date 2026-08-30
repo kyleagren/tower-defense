@@ -42,11 +42,14 @@ public class SpellInstance
             foreach (Rune rune in _attachedRunes)
             {
                 rune.Apply(_cachedContext);
+                _cachedContext.MoreManaCostMultiplier *= rune.ManaCostMultiplier;
             }
 
             _cachedContext.Damage = _cachedContext.Damage * (1f + _cachedContext.IncreasedDamagePercent) * _cachedContext.MoreDamageMultiplier;
             _cachedContext.CastTime /= _cachedContext.CastSpeedMultiplier;
             _cachedContext.Range = _cachedContext.Range * (1f + _cachedContext.IncreasedRangePercent) * _cachedContext.MoreRangeMultiplier;
+            _cachedContext.ManaCost = _cachedContext.ManaCost * (1f + _cachedContext.IncreasedManaCostPercent) * _cachedContext.MoreManaCostMultiplier;
+            _cachedContext.CapacityCost = _cachedContext.CapacityCost * (1f + _cachedContext.IncreasedCapacityCostPercent) * _cachedContext.MoreCapacityCostMultiplier;
 
             if (_cachedContext.Area != null)
             {
@@ -95,5 +98,19 @@ public class SpellInstance
         }
 
         return removed;
+    }
+
+    public static SpellCastContext ResolvePreview(Spell spell, IEnumerable<Rune> runes)
+    {
+        SpellInstance instance = new SpellInstance(spell);
+        foreach (Rune rune in runes)
+        {
+            if (rune != null)
+            {
+                instance.TryAttachRune(rune);
+            }
+        }
+
+        return instance.Resolve();
     }
 }

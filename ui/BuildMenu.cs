@@ -129,8 +129,7 @@ public partial class BuildMenu : Control
 
     private void RefreshSocketScreen()
     {
-        int runeCount = _socketedRunes.Count(r => r != null);
-        int cost = _selectedSpell != null ? _economy.GetTowerCost(_selectedSpell, runeCount) : 0;
+        int cost = ComputeManaCost(_socketedRunes);
         _centerSpellLabel.Text = $"{_selectedSpell?.Name}\nCost: {cost} / Mana: {_economy.Mana}";
 
         for (int i = 0; i < _socketButtons.Length; i++)
@@ -142,6 +141,16 @@ public partial class BuildMenu : Control
             _socketButtons[i].AddThemeStyleboxOverride("hover", isEmpty ? _emptySocketHoverStyle : _hoverTileStyle);
             _socketButtons[i].AddThemeStyleboxOverride("pressed", isEmpty ? _emptySocketPressedStyle : _pressedTileStyle);
         }
+    }
+
+    private int ComputeManaCost(IEnumerable<Rune> runes)
+    {
+        if (_selectedSpell == null)
+        {
+            return 0;
+        }
+
+        return Mathf.CeilToInt(SpellInstance.ResolvePreview(_selectedSpell, runes).ManaCost);
     }
 
     private void ShowSocketDescription(int socketIndex)
@@ -211,6 +220,7 @@ public partial class BuildMenu : Control
         }
 
         List<Rune> compatibleRunes = GetCompatibleRunes(socketIndex);
+        int baseCost = ComputeManaCost(_socketedRunes);
 
         int pageSize = _runeGrid.Columns * _runeGrid.Rows;
 
@@ -222,7 +232,8 @@ public partial class BuildMenu : Control
                 bool isCurrentSocketRune = rune == currentSocketRune;
                 bool disabled = IsSocketedElsewhere(rune, socketIndex);
 
-                Button button = CreateTileButton($"{rune.Name}\n+{_economy.ManaPerRune}", rune.Name, rune.Description);
+                int costDelta = ComputeManaCost(WithSocket(socketIndex, rune)) - baseCost;
+                Button button = CreateTileButton($"{rune.Name}\n+{costDelta}", rune.Name, rune.Description);
                 button.Disabled = disabled;
 
                 if (isCurrentSocketRune)
@@ -257,6 +268,13 @@ public partial class BuildMenu : Control
             .OrderBy(rune => IsSocketedElsewhere(rune, socketIndex))
             .ThenBy(rune => rune.Name)
             .ToList();
+    }
+
+    private Rune[] WithSocket(int socketIndex, Rune rune)
+    {
+        Rune[] result = (Rune[])_socketedRunes.Clone();
+        result[socketIndex] = rune;
+        return result;
     }
 
     private bool IsSocketedElsewhere(Rune rune, int socketIndex)

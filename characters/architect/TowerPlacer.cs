@@ -14,6 +14,7 @@ public partial class TowerPlacer : Node
     private CollisionShape3D _ghostCollisionShape;
     private Spell _pendingSpell;
     private Godot.Collections.Array<Rune> _pendingRunes;
+    private SpellCastContext _pendingContext;
     private bool _isValidPlacement;
 
     private static readonly StandardMaterial3D _validMaterial = CreateGhostMaterial(new Color(0.2f, 1f, 0.3f, 0.5f));
@@ -50,6 +51,7 @@ public partial class TowerPlacer : Node
 
         _pendingSpell = spell;
         _pendingRunes = runes;
+        _pendingContext = SpellInstance.ResolvePreview(spell, runes);
 
         _ghost = RitualScene.Instantiate<Ritual>();
         GetTree().CurrentScene.AddChild(_ghost);
@@ -60,8 +62,7 @@ public partial class TowerPlacer : Node
         _ghostCollisionShape = _ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
         _ghostCollisionShape.Disabled = true;
 
-        float effectiveRange = ComputePreviewRange(spell, runes);
-        _ghost.AddChild(BuildRangeIndicator(effectiveRange));
+        _ghost.AddChild(BuildRangeIndicator(_pendingContext.Range));
 
         IsPlacing = true;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, true);
@@ -120,7 +121,7 @@ public partial class TowerPlacer : Node
         };
 
         Godot.Collections.Array<Godot.Collections.Dictionary> overlaps = spaceState.IntersectShape(query);
-        _isValidPlacement = overlaps.Count == 0 && _economy.CanAfford(_pendingSpell, _pendingRunes.Count);
+        _isValidPlacement = overlaps.Count == 0 && _economy.CanAfford(_pendingContext);
 
         _ghostMesh.MaterialOverride = _isValidPlacement ? _validMaterial : _invalidMaterial;
     }
@@ -132,8 +133,8 @@ public partial class TowerPlacer : Node
         placed.GlobalTransform = _ghost.GlobalTransform;
         placed.Configure(_pendingSpell, _pendingRunes);
 
-        int cost = _economy.SpendOnTower(_pendingSpell, _pendingRunes.Count);
-        placed.SetManaCost(cost);
+        (int manaCost, int capacityCost) = _economy.SpendOnTower(_pendingContext);
+        placed.SetCost(manaCost, capacityCost);
 
         EndPlacement();
     }
@@ -149,20 +150,6 @@ public partial class TowerPlacer : Node
         _ghost = null;
         IsPlacing = false;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, false);
-    }
-
-    private static float ComputePreviewRange(Spell spell, Godot.Collections.Array<Rune> runes)
-    {
-        SpellInstance previewInstance = new SpellInstance(spell);
-        foreach (Rune rune in runes)
-        {
-            if (rune != null)
-            {
-                previewInstance.TryAttachRune(rune);
-            }
-        }
-
-        return previewInstance.Resolve().Range;
     }
 
     private static MeshInstance3D BuildRangeIndicator(float range)

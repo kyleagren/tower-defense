@@ -28,6 +28,8 @@ public partial class FireballSpell : Spell
             Cooldown = BaseCooldown,
             Damage = BaseDamage,
             RagdollForce = BaseRagdollForce,
+            ManaCost = ManaCost,
+            CapacityCost = CapacityCost,
             Projectile = new ProjectileCastData
             {
                 ProjectileCount = BaseProjectileCount,

@@ -32,7 +32,7 @@ public partial class PhaseIndicator : Control
     private void UpdateText()
     {
         string phaseText = _currentPhase == WaveController.GamePhase.Combat ? "Combat Phase" : "Build Phase";
-        PhaseLabel.Text = $"{phaseText} — Mana: {EconomyManager.Instance.Mana} | Towers: {EconomyManager.Instance.CapacityUsed}/{EconomyManager.Instance.MaxCapacity}";
+        PhaseLabel.Text = $"{phaseText} — Mana: {EconomyManager.Instance.Mana} | Build Capacity: {EconomyManager.Instance.CapacityUsed}/{EconomyManager.Instance.MaxCapacity}";
     }
 
     private void UpdateGoldText()
