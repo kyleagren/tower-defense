@@ -32,14 +32,14 @@ public partial class Projectile : Area3D
     public void Initialize(SpellCastContext context)
     {
         Damage = context.Damage;
-        AreaMultiplier = context.Area?.AreaMultiplier ?? 1f;
+        AreaMultiplier = context.Area?.Multiplier.Value ?? 1f;
         Radius = context.Projectile.Radius * AreaMultiplier;
-        RagdollForce = context.RagdollForce;
+        RagdollForce = context.RagdollForce.Value;
         ChainCount = context.Chain?.ChainCount ?? 0;
         ChainRange = context.Chain?.ChainRange ?? 0f;
         _pierceRemaining = context.Projectile.PierceCount;
         _isReturn = context.Projectile.IsReturn;
-        _speed = context.Projectile.Speed;
+        _speed = context.Projectile.Speed.Value;
         Reaction = context.Reaction;
     }
 

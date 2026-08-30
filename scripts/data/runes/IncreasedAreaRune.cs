@@ -15,6 +15,6 @@ public partial class IncreasedAreaRune : Rune
     public override void Apply(SpellCastContext context)
     {
         context.Area ??= new AreaCastData();
-        context.Area.IncreasedAreaPercent += IncreasedAreaPercent;
+        context.Area.Multiplier.Increased += IncreasedAreaPercent;
     }
 }

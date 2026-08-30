@@ -17,6 +17,6 @@ public partial class ForkRune : Rune
     {
         context.Chain ??= new ChainCastData();
         context.Chain.ForkCount += ExtraForks;
-        context.MoreDamageMultiplier *= DamageMultiplier;
+        context.DamageScale.More *= DamageMultiplier;
     }
 }

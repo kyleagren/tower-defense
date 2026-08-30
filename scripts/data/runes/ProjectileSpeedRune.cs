@@ -16,7 +16,7 @@ public partial class ProjectileSpeedRune : Rune
     {
         if (context.Projectile != null)
         {
-            context.Projectile.IncreasedSpeedPercent += IncreasedSpeedPercent;
+            context.Projectile.Speed.Increased += IncreasedSpeedPercent;
         }
     }
 }

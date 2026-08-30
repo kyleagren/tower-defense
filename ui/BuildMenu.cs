@@ -150,7 +150,7 @@ public partial class BuildMenu : Control
             return 0;
         }
 
-        return Mathf.CeilToInt(SpellInstance.ResolvePreview(_selectedSpell, runes).ManaCost);
+        return Mathf.CeilToInt(SpellInstance.ResolvePreview(_selectedSpell, runes).ManaCost.Value);
     }
 
     private void ShowSocketDescription(int socketIndex)

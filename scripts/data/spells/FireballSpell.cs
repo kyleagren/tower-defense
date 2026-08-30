@@ -26,7 +26,7 @@ public partial class FireballSpell : Spell
             Range = BaseRange,
             CastTime = BaseCastTime,
             Cooldown = BaseCooldown,
-            Damage = BaseDamage,
+            UnscaledDamage = BaseDamage,
             RagdollForce = BaseRagdollForce,
             ManaCost = BaseManaCost,
             CapacityCost = BaseCapacityCost,

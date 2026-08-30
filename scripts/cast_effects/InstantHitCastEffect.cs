@@ -40,7 +40,7 @@ public partial class InstantHitCastEffect : CastEffect
         HashSet<Enemy> initialTargets = new HashSet<Enemy>();
         List<Enemy> targets = new List<Enemy>();
 
-        Enemy primary = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range, initialTargets);
+        Enemy primary = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range.Value, initialTargets);
         if (primary == null)
         {
             return targets;
@@ -55,9 +55,9 @@ public partial class InstantHitCastEffect : CastEffect
         {
             float desiredSide = (i % 2 == 1) ? 1f : -1f;
 
-            Enemy target = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range, initialTargets,
+            Enemy target = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range.Value, initialTargets,
                 candidate => SideOf(spawnPoint.GlobalPosition, referenceDir, candidate.GlobalPosition) * desiredSide > 0f);
-            target ??= EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range, initialTargets);
+            target ??= EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range.Value, initialTargets);
 
             if (target == null)
             {
@@ -74,14 +74,14 @@ public partial class InstantHitCastEffect : CastEffect
     private void StrikeTarget(SpellCastContext context, ChainCastData chain, Node3D spawnPoint, Vector3 visualOrigin, Enemy target, HashSet<Enemy> chainTracker)
     {
         Vector3 targetPoint = target.GetJitteredCenterMass(0.25f);
-        Vector3 ragdollImpulse = (targetPoint - spawnPoint.GlobalPosition).Normalized() * context.RagdollForce;
+        Vector3 ragdollImpulse = (targetPoint - spawnPoint.GlobalPosition).Normalized() * context.RagdollForce.Value;
         float firstHitMultiplier = chain.DamageModifier?.GetMultiplier(chain.ChainCount) ?? 1f;
         DamagePacket firstHitDamage = context.Damage * firstHitMultiplier;
         target.TakeDamage(firstHitDamage, ragdollImpulse, reaction: context.Reaction);
 
         ChainResolver.SpawnArcVisual(ArcVisualScene, visualOrigin, targetPoint);
 
-        ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce, chain.ChainCount, chain.ChainRange, chain.DamageModifier, context.Reaction, ArcVisualScene, chainTracker);
+        ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce.Value, chain.ChainCount, chain.ChainRange, chain.DamageModifier, context.Reaction, ArcVisualScene, chainTracker);
     }
 
     private static float SideOf(Vector3 origin, Vector3 referenceDir, Vector3 point)

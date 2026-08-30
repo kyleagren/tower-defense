@@ -19,7 +19,7 @@ public partial class MultiProjectileRune : Rune
         if (context.Projectile != null)
         {
             context.Projectile.ProjectileCount += ExtraProjectiles;
-            context.MoreDamageMultiplier *= DamageMultiplier;
+            context.DamageScale.More *= DamageMultiplier;
         }
     }
 }

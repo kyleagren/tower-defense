@@ -15,6 +15,6 @@ public partial class CastSpeedRune : Rune
 
     public override void Apply(SpellCastContext context)
     {
-        context.CastSpeedMultiplier *= 1f + IncreasedCastSpeedPercent;
+        context.CastSpeed.Increased += IncreasedCastSpeedPercent;
     }
 }

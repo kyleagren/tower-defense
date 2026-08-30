@@ -55,15 +55,15 @@ public partial class EconomyManager : Node
 
     public bool CanAfford(SpellCastContext context)
     {
-        int manaCost = Mathf.CeilToInt(context.ManaCost);
-        int capacityCost = Mathf.CeilToInt(context.CapacityCost);
+        int manaCost = Mathf.CeilToInt(context.ManaCost.Value);
+        int capacityCost = Mathf.CeilToInt(context.CapacityCost.Value);
         return CapacityUsed + capacityCost <= MaxCapacity && Mana >= manaCost;
     }
 
     public (int ManaCost, int CapacityCost) SpendOnRitual(SpellCastContext context)
     {
-        int manaCost = Mathf.CeilToInt(context.ManaCost);
-        int capacityCost = Mathf.CeilToInt(context.CapacityCost);
+        int manaCost = Mathf.CeilToInt(context.ManaCost.Value);
+        int capacityCost = Mathf.CeilToInt(context.CapacityCost.Value);
         Mana -= manaCost;
         CapacityUsed += capacityCost;
         ManaChanged?.Invoke();

@@ -20,7 +20,7 @@ public partial class NovaProjectileRune : Rune
         {
             context.Projectile.ProjectileCount += ExtraProjectiles;
             context.Projectile.IsNova = true;
-            context.MoreDamageMultiplier *= DamageMultiplier;
+            context.DamageScale.More *= DamageMultiplier;
         }
     }
 }

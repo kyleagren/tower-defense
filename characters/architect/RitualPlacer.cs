@@ -188,7 +188,7 @@ public partial class RitualPlacer : Node
 
         if (_pendingContext.Wall == null)
         {
-            _ghost.AddChild(BuildRangeIndicator(_pendingContext.Range));
+            _ghost.AddChild(BuildRangeIndicator(_pendingContext.Range.Value));
         }
     }
 
@@ -218,7 +218,7 @@ public partial class RitualPlacer : Node
     {
         Vector3 diff = _wallEndPosition - _wallStartPosition;
         float length = diff.Length();
-        float range = _pendingContext.Range;
+        float range = _pendingContext.Range.Value;
 
         if (length < 0.0001f)
         {
@@ -244,7 +244,7 @@ public partial class RitualPlacer : Node
         float length = diff.Length();
         Vector3 direction = length > 0.0001f ? diff / length : Vector3.Forward;
         Vector3 perpendicular = new Vector3(-direction.Z, 0f, direction.X);
-        float range = _pendingContext.Range;
+        float range = _pendingContext.Range.Value;
         Vector3 up = Vector3.Up * 0.03f;
 
         Vector3 ToWorld(float along, float across) => _wallStartPosition + direction * along + perpendicular * across + up;
@@ -333,19 +333,16 @@ public partial class RitualPlacer : Node
     // something that needs checking per-segment independently.
     private int ComputeAffordableSegmentCount(WallCastData wallData)
     {
-        float manaMultiplier = (1f + _pendingContext.IncreasedManaCostPercent) * _pendingContext.MoreManaCostMultiplier;
-        float capacityMultiplier = (1f + _pendingContext.IncreasedCapacityCostPercent) * _pendingContext.MoreCapacityCostMultiplier;
-
-        float manaPerSegment = wallData.ManaCostPerSegment * manaMultiplier;
-        float capacityPerSegment = wallData.CapacityCostPerSegment * capacityMultiplier;
+        float manaPerSegment = wallData.ManaCostPerSegment * _pendingContext.ManaCost.Multiplier;
+        float capacityPerSegment = wallData.CapacityCostPerSegment * _pendingContext.CapacityCost.Multiplier;
         int capacityRemaining = _economy.MaxCapacity - _economy.CapacityUsed;
 
         int manaMax = manaPerSegment > 0f
-            ? Mathf.FloorToInt((_economy.Mana - _pendingContext.ManaCost) / manaPerSegment)
+            ? Mathf.FloorToInt((_economy.Mana - _pendingContext.ManaCost.Value) / manaPerSegment)
             : int.MaxValue;
 
         int capacityMax = capacityPerSegment > 0f
-            ? Mathf.FloorToInt((capacityRemaining - _pendingContext.CapacityCost) / capacityPerSegment)
+            ? Mathf.FloorToInt((capacityRemaining - _pendingContext.CapacityCost.Value) / capacityPerSegment)
             : int.MaxValue;
 
         return Mathf.Max(0, Mathf.Min(manaMax, capacityMax));
@@ -392,17 +389,14 @@ public partial class RitualPlacer : Node
         WallCastData wallData = _pendingContext.Wall;
         int segmentCount = IceWall.ComputeSegmentCount(start.DistanceTo(end), wallData.SegmentWidth);
 
-        float projectedMana = _pendingContext.ManaCost;
-        float projectedCapacity = _pendingContext.CapacityCost;
+        float projectedMana = _pendingContext.ManaCost.Value;
+        float projectedCapacity = _pendingContext.CapacityCost.Value;
         bool affordable = true;
 
         if (!_wallCostApplied)
         {
-            float manaMultiplier = (1f + _pendingContext.IncreasedManaCostPercent) * _pendingContext.MoreManaCostMultiplier;
-            float capacityMultiplier = (1f + _pendingContext.IncreasedCapacityCostPercent) * _pendingContext.MoreCapacityCostMultiplier;
-
-            projectedMana += segmentCount * wallData.ManaCostPerSegment * manaMultiplier;
-            projectedCapacity += segmentCount * wallData.CapacityCostPerSegment * capacityMultiplier;
+            projectedMana += segmentCount * wallData.ManaCostPerSegment * _pendingContext.ManaCost.Multiplier;
+            projectedCapacity += segmentCount * wallData.CapacityCostPerSegment * _pendingContext.CapacityCost.Multiplier;
 
             affordable = segmentCount <= ComputeAffordableSegmentCount(wallData);
         }
@@ -414,19 +408,15 @@ public partial class RitualPlacer : Node
         return affordable;
     }
 
-    // Applies the rune-derived cost multipliers (already resolved onto _pendingContext from the
-    // selected runes) to the per-segment cost too, so a cost-affecting rune scales the whole
-    // total consistently rather than just the flat base.
+    // Folds the wall's per-segment cost into the base, so the rune-derived multipliers already
+    // sitting on ManaCost/CapacityCost scale the whole total rather than just the flat base.
     private void ApplyWallCostScaling()
     {
         WallCastData wallData = _pendingContext.Wall;
         int segmentCount = IceWall.ComputeSegmentCount(_wallStartPosition.DistanceTo(_wallEndPosition), wallData.SegmentWidth);
 
-        float manaMultiplier = (1f + _pendingContext.IncreasedManaCostPercent) * _pendingContext.MoreManaCostMultiplier;
-        float capacityMultiplier = (1f + _pendingContext.IncreasedCapacityCostPercent) * _pendingContext.MoreCapacityCostMultiplier;
-
-        _pendingContext.ManaCost += segmentCount * wallData.ManaCostPerSegment * manaMultiplier;
-        _pendingContext.CapacityCost += segmentCount * wallData.CapacityCostPerSegment * capacityMultiplier;
+        _pendingContext.ManaCost.Base += segmentCount * wallData.ManaCostPerSegment;
+        _pendingContext.CapacityCost.Base += segmentCount * wallData.CapacityCostPerSegment;
         _wallCostApplied = true;
     }
 

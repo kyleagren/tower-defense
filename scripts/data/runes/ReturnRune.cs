@@ -17,7 +17,7 @@ public partial class ReturnRune : Rune
         if (context.Projectile != null)
         {
             context.Projectile.IsReturn = true;
-            context.MoreDamageMultiplier *= DamageMultiplier;
+            context.DamageScale.More *= DamageMultiplier;
         }
     }
 }

@@ -39,26 +39,11 @@ public class SpellInstance
         if (_cachedContext == null)
         {
             _cachedContext = _definition.CreateBaseContext();
+
             foreach (Rune rune in _attachedRunes)
             {
                 rune.Apply(_cachedContext);
-                _cachedContext.MoreManaCostMultiplier *= rune.ManaCostMultiplier;
-            }
-
-            _cachedContext.Damage = _cachedContext.Damage * (1f + _cachedContext.IncreasedDamagePercent) * _cachedContext.MoreDamageMultiplier;
-            _cachedContext.CastTime /= _cachedContext.CastSpeedMultiplier;
-            _cachedContext.Range = _cachedContext.Range * (1f + _cachedContext.IncreasedRangePercent) * _cachedContext.MoreRangeMultiplier;
-            _cachedContext.ManaCost = _cachedContext.ManaCost * (1f + _cachedContext.IncreasedManaCostPercent) * _cachedContext.MoreManaCostMultiplier;
-            _cachedContext.CapacityCost = _cachedContext.CapacityCost * (1f + _cachedContext.IncreasedCapacityCostPercent) * _cachedContext.MoreCapacityCostMultiplier;
-
-            if (_cachedContext.Area != null)
-            {
-                _cachedContext.Area.AreaMultiplier = _cachedContext.Area.AreaMultiplier * (1f + _cachedContext.Area.IncreasedAreaPercent) * _cachedContext.Area.MoreAreaMultiplier;
-            }
-
-            if (_cachedContext.Projectile != null)
-            {
-                _cachedContext.Projectile.Speed = _cachedContext.Projectile.Speed * (1f + _cachedContext.Projectile.IncreasedSpeedPercent) * _cachedContext.Projectile.MoreSpeedMultiplier;
+                _cachedContext.ManaCost.More *= rune.ManaCostMultiplier;
             }
         }
 

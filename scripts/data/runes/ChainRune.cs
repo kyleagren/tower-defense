@@ -20,6 +20,6 @@ public partial class ChainRune : Rune
         context.Chain ??= new ChainCastData();
         context.Chain.ChainCount += ExtraChains;
         context.Chain.ChainRange = Mathf.Max(context.Chain.ChainRange, FallbackChainRange);
-        context.MoreDamageMultiplier *= DamageMultiplier;
+        context.DamageScale.More *= DamageMultiplier;
     }
 }

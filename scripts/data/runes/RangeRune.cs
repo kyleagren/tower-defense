@@ -15,6 +15,6 @@ public partial class RangeRune : Rune
 
     public override void Apply(SpellCastContext context)
     {
-        context.IncreasedRangePercent += IncreasedRangePercent;
+        context.Range.Increased += IncreasedRangePercent;
     }
 }

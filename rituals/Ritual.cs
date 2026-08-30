@@ -97,7 +97,7 @@ public partial class Ritual : Node3D
         if (_searchTimer <= 0f || justLostTarget)
         {
             _searchTimer = TargetSearchInterval;
-            _currentTarget = EnemyTargeting.FindNearest(GlobalPosition, _spellInstance.Resolve().Range);
+            _currentTarget = EnemyTargeting.FindNearest(GlobalPosition, _spellInstance.Resolve().Range.Value);
         }
 
         if (_spellInstance.CanCast && CanCastNow())
@@ -131,6 +131,6 @@ public partial class Ritual : Node3D
         CastEffect effect = _castEffects.FirstOrDefault(e => e.CanHandle(context));
         effect?.Cast(context, SpawnPoint, this);
 
-        _spellInstance.StartCast(context.CastTime, context.Cooldown);
+        _spellInstance.StartCast(context.ResolvedCastTime, context.Cooldown.Value);
     }
 }
