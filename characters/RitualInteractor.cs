@@ -1,6 +1,6 @@
 using Godot;
 
-public partial class TowerInteractor : Node
+public partial class RitualInteractor : Node
 {
     [Export] public PlayerCharacter Character { get; private set; }
     [Export] public float InteractionRange = GameRules.RitualReach;

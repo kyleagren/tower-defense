@@ -3,7 +3,7 @@ using Godot;
 public partial class Architect : PlayerCharacter
 {
     [Export] public BuildMenu BuildMenu { get; private set; }
-    [Export] public TowerPlacer TowerPlacer { get; private set; }
+    [Export] public RitualPlacer RitualPlacer { get; private set; }
     [Export] public PlayerCharacter Soldier { get; private set; }
 
     private bool _buildMenuOpen;
@@ -30,7 +30,7 @@ public partial class Architect : PlayerCharacter
             return;
         }
 
-        if (@event.IsActionPressed("open_build_menu") && !TowerPlacer.IsPlacing)
+        if (@event.IsActionPressed("open_build_menu") && !RitualPlacer.IsPlacing)
         {
             OpenBuildMenu();
             return;
@@ -41,7 +41,7 @@ public partial class Architect : PlayerCharacter
             HandleLook(mouseMotion);
         }
 
-        if (@event.IsActionPressed("ui_cancel") && !TowerPlacer.IsPlacing)
+        if (@event.IsActionPressed("ui_cancel") && !RitualPlacer.IsPlacing)
         {
             ToggleMouseCapture();
         }
@@ -62,7 +62,7 @@ public partial class Architect : PlayerCharacter
 
     private void OnBuildMenuConfirmed(Spell spell, Godot.Collections.Array<Rune> runes)
     {
-        TowerPlacer.BeginPlacement(spell, runes);
+        RitualPlacer.BeginPlacement(spell, runes);
     }
 
     private void OnGamePhaseChanged(GamePhase phase)

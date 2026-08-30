@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d2otykwv31mch"]
 
 [ext_resource type="Script" uid="uid://cuia4k1x6b746" path="res://ui/BuildMenu.cs" id="1_cd770"]
-[ext_resource type="Script" uid="uid://ts88p5kp3hvy" path="res://ui/SpellGrid.cs" id="2_n5wqu"]
+[ext_resource type="Script" uid="uid://ts88p5kp3hvy" path="res://ui/TileGrid.cs" id="2_n5wqu"]
 
 [node name="BuildMenu" type="Control" unique_id=2049028399 node_paths=PackedStringArray("Grid", "MenuRegion", "DescriptionTitleLabel", "DescriptionBodyLabel")]
 visible = false

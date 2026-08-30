@@ -7,7 +7,7 @@ public partial class BuildMenu : Control
     [Signal] public delegate void ClosedEventHandler();
     [Signal] public delegate void ConfirmedEventHandler(Spell spell, Godot.Collections.Array<Rune> runes);
 
-    [Export] public SpellGrid Grid { get; private set; }
+    [Export] public TileGrid Grid { get; private set; }
     [Export] public Control MenuRegion { get; private set; }
     [Export] public Label DescriptionTitleLabel { get; private set; }
     [Export] public Label DescriptionBodyLabel { get; private set; }
@@ -20,7 +20,7 @@ public partial class BuildMenu : Control
     private readonly Button[] _socketButtons = new Button[GameRules.MaxRuneSlots];
 
     private Control _runePickerScreen;
-    private SpellGrid _runeGrid;
+    private TileGrid _runeGrid;
     private int _socketBeingAssigned = -1;
 
     private ConfirmationDialog _clearAllDialog;
@@ -190,7 +190,7 @@ public partial class BuildMenu : Control
         _runePickerScreen.SetAnchorsPreset(LayoutPreset.FullRect);
         MenuRegion.AddChild(_runePickerScreen);
 
-        _runeGrid = new SpellGrid
+        _runeGrid = new TileGrid
         {
             Columns = Grid.Columns,
             Rows = Grid.Rows,

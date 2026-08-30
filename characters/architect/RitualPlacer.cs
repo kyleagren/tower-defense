@@ -1,9 +1,9 @@
 using Godot;
 using System.Collections.Generic;
 
-public partial class TowerPlacer : Node
+public partial class RitualPlacer : Node
 {
-    [Export] public PlayerCharacter Architect { get; private set; }
+    [Export] public PlayerCharacter Character { get; private set; }
     [Export] public PackedScene RitualScene { get; private set; }
     [Export] public float PlacementDistance = GameRules.RitualReach;
     [Export] public float GroundRaycastRange = 10f;
@@ -113,12 +113,12 @@ public partial class TowerPlacer : Node
 
     private void UpdateCursorPosition()
     {
-        Vector3 aheadPoint = Architect.GetCameraAimPoint(PlacementDistance);
+        Vector3 aheadPoint = Character.GetCameraAimPoint(PlacementDistance);
 
         Vector3 rayStart = aheadPoint + Vector3.Up * GroundRaycastRange;
         Vector3 rayEnd = aheadPoint - Vector3.Up * GroundRaycastRange;
 
-        PhysicsDirectSpaceState3D spaceState = Architect.GetWorld3D().DirectSpaceState;
+        PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(rayStart, rayEnd);
         // World only — ignore rituals/obstacles so the cursor always lands at true ground height
         query.CollisionMask = PhysicsLayers.World;
@@ -194,7 +194,7 @@ public partial class TowerPlacer : Node
 
     private void UpdateGhostValidity()
     {
-        PhysicsDirectSpaceState3D spaceState = Architect.GetWorld3D().DirectSpaceState;
+        PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
 
         PhysicsShapeQueryParameters3D query = new PhysicsShapeQueryParameters3D
         {
