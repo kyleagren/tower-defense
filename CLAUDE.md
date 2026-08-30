@@ -18,5 +18,13 @@ Godot 4 (C#) 3D tower-defense project. `README.md` is the design reference — c
 ## Code style notes
 
 - **Naming/style standard (decided): follow Godot's official style guides exactly, no project-specific exceptions.** For C# code: [Godot's C# style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_style_guide.html) — notably, private fields (instance or static, not `const`) use an underscore prefix + camelCase (`_aimingAt`), everything else at member level (methods, properties, constants, events, types, namespaces) is PascalCase, locals/parameters are camelCase, interfaces get an `I` prefix. For files and folders: [Godot's project organization guide](https://docs.godotengine.org/en/stable/tutorials/best_practices/project_organization.html) — snake_case for all files and folders, except `.cs` files, which stay PascalCase named after their class. Chosen deliberately over inventing a bespoke house style, specifically so there's one canonical, complete reference to defer to instead of re-litigating individual naming calls — see a specific rule isn't covered here, check the linked guide before improvising.
+- **Non-public fields are `_camelCase`.** If a subclass needs access, expose a PascalCase `protected` property rather than widening the field. Godot's C# guide only specifies public members and private fields, so this keeps us inside it as written instead of inventing a third convention for `protected`.
+- **A tower is a `Ritual`.** "Tower" was the working word early on and has been swept out of the code — use `Ritual` in class names, identifiers, input actions, physics layer names, and player-facing copy. (README still uses "tower" in design prose in places; that's prose, not a naming rule.)
 - If GDScript is optimal for something, that's fine too, but we've been keeping things in C# to try to optimize.
 - 1 unit in Godot should correspond to 1 meter, but this is standard in Godot anyway.
+
+## Resources: where values live
+
+- **Base gameplay values live on `Spell`/`Rune` resources**, authored in `.tres` and reachable from code.
+- **Shapes and meshes inside `.tscn` files are unit placeholders that code sizes at runtime.** Construct them fresh in code rather than mutating the scene's copy — a sub-resource in a scene is shared by every instance of that scene, so writing to it stomps every other instance. (`resource_local_to_scene` is the alternative, and is the right tool when a scene genuinely authors per-instance content that code then tweaks — we don't currently have that case.)
+- Physics layer bit masks live in `PhysicsLayers`; keep it in sync with `project.godot`'s `[layer_names]`.

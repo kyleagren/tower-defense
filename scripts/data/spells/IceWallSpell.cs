@@ -14,8 +14,8 @@ public partial class IceWallSpell : Spell
 
     [Export] public override float BaseCastTime { get; protected set; } = 1f;
     [Export] public override float BaseCooldown { get; protected set; } = 15f;
-    [Export] public override int ManaCost { get; protected set; } = 15;
-    [Export] public override int CapacityCost { get; protected set; } = 15;
+    [Export] public override int BaseManaCost { get; protected set; } = 15;
+    [Export] public override int BaseCapacityCost { get; protected set; } = 15;
 
     public override string Name => "Ice Wall";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Cold, Tag.Duration, Tag.Wall };
@@ -29,8 +29,8 @@ public partial class IceWallSpell : Spell
             Range = BaseRange,
             CastTime = BaseCastTime,
             Cooldown = BaseCooldown,
-            ManaCost = ManaCost,
-            CapacityCost = CapacityCost,
+            ManaCost = BaseManaCost,
+            CapacityCost = BaseCapacityCost,
             Wall = new WallCastData
             {
                 SegmentScene = SegmentScene,

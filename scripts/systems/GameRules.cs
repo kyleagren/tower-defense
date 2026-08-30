@@ -1,5 +1,5 @@
 public static class GameRules
 {
     public const int MaxRuneSlots = 4;
-    public const float TowerReach = 4f;
+    public const float RitualReach = 4f;
 }

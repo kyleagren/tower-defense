@@ -11,7 +11,7 @@ public partial class CastSpeedRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => Array.Empty<Tag>();
 
-    public override string Description => "Reduces cast time, letting this tower act more often.";
+    public override string Description => "Reduces cast time, letting this ritual act more often.";
 
     public override void Apply(SpellCastContext context)
     {

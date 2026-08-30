@@ -11,7 +11,7 @@ public partial class RangeRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => Array.Empty<Tag>();
 
-    public override string Description => "Increases this tower's range by 30%.";
+    public override string Description => "Increases this ritual's range by 30%.";
 
     public override void Apply(SpellCastContext context)
     {

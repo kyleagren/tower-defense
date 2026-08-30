@@ -7,7 +7,7 @@ public partial class LightningBoltSpell : ChainableSpell
     [Export] public override float BaseLightningDamage { get; protected set; } = 40f;
     [Export] public override float BaseCastTime { get; protected set; } = 0.6f;
     [Export] public override int BaseChainCount { get; protected set; } = 2;
-    [Export] public override int ManaCost { get; protected set; } = 10;
+    [Export] public override int BaseManaCost { get; protected set; } = 10;
     [Export] public override ChainDamageModifier DamageModifier { get; protected set; }
 
     public override string Name => "Lightning Bolt";
@@ -23,8 +23,8 @@ public partial class LightningBoltSpell : ChainableSpell
             Cooldown = BaseCooldown,
             Damage = BaseDamage,
             RagdollForce = BaseRagdollForce,
-            ManaCost = ManaCost,
-            CapacityCost = CapacityCost,
+            ManaCost = BaseManaCost,
+            CapacityCost = BaseCapacityCost,
             InstantHit = new InstantHitCastData(),
             Chain = new ChainCastData
             {

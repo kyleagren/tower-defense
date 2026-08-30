@@ -25,7 +25,7 @@ public partial class Architect : PlayerCharacter
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (_buildMenuOpen || !active)
+        if (_buildMenuOpen || !IsActive)
         {
             return;
         }
@@ -65,9 +65,9 @@ public partial class Architect : PlayerCharacter
         TowerPlacer.BeginPlacement(spell, runes);
     }
 
-    private void OnGamePhaseChanged(WaveController.GamePhase phase)
+    private void OnGamePhaseChanged(GamePhase phase)
     {
-        bool shouldBeActive = phase == WaveController.GamePhase.Build;
+        bool shouldBeActive = phase == GamePhase.Build;
 
         if (shouldBeActive)
         {
@@ -79,7 +79,7 @@ public partial class Architect : PlayerCharacter
 
     public override void _PhysicsProcess(double delta)
     {
-        if (!active)
+        if (!IsActive)
         {
             return;
         }

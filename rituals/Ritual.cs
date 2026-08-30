@@ -27,7 +27,7 @@ public partial class Ritual : Node3D
 
     public void Repair()
     {
-        GD.Print($"Repairing {Spell?.Name} tower...");
+        GD.Print($"Repairing {Spell?.Name} ritual...");
     }
 
     public void SetCost(int manaCost, int capacityCost)
@@ -60,7 +60,7 @@ public partial class Ritual : Node3D
             }
         }
 
-        EconomyManager.Instance.RefundTower(_manaCost, _capacityCost);
+        EconomyManager.Instance.RefundRitual(_manaCost, _capacityCost);
 
         QueueFree();
     }

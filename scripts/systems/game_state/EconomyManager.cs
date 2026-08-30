@@ -60,7 +60,7 @@ public partial class EconomyManager : Node
         return CapacityUsed + capacityCost <= MaxCapacity && Mana >= manaCost;
     }
 
-    public (int ManaCost, int CapacityCost) SpendOnTower(SpellCastContext context)
+    public (int ManaCost, int CapacityCost) SpendOnRitual(SpellCastContext context)
     {
         int manaCost = Mathf.CeilToInt(context.ManaCost);
         int capacityCost = Mathf.CeilToInt(context.CapacityCost);
@@ -70,7 +70,7 @@ public partial class EconomyManager : Node
         return (manaCost, capacityCost);
     }
 
-    public void RefundTower(int manaSpent, int capacityCost)
+    public void RefundRitual(int manaSpent, int capacityCost)
     {
         Mana += manaSpent;
         CapacityUsed -= capacityCost;

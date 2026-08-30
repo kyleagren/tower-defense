@@ -27,7 +27,7 @@ public partial class RoutePreviewEffect : Node3D
         AddChild(_pulseTimer);
 
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        OnGamePhaseChanged(WaveController.GamePhase.Build);
+        OnGamePhaseChanged(GamePhase.Build);
     }
 
     public override void _ExitTree()
@@ -48,9 +48,9 @@ public partial class RoutePreviewEffect : Node3D
         }
     }
 
-    private void OnGamePhaseChanged(WaveController.GamePhase phase)
+    private void OnGamePhaseChanged(GamePhase phase)
     {
-        if (phase == WaveController.GamePhase.Build)
+        if (phase == GamePhase.Build)
         {
             SetProcess(true);
             _pulseTimer.Start();

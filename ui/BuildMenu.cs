@@ -47,7 +47,7 @@ public partial class BuildMenu : Control
             if (i < spells.Count)
             {
                 Spell spell = spells[i];
-                Button button = CreateTileButton($"{spell.Name}\nCost: {spell.ManaCost}", spell.Name, spell.Description);
+                Button button = CreateTileButton($"{spell.Name}\nCost: {spell.BaseManaCost}", spell.Name, spell.Description);
                 button.Pressed += () => OnSpellSelected(spell);
                 Grid.AddChild(button);
             }

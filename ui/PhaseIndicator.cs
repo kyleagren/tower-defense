@@ -5,7 +5,7 @@ public partial class PhaseIndicator : Control
     [Export] public Label PhaseLabel { get; private set; }
     [Export] public Label GoldLabel { get; private set; }
 
-    private WaveController.GamePhase _currentPhase = WaveController.GamePhase.Build;
+    private GamePhase _currentPhase = GamePhase.Build;
 
     public override void _Ready()
     {
@@ -23,7 +23,7 @@ public partial class PhaseIndicator : Control
         EconomyManager.Instance.GoldEarnedChanged -= UpdateGoldText;
     }
 
-    private void OnGamePhaseChanged(WaveController.GamePhase phase)
+    private void OnGamePhaseChanged(GamePhase phase)
     {
         _currentPhase = phase;
         UpdateText();
@@ -31,7 +31,7 @@ public partial class PhaseIndicator : Control
 
     private void UpdateText()
     {
-        string phaseText = _currentPhase == WaveController.GamePhase.Combat ? "Combat Phase" : "Build Phase";
+        string phaseText = _currentPhase == GamePhase.Combat ? "Combat Phase" : "Build Phase";
         PhaseLabel.Text = $"{phaseText} — Mana: {EconomyManager.Instance.Mana} | Build Capacity: {EconomyManager.Instance.CapacityUsed}/{EconomyManager.Instance.MaxCapacity}";
     }
 

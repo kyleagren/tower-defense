@@ -4,12 +4,6 @@ using System.Threading.Tasks;
 
 public partial class WaveController : Node
 {
-    public enum GamePhase
-    {
-        Build,
-        Combat
-    }
-
     [Export] public Godot.Collections.Array<WaveDefinition> Waves { get; private set; } = new();
     [Export] public float SpawnInterval = 0.3f;
     [Export] public float EnemyCheckInterval = 0.5f;

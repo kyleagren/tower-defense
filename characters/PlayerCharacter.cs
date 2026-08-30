@@ -11,16 +11,19 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     [Export] public Camera3D Camera { get; private set; }
     [Export] public MeshInstance3D BodyMesh { get; private set; }
 
-    public bool IsActive => active;
+    public bool IsActive => _active;
 
-    protected float cameraPitch;
-    protected float gravity;
-    protected bool active;
-    protected float lookSensitivityMultiplier = 1f;
+    // Subclasses read activity through IsActive and adjust look sensitivity through
+    // LookSensitivity; nothing outside this class needs the backing fields.
+    protected float LookSensitivity { get; set; } = 1f;
+
+    private float _cameraPitch;
+    private float _gravity;
+    private bool _active;
 
     public override void _Ready()
     {
-        gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
+        _gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
     }
 
     public Vector3 GetCameraAimPoint(float distance)
@@ -35,16 +38,16 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     {
         GlobalPosition = previous.GlobalPosition;
         GlobalRotation = new Vector3(0f, previous.GlobalRotation.Y, 0f);
-        cameraPitch = previous.cameraPitch;
-        SpringArm.Rotation = new Vector3(cameraPitch, 0f, 0f);
+        _cameraPitch = previous._cameraPitch;
+        SpringArm.Rotation = new Vector3(_cameraPitch, 0f, 0f);
     }
 
     protected void SetActive(bool value)
     {
-        active = value;
-        BodyMesh.Visible = active;
+        _active = value;
+        BodyMesh.Visible = _active;
 
-        if (active)
+        if (_active)
         {
             Camera.Current = true;
             Input.MouseMode = Input.MouseModeEnum.Captured;
@@ -58,16 +61,16 @@ public abstract partial class PlayerCharacter : CharacterBody3D
             return;
         }
 
-        float sensitivity = MouseSensitivity * lookSensitivityMultiplier;
+        float sensitivity = MouseSensitivity * LookSensitivity;
 
         RotateY(-mouseMotion.Relative.X * sensitivity);
 
-        cameraPitch = Mathf.Clamp(
-            cameraPitch - mouseMotion.Relative.Y * sensitivity,
+        _cameraPitch = Mathf.Clamp(
+            _cameraPitch - mouseMotion.Relative.Y * sensitivity,
             Mathf.DegToRad(MinPitchDegrees),
             Mathf.DegToRad(MaxPitchDegrees));
 
-        SpringArm.Rotation = new Vector3(cameraPitch, 0f, 0f);
+        SpringArm.Rotation = new Vector3(_cameraPitch, 0f, 0f);
     }
 
     protected void ToggleMouseCapture()
@@ -83,7 +86,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
         if (!IsOnFloor())
         {
-            velocity.Y -= gravity * (float)delta;
+            velocity.Y -= _gravity * (float)delta;
         }
         else if (allowJump && Input.IsActionJustPressed("jump"))
         {

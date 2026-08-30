@@ -3,11 +3,11 @@ using Godot;
 public partial class TowerInteractor : Node
 {
     [Export] public PlayerCharacter Character { get; private set; }
-    [Export] public float InteractionRange = GameRules.TowerReach;
+    [Export] public float InteractionRange = GameRules.RitualReach;
     [Export] public PackedScene PromptScene { get; private set; }
     [Export] public float DestroyHoldDuration = 1f;
 
-    public Ritual TargetedTower { get; private set; }
+    public Ritual TargetedRitual { get; private set; }
 
     private InteractionPrompt _prompt;
     private string _promptText;
@@ -19,8 +19,8 @@ public partial class TowerInteractor : Node
         GetTree().CurrentScene.CallDeferred(Node.MethodName.AddChild, _prompt);
         _prompt.HidePrompt();
 
-        string repairKey = InputPromptHelper.GetActionKeyName("repair_tower");
-        string destroyKey = InputPromptHelper.GetActionKeyName("destroy_tower");
+        string repairKey = InputPromptHelper.GetActionKeyName("repair_ritual");
+        string destroyKey = InputPromptHelper.GetActionKeyName("destroy_ritual");
         _promptText = $"Press {repairKey} to Repair\nHold {destroyKey} to Destroy";
     }
 
@@ -28,32 +28,32 @@ public partial class TowerInteractor : Node
     {
         if (!Character.IsActive)
         {
-            TargetedTower = null;
+            TargetedRitual = null;
             _destroyHoldTime = 0f;
             _prompt.HidePrompt();
             return;
         }
 
-        TargetedTower = FindTowerAhead();
+        TargetedRitual = FindRitualAhead();
 
-        if (TargetedTower == null)
+        if (TargetedRitual == null)
         {
             _destroyHoldTime = 0f;
             _prompt.HidePrompt();
             return;
         }
 
-        if (Input.IsActionPressed("destroy_tower"))
+        if (Input.IsActionPressed("destroy_ritual"))
         {
             _destroyHoldTime += (float)delta;
 
             if (_destroyHoldTime >= DestroyHoldDuration)
             {
-                Ritual tower = TargetedTower;
-                TargetedTower = null;
+                Ritual ritual = TargetedRitual;
+                TargetedRitual = null;
                 _destroyHoldTime = 0f;
                 _prompt.HidePrompt();
-                tower.Destroy();
+                ritual.Destroy();
                 return;
             }
         }
@@ -62,7 +62,7 @@ public partial class TowerInteractor : Node
             _destroyHoldTime = 0f;
         }
 
-        Vector3 promptPosition = TargetedTower.GlobalPosition + Vector3.Up * 0.3f;
+        Vector3 promptPosition = TargetedRitual.GlobalPosition + Vector3.Up * 0.3f;
 
         if (_destroyHoldTime > 0f)
         {
@@ -77,25 +77,25 @@ public partial class TowerInteractor : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!Character.IsActive || TargetedTower == null)
+        if (!Character.IsActive || TargetedRitual == null)
         {
             return;
         }
 
-        if (@event.IsActionPressed("repair_tower"))
+        if (@event.IsActionPressed("repair_ritual"))
         {
-            TargetedTower.Repair();
+            TargetedRitual.Repair();
         }
     }
 
-    private Ritual FindTowerAhead()
+    private Ritual FindRitualAhead()
     {
         Vector3 origin = Character.Camera.GlobalPosition;
         Vector3 end = Character.GetCameraAimPoint(InteractionRange);
 
         PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
-        query.CollisionMask = 32; // Towers layer only
+        query.CollisionMask = PhysicsLayers.Rituals;
 
         Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
 

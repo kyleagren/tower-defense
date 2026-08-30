@@ -5,12 +5,12 @@ public partial class TowerPlacer : Node
 {
     [Export] public PlayerCharacter Architect { get; private set; }
     [Export] public PackedScene RitualScene { get; private set; }
-    [Export] public float PlacementDistance = GameRules.TowerReach;
+    [Export] public float PlacementDistance = GameRules.RitualReach;
     [Export] public float GroundRaycastRange = 10f;
 
     public bool IsPlacing { get; private set; }
 
-    private enum Stage { Tower, WallStart, WallEnd }
+    private enum Stage { Ritual, WallStart, WallEnd }
     private Stage _stage;
 
     private Ritual _ghost;
@@ -49,9 +49,9 @@ public partial class TowerPlacer : Node
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
     }
 
-    private void OnGamePhaseChanged(WaveController.GamePhase phase)
+    private void OnGamePhaseChanged(GamePhase phase)
     {
-        if (phase == WaveController.GamePhase.Combat && IsPlacing)
+        if (phase == GamePhase.Combat && IsPlacing)
         {
             CancelPlacement();
         }
@@ -78,8 +78,8 @@ public partial class TowerPlacer : Node
         }
         else
         {
-            _stage = Stage.Tower;
-            BeginTowerGhost();
+            _stage = Stage.Ritual;
+            BeginRitualGhost();
         }
     }
 
@@ -100,8 +100,8 @@ public partial class TowerPlacer : Node
             case Stage.WallEnd:
                 ProcessWallEndStage();
                 break;
-            case Stage.Tower:
-                ProcessTowerStage();
+            case Stage.Ritual:
+                ProcessRitualStage();
                 break;
         }
 
@@ -120,7 +120,8 @@ public partial class TowerPlacer : Node
 
         PhysicsDirectSpaceState3D spaceState = Architect.GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(rayStart, rayEnd);
-        query.CollisionMask = 1; // World only — ignore towers/obstacles so the cursor always lands at true ground height
+        // World only — ignore rituals/obstacles so the cursor always lands at true ground height
+        query.CollisionMask = PhysicsLayers.World;
 
         Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
 
@@ -158,12 +159,12 @@ public partial class TowerPlacer : Node
             UpdateCostPreviewLabel(_wallStartPosition, _wallEndPosition);
             FadeWallPreview();
             BuildWallRangeIndicator();
-            _stage = Stage.Tower;
-            BeginTowerGhost();
+            _stage = Stage.Ritual;
+            BeginRitualGhost();
         }
     }
 
-    private void ProcessTowerStage()
+    private void ProcessRitualStage()
     {
         _ghost.GlobalPosition = _pendingContext.Wall != null ? ClampToWallRange(_cursorPosition) : _cursorPosition;
         UpdateGhostValidity();
@@ -174,7 +175,7 @@ public partial class TowerPlacer : Node
         }
     }
 
-    private void BeginTowerGhost()
+    private void BeginRitualGhost()
     {
         _ghost = RitualScene.Instantiate<Ritual>();
         GetTree().CurrentScene.AddChild(_ghost);
@@ -199,7 +200,7 @@ public partial class TowerPlacer : Node
         {
             Shape = _ghostCollisionShape.Shape,
             Transform = _ghostCollisionShape.GlobalTransform,
-            CollisionMask = 16,
+            CollisionMask = PhysicsLayers.Obstacles,
             CollideWithBodies = true,
             CollideWithAreas = false
         };
@@ -445,7 +446,7 @@ public partial class TowerPlacer : Node
             marker.Initialize(_wallStartPosition, _wallEndPosition, _pendingContext.Wall.SegmentWidth);
         }
 
-        (int manaCost, int capacityCost) = _economy.SpendOnTower(_pendingContext);
+        (int manaCost, int capacityCost) = _economy.SpendOnRitual(_pendingContext);
         placed.SetCost(manaCost, capacityCost);
 
         EndPlacement();

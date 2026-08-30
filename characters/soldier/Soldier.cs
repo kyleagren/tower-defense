@@ -32,9 +32,9 @@ public partial class Soldier : PlayerCharacter
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
     }
 
-    private void OnGamePhaseChanged(WaveController.GamePhase phase)
+    private void OnGamePhaseChanged(GamePhase phase)
     {
-        bool shouldBeActive = phase == WaveController.GamePhase.Combat;
+        bool shouldBeActive = phase == GamePhase.Combat;
 
         if (shouldBeActive)
         {
@@ -47,7 +47,7 @@ public partial class Soldier : PlayerCharacter
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!active)
+        if (!IsActive)
         {
             return;
         }
@@ -65,7 +65,7 @@ public partial class Soldier : PlayerCharacter
 
     public override void _PhysicsProcess(double delta)
     {
-        if (!active)
+        if (!IsActive)
         {
             return;
         }
@@ -94,7 +94,7 @@ public partial class Soldier : PlayerCharacter
 
         Camera.Fov = Mathf.Lerp(Camera.Fov, targetFov, weight);
         SpringArm.SpringLength = Mathf.Lerp(SpringArm.SpringLength, targetSpringLength, weight);
-        lookSensitivityMultiplier = Mathf.Lerp(lookSensitivityMultiplier, targetSensitivityMultiplier, weight);
+        LookSensitivity = Mathf.Lerp(LookSensitivity, targetSensitivityMultiplier, weight);
     }
 
     private void FireShot()
@@ -105,7 +105,7 @@ public partial class Soldier : PlayerCharacter
 
         PhysicsDirectSpaceState3D spaceState = GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
-        query.CollisionMask = 2; // Enemies layer only
+        query.CollisionMask = PhysicsLayers.Enemies;
 
         Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
         Vector3 tracerEnd = end;

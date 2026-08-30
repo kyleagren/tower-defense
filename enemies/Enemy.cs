@@ -18,7 +18,7 @@ public partial class Enemy : CharacterBody3D
     [Export] public float RagdollCleanupDelay = 2f;
     [Export] public float MaxHealth = 100f;
     [Export] public float CenterMassHeight = 1f;
-    [Export] public int Reward = 1;
+    [Export] public int ManaReward = 1;
     [Export] public int GoldReward = 1;
     [Export] public HealthBar3D HealthBar { get; private set; }
 
@@ -151,12 +151,12 @@ public partial class Enemy : CharacterBody3D
         _isDead = true;
         HealthBar.Visible = false;
         HealthBar.SetProcess(false);
-        EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, Reward, GoldReward);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward);
 
         SetPhysicsProcess(false);
         BodyCollision.Disabled = true;
 
-        SetPhysicalBonesCollision(4, 1);
+        SetPhysicalBonesCollision(PhysicsLayers.Ragdoll, PhysicsLayers.World);
 
         BoneSimulator.PhysicalBonesStartSimulation();
         _ = ApplyRagdollImpulseNextPhysicsFrame(ragdollImpulse);
