@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public partial class ForkRune : Rune
 {
     [Export] public int ExtraForks { get; private set; } = 1;
-    [Export] public float DamageMultiplier { get; private set; } = 0.6f;
+    [Export] public override float DamageMultiplier { get; protected set; } = 0.6f;
 
     public override string Name => "Fork";
 
@@ -17,6 +17,5 @@ public partial class ForkRune : Rune
     {
         context.Chain ??= new ChainCastData();
         context.Chain.ForkCount += ExtraForks;
-        context.DamageScale.More *= DamageMultiplier;
     }
 }

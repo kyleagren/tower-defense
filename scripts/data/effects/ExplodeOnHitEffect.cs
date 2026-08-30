@@ -44,6 +44,7 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
         {
             Shape = explosionShape,
             Transform = projectile.GlobalTransform,
+            CollisionMask = PhysicsLayers.Enemies,
             CollideWithBodies = true,
             CollideWithAreas = false
         };

@@ -1,6 +1,6 @@
 using Godot;
 
-public partial class IceWallSegment : StaticBody3D
+public partial class IceWallSegment : StaticBody3D, IDamageable
 {
     [Export] public MeshInstance3D BodyMesh { get; private set; }
     [Export] public CollisionShape3D BodyCollision { get; private set; }
@@ -12,6 +12,8 @@ public partial class IceWallSegment : StaticBody3D
 
     private float _currentHealth;
     private bool _isBroken;
+
+    public bool IsDestroyed => _isBroken;
 
     public void Initialize(float maxHealth, float width)
     {
@@ -35,14 +37,14 @@ public partial class IceWallSegment : StaticBody3D
 
     // TODO: no callers yet - enemies don't detect or attack walls (README section 16, step 10).
     // Wire this up with the enemy movement rework, along with the regrow cooldown (section 6).
-    public void TakeDamage(float amount)
+    public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
     {
         if (_isBroken)
         {
             return;
         }
 
-        _currentHealth -= amount;
+        _currentHealth -= damage.Total;
         if (_currentHealth <= 0f)
         {
             Break();

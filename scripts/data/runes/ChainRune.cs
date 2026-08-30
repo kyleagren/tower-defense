@@ -6,7 +6,7 @@ public partial class ChainRune : Rune
 {
     [Export] public int ExtraChains { get; private set; } = 3;
     [Export] public float FallbackChainRange { get; private set; } = 6f;
-    [Export] public float DamageMultiplier { get; private set; } = 0.8f;
+    [Export] public override float DamageMultiplier { get; protected set; } = 0.8f;
 
     public override string Name => "Chain";
 
@@ -20,6 +20,5 @@ public partial class ChainRune : Rune
         context.Chain ??= new ChainCastData();
         context.Chain.ChainCount += ExtraChains;
         context.Chain.ChainRange = Mathf.Max(context.Chain.ChainRange, FallbackChainRange);
-        context.DamageScale.More *= DamageMultiplier;
     }
 }

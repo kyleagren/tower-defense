@@ -1,5 +1,4 @@
 using Godot;
-using System.Threading.Tasks;
 
 public partial class EnemySpawner : Node3D
 {
@@ -10,7 +9,7 @@ public partial class EnemySpawner : Node3D
 
     public override async void _Ready()
     {
-        await ComputeInitialDirectionWithRetry();
+        await NavigationReady.WaitFor(this, TryComputeInitialDirection, $"EnemySpawner '{Id}'");
     }
 
     public void Spawn(PackedScene enemyScene)
@@ -20,19 +19,6 @@ public partial class EnemySpawner : Node3D
         enemy.GlobalPosition = GlobalPosition;
         enemy.SetInitialFacing(_initialDirection);
         enemy.SetTarget(Target.GlobalPosition);
-    }
-
-    private async Task ComputeInitialDirectionWithRetry()
-    {
-        for (int attempt = 1; attempt <= 30; attempt++)
-        {
-            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
-
-            if (TryComputeInitialDirection())
-            {
-                return;
-            }
-        }
     }
 
     private bool TryComputeInitialDirection()

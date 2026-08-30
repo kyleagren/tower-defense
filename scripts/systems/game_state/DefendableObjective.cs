@@ -1,6 +1,6 @@
 using Godot;
 
-public partial class DefendableObjective : Area3D
+public partial class DefendableObjective : Area3D, IDamageable
 {
     [Export] public float RagdollForce = 200.0f;
     [Export] public float RagdollAngleJitterDegrees = 20.0f;
@@ -11,6 +11,8 @@ public partial class DefendableObjective : Area3D
     private float _currentHealth;
     private bool _destroyed;
 
+    public bool IsDestroyed => _destroyed;
+
     public override void _Ready()
     {
         _currentHealth = MaxHealth;
@@ -18,30 +20,37 @@ public partial class DefendableObjective : Area3D
         HealthBar.SetFraction(1f);
     }
 
-    private void OnBodyEntered(Node3D body)
+    public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
     {
         if (_destroyed)
         {
             return;
         }
 
-        if (body is Enemy enemy)
+        _currentHealth -= damage.Total;
+        HealthBar.SetFraction(_currentHealth / MaxHealth);
+
+        if (_currentHealth <= 0f)
         {
-            Vector3 ragdollDirection = (enemy.GlobalPosition - GlobalPosition).Normalized();
-
-            float jitterRadians = Mathf.DegToRad((float)GD.RandRange(-RagdollAngleJitterDegrees, RagdollAngleJitterDegrees));
-            ragdollDirection = ragdollDirection.Rotated(Vector3.Up, jitterRadians);
-
-            enemy.Die(ragdollDirection * RagdollForce);
-
-            _currentHealth -= DamagePerHit;
-            HealthBar.SetFraction(_currentHealth / MaxHealth);
-
-            if (_currentHealth <= 0f)
-            {
-                _destroyed = true;
-                EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, false);
-            }
+            _destroyed = true;
+            EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, false);
         }
+    }
+
+    private void OnBodyEntered(Node3D body)
+    {
+        if (_destroyed || body is not Enemy enemy)
+        {
+            return;
+        }
+
+        Vector3 ragdollDirection = (enemy.GlobalPosition - GlobalPosition).Normalized();
+
+        float jitterRadians = Mathf.DegToRad((float)GD.RandRange(-RagdollAngleJitterDegrees, RagdollAngleJitterDegrees));
+        ragdollDirection = ragdollDirection.Rotated(Vector3.Up, jitterRadians);
+
+        enemy.Die(ragdollDirection * RagdollForce);
+
+        TakeDamage(new DamagePacket { PhysicalDamage = DamagePerHit });
     }
 }

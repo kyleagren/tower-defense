@@ -4,7 +4,7 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class ReturnRune : Rune
 {
-    [Export] public float DamageMultiplier { get; private set; } = 0.6f;
+    [Export] public override float DamageMultiplier { get; protected set; } = 0.6f;
 
     public override string Name => "Return";
 
@@ -17,7 +17,6 @@ public partial class ReturnRune : Rune
         if (context.Projectile != null)
         {
             context.Projectile.IsReturn = true;
-            context.DamageScale.More *= DamageMultiplier;
         }
     }
 }

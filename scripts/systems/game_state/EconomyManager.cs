@@ -1,5 +1,4 @@
 using Godot;
-using System;
 
 public partial class EconomyManager : Node
 {
@@ -12,8 +11,11 @@ public partial class EconomyManager : Node
     public int CapacityUsed { get; private set; }
     public int GoldEarned { get; private set; }
 
-    public event Action ManaChanged;
-    public event Action GoldEarnedChanged;
+    // Mana, capacity, and gold only ever move together (a kill, a spend, a refund, a reset), and
+    // every listener refreshes on all of them, so one signal covers it. A Godot signal rather than
+    // a C# event so every cross-system notification in the project goes through the same
+    // mechanism — and so the multiplayer layer (README section 14) has an RPC-able hook.
+    [Signal] public delegate void EconomyChangedEventHandler();
 
     // Assigned in _EnterTree rather than _Ready: _EnterTree runs top-down across the whole tree
     // before any node's _Ready, so consumers caching Instance in their own _Ready are safe
@@ -41,16 +43,14 @@ public partial class EconomyManager : Node
         Mana = StartingMana;
         CapacityUsed = 0;
         GoldEarned = 0;
-        ManaChanged?.Invoke();
-        GoldEarnedChanged?.Invoke();
+        EmitSignal(SignalName.EconomyChanged);
     }
 
     private void OnEnemyKilled(int reward, int goldReward)
     {
         Mana += reward;
         GoldEarned += goldReward;
-        ManaChanged?.Invoke();
-        GoldEarnedChanged?.Invoke();
+        EmitSignal(SignalName.EconomyChanged);
     }
 
     public bool CanAfford(SpellCastContext context)
@@ -66,7 +66,7 @@ public partial class EconomyManager : Node
         int capacityCost = Mathf.CeilToInt(context.CapacityCost.Value);
         Mana -= manaCost;
         CapacityUsed += capacityCost;
-        ManaChanged?.Invoke();
+        EmitSignal(SignalName.EconomyChanged);
         return (manaCost, capacityCost);
     }
 
@@ -74,6 +74,6 @@ public partial class EconomyManager : Node
     {
         Mana += manaSpent;
         CapacityUsed -= capacityCost;
-        ManaChanged?.Invoke();
+        EmitSignal(SignalName.EconomyChanged);
     }
 }

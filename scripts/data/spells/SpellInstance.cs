@@ -5,7 +5,7 @@ public class SpellInstance
 {
     // a definition is which Spell this instance is using.
     private readonly Spell _definition;
-    private List<Rune> _attachedRunes = new List<Rune>();
+    private readonly List<Rune> _attachedRunes = new List<Rune>();
     private SpellCastContext _cachedContext;
 
     public IReadOnlyList<Rune> AttachedRunes => _attachedRunes;
@@ -44,6 +44,7 @@ public class SpellInstance
             {
                 rune.Apply(_cachedContext);
                 _cachedContext.ManaCost.More *= rune.ManaCostMultiplier;
+                _cachedContext.DamageScale.More *= rune.DamageMultiplier;
             }
         }
 

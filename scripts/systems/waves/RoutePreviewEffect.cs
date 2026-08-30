@@ -1,6 +1,5 @@
 using Godot;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 public partial class RoutePreviewEffect : Node3D
 {
@@ -15,12 +14,12 @@ public partial class RoutePreviewEffect : Node3D
 
     private const string SpawnerGroup = "enemy_spawners";
 
-    private List<PathFollow3D[]> _routes = new List<PathFollow3D[]>();
+    private readonly List<PathFollow3D[]> _routes = new List<PathFollow3D[]>();
     private Timer _pulseTimer;
 
     public override async void _Ready()
     {
-        await BuildRoutesWithRetry();
+        await NavigationReady.WaitFor(this, TryBuildRoutes, "RoutePreviewEffect");
 
         _pulseTimer = new Timer { WaitTime = PulseInterval };
         _pulseTimer.Timeout += Pulse;
@@ -63,19 +62,10 @@ public partial class RoutePreviewEffect : Node3D
         }
     }
 
-    private async Task BuildRoutesWithRetry()
+    private bool TryBuildRoutes()
     {
-        for (int attempt = 1; attempt <= 30; attempt++)
-        {
-            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
-
-            BuildRoutes();
-
-            if (_routes.Count > 0)
-            {
-                return;
-            }
-        }
+        BuildRoutes();
+        return _routes.Count > 0;
     }
 
     private void BuildRoutes()

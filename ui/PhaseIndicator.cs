@@ -10,34 +10,28 @@ public partial class PhaseIndicator : Control
     public override void _Ready()
     {
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        EconomyManager.Instance.ManaChanged += UpdateText;
-        EconomyManager.Instance.GoldEarnedChanged += UpdateGoldText;
-        UpdateText();
-        UpdateGoldText();
+        EconomyManager.Instance.EconomyChanged += Refresh;
+        Refresh();
     }
 
     public override void _ExitTree()
     {
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
-        EconomyManager.Instance.ManaChanged -= UpdateText;
-        EconomyManager.Instance.GoldEarnedChanged -= UpdateGoldText;
+        EconomyManager.Instance.EconomyChanged -= Refresh;
     }
 
     private void OnGamePhaseChanged(GamePhase phase)
     {
         _currentPhase = phase;
-        UpdateText();
+        Refresh();
     }
 
-    private void UpdateText()
+    private void Refresh()
     {
         string phaseText = _currentPhase == GamePhase.Combat ? "Combat Phase" : "Build Phase";
         PhaseLabel.Text = $"{phaseText} — Mana: {EconomyManager.Instance.Mana} | Build Capacity: {EconomyManager.Instance.CapacityUsed}/{EconomyManager.Instance.MaxCapacity}";
-    }
 
-    private void UpdateGoldText()
-    {
-        int total = SaveManager.Instance.Data.Gold + EconomyManager.Instance.GoldEarned;
-        GoldLabel.Text = $"Gold: {total}";
+        int totalGold = SaveManager.Instance.Data.Gold + EconomyManager.Instance.GoldEarned;
+        GoldLabel.Text = $"Gold: {totalGold}";
     }
 }

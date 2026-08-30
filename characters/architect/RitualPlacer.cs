@@ -1,5 +1,4 @@
 using Godot;
-using System.Collections.Generic;
 
 public partial class RitualPlacer : Node
 {
@@ -25,16 +24,7 @@ public partial class RitualPlacer : Node
     private Vector3 _wallStartPosition;
     private Vector3 _wallEndPosition;
     private bool _wallCostApplied;
-    private readonly List<MeshInstance3D> _wallPreviewMeshes = new List<MeshInstance3D>();
-    private MeshInstance3D _wallRangeIndicator;
-    private MeshInstance3D _wallRangeBorder;
-    private Label3D _costPreviewLabel;
-
-    private static readonly StandardMaterial3D _validMaterial = CreateGhostMaterial(new Color(0.2f, 1f, 0.3f, 0.5f));
-    private static readonly StandardMaterial3D _invalidMaterial = CreateGhostMaterial(new Color(1f, 0.2f, 0.2f, 0.5f));
-    private static readonly StandardMaterial3D _rangeMaterial = CreateFlatOverlayMaterial(new Color(0.3f, 0.6f, 1f, 0.25f));
-    private static readonly StandardMaterial3D _rangeBorderMaterial = CreateFlatOverlayMaterial(new Color(0.5f, 0.8f, 1f, 0.9f));
-    private static readonly StandardMaterial3D _wallPreviewFadedMaterial = CreateGhostMaterial(new Color(0.2f, 1f, 0.3f, 0.2f));
+    private WallPlacementPreview _wallPreview;
 
     private EconomyManager _economy;
 
@@ -74,6 +64,8 @@ public partial class RitualPlacer : Node
 
         if (_pendingContext.Wall != null)
         {
+            _wallPreview = new WallPlacementPreview();
+            GetTree().CurrentScene.AddChild(_wallPreview);
             _stage = Stage.WallStart;
         }
         else
@@ -120,6 +112,7 @@ public partial class RitualPlacer : Node
 
         PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(rayStart, rayEnd);
+
         // World only — ignore rituals/obstacles so the cursor always lands at true ground height
         query.CollisionMask = PhysicsLayers.World;
 
@@ -133,7 +126,8 @@ public partial class RitualPlacer : Node
 
     private void ProcessWallStartStage()
     {
-        RebuildWallPreview(_cursorPosition, _cursorPosition);
+        WallCastData wallData = _pendingContext.Wall;
+        _wallPreview.UpdateWall(_cursorPosition, _cursorPosition, wallData, ComputeAffordableSegmentCount(wallData));
 
         if (Input.IsActionJustPressed("confirm_placement"))
         {
@@ -144,21 +138,23 @@ public partial class RitualPlacer : Node
 
     private void ProcessWallEndStage()
     {
-        if (_costPreviewLabel == null)
-        {
-            _costPreviewLabel = BuildCostPreviewLabel();
-        }
+        WallCastData wallData = _pendingContext.Wall;
+        int segmentCount = IceWall.ComputeSegmentCount(_wallStartPosition.DistanceTo(_cursorPosition), wallData.SegmentWidth);
+        int affordableSegments = ComputeAffordableSegmentCount(wallData);
 
-        RebuildWallPreview(_wallStartPosition, _cursorPosition);
-        bool affordable = UpdateCostPreviewLabel(_wallStartPosition, _cursorPosition);
+        _wallPreview.UpdateWall(_wallStartPosition, _cursorPosition, wallData, affordableSegments);
+
+        bool affordable = segmentCount <= affordableSegments;
+        ShowProjectedCost(_wallStartPosition, _cursorPosition, segmentCount, affordable);
 
         if (affordable && Input.IsActionJustPressed("confirm_placement"))
         {
             _wallEndPosition = _cursorPosition;
             ApplyWallCostScaling();
-            UpdateCostPreviewLabel(_wallStartPosition, _wallEndPosition);
-            FadeWallPreview();
-            BuildWallRangeIndicator();
+
+            ShowProjectedCost(_wallStartPosition, _wallEndPosition, segmentCount, affordable: true);
+            _wallPreview.Freeze(_wallStartPosition, _wallEndPosition, _pendingContext.Range.Value);
+
             _stage = Stage.Ritual;
             BeginRitualGhost();
         }
@@ -209,11 +205,11 @@ public partial class RitualPlacer : Node
 
         _isValidPlacement = overlaps.Count == 0 && _economy.CanAfford(_pendingContext);
 
-        _ghostMesh.MaterialOverride = _isValidPlacement ? _validMaterial : _invalidMaterial;
+        _ghostMesh.MaterialOverride = _isValidPlacement ? PreviewMaterials.Valid : PreviewMaterials.Invalid;
     }
 
     // Clamps an arbitrary world point to the nearest point inside the wall's flat-capped
-    // rectangular placement zone (see BuildWallRangeIndicator for the same shape drawn as UI).
+    // rectangular placement zone (WallPlacementPreview draws the same shape).
     private Vector3 ClampToWallRange(Vector3 point)
     {
         Vector3 diff = _wallEndPosition - _wallStartPosition;
@@ -236,98 +232,6 @@ public partial class RitualPlacer : Node
         return _wallStartPosition + direction * along + perpendicular * across;
     }
 
-    private void BuildWallRangeIndicator()
-    {
-        const float BorderThickness = 0.3f;
-
-        Vector3 diff = _wallEndPosition - _wallStartPosition;
-        float length = diff.Length();
-        Vector3 direction = length > 0.0001f ? diff / length : Vector3.Forward;
-        Vector3 perpendicular = new Vector3(-direction.Z, 0f, direction.X);
-        float range = _pendingContext.Range.Value;
-        Vector3 up = Vector3.Up * 0.03f;
-
-        Vector3 ToWorld(float along, float across) => _wallStartPosition + direction * along + perpendicular * across + up;
-
-        Vector3 innerA = ToWorld(0f, range);
-        Vector3 innerB = ToWorld(length, range);
-        Vector3 innerC = ToWorld(length, -range);
-        Vector3 innerD = ToWorld(0f, -range);
-
-        SurfaceTool fillTool = new SurfaceTool();
-        fillTool.Begin(Mesh.PrimitiveType.Triangles);
-        AddQuad(fillTool, innerA, innerB, innerC, innerD);
-
-        _wallRangeIndicator = new MeshInstance3D
-        {
-            Mesh = fillTool.Commit(),
-            MaterialOverride = _rangeMaterial
-        };
-        GetTree().CurrentScene.AddChild(_wallRangeIndicator);
-
-        Vector3 outerA = ToWorld(-BorderThickness, range + BorderThickness);
-        Vector3 outerB = ToWorld(length + BorderThickness, range + BorderThickness);
-        Vector3 outerC = ToWorld(length + BorderThickness, -range - BorderThickness);
-        Vector3 outerD = ToWorld(-BorderThickness, -range - BorderThickness);
-
-        SurfaceTool borderTool = new SurfaceTool();
-        borderTool.Begin(Mesh.PrimitiveType.Triangles);
-        AddQuad(borderTool, outerA, outerB, innerB, innerA);
-        AddQuad(borderTool, outerD, outerC, innerC, innerD);
-        AddQuad(borderTool, outerA, outerD, innerD, innerA);
-        AddQuad(borderTool, outerB, outerC, innerC, innerB);
-
-        _wallRangeBorder = new MeshInstance3D
-        {
-            Mesh = borderTool.Commit(),
-            MaterialOverride = _rangeBorderMaterial
-        };
-        GetTree().CurrentScene.AddChild(_wallRangeBorder);
-    }
-
-    private static void AddQuad(SurfaceTool surfaceTool, Vector3 a, Vector3 b, Vector3 c, Vector3 d)
-    {
-        surfaceTool.AddVertex(a);
-        surfaceTool.AddVertex(b);
-        surfaceTool.AddVertex(c);
-
-        surfaceTool.AddVertex(a);
-        surfaceTool.AddVertex(c);
-        surfaceTool.AddVertex(d);
-    }
-
-    private void RebuildWallPreview(Vector3 start, Vector3 end)
-    {
-        ClearWallPreview();
-
-        WallCastData wallData = _pendingContext.Wall;
-        int segmentCount = IceWall.ComputeSegmentCount(start.DistanceTo(end), wallData.SegmentWidth);
-        int affordableSegments = ComputeAffordableSegmentCount(wallData);
-
-        for (int i = 0; i < segmentCount; i++)
-        {
-            float t = segmentCount > 1 ? (float)i / (segmentCount - 1) : 0f;
-            Vector3 position = start.Lerp(end, t);
-            bool affordable = i < affordableSegments;
-
-            MeshInstance3D previewMesh = new MeshInstance3D
-            {
-                Mesh = new CylinderMesh
-                {
-                    TopRadius = 0f,
-                    BottomRadius = wallData.SegmentWidth / 2f,
-                    Height = wallData.SegmentWidth * 2f,
-                    RadialSegments = 4
-                },
-                MaterialOverride = affordable ? _validMaterial : _invalidMaterial,
-                Position = position + Vector3.Up * wallData.SegmentWidth
-            };
-
-            GetTree().CurrentScene.AddChild(previewMesh);
-            _wallPreviewMeshes.Add(previewMesh);
-        }
-    }
-
     // The highest segment count still affordable given currently-held Mana and remaining
     // Capacity — since each extra segment adds a fixed cost, this is a clean cutoff rather than
     // something that needs checking per-segment independently.
@@ -348,64 +252,24 @@ public partial class RitualPlacer : Node
         return Mathf.Max(0, Mathf.Min(manaMax, capacityMax));
     }
 
-    private void FadeWallPreview()
-    {
-        foreach (MeshInstance3D mesh in _wallPreviewMeshes)
-        {
-            mesh.MaterialOverride = _wallPreviewFadedMaterial;
-        }
-    }
-
-    private void ClearWallPreview()
-    {
-        foreach (MeshInstance3D mesh in _wallPreviewMeshes)
-        {
-            mesh.QueueFree();
-        }
-
-        _wallPreviewMeshes.Clear();
-    }
-
-    private Label3D BuildCostPreviewLabel()
-    {
-        Label3D label = new Label3D
-        {
-            FontSize = 32,
-            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-            NoDepthTest = true
-        };
-
-        GetTree().CurrentScene.AddChild(label);
-        return label;
-    }
-
-    // While the wall's size is still being adjusted, shows a projected total (base + the
-    // not-yet-committed segment cost) without touching _pendingContext, and reports whether the
-    // current size is still affordable. Once ApplyWallCostScaling has actually locked the cost
-    // in, just reflects the real resolved values and reports affordable (it was, or we wouldn't
-    // have reached that point).
-    private bool UpdateCostPreviewLabel(Vector3 start, Vector3 end)
+    // While the wall's size is still being adjusted this projects the total (base plus the
+    // not-yet-committed segment cost) without touching _pendingContext. Once ApplyWallCostScaling
+    // has folded that cost into the base, the resolved values already include it.
+    private void ShowProjectedCost(Vector3 start, Vector3 end, int segmentCount, bool affordable)
     {
         WallCastData wallData = _pendingContext.Wall;
-        int segmentCount = IceWall.ComputeSegmentCount(start.DistanceTo(end), wallData.SegmentWidth);
 
-        float projectedMana = _pendingContext.ManaCost.Value;
-        float projectedCapacity = _pendingContext.CapacityCost.Value;
-        bool affordable = true;
+        float mana = _pendingContext.ManaCost.Value;
+        float capacity = _pendingContext.CapacityCost.Value;
 
         if (!_wallCostApplied)
         {
-            projectedMana += segmentCount * wallData.ManaCostPerSegment * _pendingContext.ManaCost.Multiplier;
-            projectedCapacity += segmentCount * wallData.CapacityCostPerSegment * _pendingContext.CapacityCost.Multiplier;
-
-            affordable = segmentCount <= ComputeAffordableSegmentCount(wallData);
+            mana += segmentCount * wallData.ManaCostPerSegment * _pendingContext.ManaCost.Multiplier;
+            capacity += segmentCount * wallData.CapacityCostPerSegment * _pendingContext.CapacityCost.Multiplier;
         }
 
-        _costPreviewLabel.Text = $"Segments: {segmentCount}\nMana: {Mathf.CeilToInt(projectedMana)}   Capacity: {Mathf.CeilToInt(projectedCapacity)}";
-        _costPreviewLabel.Modulate = affordable ? Colors.White : Colors.Red;
-        _costPreviewLabel.GlobalPosition = (start + end) / 2f + Vector3.Up * 2f;
-
-        return affordable;
+        string text = $"Segments: {segmentCount}\nMana: {Mathf.CeilToInt(mana)}   Capacity: {Mathf.CeilToInt(capacity)}";
+        _wallPreview.ShowCost(start, end, text, affordable);
     }
 
     // Folds the wall's per-segment cost into the base, so the rune-derived multipliers already
@@ -449,24 +313,11 @@ public partial class RitualPlacer : Node
 
     private void EndPlacement()
     {
-        ClearWallPreview();
-
-        if (_costPreviewLabel != null)
+        if (_wallPreview != null)
         {
-            _costPreviewLabel.QueueFree();
-            _costPreviewLabel = null;
-        }
-
-        if (_wallRangeIndicator != null)
-        {
-            _wallRangeIndicator.QueueFree();
-            _wallRangeIndicator = null;
-        }
-
-        if (_wallRangeBorder != null)
-        {
-            _wallRangeBorder.QueueFree();
-            _wallRangeBorder = null;
+            _wallPreview.Clear();
+            _wallPreview.QueueFree();
+            _wallPreview = null;
         }
 
         if (_ghost != null)
@@ -484,27 +335,8 @@ public partial class RitualPlacer : Node
         return new MeshInstance3D
         {
             Mesh = new CylinderMesh { TopRadius = range, BottomRadius = range, Height = 0.05f },
-            MaterialOverride = _rangeMaterial,
+            MaterialOverride = PreviewMaterials.RangeFill,
             Position = new Vector3(0f, 0.03f, 0f)
         };
-    }
-
-    private static StandardMaterial3D CreateGhostMaterial(Color color)
-    {
-        return new StandardMaterial3D
-        {
-            AlbedoColor = color,
-            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-        };
-    }
-
-    // Flat, single-sided overlay quads (fill + border) whose triangle winding isn't hand-verified
-    // against a specific viewing angle — cull disabled so they're visible from above regardless.
-    private static StandardMaterial3D CreateFlatOverlayMaterial(Color color)
-    {
-        StandardMaterial3D material = CreateGhostMaterial(color);
-        material.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
-        return material;
     }
 }

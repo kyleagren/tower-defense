@@ -15,6 +15,7 @@ public partial class Ritual : Node3D
     private int _manaCost;
     private int _capacityCost;
     private List<CastEffect> _castEffects;
+    private bool _hasWarnedAboutCastEffects;
 
     public Vector3? WallStart { get; private set; }
     public Vector3? WallEnd { get; private set; }
@@ -22,7 +23,13 @@ public partial class Ritual : Node3D
     public override void _Ready()
     {
         _castEffects = GetChildren().OfType<CastEffect>().ToList();
-        Configure(Spell, RuneSlots);
+
+        // A ritual placed by RitualPlacer is configured explicitly right after AddChild, so only
+        // one authored into a scene with a Spell already assigned configures itself here.
+        if (Spell != null)
+        {
+            Configure(Spell, RuneSlots);
+        }
     }
 
     public void Repair()
@@ -81,8 +88,16 @@ public partial class Ritual : Node3D
 
     public override void _Process(double delta)
     {
-        _spellInstance.Tick((float)delta);
+        // Null until Configure runs — placement ghosts and scene-authored rituals with no Spell
+        // assigned both sit in this state.
+        if (_spellInstance == null)
+        {
+            return;
+        }
 
+        SpellCastContext context = _spellInstance.Resolve();
+
+        _spellInstance.Tick((float)delta);
         _searchTimer -= (float)delta;
 
         bool hadTarget = _currentTarget != null;
@@ -97,19 +112,17 @@ public partial class Ritual : Node3D
         if (_searchTimer <= 0f || justLostTarget)
         {
             _searchTimer = TargetSearchInterval;
-            _currentTarget = EnemyTargeting.FindNearest(GlobalPosition, _spellInstance.Resolve().Range.Value);
+            _currentTarget = EnemyTargeting.FindNearest(GlobalPosition, context.Range.Value);
         }
 
-        if (_spellInstance.CanCast && CanCastNow())
+        if (_spellInstance.CanCast && CanCastNow(context))
         {
-            CastAtTarget();
+            CastAtTarget(context);
         }
     }
 
-    private bool CanCastNow()
+    private bool CanCastNow(SpellCastContext context)
     {
-        SpellCastContext context = _spellInstance.Resolve();
-
         if (context.CastTrigger != null)
         {
             return context.CastTrigger.ShouldCast(this, context);
@@ -118,8 +131,15 @@ public partial class Ritual : Node3D
         return !Spell.RequiresTarget || _currentTarget != null;
     }
 
-    private void CastAtTarget()
+    private void CastAtTarget(SpellCastContext context)
     {
+        CastEffect effect = SelectCastEffect(context);
+
+        if (effect == null)
+        {
+            return;
+        }
+
         if (_currentTarget != null)
         {
             Vector3 targetPosition = _currentTarget.GlobalPosition;
@@ -127,10 +147,54 @@ public partial class Ritual : Node3D
             SpawnPoint.LookAt(levelAimPosition, Vector3.Up);
         }
 
-        SpellCastContext context = _spellInstance.Resolve();
-        CastEffect effect = _castEffects.FirstOrDefault(e => e.CanHandle(context));
-        effect?.Cast(context, SpawnPoint, this);
-
+        effect.Cast(context, SpawnPoint, this);
         _spellInstance.StartCast(context.ResolvedCastTime, context.Cooldown.Value);
+    }
+
+    // Picks the one CastEffect child that handles this context. Which effect wins is otherwise
+    // decided silently by child order in the scene, so both "none matched" (a ritual that burns
+    // its cooldown firing nothing) and "several matched" (an ambiguous scene) get reported once.
+    private CastEffect SelectCastEffect(SpellCastContext context)
+    {
+        CastEffect match = null;
+
+        foreach (CastEffect candidate in _castEffects)
+        {
+            if (!candidate.CanHandle(context))
+            {
+                continue;
+            }
+
+            if (match == null)
+            {
+                match = candidate;
+                continue;
+            }
+
+            WarnAboutCastEffectsOnce(
+                $"Ritual '{Spell?.Name}' has more than one CastEffect that can handle its context " +
+                $"({match.Name} and {candidate.Name}); using {match.Name} because it comes first in the scene.");
+            break;
+        }
+
+        if (match == null)
+        {
+            WarnAboutCastEffectsOnce(
+                $"Ritual '{Spell?.Name}' has no CastEffect that can handle its context and will never fire. " +
+                "Add the matching CastEffect node to the ritual scene.");
+        }
+
+        return match;
+    }
+
+    private void WarnAboutCastEffectsOnce(string message)
+    {
+        if (_hasWarnedAboutCastEffects)
+        {
+            return;
+        }
+
+        _hasWarnedAboutCastEffects = true;
+        GD.PushWarning(message);
     }
 }

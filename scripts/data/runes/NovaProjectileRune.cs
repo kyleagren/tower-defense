@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public partial class NovaProjectileRune : Rune
 {
     [Export] public int ExtraProjectiles { get; private set; } = 7;
-    [Export] public float DamageMultiplier { get; private set; } = 0.4f;
+    [Export] public override float DamageMultiplier { get; protected set; } = 0.4f;
 
     public override string Name => "Nova";
 
@@ -20,7 +20,6 @@ public partial class NovaProjectileRune : Rune
         {
             context.Projectile.ProjectileCount += ExtraProjectiles;
             context.Projectile.IsNova = true;
-            context.DamageScale.More *= DamageMultiplier;
         }
     }
 }

@@ -14,9 +14,9 @@ public partial class Projectile : Area3D
     public int ChainCount { get; private set; }
     public float ChainRange { get; private set; }
     public Vector3 SpawnPosition { get; set; }
-    public ProjectileHitEffect HitEffect { get; set; }
-    public HashSet<Enemy> ReturnHitTracker { get; set; }
-    public HashSet<Enemy> ChainHitTracker { get; set; }
+    public ProjectileHitEffect HitEffect { get; private set; }
+    public HashSet<Enemy> ReturnHitTracker { get; private set; }
+    public HashSet<Enemy> ChainHitTracker { get; private set; }
     public Vector3 LastRagdollImpulse { get; private set; }
     public ReactionRune Reaction { get; private set; }
 
@@ -27,9 +27,12 @@ public partial class Projectile : Area3D
     private bool _hasReturned;
     private const float ReturnArrivalDistance = 0.75f;
     private const float MaxReturnDistance = 10f;
-    private HashSet<Node3D> _alreadyHit = new HashSet<Node3D>();
+    private readonly HashSet<Node3D> _alreadyHit = new HashSet<Node3D>();
 
-    public void Initialize(SpellCastContext context)
+    // The trackers are shared across every projectile in one cast, so they're passed in rather
+    // than read off the context. Everything else the projectile needs comes from the context —
+    // SpawnPosition is the one exception, since it can only be read after the caller positions it.
+    public void Initialize(SpellCastContext context, HashSet<Enemy> returnHitTracker, HashSet<Enemy> chainHitTracker)
     {
         Damage = context.Damage;
         AreaMultiplier = context.Area?.Multiplier.Value ?? 1f;
@@ -37,10 +40,15 @@ public partial class Projectile : Area3D
         RagdollForce = context.RagdollForce.Value;
         ChainCount = context.Chain?.ChainCount ?? 0;
         ChainRange = context.Chain?.ChainRange ?? 0f;
+        Reaction = context.Reaction;
+        HitEffect = context.Projectile.HitEffect;
+
+        ReturnHitTracker = returnHitTracker;
+        ChainHitTracker = chainHitTracker;
+
         _pierceRemaining = context.Projectile.PierceCount;
         _isReturn = context.Projectile.IsReturn;
         _speed = context.Projectile.Speed.Value;
-        Reaction = context.Reaction;
     }
 
     public override void _Ready()

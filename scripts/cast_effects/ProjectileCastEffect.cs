@@ -26,10 +26,7 @@ public partial class ProjectileCastEffect : CastEffect
                 : ComputeConeAngle(i, count);
 
             Projectile projectile = projectileData.ProjectileScene.Instantiate<Projectile>();
-            projectile.Initialize(context);
-            projectile.HitEffect = projectileData.HitEffect;
-            projectile.ReturnHitTracker = returnHitTracker;
-            projectile.ChainHitTracker = chainHitTracker;
+            projectile.Initialize(context, returnHitTracker, chainHitTracker);
             spawnPoint.GetTree().CurrentScene.AddChild(projectile);
 
             projectile.GlobalTransform = spawnPoint.GlobalTransform;

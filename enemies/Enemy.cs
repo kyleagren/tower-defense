@@ -2,7 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-public partial class Enemy : CharacterBody3D
+public partial class Enemy : CharacterBody3D, IDamageable
 {
     [Export] public float Speed = 3.5f;
     [Export] public float RotationSpeed = 10f;
@@ -43,20 +43,17 @@ public partial class Enemy : CharacterBody3D
         };
     }
 
-    private int _legLBoneIdx;
-    private int _legRBoneIdx;
-    private int _armLBoneIdx;
-    private int _armRBoneIdx;
-    private float _walkTime;
+    private ProceduralWalkAnimator _walkAnimator;
     private bool _isDead;
     private bool _hasFacedInitialDirection;
     private float _currentHealth;
-    private List<Ailment> _ailments = new List<Ailment>();
+    private readonly List<Ailment> _ailments = new List<Ailment>();
     // TODO placeholder: remove alongside StatusMaterials/BurnFlashMaterial above.
-    private List<MeshInstance3D> _meshInstances = new List<MeshInstance3D>();
+    private readonly List<MeshInstance3D> _meshInstances = new List<MeshInstance3D>();
     private float _burnFlashTimer;
 
     public bool IsDead => _isDead;
+    public bool IsDestroyed => _isDead;
     public Tag? Status { get; private set; }
     public Vector3 CenterMass => GlobalPosition + Vector3.Up * CenterMassHeight;
 
@@ -73,10 +70,7 @@ public partial class Enemy : CharacterBody3D
 
     public override void _Ready()
     {
-        _legLBoneIdx = Skeleton.FindBone("Leg.L");
-        _legRBoneIdx = Skeleton.FindBone("Leg.R");
-        _armLBoneIdx = Skeleton.FindBone("Arm.L");
-        _armRBoneIdx = Skeleton.FindBone("Arm.R");
+        _walkAnimator = new ProceduralWalkAnimator(Skeleton, WalkCycleFrequency, LegSwingAmplitude, ArmSwingAmplitude);
 
         _currentHealth = MaxHealth;
 
@@ -103,6 +97,10 @@ public partial class Enemy : CharacterBody3D
     {
         NavAgent.TargetPosition = targetPosition;
     }
+
+    // Explicit implementation: the overload below carries extra optional parameters, so it can't
+    // satisfy the interface signature on its own.
+    void IDamageable.TakeDamage(DamagePacket damage, Vector3 impulse) => TakeDamage(damage, impulse);
 
     public void TakeDamage(DamagePacket amount, Vector3 ragdollImpulse = default, bool updateStatus = true, ReactionRune reaction = null)
     {
@@ -214,7 +212,7 @@ public partial class Enemy : CharacterBody3D
         {
             Velocity = Vector3.Zero;
             MoveAndSlide();
-            AnimateWalkCycle(0.0, delta);
+            _walkAnimator.Animate(0.0, delta);
             return;
         }
 
@@ -225,7 +223,7 @@ public partial class Enemy : CharacterBody3D
         MoveAndSlide();
 
         RotateTowardsMovement(direction, delta);
-        AnimateWalkCycle(1.0, delta);
+        _walkAnimator.Animate(1.0, delta);
     }
 
     private void TickAilments(float delta)
@@ -325,18 +323,5 @@ public partial class Enemy : CharacterBody3D
         }
 
         Basis = Basis.Slerp(targetBasis.Value, Mathf.Min(1f, (float)delta * RotationSpeed));
-    }
-
-    private void AnimateWalkCycle(double moveAmount, double delta)
-    {
-        _walkTime += (float)(moveAmount * delta * WalkCycleFrequency);
-
-        float legAngle = LegSwingAmplitude * Mathf.Sin(_walkTime) * (float)moveAmount;
-        float armAngle = ArmSwingAmplitude * Mathf.Sin(_walkTime) * (float)moveAmount;
-
-        Skeleton.SetBonePoseRotation(_legLBoneIdx, new Quaternion(Vector3.Right, legAngle));
-        Skeleton.SetBonePoseRotation(_legRBoneIdx, new Quaternion(Vector3.Right, -legAngle));
-        Skeleton.SetBonePoseRotation(_armLBoneIdx, new Quaternion(Vector3.Right, -armAngle));
-        Skeleton.SetBonePoseRotation(_armRBoneIdx, new Quaternion(Vector3.Right, armAngle));
     }
 }
