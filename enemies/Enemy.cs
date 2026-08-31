@@ -271,15 +271,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     private void ProcessLaneFollowing(double delta)
     {
-        if (_waypointIndex < _lane.Waypoints.Count && GlobalPosition.DistanceTo(_lane.Waypoints[_waypointIndex]) <= WaypointArrivalDistance)
-        {
-            _waypointIndex++;
-
-            if (_waypointIndex < _lane.Waypoints.Count)
-            {
-                NavAgent.TargetPosition = _lane.Waypoints[_waypointIndex];
-            }
-        }
+        AdvanceWaypointIfPassed();
 
         if (_waypointIndex >= _lane.Waypoints.Count - 1)
         {
@@ -289,6 +281,32 @@ public partial class Enemy : CharacterBody3D, IDamageable
         }
 
         Move((_lane.Waypoints[_waypointIndex] - GlobalPosition).Normalized(), delta);
+    }
+
+    // Catches up _waypointIndex to wherever the enemy actually is, not just where it was heading
+    // before being interrupted (e.g. a wall fight, or a player leash-chase). Uses a projection
+    // onto the direction the path continues from the current waypoint, not raw distance, so it
+    // still works when waypoints are sparse (a distance comparison would favor whichever waypoint
+    // happens to be geometrically nearer, which is unreliable when the next one is far away).
+    private void AdvanceWaypointIfPassed()
+    {
+        while (_waypointIndex < _lane.Waypoints.Count - 1)
+        {
+            Vector3 current = _lane.Waypoints[_waypointIndex];
+            Vector3 next = _lane.Waypoints[_waypointIndex + 1];
+            Vector3 forward = (next - current).Normalized();
+
+            bool arrived = GlobalPosition.DistanceTo(current) <= WaypointArrivalDistance;
+            bool alreadyPastIt = (GlobalPosition - current).Dot(forward) > 0f;
+
+            if (!arrived && !alreadyPastIt)
+            {
+                break;
+            }
+
+            _waypointIndex++;
+            NavAgent.TargetPosition = _lane.Waypoints[_waypointIndex];
+        }
     }
 
     private void BeginApproachingObjective()
