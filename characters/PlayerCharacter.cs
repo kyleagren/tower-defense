@@ -1,9 +1,10 @@
 using Godot;
 
-public abstract partial class PlayerCharacter : CharacterBody3D
+public abstract partial class PlayerCharacter : CharacterBody3D, IDamageable
 {
     [Export] public float Speed = 5.0f;
     [Export] public float JumpVelocity = 4.5f;
+    [Export] public float MaxHealth = 100f;
     [Export] public float MouseSensitivity = 0.003f;
     [Export] public float MinPitchDegrees = -60f;
     [Export] public float MaxPitchDegrees = 10f;
@@ -12,6 +13,8 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     [Export] public MeshInstance3D BodyMesh { get; private set; }
 
     public bool IsActive => _active;
+    public bool IsDead => _currentHealth <= 0f;
+    public bool IsDestroyed => IsDead;
 
     // Subclasses read activity through IsActive and adjust look sensitivity through
     // LookSensitivity; nothing outside this class needs the backing fields.
@@ -20,10 +23,12 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     private float _cameraPitch;
     private float _gravity;
     private bool _active;
+    private float _currentHealth;
 
     public override void _Ready()
     {
         _gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
+        _currentHealth = MaxHealth;
     }
 
     public Vector3 GetCameraAimPoint(float distance)
@@ -40,6 +45,29 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         GlobalRotation = new Vector3(0f, previous.GlobalRotation.Y, 0f);
         _cameraPitch = previous._cameraPitch;
         SpringArm.Rotation = new Vector3(_cameraPitch, 0f, 0f);
+    }
+
+    // Full reset is a placeholder — a real healing mechanic (README §15) will replace this.
+    protected void HealToFull()
+    {
+        _currentHealth = MaxHealth;
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
+    }
+
+    public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
+    {
+        if (IsDead)
+        {
+            return;
+        }
+
+        _currentHealth = Mathf.Max(0f, _currentHealth - damage.Total);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
+
+        if (IsDead)
+        {
+            EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, false);
+        }
     }
 
     protected void SetActive(bool value)

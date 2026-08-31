@@ -6,6 +6,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 {
     [Export] public float Speed = 3.5f;
     [Export] public float RotationSpeed = 10f;
+    [Export] public float WaypointArrivalDistance = 0.5f;
     [Export] public NavigationAgent3D NavAgent { get; private set; }
     [Export] public Skeleton3D Skeleton { get; private set; }
     [Export] public CollisionShape3D BodyCollision { get; private set; }
@@ -44,8 +45,8 @@ public partial class Enemy : CharacterBody3D, IDamageable
     }
 
     private ProceduralWalkAnimator _walkAnimator;
-    private Vector3[] _navPath = System.Array.Empty<Vector3>();
-    private float[] _navPathRemaining = System.Array.Empty<float>();
+    private Lane _lane;
+    private int _waypointIndex;
     private bool _isDead;
     private bool _hasFacedInitialDirection;
     private float _currentHealth;
@@ -77,7 +78,6 @@ public partial class Enemy : CharacterBody3D, IDamageable
     public override void _Ready()
     {
         _walkAnimator = new ProceduralWalkAnimator(Skeleton, WalkCycleFrequency, LegSwingAmplitude, ArmSwingAmplitude);
-        NavAgent.PathChanged += OnNavPathChanged;
 
         _currentHealth = MaxHealth;
 
@@ -100,33 +100,15 @@ public partial class Enemy : CharacterBody3D, IDamageable
         EnemyRegistry.Unregister(this);
     }
 
-    public void SetTarget(Vector3 targetPosition)
+    public void SetLane(Lane lane)
     {
-        NavAgent.TargetPosition = targetPosition;
-    }
-
-    // Recomputed only when the agent repaths. _navPathRemaining[i] holds the distance from path
-    // point i to the end, which keeps the per-frame update below O(1) and allocation-free.
-    private void OnNavPathChanged()
-    {
-        _navPath = NavAgent.GetCurrentNavigationPath();
-        _navPathRemaining = new float[_navPath.Length];
-
-        for (int i = _navPath.Length - 2; i >= 0; i--)
-        {
-            _navPathRemaining[i] = _navPathRemaining[i + 1] + _navPath[i].DistanceTo(_navPath[i + 1]);
-        }
+        _lane = lane;
+        _waypointIndex = 0;
     }
 
     private void UpdateDistanceToGoal()
     {
-        int index = NavAgent.GetCurrentNavigationPathIndex();
-
-        // Straight-line fallback covers the first frames after spawn, before the agent's first
-        // path arrives. Every enemy is in that state at once, so relative ordering still holds.
-        DistanceToGoal = index < _navPath.Length
-            ? GlobalPosition.DistanceTo(_navPath[index]) + _navPathRemaining[index]
-            : GlobalPosition.DistanceTo(NavAgent.TargetPosition);
+        DistanceToGoal = _lane.DistanceToGoal(_waypointIndex, GlobalPosition);
     }
 
     // Explicit implementation: the overload below carries extra optional parameters, so it can't
@@ -240,7 +222,12 @@ public partial class Enemy : CharacterBody3D, IDamageable
         TickAilments((float)delta);
         UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
 
-        if (NavAgent.IsNavigationFinished())
+        if (_waypointIndex < _lane.Waypoints.Count && GlobalPosition.DistanceTo(_lane.Waypoints[_waypointIndex]) <= WaypointArrivalDistance)
+        {
+            _waypointIndex++;
+        }
+
+        if (_waypointIndex >= _lane.Waypoints.Count)
         {
             Velocity = Vector3.Zero;
             MoveAndSlide();
@@ -248,8 +235,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
             return;
         }
 
-        Vector3 nextPathPosition = NavAgent.GetNextPathPosition();
-        Vector3 direction = (nextPathPosition - GlobalPosition).Normalized();
+        Vector3 direction = (_lane.Waypoints[_waypointIndex] - GlobalPosition).Normalized();
 
         Velocity = direction * Speed;
         MoveAndSlide();

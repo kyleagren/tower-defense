@@ -70,24 +70,15 @@ public partial class RoutePreviewEffect : Node3D
 
     private void BuildRoutes()
     {
-        Rid map = GetWorld3D().NavigationMap;
-
         foreach (Node node in GetTree().GetNodesInGroup(SpawnerGroup))
         {
-            if (node is not EnemySpawner spawner || spawner.Target == null)
-            {
-                continue;
-            }
-
-            Vector3[] pathPoints = NavigationServer3D.MapGetPath(map, spawner.GlobalPosition, spawner.Target.GlobalPosition, true);
-
-            if (pathPoints.Length < 2)
+            if (node is not EnemySpawner spawner || spawner.Lane == null)
             {
                 continue;
             }
 
             Curve3D curve = new Curve3D();
-            foreach (Vector3 point in pathPoints)
+            foreach (Vector3 point in spawner.Lane.Waypoints)
             {
                 curve.AddPoint(point);
             }

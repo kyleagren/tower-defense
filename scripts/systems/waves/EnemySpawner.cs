@@ -5,23 +5,29 @@ public partial class EnemySpawner : Node3D
     [Export] public string Id { get; private set; }
     [Export] public Node3D Target { get; private set; }
 
-    private Vector3 _initialDirection = Vector3.Forward;
+    public Lane Lane { get; private set; }
 
     public override async void _Ready()
     {
-        await NavigationReady.WaitFor(this, TryComputeInitialDirection, $"EnemySpawner '{Id}'");
+        await NavigationReady.WaitFor(this, TryBuildLane, $"EnemySpawner '{Id}'");
     }
 
     public void Spawn(PackedScene enemyScene)
     {
+        if (Lane == null)
+        {
+            GD.PushWarning($"EnemySpawner '{Id}': no Lane available, skipping spawn.");
+            return;
+        }
+
         Enemy enemy = enemyScene.Instantiate<Enemy>();
         GetParent().AddChild(enemy);
         enemy.GlobalPosition = GlobalPosition;
-        enemy.SetInitialFacing(_initialDirection);
-        enemy.SetTarget(Target.GlobalPosition);
+        enemy.SetInitialFacing((Lane.Waypoints[1] - Lane.Waypoints[0]).Normalized());
+        enemy.SetLane(Lane);
     }
 
-    private bool TryComputeInitialDirection()
+    private bool TryBuildLane()
     {
         if (Target == null)
         {
@@ -36,7 +42,7 @@ public partial class EnemySpawner : Node3D
             return false;
         }
 
-        _initialDirection = (pathPoints[1] - pathPoints[0]).Normalized();
+        Lane = new Lane(pathPoints);
         return true;
     }
 }

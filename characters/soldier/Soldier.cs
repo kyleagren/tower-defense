@@ -40,6 +40,10 @@ public partial class Soldier : PlayerCharacter
         {
             HandoffFrom(Architect);
         }
+        else
+        {
+            HealToFull();
+        }
 
         SetActive(shouldBeActive);
         Rifle.Visible = shouldBeActive;
