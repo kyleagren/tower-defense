@@ -14,6 +14,7 @@ public partial class PlayerHealthOrb : TextureProgressBar
         FillMode = (int)FillModeEnum.BottomToTop;
         MinValue = 0f;
         MaxValue = 1f;
+        Step = 0f;
         Value = 1f;
 
         TextureUnder = BuildCircleTexture(EmptyColor);

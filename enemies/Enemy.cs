@@ -7,6 +7,11 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public float Speed = 3.5f;
     [Export] public float RotationSpeed = 10f;
     [Export] public float WaypointArrivalDistance = 0.5f;
+    [Export] public float PlayerCheckInterval = 0.25f;
+    [Export] public float LeashRange = 6f;
+    [Export] public float AttackRange = 1.5f;
+    [Export] public float AttackDamage = 10f;
+    [Export] public float AttackInterval = 1f;
     [Export] public NavigationAgent3D NavAgent { get; private set; }
     [Export] public Skeleton3D Skeleton { get; private set; }
     [Export] public CollisionShape3D BodyCollision { get; private set; }
@@ -44,9 +49,14 @@ public partial class Enemy : CharacterBody3D, IDamageable
         };
     }
 
+    private enum MovementMode { FollowingLane, ChasingPlayer }
+
     private ProceduralWalkAnimator _walkAnimator;
     private Lane _lane;
     private int _waypointIndex;
+    private MovementMode _movementMode = MovementMode.FollowingLane;
+    private float _playerCheckTimer;
+    private float _attackCooldown;
     private bool _isDead;
     private bool _hasFacedInitialDirection;
     private float _currentHealth;
@@ -221,7 +231,20 @@ public partial class Enemy : CharacterBody3D, IDamageable
         UpdateDistanceToGoal();
         TickAilments((float)delta);
         UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
+        UpdatePlayerLeash((float)delta);
 
+        if (_movementMode == MovementMode.ChasingPlayer)
+        {
+            ProcessChasingPlayer(delta);
+        }
+        else
+        {
+            ProcessLaneFollowing(delta);
+        }
+    }
+
+    private void ProcessLaneFollowing(double delta)
+    {
         if (_waypointIndex < _lane.Waypoints.Count && GlobalPosition.DistanceTo(_lane.Waypoints[_waypointIndex]) <= WaypointArrivalDistance)
         {
             _waypointIndex++;
@@ -229,14 +252,82 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         if (_waypointIndex >= _lane.Waypoints.Count)
         {
-            Velocity = Vector3.Zero;
-            MoveAndSlide();
-            _walkAnimator.Animate(0.0, delta);
+            Stop(delta);
             return;
         }
 
-        Vector3 direction = (_lane.Waypoints[_waypointIndex] - GlobalPosition).Normalized();
+        Move((_lane.Waypoints[_waypointIndex] - GlobalPosition).Normalized(), delta);
+    }
 
+    // Leash/chase state is decided on an interval (mirrors Ritual.TargetSearchInterval) rather
+    // than every frame — a cheap distance check, not a live per-enemy nav query.
+    private void UpdatePlayerLeash(float delta)
+    {
+        _playerCheckTimer -= delta;
+        if (_playerCheckTimer > 0f || PlayerCharacter.ActiveCombatant == null)
+        {
+            return;
+        }
+
+        _playerCheckTimer = PlayerCheckInterval;
+
+        float distanceToPlayer = GlobalPosition.DistanceTo(PlayerCharacter.ActiveCombatant.GlobalPosition);
+
+        if (_movementMode == MovementMode.FollowingLane && distanceToPlayer <= LeashRange)
+        {
+            _movementMode = MovementMode.ChasingPlayer;
+        }
+        else if (_movementMode == MovementMode.ChasingPlayer && distanceToPlayer > LeashRange)
+        {
+            // Give-up-and-rejoin across lanes (README §15) isn't built yet — this just resumes
+            // lane-following from wherever the enemy currently is.
+            _movementMode = MovementMode.FollowingLane;
+            return;
+        }
+
+        if (_movementMode == MovementMode.ChasingPlayer)
+        {
+            NavAgent.TargetPosition = PlayerCharacter.ActiveCombatant.GlobalPosition;
+        }
+    }
+
+    private void ProcessChasingPlayer(double delta)
+    {
+        float distanceToPlayer = GlobalPosition.DistanceTo(PlayerCharacter.ActiveCombatant.GlobalPosition);
+        _attackCooldown -= (float)delta;
+
+        if (distanceToPlayer <= AttackRange)
+        {
+            Stop(delta);
+            RotateTowardsMovement((PlayerCharacter.ActiveCombatant.GlobalPosition - GlobalPosition).Normalized(), delta);
+
+            if (_attackCooldown <= 0f)
+            {
+                _attackCooldown = AttackInterval;
+                PlayerCharacter.ActiveCombatant.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+            }
+
+            return;
+        }
+
+        if (NavAgent.IsNavigationFinished())
+        {
+            Stop(delta);
+            return;
+        }
+
+        Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
+    }
+
+    private void Stop(double delta)
+    {
+        Velocity = Vector3.Zero;
+        MoveAndSlide();
+        _walkAnimator.Animate(0.0, delta);
+    }
+
+    private void Move(Vector3 direction, double delta)
+    {
         Velocity = direction * Speed;
         MoveAndSlide();
 
