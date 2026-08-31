@@ -25,6 +25,7 @@ public partial class LightningBoltSpell : ChainableSpell
             RagdollForce = BaseRagdollForce,
             ManaCost = BaseManaCost,
             CapacityCost = BaseCapacityCost,
+            TargetPriority = BaseTargetPriority,
             InstantHit = new InstantHitCastData(),
             Chain = new ChainCastData
             {

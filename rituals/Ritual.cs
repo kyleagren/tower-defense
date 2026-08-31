@@ -112,7 +112,7 @@ public partial class Ritual : Node3D
         if (_searchTimer <= 0f || justLostTarget)
         {
             _searchTimer = TargetSearchInterval;
-            _currentTarget = EnemyTargeting.FindNearest(GlobalPosition, context.Range.Value);
+            _currentTarget = EnemyTargeting.FindTarget(GlobalPosition, context.Range.Value, context.TargetPriority);
         }
 
         if (_spellInstance.CanCast && CanCastNow(context))

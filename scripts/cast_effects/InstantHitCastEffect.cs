@@ -40,7 +40,9 @@ public partial class InstantHitCastEffect : CastEffect
         HashSet<Enemy> initialTargets = new HashSet<Enemy>();
         List<Enemy> targets = new List<Enemy>();
 
-        Enemy primary = EnemyTargeting.FindNearest(spawnPoint.GlobalPosition, context.Range.Value, initialTargets);
+        // The primary strike follows the spell's target priority; the forks below deliberately
+        // stay nearest-first, since a fork is "an additional nearby enemy at the same time".
+        Enemy primary = EnemyTargeting.FindTarget(spawnPoint.GlobalPosition, context.Range.Value, context.TargetPriority, initialTargets);
         if (primary == null)
         {
             return targets;

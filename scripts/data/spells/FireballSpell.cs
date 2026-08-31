@@ -30,6 +30,7 @@ public partial class FireballSpell : Spell
             RagdollForce = BaseRagdollForce,
             ManaCost = BaseManaCost,
             CapacityCost = BaseCapacityCost,
+            TargetPriority = BaseTargetPriority,
             Projectile = new ProjectileCastData
             {
                 ProjectileCount = BaseProjectileCount,

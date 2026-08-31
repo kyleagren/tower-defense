@@ -19,6 +19,8 @@ public class SpellCastContext
     // Cast speed reduces cast time rather than scaling it, so the two resolve together.
     public float ResolvedCastTime => CastTime.Value / CastSpeed.Value;
 
+    public TargetPriority TargetPriority;
+
     public ProjectileCastData Projectile;
     public ChainCastData Chain;
     public AreaCastData Area;

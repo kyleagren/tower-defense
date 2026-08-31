@@ -20,6 +20,7 @@ public abstract partial class Spell : Resource
     public virtual int BaseManaCost { get; protected set; } = 10;
     public virtual int BaseCapacityCost { get; protected set; } = 10;
     public virtual bool RequiresTarget => true;
+    public virtual TargetPriority BaseTargetPriority { get; protected set; } = TargetPriority.ClosestToGoal;
 
     public DamagePacket BaseDamage => new DamagePacket
     {
