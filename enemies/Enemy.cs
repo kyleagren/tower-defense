@@ -49,7 +49,9 @@ public partial class Enemy : CharacterBody3D, IDamageable
         };
     }
 
-    private enum MovementMode { FollowingLane, ChasingPlayer }
+    private enum MovementMode { FollowingLane, ChasingPlayer, RejoiningLane }
+
+    private const string SpawnerGroup = "enemy_spawners";
 
     private ProceduralWalkAnimator _walkAnimator;
     private Lane _lane;
@@ -233,13 +235,17 @@ public partial class Enemy : CharacterBody3D, IDamageable
         UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
         UpdatePlayerLeash((float)delta);
 
-        if (_movementMode == MovementMode.ChasingPlayer)
+        switch (_movementMode)
         {
-            ProcessChasingPlayer(delta);
-        }
-        else
-        {
-            ProcessLaneFollowing(delta);
+            case MovementMode.ChasingPlayer:
+                ProcessChasingPlayer(delta);
+                break;
+            case MovementMode.RejoiningLane:
+                ProcessRejoiningLane(delta);
+                break;
+            default:
+                ProcessLaneFollowing(delta);
+                break;
         }
     }
 
@@ -272,16 +278,15 @@ public partial class Enemy : CharacterBody3D, IDamageable
         _playerCheckTimer = PlayerCheckInterval;
 
         float distanceToPlayer = GlobalPosition.DistanceTo(PlayerCharacter.ActiveCombatant.GlobalPosition);
+        bool withinLeash = distanceToPlayer <= LeashRange;
 
-        if (_movementMode == MovementMode.FollowingLane && distanceToPlayer <= LeashRange)
+        if (withinLeash && _movementMode != MovementMode.ChasingPlayer)
         {
             _movementMode = MovementMode.ChasingPlayer;
         }
-        else if (_movementMode == MovementMode.ChasingPlayer && distanceToPlayer > LeashRange)
+        else if (!withinLeash && _movementMode == MovementMode.ChasingPlayer)
         {
-            // Give-up-and-rejoin across lanes (README §15) isn't built yet — this just resumes
-            // lane-following from wherever the enemy currently is.
-            _movementMode = MovementMode.FollowingLane;
+            BeginRejoin();
             return;
         }
 
@@ -289,6 +294,68 @@ public partial class Enemy : CharacterBody3D, IDamageable
         {
             NavAgent.TargetPosition = PlayerCharacter.ActiveCombatant.GlobalPosition;
         }
+    }
+
+    // Give-up-and-rejoin across lanes (README §15): one real pathfind to whichever waypoint is
+    // nearest across every lane's spawner, not just the one this enemy started on.
+    private void BeginRejoin()
+    {
+        (Lane lane, int waypointIndex) = FindNearestWaypointAcrossLanes();
+
+        if (lane == null)
+        {
+            _movementMode = MovementMode.FollowingLane;
+            return;
+        }
+
+        _lane = lane;
+        _waypointIndex = waypointIndex;
+        NavAgent.TargetPosition = lane.Waypoints[waypointIndex];
+        _movementMode = MovementMode.RejoiningLane;
+    }
+
+    private (Lane lane, int waypointIndex) FindNearestWaypointAcrossLanes()
+    {
+        Lane bestLane = null;
+        int bestIndex = -1;
+        float bestDistance = float.MaxValue;
+
+        foreach (Node node in GetTree().GetNodesInGroup(SpawnerGroup))
+        {
+            if (node is not EnemySpawner spawner || spawner.Lane == null)
+            {
+                continue;
+            }
+
+            // Never rejoin behind where this enemy already progressed on its own lane — only
+            // other lanes, which it never walked, are fair game at any point along their length.
+            int startIndex = spawner.Lane == _lane ? _waypointIndex : 0;
+
+            for (int i = startIndex; i < spawner.Lane.Waypoints.Count; i++)
+            {
+                float distance = GlobalPosition.DistanceTo(spawner.Lane.Waypoints[i]);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestLane = spawner.Lane;
+                    bestIndex = i;
+                }
+            }
+        }
+
+        return (bestLane, bestIndex);
+    }
+
+    private void ProcessRejoiningLane(double delta)
+    {
+        if (NavAgent.IsNavigationFinished())
+        {
+            _movementMode = MovementMode.FollowingLane;
+            ProcessLaneFollowing(delta);
+            return;
+        }
+
+        Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
     }
 
     private void ProcessChasingPlayer(double delta)
