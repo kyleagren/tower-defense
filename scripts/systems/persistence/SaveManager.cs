@@ -7,6 +7,7 @@ public partial class SaveManager : Node
     private const string SavePath = "user://save_data.tres";
     private const string SpellsDirectory = "res://assets/spells/";
     private const string RunesDirectory = "res://assets/runes/";
+    private const string ItemsDirectory = "res://assets/items/";
 
     public static SaveManager Instance { get; private set; }
     public PlayerSaveData Data { get; private set; }
@@ -43,7 +44,34 @@ public partial class SaveManager : Node
             changed |= EnsureKnownRune(path);
         }
 
+        changed |= EnsureStarterItems();
+
         return changed;
+    }
+
+    // One-time starter kit so the grid has something in it. Items are meant to be earned over
+    // time, unlike spells/runes, so this seeds once instead of tracking each item forever.
+    private bool EnsureStarterItems()
+    {
+        if (Data.OwnedItems.Count > 0)
+        {
+            return false;
+        }
+
+        foreach (string path in ListResourceFiles(ItemsDirectory))
+        {
+            Item item = GD.Load<Item>(path);
+
+            if (item == null)
+            {
+                continue;
+            }
+
+            Data.OwnedItems.Add(item);
+            Data.OwnedItems.Add((Item)item.Duplicate());
+        }
+
+        return Data.OwnedItems.Count > 0;
     }
 
     private static string[] ListResourceFiles(string directoryPath)
