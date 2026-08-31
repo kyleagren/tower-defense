@@ -27,6 +27,14 @@ public partial class BuildMenu : Control
 
     private EconomyManager _economy;
 
+    // Button styling lives in ui/build_menu_theme.tres, assigned to this menu's root Control and
+    // inherited by every button created here. These name the theme's type variations — a button
+    // left with no variation gets the default tile look.
+    private static readonly StringName _confirmVariation = "ConfirmButton";
+    private static readonly StringName _clearAllVariation = "ClearAllButton";
+    private static readonly StringName _emptySocketVariation = "EmptySocketButton";
+    private static readonly StringName _currentSocketVariation = "CurrentSocketButton";
+
     private IEnumerable<Rune> AllRunes => SaveManager.Instance.Data.KnownRunes.Select(entry => entry.Rune);
 
     public override void _Ready()
@@ -95,19 +103,13 @@ public partial class BuildMenu : Control
             _socketButtons[i] = socketButton;
         }
 
-        Button clearAllButton = new Button { Text = "Clear All" };
+        Button clearAllButton = new Button { Text = "Clear All", ThemeTypeVariation = _clearAllVariation };
         CenterOnAnchor(clearAllButton, new Vector2(1f / 3f, 0.95f), new Vector2(140f, 50f));
-        clearAllButton.AddThemeStyleboxOverride("normal", _clearAllButtonStyle);
-        clearAllButton.AddThemeStyleboxOverride("hover", _clearAllButtonHoverStyle);
-        clearAllButton.AddThemeStyleboxOverride("pressed", _clearAllButtonPressedStyle);
         clearAllButton.Pressed += () => _clearAllDialog.PopupCentered();
         _socketScreen.AddChild(clearAllButton);
 
-        Button confirmButton = new Button { Text = "Confirm" };
+        Button confirmButton = new Button { Text = "Confirm", ThemeTypeVariation = _confirmVariation };
         CenterOnAnchor(confirmButton, new Vector2(2f / 3f, 0.95f), new Vector2(140f, 50f));
-        confirmButton.AddThemeStyleboxOverride("normal", _confirmButtonStyle);
-        confirmButton.AddThemeStyleboxOverride("hover", _confirmButtonHoverStyle);
-        confirmButton.AddThemeStyleboxOverride("pressed", _confirmButtonPressedStyle);
         confirmButton.Pressed += OnConfirmPressed;
         _socketScreen.AddChild(confirmButton);
 
@@ -137,9 +139,8 @@ public partial class BuildMenu : Control
             bool isEmpty = _socketedRunes[i] == null;
             _socketButtons[i].Text = _socketedRunes[i]?.Name ?? "Empty";
 
-            _socketButtons[i].AddThemeStyleboxOverride("normal", isEmpty ? _emptySocketStyle : _normalTileStyle);
-            _socketButtons[i].AddThemeStyleboxOverride("hover", isEmpty ? _emptySocketHoverStyle : _hoverTileStyle);
-            _socketButtons[i].AddThemeStyleboxOverride("pressed", isEmpty ? _emptySocketPressedStyle : _pressedTileStyle);
+            // Empty string falls back to the theme's base Button type.
+            _socketButtons[i].ThemeTypeVariation = isEmpty ? _emptySocketVariation : "";
         }
     }
 
@@ -238,7 +239,7 @@ public partial class BuildMenu : Control
 
                 if (isCurrentSocketRune)
                 {
-                    button.AddThemeStyleboxOverride("normal", _currentSocketTileStyle);
+                    button.ThemeTypeVariation = _currentSocketVariation;
                     button.Pressed += () => OnRuneSelected(null);
                 }
                 else if (!disabled)
@@ -315,53 +316,10 @@ public partial class BuildMenu : Control
         label.SetAnchorsPreset(LayoutPreset.TopWide);
         button.AddChild(label);
 
-        button.AddThemeStyleboxOverride("normal", _normalTileStyle);
-        button.AddThemeStyleboxOverride("hover", _hoverTileStyle);
-        button.AddThemeStyleboxOverride("pressed", _pressedTileStyle);
-        button.AddThemeStyleboxOverride("disabled", _disabledTileStyle);
-
         button.MouseEntered += () => ShowDescription(descriptionTitle, descriptionBody);
         button.FocusEntered += () => ShowDescription(descriptionTitle, descriptionBody);
 
         return button;
-    }
-
-    private static readonly StyleBoxFlat _normalTileStyle = CreateTileStyle(new Color(0.25f, 0.45f, 0.65f));
-    private static readonly StyleBoxFlat _hoverTileStyle = CreateTileStyle(new Color(0.32f, 0.55f, 0.78f));
-    private static readonly StyleBoxFlat _pressedTileStyle = CreateTileStyle(new Color(0.18f, 0.32f, 0.48f));
-    private static readonly StyleBoxFlat _disabledTileStyle = CreateTileStyle(new Color(0.18f, 0.18f, 0.18f));
-    private static readonly StyleBoxFlat _currentSocketTileStyle = CreateTileStyle(new Color(0.75f, 0.6f, 0.15f));
-    private static readonly StyleBoxFlat _confirmButtonStyle = CreateTileStyle(new Color(0.2f, 0.55f, 0.25f));
-    private static readonly StyleBoxFlat _confirmButtonHoverStyle = CreateTileStyle(new Color(0.28f, 0.68f, 0.32f));
-    private static readonly StyleBoxFlat _confirmButtonPressedStyle = CreateTileStyle(new Color(0.15f, 0.4f, 0.18f));
-    private static readonly StyleBoxFlat _clearAllButtonStyle = CreateTileStyle(new Color(0.6f, 0.2f, 0.2f));
-    private static readonly StyleBoxFlat _clearAllButtonHoverStyle = CreateTileStyle(new Color(0.72f, 0.28f, 0.28f));
-    private static readonly StyleBoxFlat _clearAllButtonPressedStyle = CreateTileStyle(new Color(0.45f, 0.15f, 0.15f));
-    private static readonly StyleBoxFlat _emptySocketStyle = CreateBorderedTileStyle(new Color(0.15f, 0.15f, 0.15f), new Color(0.25f, 0.45f, 0.65f));
-    private static readonly StyleBoxFlat _emptySocketHoverStyle = CreateBorderedTileStyle(new Color(0.2f, 0.2f, 0.2f), new Color(0.32f, 0.55f, 0.78f));
-    private static readonly StyleBoxFlat _emptySocketPressedStyle = CreateBorderedTileStyle(new Color(0.1f, 0.1f, 0.1f), new Color(0.18f, 0.32f, 0.48f));
-
-    private static StyleBoxFlat CreateTileStyle(Color color)
-    {
-        return new StyleBoxFlat
-        {
-            BgColor = color,
-            CornerRadiusTopLeft = 6,
-            CornerRadiusTopRight = 6,
-            CornerRadiusBottomLeft = 6,
-            CornerRadiusBottomRight = 6
-        };
-    }
-
-    private static StyleBoxFlat CreateBorderedTileStyle(Color bgColor, Color borderColor)
-    {
-        StyleBoxFlat style = CreateTileStyle(bgColor);
-        style.BorderColor = borderColor;
-        style.BorderWidthLeft = 3;
-        style.BorderWidthRight = 3;
-        style.BorderWidthTop = 3;
-        style.BorderWidthBottom = 3;
-        return style;
     }
 
     private void ShowDescription(string title, string body)

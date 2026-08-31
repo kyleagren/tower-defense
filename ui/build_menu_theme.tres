@@ -1,0 +1,134 @@
+[gd_resource type="Theme" format=3 uid="uid://cxk24vcuv4dp6"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tile_disabled"]
+bg_color = Color(0.18, 0.18, 0.18, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tile_hover"]
+bg_color = Color(0.32, 0.55, 0.78, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tile_normal"]
+bg_color = Color(0.25, 0.45, 0.65, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tile_pressed"]
+bg_color = Color(0.18, 0.32, 0.48, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_clearall_hover"]
+bg_color = Color(0.72, 0.28, 0.28, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_clearall_normal"]
+bg_color = Color(0.6, 0.2, 0.2, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_clearall_pressed"]
+bg_color = Color(0.45, 0.15, 0.15, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_confirm_hover"]
+bg_color = Color(0.28, 0.68, 0.32, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_confirm_normal"]
+bg_color = Color(0.2, 0.55, 0.25, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_confirm_pressed"]
+bg_color = Color(0.15, 0.4, 0.18, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_currentsocket_normal"]
+bg_color = Color(0.75, 0.6, 0.15, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_emptysocket_hover"]
+bg_color = Color(0.2, 0.2, 0.2, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.32, 0.55, 0.78, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_emptysocket_normal"]
+bg_color = Color(0.15, 0.15, 0.15, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.25, 0.45, 0.65, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_emptysocket_pressed"]
+bg_color = Color(0.1, 0.1, 0.1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.18, 0.32, 0.48, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[resource]
+Button/styles/disabled = SubResource("StyleBoxFlat_tile_disabled")
+Button/styles/hover = SubResource("StyleBoxFlat_tile_hover")
+Button/styles/normal = SubResource("StyleBoxFlat_tile_normal")
+Button/styles/pressed = SubResource("StyleBoxFlat_tile_pressed")
+ClearAllButton/base_type = &"Button"
+ClearAllButton/styles/hover = SubResource("StyleBoxFlat_clearall_hover")
+ClearAllButton/styles/normal = SubResource("StyleBoxFlat_clearall_normal")
+ClearAllButton/styles/pressed = SubResource("StyleBoxFlat_clearall_pressed")
+ConfirmButton/base_type = &"Button"
+ConfirmButton/styles/hover = SubResource("StyleBoxFlat_confirm_hover")
+ConfirmButton/styles/normal = SubResource("StyleBoxFlat_confirm_normal")
+ConfirmButton/styles/pressed = SubResource("StyleBoxFlat_confirm_pressed")
+CurrentSocketButton/base_type = &"Button"
+CurrentSocketButton/styles/normal = SubResource("StyleBoxFlat_currentsocket_normal")
+EmptySocketButton/base_type = &"Button"
+EmptySocketButton/styles/hover = SubResource("StyleBoxFlat_emptysocket_hover")
+EmptySocketButton/styles/normal = SubResource("StyleBoxFlat_emptysocket_normal")
+EmptySocketButton/styles/pressed = SubResource("StyleBoxFlat_emptysocket_pressed")
