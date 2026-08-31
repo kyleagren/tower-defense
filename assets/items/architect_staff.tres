@@ -6,3 +6,4 @@
 [resource]
 script = ExtResource("1_weapon")
 Icon = ExtResource("2_icon")
+EquippableCharacter = 1
