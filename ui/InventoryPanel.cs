@@ -4,6 +4,9 @@ using System.Linq;
 
 public partial class InventoryPanel : Control
 {
+    private static readonly Color ArchitectBg = new Color(0.14f, 0.18f, 0.32f);
+    private static readonly Color DisabledBg = new Color(0.32f, 0.14f, 0.14f);
+
     [Export] public TileGrid Grid { get; private set; }
     [Export] public Button WeaponSlotButton { get; private set; }
     [Export] public Button HelmetSlotButton { get; private set; }
@@ -17,6 +20,13 @@ public partial class InventoryPanel : Control
     public override void _Ready()
     {
         // TODO: rename "paper doll" (RefreshPaperDoll et al.) - not happy with that name, no better one yet.
+        BuildItemVisual(WeaponSlotButton);
+        BuildItemVisual(HelmetSlotButton);
+        BuildItemVisual(ChestSlotButton);
+        BuildItemVisual(LegsSlotButton);
+        BuildItemVisual(BootsSlotButton);
+        BuildItemVisual(GlovesSlotButton);
+
         WeaponSlotButton.Pressed += () => { _loadout.Weapon = null; Refresh(); };
         HelmetSlotButton.Pressed += () => { _loadout.Helmet = null; Refresh(); };
         ChestSlotButton.Pressed += () => { _loadout.Chest = null; Refresh(); };
@@ -34,7 +44,7 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        if (Visible && @event.IsActionPressed("ui_cancel"))
+        if (Visible && UiPanelStack.IsTop(this) && @event.IsActionPressed("ui_cancel"))
         {
             Close();
             GetViewport().SetInputAsHandled();
@@ -63,11 +73,13 @@ public partial class InventoryPanel : Control
         Visible = true;
         Refresh();
         WeaponSlotButton.GrabFocus();
+        UiPanelStack.Push(this);
     }
 
     private void Close()
     {
         Visible = false;
+        UiPanelStack.Pop(this);
     }
 
     private CharacterId ActiveCharacter => PlayerCharacter.ActiveCombatant.Id;
@@ -94,18 +106,12 @@ public partial class InventoryPanel : Control
 
     private void RefreshPaperDoll()
     {
-        SetSlotButton(WeaponSlotButton, _loadout.Weapon);
-        SetSlotButton(HelmetSlotButton, _loadout.Helmet);
-        SetSlotButton(ChestSlotButton, _loadout.Chest);
-        SetSlotButton(LegsSlotButton, _loadout.Legs);
-        SetSlotButton(BootsSlotButton, _loadout.Boots);
-        SetSlotButton(GlovesSlotButton, _loadout.Gloves);
-    }
-
-    private static void SetSlotButton(Button button, Item item)
-    {
-        button.Text = item?.Name ?? "Empty";
-        button.Icon = item?.Icon;
+        SetItemVisual(WeaponSlotButton, _loadout.Weapon?.Icon, _loadout.Weapon?.Name ?? "Empty");
+        SetItemVisual(HelmetSlotButton, _loadout.Helmet?.Icon, _loadout.Helmet?.Name ?? "Empty");
+        SetItemVisual(ChestSlotButton, _loadout.Chest?.Icon, _loadout.Chest?.Name ?? "Empty");
+        SetItemVisual(LegsSlotButton, _loadout.Legs?.Icon, _loadout.Legs?.Name ?? "Empty");
+        SetItemVisual(BootsSlotButton, _loadout.Boots?.Icon, _loadout.Boots?.Name ?? "Empty");
+        SetItemVisual(GlovesSlotButton, _loadout.Gloves?.Icon, _loadout.Gloves?.Name ?? "Empty");
     }
 
     private void RefreshGrid()
@@ -123,13 +129,13 @@ public partial class InventoryPanel : Control
 
             Button button = new Button
             {
-                Text = item.Name,
-                Icon = item.Icon,
                 Disabled = !compatible,
-                CustomMinimumSize = new Vector2(120f, 80f),
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ExpandFill
+                CustomMinimumSize = new Vector2(120f, 100f)
             };
+
+            BuildItemVisual(button);
+            SetItemVisual(button, item.Icon, item.Name);
+            ApplyGridTint(button, item, compatible);
 
             if (compatible)
             {
@@ -138,6 +144,68 @@ public partial class InventoryPanel : Control
 
             Grid.AddChild(button);
         }
+    }
+
+    private static void ApplyGridTint(Button button, Item item, bool compatible)
+    {
+        if (!compatible)
+        {
+            button.AddThemeStyleboxOverride("disabled", CreateBackground(DisabledBg));
+            return;
+        }
+
+        if (item.EquippableCharacter == CharacterId.Architect)
+        {
+            button.AddThemeStyleboxOverride("normal", CreateBackground(ArchitectBg));
+        }
+    }
+
+    private static StyleBoxFlat CreateBackground(Color color)
+    {
+        return new StyleBoxFlat
+        {
+            BgColor = color,
+            CornerRadiusTopLeft = 6,
+            CornerRadiusTopRight = 6,
+            CornerRadiusBottomLeft = 6,
+            CornerRadiusBottomRight = 6
+        };
+    }
+
+    private static void BuildItemVisual(Button button)
+    {
+        button.Text = "";
+
+        VBoxContainer content = new VBoxContainer { Name = "Content", MouseFilter = MouseFilterEnum.Ignore };
+        content.SetAnchorsPreset(LayoutPreset.FullRect);
+        content.AddThemeConstantOverride("separation", 4);
+
+        TextureRect icon = new TextureRect
+        {
+            Name = "Icon",
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            MouseFilter = MouseFilterEnum.Ignore,
+            SizeFlagsVertical = SizeFlags.ExpandFill
+        };
+
+        Label label = new Label
+        {
+            Name = "Label",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            MouseFilter = MouseFilterEnum.Ignore
+        };
+
+        content.AddChild(icon);
+        content.AddChild(label);
+        button.AddChild(content);
+    }
+
+    private static void SetItemVisual(Button button, Texture2D icon, string name)
+    {
+        button.GetNode<TextureRect>("Content/Icon").Texture = icon;
+        button.GetNode<Label>("Content/Label").Text = name;
     }
 
     private HashSet<Item> GetAllEquippedItems()

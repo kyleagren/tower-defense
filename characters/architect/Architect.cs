@@ -52,14 +52,12 @@ public partial class Architect : PlayerCharacter
     private void OpenBuildMenu()
     {
         _buildMenuOpen = true;
-        Input.MouseMode = Input.MouseModeEnum.Visible;
         BuildMenu.Open();
     }
 
     private void OnBuildMenuClosed()
     {
         _buildMenuOpen = false;
-        Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 
     private void OnBuildMenuConfirmed(Spell spell, Godot.Collections.Array<Rune> runes)

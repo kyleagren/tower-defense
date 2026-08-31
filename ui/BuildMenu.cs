@@ -362,6 +362,7 @@ public partial class BuildMenu : Control
     public void Open()
     {
         Visible = true;
+        UiPanelStack.Push(this);
         ShowSpellGrid();
     }
 
@@ -381,7 +382,7 @@ public partial class BuildMenu : Control
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!Visible)
+        if (!Visible || !UiPanelStack.IsTop(this))
         {
             return;
         }
@@ -412,6 +413,7 @@ public partial class BuildMenu : Control
     private void Close()
     {
         Visible = false;
+        UiPanelStack.Pop(this);
         EmitSignal(SignalName.Closed);
     }
 }
