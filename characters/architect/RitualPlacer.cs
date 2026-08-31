@@ -127,7 +127,8 @@ public partial class RitualPlacer : Node
     private void ProcessWallStartStage()
     {
         WallCastData wallData = _pendingContext.Wall;
-        _wallPreview.UpdateWall(_cursorPosition, _cursorPosition, wallData, ComputeAffordableSegmentCount(wallData));
+        bool[] segmentValid = ComputeSegmentValidity(_cursorPosition, _cursorPosition, wallData, ComputeAffordableSegmentCount(wallData));
+        _wallPreview.UpdateWall(_cursorPosition, _cursorPosition, wallData, segmentValid);
 
         if (Input.IsActionJustPressed("confirm_placement"))
         {
@@ -142,12 +143,16 @@ public partial class RitualPlacer : Node
         int segmentCount = IceWall.ComputeSegmentCount(_wallStartPosition.DistanceTo(_cursorPosition), wallData.SegmentWidth);
         int affordableSegments = ComputeAffordableSegmentCount(wallData);
 
-        _wallPreview.UpdateWall(_wallStartPosition, _cursorPosition, wallData, affordableSegments);
+        bool[] segmentValid = ComputeSegmentValidity(_wallStartPosition, _cursorPosition, wallData, affordableSegments);
+        _wallPreview.UpdateWall(_wallStartPosition, _cursorPosition, wallData, segmentValid);
 
         bool affordable = segmentCount <= affordableSegments;
-        ShowProjectedCost(_wallStartPosition, _cursorPosition, segmentCount, affordable);
+        bool noOverlap = System.Array.TrueForAll(segmentValid, v => v);
+        bool placementValid = affordable && noOverlap;
 
-        if (affordable && Input.IsActionJustPressed("confirm_placement"))
+        ShowProjectedCost(_wallStartPosition, _cursorPosition, segmentCount, placementValid);
+
+        if (placementValid && Input.IsActionJustPressed("confirm_placement"))
         {
             _wallEndPosition = _cursorPosition;
             ApplyWallCostScaling();
@@ -158,6 +163,37 @@ public partial class RitualPlacer : Node
             _stage = Stage.Ritual;
             BeginRitualGhost();
         }
+    }
+
+    // Mirrors UpdateGhostValidity's shape-overlap pattern, but per prospective segment position
+    // along the line instead of a single point - a wall can overlap something in the middle
+    // without overlapping at either end, so a single pass/fail cutoff (like affordability) isn't
+    // enough here.
+    private bool[] ComputeSegmentValidity(Vector3 start, Vector3 end, WallCastData wallData, int affordableSegments)
+    {
+        int segmentCount = IceWall.ComputeSegmentCount(start.DistanceTo(end), wallData.SegmentWidth);
+        bool[] valid = new bool[segmentCount];
+        PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
+
+        for (int i = 0; i < segmentCount; i++)
+        {
+            float t = segmentCount > 1 ? (float)i / (segmentCount - 1) : 0f;
+            Vector3 position = start.Lerp(end, t) + Vector3.Up * wallData.SegmentWidth;
+
+            PhysicsShapeQueryParameters3D query = new PhysicsShapeQueryParameters3D
+            {
+                Shape = new BoxShape3D { Size = new Vector3(wallData.SegmentWidth, wallData.SegmentWidth * 2f, wallData.SegmentWidth) },
+                Transform = new Transform3D(Basis.Identity, position),
+                CollisionMask = PhysicsLayers.Obstacles,
+                CollideWithBodies = true,
+                CollideWithAreas = false
+            };
+
+            bool overlaps = spaceState.IntersectShape(query).Count > 0;
+            valid[i] = i < affordableSegments && !overlaps;
+        }
+
+        return valid;
     }
 
     private void ProcessRitualStage()

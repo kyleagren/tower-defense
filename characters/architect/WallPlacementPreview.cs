@@ -21,24 +21,32 @@ public partial class WallPlacementPreview : Node3D
     private float _segmentMeshWidth = -1f;
     private bool _frozen;
 
-    public void UpdateWall(Vector3 start, Vector3 end, WallCastData wallData, int affordableSegments)
+    public void UpdateWall(Vector3 start, Vector3 end, WallCastData wallData, IReadOnlyList<bool> segmentValid)
     {
         if (_frozen)
         {
             return;
         }
 
-        int segmentCount = IceWall.ComputeSegmentCount(start.DistanceTo(end), wallData.SegmentWidth);
+        int segmentCount = segmentValid.Count;
         ResizeSegmentPool(segmentCount, wallData.SegmentWidth);
+
+        bool allValid = true;
+        for (int i = 0; i < segmentCount; i++)
+        {
+            if (!segmentValid[i])
+            {
+                allValid = false;
+                break;
+            }
+        }
 
         for (int i = 0; i < segmentCount; i++)
         {
             float t = segmentCount > 1 ? (float)i / (segmentCount - 1) : 0f;
 
             _segmentMeshes[i].Position = start.Lerp(end, t) + Vector3.Up * wallData.SegmentWidth;
-            _segmentMeshes[i].MaterialOverride = i < affordableSegments
-                ? PreviewMaterials.Valid
-                : PreviewMaterials.Invalid;
+            _segmentMeshes[i].MaterialOverride = allValid ? PreviewMaterials.Valid : PreviewMaterials.Invalid;
         }
     }
 
