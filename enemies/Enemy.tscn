@@ -48,7 +48,7 @@ height = 0.8
 
 [node name="Enemy" type="CharacterBody3D" unique_id=1298715792 node_paths=PackedStringArray("NavAgent", "Skeleton", "BodyCollision", "BoneSimulator", "RootPhysicalBone", "HealthBar")]
 collision_layer = 2
-collision_mask = 35
+collision_mask = 51
 script = ExtResource("1_enemy")
 NavAgent = NodePath("NavigationAgent3D")
 Skeleton = NodePath("Skeleton3D")

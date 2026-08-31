@@ -8,6 +8,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public float RotationSpeed = 10f;
     [Export] public float WaypointArrivalDistance = 0.5f;
     [Export] public float PlayerCheckInterval = 0.25f;
+    [Export] public float WallDetectionRange = 4f;
     [Export] public float LeashRange = 6f;
     [Export] public float AttackRange = 1.5f;
     [Export] public float AttackDamage = 10f;
@@ -49,7 +50,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         };
     }
 
-    private enum MovementMode { FollowingLane, ChasingPlayer, RejoiningLane, ApproachingObjective }
+    private enum MovementMode { FollowingLane, ChasingPlayer, AttackingWall, RejoiningLane, ApproachingObjective }
 
     private const string SpawnerGroup = "enemy_spawners";
 
@@ -59,6 +60,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     private int _waypointIndex;
     private MovementMode _movementMode = MovementMode.FollowingLane;
     private float _playerCheckTimer;
+    private IceWall _targetWall;
     private float _attackCooldown;
     private bool _isDead;
     private bool _hasFacedInitialDirection;
@@ -245,11 +247,15 @@ public partial class Enemy : CharacterBody3D, IDamageable
         TickAilments((float)delta);
         UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
         UpdatePlayerLeash((float)delta);
+        UpdateWallEngagement();
 
         switch (_movementMode)
         {
             case MovementMode.ChasingPlayer:
                 ProcessChasingPlayer(delta);
+                break;
+            case MovementMode.AttackingWall:
+                ProcessAttackingWall(delta);
                 break;
             case MovementMode.RejoiningLane:
                 ProcessRejoiningLane(delta);
@@ -424,6 +430,109 @@ public partial class Enemy : CharacterBody3D, IDamageable
         }
 
         Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
+    }
+
+    // Runs every tick regardless of current mode so a wall can interrupt lane-following or
+    // objective-attacking, but never interrupts chasing the player, who always outranks it.
+    private void UpdateWallEngagement()
+    {
+        if (_movementMode == MovementMode.ChasingPlayer || _movementMode == MovementMode.AttackingWall)
+        {
+            return;
+        }
+
+        IceWallSegment nearestSegment = FindNearestWallSegmentInRange();
+        if (nearestSegment == null)
+        {
+            return;
+        }
+
+        _targetWall = nearestSegment.Wall;
+        _movementMode = MovementMode.AttackingWall;
+
+        NavAgent.TargetDesiredDistance = AttackRange;
+        NavAgent.TargetPosition = _targetWall.ClosestPointOnWall(GlobalPosition);
+    }
+
+    private IceWallSegment FindNearestWallSegmentInRange()
+    {
+        IceWallSegment nearest = null;
+        float bestDistance = WallDetectionRange;
+
+        foreach (IceWallSegment segment in IceWallSegmentRegistry.Active)
+        {
+            float distance = GlobalPosition.DistanceTo(segment.GlobalPosition);
+            if (distance <= bestDistance)
+            {
+                bestDistance = distance;
+                nearest = segment;
+            }
+        }
+
+        return nearest;
+    }
+
+    // Walks toward whichever point on the wall's own line is closest to this enemy's position at
+    // the moment it engages, rather than a shared segment center every nearby enemy would
+    // otherwise converge on. Which actual segment takes the damage is resolved separately, once
+    // close enough to hit something.
+    private void ProcessAttackingWall(double delta)
+    {
+        if (_targetWall == null || !IsInstanceValid(_targetWall) || _targetWall.IsDestroyed)
+        {
+            _targetWall = null;
+            _movementMode = MovementMode.FollowingLane;
+            ProcessLaneFollowing(delta);
+            return;
+        }
+
+        IceWallSegment target = FindNearestSegmentOnWall(_targetWall);
+
+        if (target != null)
+        {
+            Stop(delta);
+            RotateTowardsMovement((target.GlobalPosition - GlobalPosition).Normalized(), delta);
+
+            _attackCooldown -= (float)delta;
+            if (_attackCooldown <= 0f)
+            {
+                _attackCooldown = AttackInterval;
+                target.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+            }
+
+            return;
+        }
+
+        if (NavAgent.IsNavigationFinished())
+        {
+            Stop(delta);
+            return;
+        }
+
+        Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
+    }
+
+    private IceWallSegment FindNearestSegmentOnWall(IceWall wall)
+    {
+        IceWallSegment nearest = null;
+        float bestDistance = AttackRange;
+
+        foreach (IceWallSegment segment in IceWallSegmentRegistry.Active)
+        {
+            if (segment.Wall != wall)
+            {
+                continue;
+            }
+
+            float distance = GlobalPosition.DistanceTo(segment.GlobalPosition);
+            if (distance <= bestDistance)
+            {
+                bestDistance = distance;
+                nearest = segment;
+            }
+        }
+
+        return nearest;
     }
 
     private void ProcessChasingPlayer(double delta)

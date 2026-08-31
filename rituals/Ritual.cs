@@ -24,12 +24,22 @@ public partial class Ritual : Node3D
     {
         _castEffects = GetChildren().OfType<CastEffect>().ToList();
 
+        foreach (CastEffect effect in _castEffects)
+        {
+            effect.Concluded += OnCastEffectConcluded;
+        }
+
         // A ritual placed by RitualPlacer is configured explicitly right after AddChild, so only
         // one authored into a scene with a Spell already assigned configures itself here.
         if (Spell != null)
         {
             Configure(Spell, RuneSlots);
         }
+    }
+
+    private void OnCastEffectConcluded()
+    {
+        _spellInstance.EndOngoingEffect(_spellInstance.Resolve().Cooldown.Value);
     }
 
     public void Repair()
@@ -148,7 +158,16 @@ public partial class Ritual : Node3D
         }
 
         effect.Cast(context, SpawnPoint, this);
-        _spellInstance.StartCast(context.ResolvedCastTime, context.Cooldown.Value);
+
+        if (effect.IsOngoing)
+        {
+            _spellInstance.StartCast(context.ResolvedCastTime, 0f);
+            _spellInstance.BeginOngoingEffect();
+        }
+        else
+        {
+            _spellInstance.StartCast(context.ResolvedCastTime, context.Cooldown.Value);
+        }
     }
 
     // Picks the one CastEffect child that handles this context. Which effect wins is otherwise

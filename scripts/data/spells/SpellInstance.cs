@@ -12,10 +12,11 @@ public class SpellInstance
 
     private float _castTimeRemaining;
     private float _cooldownRemaining;
+    private bool _isEffectOngoing;
 
     public bool IsCasting => _castTimeRemaining > 0f;
     public bool IsOnCooldown => _cooldownRemaining > 0f;
-    public bool CanCast => !IsCasting && !IsOnCooldown;
+    public bool CanCast => !IsCasting && !IsOnCooldown && !_isEffectOngoing;
 
     public SpellInstance(Spell definition)
     {
@@ -54,6 +55,20 @@ public class SpellInstance
     public void StartCast(float castTime, float cooldown)
     {
         _castTimeRemaining = castTime;
+        _cooldownRemaining = cooldown;
+    }
+
+    // For a spell whose CastEffect is still ongoing after Cast() returns (e.g. a wall that has
+    // to break or expire first), the real cooldown doesn't start until EndOngoingEffect is
+    // called later - CanCast stays false for the whole in-between period.
+    public void BeginOngoingEffect()
+    {
+        _isEffectOngoing = true;
+    }
+
+    public void EndOngoingEffect(float cooldown)
+    {
+        _isEffectOngoing = false;
         _cooldownRemaining = cooldown;
     }
 

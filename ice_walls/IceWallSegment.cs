@@ -10,14 +10,27 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
         AlbedoColor = new Color(0.6f, 0.85f, 1f)
     };
 
-    private float _currentHealth;
+    private IceWall _wall;
     private bool _isBroken;
 
     public bool IsDestroyed => _isBroken;
+    public IceWall Wall => _wall;
 
-    public void Initialize(float maxHealth, float width)
+    public override void _Ready()
     {
-        _currentHealth = maxHealth;
+        IceWallSegmentRegistry.Register(this);
+    }
+
+    // Safety net for segments freed without breaking (e.g. scene reload). Unregistering twice is
+    // a no-op, so the Break() path unregistering first is unaffected.
+    public override void _ExitTree()
+    {
+        IceWallSegmentRegistry.Unregister(this);
+    }
+
+    public void Initialize(IceWall wall, float width)
+    {
+        _wall = wall;
 
         BodyMesh.Mesh = new CylinderMesh
         {
@@ -35,8 +48,7 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
         BodyCollision.Position = new Vector3(0f, width, 0f);
     }
 
-    // TODO: no callers yet - enemies don't detect or attack walls (README section 16, step 10).
-    // Wire this up with the enemy movement rework, along with the regrow cooldown (section 6).
+    // TODO: regrow cooldown after breaking (README section 6) isn't implemented yet.
     public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
     {
         if (_isBroken)
@@ -44,11 +56,9 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
             return;
         }
 
-        _currentHealth -= damage.Total;
-        if (_currentHealth <= 0f)
-        {
-            Break();
-        }
+        // Hitting any one segment damages the whole wall's shared pool - segments break
+        // together, not individually, once that pool is spent.
+        _wall.TakeDamage(damage);
     }
 
     public void Break()
@@ -59,6 +69,7 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
         }
 
         _isBroken = true;
+        IceWallSegmentRegistry.Unregister(this);
         QueueFree();
     }
 }

@@ -4,7 +4,7 @@ public partial class EconomyManager : Node
 {
     public static EconomyManager Instance { get; private set; }
 
-    [Export] public int StartingMana = 60;
+    [Export] public int StartingMana = 120;
     [Export] public int MaxCapacity = 1000;
 
     public int Mana { get; private set; }
