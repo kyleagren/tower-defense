@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="Gloves" format=3 uid="uid://bjnavkdkaln2b"]
+
+[ext_resource type="Script" uid="uid://ehvmi3g0gppn" path="res://scripts/data/items/Gloves.cs" id="1_gloves"]
+[ext_resource type="Texture2D" uid="uid://ddb8sc0a80bhk" path="res://assets/thumbnails/gloves.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_gloves")
+Icon = ExtResource("2_icon")

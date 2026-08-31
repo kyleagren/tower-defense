@@ -1,0 +1,8 @@
+[gd_resource type="Resource" format=3 uid="uid://c3mgl34huwnx8"]
+
+[ext_resource type="Script" uid="uid://d3am1uiagg5b4" path="res://scripts/data/items/Weapon.cs" id="1_weapon"]
+[ext_resource type="Texture2D" uid="uid://rcbw0rtkvkgy" path="res://assets/thumbnails/gun.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_weapon")
+Icon = ExtResource("2_icon")

@@ -8,4 +8,6 @@ public partial class PlayerSaveData : Resource
     [Export] public int Gold { get; set; } = 0;
     [Export] public Godot.Collections.Array<Spell> KnownSpells { get; set; } = new();
     [Export] public Godot.Collections.Array<RuneInventoryEntry> KnownRunes { get; set; } = new();
+    [Export] public Godot.Collections.Array<Item> OwnedItems { get; set; } = new();
+    [Export] public Godot.Collections.Dictionary<CharacterId, EquippedLoadout> Loadouts { get; set; } = new();
 }

@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="Helmet" format=3 uid="uid://c001ewup4wp15"]
+
+[ext_resource type="Script" uid="uid://djlfksyut1pv1" path="res://scripts/data/items/Helmet.cs" id="1_helmet"]
+[ext_resource type="Texture2D" uid="uid://ey8vi01du5gq" path="res://assets/thumbnails/helmet.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_helmet")
+Icon = ExtResource("2_icon")

@@ -10,7 +10,7 @@ public partial class Modifier : Resource
 
     // Empty means valid on any slot. Non-empty restricts which items this mod can roll on or be
     // crafted onto (e.g. movement speed only on Boots).
-    [Export] public EquipmentSlot[] AllowedSlots { get; private set; } = System.Array.Empty<EquipmentSlot>();
+    [Export] public Godot.Collections.Array<EquipmentSlot> AllowedSlots { get; private set; } = new();
 
     // AnySentinel means this mod is a generic stat roll usable by any Sentinel. Set to a specific
     // character only for bespoke mods that reference that character's own kit - the item itself
