@@ -49,12 +49,13 @@ public partial class Enemy : CharacterBody3D, IDamageable
         };
     }
 
-    private enum MovementMode { FollowingLane, ChasingPlayer, RejoiningLane }
+    private enum MovementMode { FollowingLane, ChasingPlayer, RejoiningLane, ApproachingObjective }
 
     private const string SpawnerGroup = "enemy_spawners";
 
     private ProceduralWalkAnimator _walkAnimator;
     private Lane _lane;
+    private DefendableObjective _objective;
     private int _waypointIndex;
     private MovementMode _movementMode = MovementMode.FollowingLane;
     private float _playerCheckTimer;
@@ -91,6 +92,13 @@ public partial class Enemy : CharacterBody3D, IDamageable
     {
         _walkAnimator = new ProceduralWalkAnimator(Skeleton, WalkCycleFrequency, LegSwingAmplitude, ArmSwingAmplitude);
 
+        NavAgent.AvoidanceEnabled = true;
+        if (BodyCollision.Shape is CapsuleShape3D capsuleShape)
+        {
+            NavAgent.Radius = capsuleShape.Radius;
+        }
+        NavAgent.VelocityComputed += OnVelocityComputed;
+
         _currentHealth = MaxHealth;
 
         // Group membership is for editor / remote-debugger inspection only — code paths that need
@@ -112,10 +120,12 @@ public partial class Enemy : CharacterBody3D, IDamageable
         EnemyRegistry.Unregister(this);
     }
 
-    public void SetLane(Lane lane)
+    public void SetLane(Lane lane, DefendableObjective objective)
     {
         _lane = lane;
+        _objective = objective;
         _waypointIndex = 0;
+        NavAgent.TargetPosition = lane.Waypoints[0];
     }
 
     private void UpdateDistanceToGoal()
@@ -185,6 +195,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         _isDead = true;
         EnemyRegistry.Unregister(this);
+        NavAgent.AvoidanceEnabled = false;
         HealthBar.Visible = false;
         HealthBar.SetProcess(false);
         EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward);
@@ -243,6 +254,9 @@ public partial class Enemy : CharacterBody3D, IDamageable
             case MovementMode.RejoiningLane:
                 ProcessRejoiningLane(delta);
                 break;
+            case MovementMode.ApproachingObjective:
+                ProcessApproachingObjective(delta);
+                break;
             default:
                 ProcessLaneFollowing(delta);
                 break;
@@ -254,15 +268,68 @@ public partial class Enemy : CharacterBody3D, IDamageable
         if (_waypointIndex < _lane.Waypoints.Count && GlobalPosition.DistanceTo(_lane.Waypoints[_waypointIndex]) <= WaypointArrivalDistance)
         {
             _waypointIndex++;
+
+            if (_waypointIndex < _lane.Waypoints.Count)
+            {
+                NavAgent.TargetPosition = _lane.Waypoints[_waypointIndex];
+            }
         }
 
-        if (_waypointIndex >= _lane.Waypoints.Count)
+        if (_waypointIndex >= _lane.Waypoints.Count - 1)
+        {
+            BeginApproachingObjective();
+            ProcessApproachingObjective(delta);
+            return;
+        }
+
+        Move((_lane.Waypoints[_waypointIndex] - GlobalPosition).Normalized(), delta);
+    }
+
+    private void BeginApproachingObjective()
+    {
+        _movementMode = MovementMode.ApproachingObjective;
+
+        if (_objective != null)
+        {
+            NavAgent.TargetDesiredDistance = _objective.ApproachRadius + AttackRange;
+            NavAgent.TargetPosition = _objective.GlobalPosition;
+        }
+    }
+
+    private void ProcessApproachingObjective(double delta)
+    {
+        if (_objective == null || _objective.IsDestroyed)
         {
             Stop(delta);
             return;
         }
 
-        Move((_lane.Waypoints[_waypointIndex] - GlobalPosition).Normalized(), delta);
+        if (GlobalPosition.DistanceTo(_objective.GlobalPosition) - _objective.ApproachRadius <= AttackRange)
+        {
+            AttackObjective(delta);
+            return;
+        }
+
+        if (NavAgent.IsNavigationFinished())
+        {
+            Stop(delta);
+            return;
+        }
+
+        Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
+    }
+
+    private void AttackObjective(double delta)
+    {
+        Stop(delta);
+
+        _attackCooldown -= (float)delta;
+
+        if (_attackCooldown <= 0f)
+        {
+            _attackCooldown = AttackInterval;
+            _objective.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+        }
     }
 
     // Leash/chase state is decided on an interval (mirrors Ritual.TargetSearchInterval) rather
@@ -310,6 +377,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         _lane = lane;
         _waypointIndex = waypointIndex;
+        NavAgent.TargetDesiredDistance = WaypointArrivalDistance;
         NavAgent.TargetPosition = lane.Waypoints[waypointIndex];
         _movementMode = MovementMode.RejoiningLane;
     }
@@ -388,18 +456,22 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     private void Stop(double delta)
     {
-        Velocity = Vector3.Zero;
-        MoveAndSlide();
+        NavAgent.Velocity = Vector3.Zero;
         _walkAnimator.Animate(0.0, delta);
     }
 
     private void Move(Vector3 direction, double delta)
     {
-        Velocity = direction * Speed;
-        MoveAndSlide();
+        NavAgent.Velocity = direction * Speed;
 
         RotateTowardsMovement(direction, delta);
         _walkAnimator.Animate(1.0, delta);
+    }
+
+    private void OnVelocityComputed(Vector3 safeVelocity)
+    {
+        Velocity = safeVelocity;
+        MoveAndSlide();
     }
 
     private void TickAilments(float delta)

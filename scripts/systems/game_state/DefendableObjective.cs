@@ -2,10 +2,8 @@ using Godot;
 
 public partial class DefendableObjective : Area3D, IDamageable
 {
-    [Export] public float RagdollForce = 200.0f;
-    [Export] public float RagdollAngleJitterDegrees = 20.0f;
     [Export] public float MaxHealth = 100f;
-    [Export] public float DamagePerHit = 10f;
+    [Export] public float ApproachRadius = 1.1f; // matches the solid collision shape's own radius — enemies physically can't get closer than this
     [Export] public HealthBar3D HealthBar { get; private set; }
 
     private float _currentHealth;
@@ -16,7 +14,6 @@ public partial class DefendableObjective : Area3D, IDamageable
     public override void _Ready()
     {
         _currentHealth = MaxHealth;
-        BodyEntered += OnBodyEntered;
         HealthBar.SetFraction(1f);
     }
 
@@ -35,22 +32,5 @@ public partial class DefendableObjective : Area3D, IDamageable
             _destroyed = true;
             EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, false);
         }
-    }
-
-    private void OnBodyEntered(Node3D body)
-    {
-        if (_destroyed || body is not Enemy enemy)
-        {
-            return;
-        }
-
-        Vector3 ragdollDirection = (enemy.GlobalPosition - GlobalPosition).Normalized();
-
-        float jitterRadians = Mathf.DegToRad((float)GD.RandRange(-RagdollAngleJitterDegrees, RagdollAngleJitterDegrees));
-        ragdollDirection = ragdollDirection.Rotated(Vector3.Up, jitterRadians);
-
-        enemy.Die(ragdollDirection * RagdollForce);
-
-        TakeDamage(new DamagePacket { PhysicalDamage = DamagePerHit });
     }
 }

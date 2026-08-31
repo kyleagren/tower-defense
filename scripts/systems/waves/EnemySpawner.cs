@@ -3,7 +3,7 @@ using Godot;
 public partial class EnemySpawner : Node3D
 {
     [Export] public string Id { get; private set; }
-    [Export] public Node3D Target { get; private set; }
+    [Export] public DefendableObjective Target { get; private set; }
 
     public Lane Lane { get; private set; }
 
@@ -24,7 +24,7 @@ public partial class EnemySpawner : Node3D
         GetParent().AddChild(enemy);
         enemy.GlobalPosition = GlobalPosition;
         enemy.SetInitialFacing((Lane.Waypoints[1] - Lane.Waypoints[0]).Normalized());
-        enemy.SetLane(Lane);
+        enemy.SetLane(Lane, Target);
     }
 
     private bool TryBuildLane()
