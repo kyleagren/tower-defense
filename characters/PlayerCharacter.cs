@@ -21,6 +21,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D, IDamageable
     public bool IsActive => _active;
     public bool IsDead => _currentHealth <= 0f;
     public bool IsDestroyed => IsDead;
+    public abstract CharacterId Id { get; }
 
     // Subclasses read activity through IsActive and adjust look sensitivity through
     // LookSensitivity; nothing outside this class needs the backing fields.

@@ -17,6 +17,8 @@ public partial class Soldier : PlayerCharacter
     [Export] public float AdsTransitionSpeed = 10f;
     [Export] public float AdsSensitivityMultiplier = 0.5f;
 
+    public override CharacterId Id => CharacterId.Soldier;
+
     private float _fireCooldown;
 
     public override void _Ready()

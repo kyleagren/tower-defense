@@ -6,6 +6,8 @@ public partial class Architect : PlayerCharacter
     [Export] public RitualPlacer RitualPlacer { get; private set; }
     [Export] public PlayerCharacter Soldier { get; private set; }
 
+    public override CharacterId Id => CharacterId.Architect;
+
     private bool _buildMenuOpen;
 
     public override void _Ready()
