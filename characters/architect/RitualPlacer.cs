@@ -184,7 +184,7 @@ public partial class RitualPlacer : Node
             {
                 Shape = new BoxShape3D { Size = new Vector3(wallData.SegmentWidth, wallData.SegmentWidth * 2f, wallData.SegmentWidth) },
                 Transform = new Transform3D(Basis.Identity, position),
-                CollisionMask = PhysicsLayers.Obstacles,
+                CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked,
                 CollideWithBodies = true,
                 CollideWithAreas = false
             };
@@ -232,16 +232,40 @@ public partial class RitualPlacer : Node
         {
             Shape = _ghostCollisionShape.Shape,
             Transform = _ghostCollisionShape.GlobalTransform,
-            CollisionMask = PhysicsLayers.Obstacles,
+            CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked,
             CollideWithBodies = true,
             CollideWithAreas = false
         };
 
         Godot.Collections.Array<Godot.Collections.Dictionary> overlaps = spaceState.IntersectShape(query);
+        bool overlapsOwnWall = _pendingContext.Wall != null && OverlapsOwnWallLine();
 
-        _isValidPlacement = overlaps.Count == 0 && _economy.CanAfford(_pendingContext);
+        _isValidPlacement = overlaps.Count == 0 && !overlapsOwnWall && _economy.CanAfford(_pendingContext);
 
         _ghostMesh.MaterialOverride = _isValidPlacement ? PreviewMaterials.Valid : PreviewMaterials.Invalid;
+    }
+
+    // The wall this tower belongs to has no physics presence yet at this point in placement - the
+    // real IceWall only casts once an enemy triggers it, and WallFootprintMarker isn't built until
+    // the whole placement is confirmed - so this checks the ghost's position against the wall's own
+    // line directly, using the same discrete segment positions IceWall/WallFootprintMarker use.
+    private bool OverlapsOwnWallLine()
+    {
+        WallCastData wallData = _pendingContext.Wall;
+        int segmentCount = IceWall.ComputeSegmentCount(_wallStartPosition.DistanceTo(_wallEndPosition), wallData.SegmentWidth);
+
+        for (int i = 0; i < segmentCount; i++)
+        {
+            float t = segmentCount > 1 ? (float)i / (segmentCount - 1) : 0f;
+            Vector3 segmentPosition = _wallStartPosition.Lerp(_wallEndPosition, t);
+
+            if (_ghost.GlobalPosition.DistanceTo(segmentPosition) < wallData.SegmentWidth)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Clamps an arbitrary world point to the nearest point inside the wall's flat-capped
