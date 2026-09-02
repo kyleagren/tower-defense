@@ -1,4 +1,4 @@
-public enum ModifierType
+public enum AffixType
 {
     Prefix,
     Suffix,

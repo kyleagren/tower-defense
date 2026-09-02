@@ -34,10 +34,10 @@ public static class CharacterSheetCache
 
         foreach (Item item in loadout.EquippedItems())
         {
-            foreach (Modifier modifier in item.Modifiers)
+            foreach (RolledAffix roll in item.Affixes)
             {
-                bonuses.TryGetValue(modifier.Stat, out float current);
-                bonuses[modifier.Stat] = current + modifier.Value;
+                bonuses.TryGetValue(roll.Stat, out float current);
+                bonuses[roll.Stat] = current + roll.Value;
             }
         }
 

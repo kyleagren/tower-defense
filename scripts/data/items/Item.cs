@@ -4,7 +4,7 @@ public abstract partial class Item : Resource
 {
     [Export] public Rarity Rarity { get; private set; }
     [Export] public Texture2D Icon { get; private set; }
-    [Export] public Modifier[] Modifiers { get; private set; } = System.Array.Empty<Modifier>();
+    [Export] public Godot.Collections.Array<RolledAffix> Affixes { get; private set; } = new();
 
     // AnySentinel for the shared Sentinel armor pool. A Weapon always overrides this to one
     // specific character; Armor normally leaves it at the default, except the Architect's own

@@ -1,10 +1,16 @@
-[gd_resource type="Resource" script_class="Boots" format=3 uid="uid://d317xinyqj43a"]
+[gd_resource type="Resource" script_class="Boots" format=3 uid="uid://d317xinyqj43a" load_steps=4]
 
 [ext_resource type="Script" uid="uid://cgahpdswliecd" path="res://scripts/data/items/Boots.cs" id="1_boots"]
 [ext_resource type="Texture2D" uid="uid://c1t4uuys3yyt" path="res://assets/thumbnails/boots.png" id="2_icon"]
-[ext_resource type="Resource" path="res://assets/items/modifiers/swift.tres" id="3_swift"]
+[ext_resource type="Script" path="res://scripts/data/items/RolledAffix.cs" id="3_rolledaffix"]
+
+[sub_resource type="Resource" id="Resource_swiftroll"]
+script = ExtResource("3_rolledaffix")
+Stat = 12
+Tier = 3
+Value = 0.12
 
 [resource]
 script = ExtResource("1_boots")
 Icon = ExtResource("2_icon")
-Modifiers = Array[Resource]([ExtResource("3_swift")])
+Affixes = Array[Resource]([SubResource("Resource_swiftroll")])
