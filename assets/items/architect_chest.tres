@@ -1,9 +1,0 @@
-[gd_resource type="Resource" script_class="Chest" format=3]
-
-[ext_resource type="Script" uid="uid://07226pofibuh" path="res://scripts/data/items/Chest.cs" id="1_chest"]
-[ext_resource type="Texture2D" uid="uid://bj38unrnlb3tr" path="res://assets/thumbnails/chestplate.png" id="2_icon"]
-
-[resource]
-script = ExtResource("1_chest")
-Icon = ExtResource("2_icon")
-EquippableCharacter = 1

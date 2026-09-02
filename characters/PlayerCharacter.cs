@@ -21,10 +21,9 @@ public abstract partial class PlayerCharacter : CharacterBody3D, IDamageable
     public bool IsActive => _active;
     public bool IsDead => _currentHealth <= 0f;
     public bool IsDestroyed => IsDead;
-    public abstract CharacterId Id { get; }
 
-    public float Speed => BaseSpeed * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMoveSpeed));
-    public float MaxHealth => BaseMaxHealth * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMaxHealth));
+    public virtual float Speed => BaseSpeed;
+    public virtual float MaxHealth => BaseMaxHealth;
 
     // Subclasses read activity through IsActive and adjust look sensitivity through
     // LookSensitivity; nothing outside this class needs the backing fields.

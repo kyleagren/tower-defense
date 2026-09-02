@@ -1,6 +1,6 @@
 using Godot;
 
-public partial class Soldier : PlayerCharacter
+public partial class Soldier : Sentinel
 {
     [Export] public PlayerCharacter Architect { get; private set; }
     [Export] public float AttackDamage = 8f;

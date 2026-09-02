@@ -6,10 +6,9 @@ public abstract partial class Item : Resource
     [Export] public Texture2D Icon { get; private set; }
     [Export] public Godot.Collections.Array<RolledAffix> Affixes { get; private set; } = new();
 
-    // AnySentinel for the shared Sentinel armor pool. A Weapon always overrides this to one
-    // specific character; Armor normally leaves it at the default, except the Architect's own
-    // armor, which gets explicitly tagged CharacterId.Architect to keep his pool separate from
-    // the Sentinel one entirely, rather than mixing in the same shared armor list.
+    // AnySentinel for the shared, universal armor/jewelry pool. A Weapon always overrides this to
+    // one specific Sentinel. Architect can never appear here - CharacterId has no value for him at
+    // all (see the Sentinel class, which is where character-identity and gear-scaled stats live).
     [Export] public CharacterId EquippableCharacter { get; private set; } = CharacterId.AnySentinel;
 
     // No hand-authored flavor names yet - just rarity + slot, matching the "name corresponds

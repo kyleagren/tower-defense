@@ -4,7 +4,6 @@ using System.Linq;
 
 public partial class InventoryPanel : Control
 {
-    private static readonly Color ArchitectBg = new Color(0.14f, 0.18f, 0.32f);
     private static readonly Color DisabledBg = new Color(0.32f, 0.14f, 0.14f);
 
     [Export] public TileGrid Grid { get; private set; }
@@ -82,7 +81,7 @@ public partial class InventoryPanel : Control
         UiPanelStack.Pop(this);
     }
 
-    private CharacterId ActiveCharacter => PlayerCharacter.ActiveCombatant.Id;
+    private CharacterId ActiveCharacter => SelectedSentinel.Current;
 
     private void Refresh()
     {
@@ -136,7 +135,11 @@ public partial class InventoryPanel : Control
 
             BuildItemVisual(button);
             SetItemVisual(button, item.Icon, item.Name);
-            ApplyGridTint(button, item, compatible);
+
+            if (!compatible)
+            {
+                button.AddThemeStyleboxOverride("disabled", CreateBackground(DisabledBg));
+            }
 
             if (compatible)
             {
@@ -144,20 +147,6 @@ public partial class InventoryPanel : Control
             }
 
             Grid.AddChild(button);
-        }
-    }
-
-    private static void ApplyGridTint(Button button, Item item, bool compatible)
-    {
-        if (!compatible)
-        {
-            button.AddThemeStyleboxOverride("disabled", CreateBackground(DisabledBg));
-            return;
-        }
-
-        if (item.EquippableCharacter == CharacterId.Architect)
-        {
-            button.AddThemeStyleboxOverride("normal", CreateBackground(ArchitectBg));
         }
     }
 
@@ -224,16 +213,9 @@ public partial class InventoryPanel : Control
         return equipped;
     }
 
-    // AnySentinel counts as compatible for any Sentinel, but not for the Architect - that's the
-    // pool boundary. An exact CharacterId match (including Architect-to-Architect) always works.
     private bool IsCompatible(Item item)
     {
-        if (item.EquippableCharacter == ActiveCharacter)
-        {
-            return true;
-        }
-
-        return item.EquippableCharacter == CharacterId.AnySentinel && ActiveCharacter != CharacterId.Architect;
+        return item.EquippableCharacter == ActiveCharacter || item.EquippableCharacter == CharacterId.AnySentinel;
     }
 
     private void Equip(Item item)
