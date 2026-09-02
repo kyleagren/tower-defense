@@ -87,6 +87,7 @@ public partial class InventoryPanel : Control
     private void Refresh()
     {
         _loadout = GetOrCreateLoadout();
+        CharacterSheetCache.Invalidate(ActiveCharacter);
         RefreshPaperDoll();
         RefreshGrid();
     }
@@ -214,12 +215,10 @@ public partial class InventoryPanel : Control
 
         foreach (EquippedLoadout loadout in SaveManager.Instance.Data.Loadouts.Values)
         {
-            if (loadout.Weapon != null) equipped.Add(loadout.Weapon);
-            if (loadout.Helmet != null) equipped.Add(loadout.Helmet);
-            if (loadout.Chest != null) equipped.Add(loadout.Chest);
-            if (loadout.Legs != null) equipped.Add(loadout.Legs);
-            if (loadout.Boots != null) equipped.Add(loadout.Boots);
-            if (loadout.Gloves != null) equipped.Add(loadout.Gloves);
+            foreach (Item item in loadout.EquippedItems())
+            {
+                equipped.Add(item);
+            }
         }
 
         return equipped;

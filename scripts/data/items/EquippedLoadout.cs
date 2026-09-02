@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 [GlobalClass]
 public partial class EquippedLoadout : Resource
@@ -9,4 +10,14 @@ public partial class EquippedLoadout : Resource
     [Export] public Legs Legs { get; set; }
     [Export] public Boots Boots { get; set; }
     [Export] public Gloves Gloves { get; set; }
+
+    public IEnumerable<Item> EquippedItems()
+    {
+        if (Weapon != null) yield return Weapon;
+        if (Helmet != null) yield return Helmet;
+        if (Chest != null) yield return Chest;
+        if (Legs != null) yield return Legs;
+        if (Boots != null) yield return Boots;
+        if (Gloves != null) yield return Gloves;
+    }
 }

@@ -17,6 +17,6 @@ public partial class Modifier : Resource
     // still equips fine on anyone, this mod just isn't meaningful for someone else.
     [Export] public CharacterId RestrictedCharacter { get; private set; } = CharacterId.AnySentinel;
 
-    // TODO: no Apply(context) hook yet - deferred until a character stat-resolution model
-    // exists to apply mods to, mirroring Rune's Apply(SpellCastContext) shape when it does.
+    [Export] public StatId Stat { get; private set; }
+    [Export] public float Value { get; private set; }
 }

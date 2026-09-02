@@ -2,7 +2,9 @@
 
 [ext_resource type="Script" uid="uid://cgahpdswliecd" path="res://scripts/data/items/Boots.cs" id="1_boots"]
 [ext_resource type="Texture2D" uid="uid://c1t4uuys3yyt" path="res://assets/thumbnails/boots.png" id="2_icon"]
+[ext_resource type="Resource" path="res://assets/items/modifiers/swift.tres" id="3_swift"]
 
 [resource]
 script = ExtResource("1_boots")
 Icon = ExtResource("2_icon")
+Modifiers = Array[Resource]([ExtResource("3_swift")])

@@ -8,9 +8,9 @@ public abstract partial class PlayerCharacter : CharacterBody3D, IDamageable
     // it points at Architect — so no subclass needs to opt in or out individually.
     public static PlayerCharacter ActiveCombatant { get; private set; }
 
-    [Export] public float Speed = 5.0f;
+    [Export] public float BaseSpeed = 5.0f;
     [Export] public float JumpVelocity = 4.5f;
-    [Export] public float MaxHealth = 100f;
+    [Export] public float BaseMaxHealth = 100f;
     [Export] public float MouseSensitivity = 0.003f;
     [Export] public float MinPitchDegrees = -60f;
     [Export] public float MaxPitchDegrees = 10f;
@@ -22,6 +22,9 @@ public abstract partial class PlayerCharacter : CharacterBody3D, IDamageable
     public bool IsDead => _currentHealth <= 0f;
     public bool IsDestroyed => IsDead;
     public abstract CharacterId Id { get; }
+
+    public float Speed => BaseSpeed * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMoveSpeed));
+    public float MaxHealth => BaseMaxHealth * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMaxHealth));
 
     // Subclasses read activity through IsActive and adjust look sensitivity through
     // LookSensitivity; nothing outside this class needs the backing fields.
