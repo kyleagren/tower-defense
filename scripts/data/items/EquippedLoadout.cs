@@ -10,6 +10,11 @@ public partial class EquippedLoadout : Resource
     [Export] public Legs Legs { get; set; }
     [Export] public Boots Boots { get; set; }
     [Export] public Gloves Gloves { get; set; }
+    [Export] public Belt Belt { get; set; }
+    [Export] public Necklace Necklace { get; set; }
+    [Export] public LeftRing LeftRing { get; set; }
+    [Export] public RightRing RightRing { get; set; }
+    [Export] public Relic Relic { get; set; }
 
     public IEnumerable<Item> EquippedItems()
     {
@@ -19,5 +24,10 @@ public partial class EquippedLoadout : Resource
         if (Legs != null) yield return Legs;
         if (Boots != null) yield return Boots;
         if (Gloves != null) yield return Gloves;
+        if (Belt != null) yield return Belt;
+        if (Necklace != null) yield return Necklace;
+        if (LeftRing != null) yield return LeftRing;
+        if (RightRing != null) yield return RightRing;
+        if (Relic != null) yield return Relic;
     }
 }

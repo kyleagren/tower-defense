@@ -5,5 +5,10 @@ public enum EquipmentSlot
     Chest,
     Legs,
     Boots,
-    Gloves
+    Gloves,
+    Belt,
+    Necklace,
+    LeftRing,
+    RightRing,
+    Relic
 }

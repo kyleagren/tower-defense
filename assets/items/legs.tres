@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="Legs" format=3 uid="uid://bbtb7w1awgcny"]
 
-[ext_resource type="Script" uid="uid://bb0kvehpbpywa" path="res://scripts/data/items/Legs.cs" id="1_legs"]
+[ext_resource type="Script" uid="uid://bb0kvehpbpywa" path="res://scripts/data/items/armor/Legs.cs" id="1_legs"]
 [ext_resource type="Texture2D" uid="uid://s4ckiw4faouv" path="res://assets/thumbnails/pants.png" id="2_icon"]
 
 [resource]
