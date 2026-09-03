@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/PlayerHealthOrb.cs" id="1_script"]
+
+[node name="PlayerHealthOrb" type="TextureProgressBar" node_paths=PackedStringArray("HealthLabel")]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -212.0
+offset_right = 212.0
+offset_bottom = -20.0
+grow_vertical = 0
+script = ExtResource("1_script")
+HealthLabel = NodePath("HealthLabel")
+
+[node name="HealthLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = -34.0
+offset_bottom = -4.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "100/100"
+horizontal_alignment = 1

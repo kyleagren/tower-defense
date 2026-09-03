@@ -18,7 +18,6 @@ public partial class InventoryPanel : Control
 
     public override void _Ready()
     {
-        // TODO: rename "paper doll" (RefreshPaperDoll et al.) - not happy with that name, no better one yet.
         BuildItemVisual(WeaponSlotButton);
         BuildItemVisual(HelmetSlotButton);
         BuildItemVisual(ChestSlotButton);
@@ -87,7 +86,7 @@ public partial class InventoryPanel : Control
     {
         _loadout = GetOrCreateLoadout();
         CharacterSheetCache.Invalidate(ActiveCharacter);
-        RefreshPaperDoll();
+        RefreshEquipmentSlots();
         RefreshGrid();
     }
 
@@ -104,7 +103,7 @@ public partial class InventoryPanel : Control
         return loadout;
     }
 
-    private void RefreshPaperDoll()
+    private void RefreshEquipmentSlots()
     {
         SetItemVisual(WeaponSlotButton, _loadout.Weapon?.Icon, _loadout.Weapon?.Name ?? "Empty");
         SetItemVisual(HelmetSlotButton, _loadout.Helmet?.Icon, _loadout.Helmet?.Name ?? "Empty");

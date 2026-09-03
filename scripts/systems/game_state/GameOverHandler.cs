@@ -26,6 +26,10 @@ public partial class GameOverHandler : Node
             GD.Print($"Gold: {SaveManager.Instance.Data.Gold}");
         }
 
-        GetTree().CreateTimer(ReloadDelay).Timeout += () => GetTree().ReloadCurrentScene();
+        GetTree().CreateTimer(ReloadDelay).Timeout += () =>
+        {
+            UiPanelStack.Reset();
+            GetTree().ReloadCurrentScene();
+        };
     }
 }

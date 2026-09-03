@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://characters/architect/Architect.tscn" id="7_t0ybu"]
 [ext_resource type="Resource" uid="uid://nco3nmkc8shy" path="res://assets/waves/wave_01.tres" id="7_wave01"]
 [ext_resource type="Resource" uid="uid://dw62crdfa2u3" path="res://assets/waves/wave_03.tres" id="8_2ucnx"]
-[ext_resource type="Script" uid="uid://n00sya71wwu3" path="res://ui/PhaseIndicator.cs" id="9_phaseindicator"]
+[ext_resource type="PackedScene" path="res://ui/PhaseIndicator.tscn" id="9_phaseindicator"]
 [ext_resource type="PackedScene" path="res://characters/soldier/Soldier.tscn" id="10_soldier"]
 [ext_resource type="Script" uid="uid://ci5j2r32p0w77" path="res://scripts/systems/game_state/GameOverHandler.cs" id="11_gameoverhandler"]
 [ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="12_healthbar"]
@@ -16,7 +16,7 @@
 [ext_resource type="Script" uid="uid://beylbkijyxcr5" path="res://scripts/systems/game_state/EconomyManager.cs" id="14_economymanager"]
 [ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://scripts/dev/DebugToggle.cs" id="15_debugtoggle"]
 [ext_resource type="Script" uid="uid://nsgeakgljfd8" path="res://scripts/systems/waves/RoutePreviewEffect.cs" id="16_routepreview"]
-[ext_resource type="Script" uid="uid://dcrouhrja52vt" path="res://ui/PlayerHealthOrb.cs" id="17_playerhealthorb"]
+[ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="17_playerhealthorb"]
 [ext_resource type="PackedScene" path="res://ui/InventoryPanel.tscn" id="18_inventorypanel"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
@@ -232,63 +232,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 4.6874204)
 Architect = NodePath("../Architect")
 AttackDamage = 100.0
 
-[node name="PhaseIndicator" type="Control" parent="." unique_id=756900810 node_paths=PackedStringArray("PhaseLabel", "GoldLabel")]
-layout_mode = 3
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 56.0
-grow_horizontal = 2
-script = ExtResource("9_phaseindicator")
-PhaseLabel = NodePath("Label")
-GoldLabel = NodePath("GoldLabel")
+[node name="PhaseIndicator" parent="." unique_id=756900810 instance=ExtResource("9_phaseindicator")]
 
-[node name="Background" type="ColorRect" parent="PhaseIndicator" unique_id=677710620]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0, 0, 0, 0.6)
-
-[node name="Label" type="Label" parent="PhaseIndicator" unique_id=251870458]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_font_sizes/font_size = 24
-text = "Build Phase"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="GoldLabel" type="Label" parent="PhaseIndicator" unique_id=954247237]
-layout_mode = 1
-anchors_preset = 11
-anchor_left = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -220.0
-offset_right = -20.0
-grow_horizontal = 0
-grow_vertical = 2
-theme_override_font_sizes/font_size = 24
-text = "Gold: 0"
-horizontal_alignment = 2
-vertical_alignment = 1
-
-[node name="PlayerHealthOrb" type="TextureProgressBar" parent="." unique_id=505215148]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = -212.0
-offset_right = 212.0
-offset_bottom = -20.0
-grow_vertical = 0
-script = ExtResource("17_playerhealthorb")
+[node name="PlayerHealthOrb" parent="." unique_id=505215148 instance=ExtResource("17_playerhealthorb")]
 
 [node name="Crosshair" parent="." unique_id=1213473900 instance=ExtResource("13_crosshair")]
 
-[node name="InventoryPanel" parent="." instance=ExtResource("18_inventorypanel")]
+[node name="InventoryPanel" parent="." unique_id=928841354 instance=ExtResource("18_inventorypanel")]
+anchors_preset = -1

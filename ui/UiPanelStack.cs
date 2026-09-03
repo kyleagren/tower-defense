@@ -27,6 +27,12 @@ public static class UiPanelStack
         }
     }
 
+    public static void Reset()
+    {
+        _open.Clear();
+        Input.MouseMode = Input.MouseModeEnum.Captured;
+    }
+
     public static bool IsTop(Control panel)
     {
         return _open.Count > 0 && _open[^1] == panel;

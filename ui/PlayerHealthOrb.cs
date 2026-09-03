@@ -7,6 +7,7 @@ public partial class PlayerHealthOrb : TextureProgressBar
     [Export] public Color BorderColor = new Color(0.14f, 0.09f, 0.07f);
     [Export] public Color EmptyColor = new Color(0.22f, 0.06f, 0.06f);
     [Export] public Color FillColor = new Color(0.65f, 0.11f, 0.11f);
+    [Export] public Label HealthLabel { get; private set; }
 
     public override void _Ready()
     {
@@ -31,6 +32,7 @@ public partial class PlayerHealthOrb : TextureProgressBar
     private void OnPlayerHealthChanged(float currentHealth, float maxHealth)
     {
         Value = maxHealth > 0f ? Mathf.Clamp(currentHealth / maxHealth, 0f, 1f) : 0f;
+        HealthLabel.Text = $"{Mathf.CeilToInt(currentHealth)}/{Mathf.CeilToInt(maxHealth)}";
     }
 
     private ImageTexture BuildCircleTexture(Color fill)
