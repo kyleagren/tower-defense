@@ -25,12 +25,12 @@ public partial class InventoryPanel : Control
         BuildItemVisual(BootsSlotButton);
         BuildItemVisual(GlovesSlotButton);
 
-        WeaponSlotButton.Pressed += () => { _loadout.Weapon = null; Refresh(); };
-        HelmetSlotButton.Pressed += () => { _loadout.Helmet = null; Refresh(); };
-        ChestSlotButton.Pressed += () => { _loadout.Chest = null; Refresh(); };
-        LegsSlotButton.Pressed += () => { _loadout.Legs = null; Refresh(); };
-        BootsSlotButton.Pressed += () => { _loadout.Boots = null; Refresh(); };
-        GlovesSlotButton.Pressed += () => { _loadout.Gloves = null; Refresh(); };
+        WeaponSlotButton.Pressed += () => { _loadout.Weapon = null; SaveManager.Instance.Save(); Refresh(); };
+        HelmetSlotButton.Pressed += () => { _loadout.Helmet = null; SaveManager.Instance.Save(); Refresh(); };
+        ChestSlotButton.Pressed += () => { _loadout.Chest = null; SaveManager.Instance.Save(); Refresh(); };
+        LegsSlotButton.Pressed += () => { _loadout.Legs = null; SaveManager.Instance.Save(); Refresh(); };
+        BootsSlotButton.Pressed += () => { _loadout.Boots = null; SaveManager.Instance.Save(); Refresh(); };
+        GlovesSlotButton.Pressed += () => { _loadout.Gloves = null; SaveManager.Instance.Save(); Refresh(); };
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -229,6 +229,7 @@ public partial class InventoryPanel : Control
             case Gloves gloves: _loadout.Gloves = gloves; break;
         }
 
+        SaveManager.Instance.Save();
         Refresh();
     }
 }
