@@ -5,11 +5,25 @@ using Godot;
 // once at a fixed position and just sits there to be raycast against.
 public partial class WorldItem : StaticBody3D
 {
+    [Export] public MeshInstance3D VisualMesh { get; private set; }
+
     public Item Item { get; private set; }
 
+    // Assigns a fresh material rather than editing VisualMesh's shared scene material - every
+    // WorldItem instance comes from the same packed scene, so mutating a shared sub-resource here
+    // would recolor every other drop currently in the world too.
     public void Initialize(Item item)
     {
         Item = item;
+
+        Color color = RarityColors.Get(item.Rarity);
+        VisualMesh.MaterialOverride = new StandardMaterial3D
+        {
+            AlbedoColor = color,
+            EmissionEnabled = true,
+            Emission = color,
+            EmissionEnergyMultiplier = 1.2f
+        };
     }
 
     // Adds the item to the shared Inventory's first empty slot and removes itself from the world.

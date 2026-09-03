@@ -8,16 +8,6 @@ public partial class InventoryPanel : Control
     private static readonly Color SelectedBg = new Color(0.20f, 0.45f, 0.20f);
     private static readonly Color PlaceholderTint = new Color(1f, 1f, 1f, 0.4f);
 
-    private static readonly Dictionary<Rarity, Color> RarityBackgrounds = new()
-    {
-        [Rarity.Common] = new Color(0.24f, 0.24f, 0.24f),
-        [Rarity.Uncommon] = new Color(0.14f, 0.30f, 0.14f),
-        [Rarity.Rare] = new Color(0.14f, 0.20f, 0.36f),
-        [Rarity.Legendary] = new Color(0.36f, 0.22f, 0.08f),
-        [Rarity.Mythic] = new Color(0.32f, 0.10f, 0.32f),
-        [Rarity.Unique] = new Color(0.40f, 0.32f, 0.08f)
-    };
-
     // A stand-in for "a place an Item can sit" - either a grid index or an equipment field, so
     // OnSlotPressed can treat all 40 grid slots and all 11 equipment slots the same way.
     private readonly struct SlotHandle
@@ -223,7 +213,7 @@ public partial class InventoryPanel : Control
         Label label = button.GetNode<Label>("Content/Label");
         Item equippedItem = slot.GetItem();
 
-        button.TooltipText = _heldItem == null && equippedItem != null ? BuildTooltip(equippedItem) : "";
+        button.TooltipText = _heldItem == null && equippedItem != null ? equippedItem.BuildTooltip() : "";
 
         if (_heldItem != null && slot.CanAccept(_heldItem))
         {
@@ -231,7 +221,7 @@ public partial class InventoryPanel : Control
         }
         else if (equippedItem != null)
         {
-            button.AddThemeStyleboxOverride("normal", CreateBackground(RarityBackground(equippedItem.Rarity)));
+            button.AddThemeStyleboxOverride("normal", CreateBackground(RarityColors.Get(equippedItem.Rarity)));
         }
         else
         {
@@ -277,20 +267,15 @@ public partial class InventoryPanel : Control
             if (slotItem != null)
             {
                 SetIconOnlyVisual(button, slotItem.Icon);
-                Color background = IsCompatible(slotItem) ? RarityBackground(slotItem.Rarity) : DisabledBg;
+                Color background = IsCompatible(slotItem) ? RarityColors.Get(slotItem.Rarity) : DisabledBg;
                 button.AddThemeStyleboxOverride("normal", CreateBackground(background));
-                button.TooltipText = _heldItem == null ? BuildTooltip(slotItem) : "";
+                button.TooltipText = _heldItem == null ? slotItem.BuildTooltip() : "";
             }
 
             button.Pressed += () => OnSlotPressed(GridSlot(capturedIndex));
 
             Grid.AddChild(button);
         }
-    }
-
-    private static Color RarityBackground(Rarity rarity)
-    {
-        return RarityBackgrounds.TryGetValue(rarity, out Color color) ? color : RarityBackgrounds[Rarity.Common];
     }
 
     // The single click-handler for every slot in the panel, grid and equipment alike:
@@ -471,26 +456,5 @@ public partial class InventoryPanel : Control
     private bool IsCompatible(Item item)
     {
         return item.EquippableCharacter == ActiveCharacter || item.EquippableCharacter == CharacterId.AnySentinel;
-    }
-
-    // Builds the hover tooltip for an item: its name, an "X Only" line if it's character-restricted,
-    // then one line per rolled mod via that mod's own DescriptionTemplate. Every current affix is
-    // percentage-based (RolledAffix.Value is stored as a fraction, rounded to a whole percent) - a
-    // future flat-value affix would need a different formatting path here.
-    private static string BuildTooltip(Item item)
-    {
-        List<string> lines = new() { item.Name };
-
-        if (item.EquippableCharacter != CharacterId.AnySentinel)
-        {
-            lines.Add($"{item.EquippableCharacter} Only");
-        }
-
-        foreach (RolledAffix roll in item.Affixes)
-        {
-            lines.Add(string.Format(roll.Affix.DescriptionTemplate, Mathf.RoundToInt(roll.Value * 100f)));
-        }
-
-        return string.Join("\n", lines);
     }
 }

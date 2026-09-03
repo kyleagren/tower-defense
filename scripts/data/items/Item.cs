@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 public abstract partial class Item : Resource
 {
@@ -26,5 +27,27 @@ public abstract partial class Item : Resource
         Icon = icon;
         EquippableCharacter = equippableCharacter;
         Affixes = affixes;
+    }
+
+    // Multi-line hover text: name, an "X Only" line if character-restricted, then one line per
+    // rolled mod via that mod's own DescriptionTemplate. Every current affix is percentage-based
+    // (RolledAffix.Value is stored as a fraction, rounded to a whole percent) - a future flat-value
+    // affix would need a different formatting path here. Shared by InventoryPanel and
+    // ItemInteractor so both UI and world tooltips read identically.
+    public string BuildTooltip()
+    {
+        List<string> lines = new() { Name };
+
+        if (EquippableCharacter != CharacterId.AnySentinel)
+        {
+            lines.Add($"{EquippableCharacter} Only");
+        }
+
+        foreach (RolledAffix roll in Affixes)
+        {
+            lines.Add(string.Format(roll.Affix.DescriptionTemplate, Mathf.RoundToInt(roll.Value * 100f)));
+        }
+
+        return string.Join("\n", lines);
     }
 }

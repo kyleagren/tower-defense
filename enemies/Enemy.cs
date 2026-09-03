@@ -27,6 +27,8 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public float CenterMassHeight = 1f;
     [Export] public int ManaReward = 1;
     [Export] public int GoldReward = 1;
+    [Export] public float DropChance = 0.3f;
+    [Export] public int LootRolls = 1;
     [Export] public HealthBar3D HealthBar { get; private set; }
 
     // TODO placeholder: remove once there's a real way to display an enemy's element/ailments (Section 15 iconography).
@@ -200,7 +202,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         NavAgent.AvoidanceEnabled = false;
         HealthBar.Visible = false;
         HealthBar.SetProcess(false);
-        EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward, GlobalPosition, DropChance, LootRolls);
 
         SetPhysicsProcess(false);
         BodyCollision.Disabled = true;

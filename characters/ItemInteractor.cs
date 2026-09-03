@@ -41,7 +41,8 @@ public partial class ItemInteractor : Node
         }
 
         Vector3 promptPosition = TargetedItem.GlobalPosition + Vector3.Up * 0.3f;
-        _prompt.ShowPrompt(promptPosition, _promptText);
+        string text = $"{_promptText}\n\n{TargetedItem.Item.BuildTooltip()}";
+        _prompt.ShowPrompt(promptPosition, text);
     }
 
     public override void _UnhandledInput(InputEvent @event)

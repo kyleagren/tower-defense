@@ -46,7 +46,7 @@ public partial class EconomyManager : Node
         EmitSignal(SignalName.EconomyChanged);
     }
 
-    private void OnEnemyKilled(int reward, int goldReward)
+    private void OnEnemyKilled(int reward, int goldReward, Vector3 position, float dropChance, int lootRolls)
     {
         Mana += reward;
         GoldEarned += goldReward;
