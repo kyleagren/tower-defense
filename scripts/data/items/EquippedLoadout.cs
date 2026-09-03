@@ -4,8 +4,7 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class EquippedLoadout : Resource
 {
-    [Export] public Weapon MainHandWeapon { get; set; }
-    [Export] public Weapon OffHandWeapon { get; set; }
+    [Export] public Weapon Weapon { get; set; }
     [Export] public Helmet Helmet { get; set; }
     [Export] public Chest Chest { get; set; }
     [Export] public Legs Legs { get; set; }
@@ -19,10 +18,7 @@ public partial class EquippedLoadout : Resource
 
     public IEnumerable<Item> EquippedItems()
     {
-        if (MainHandWeapon != null) yield return MainHandWeapon;
-        // A two-handed weapon sits in both slots as the same reference - only yield it once so
-        // its stats (CharacterSheetCache) and the "already equipped" grid filter don't double it.
-        if (OffHandWeapon != null && OffHandWeapon != MainHandWeapon) yield return OffHandWeapon;
+        if (Weapon != null) yield return Weapon;
         if (Helmet != null) yield return Helmet;
         if (Chest != null) yield return Chest;
         if (Legs != null) yield return Legs;
