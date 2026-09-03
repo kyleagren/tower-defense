@@ -7,7 +7,7 @@ public enum EquipmentSlot
     Boots,
     Gloves,
     Belt,
-    Necklace,
+    Amulet,
     LeftRing,
     RightRing,
     Relic

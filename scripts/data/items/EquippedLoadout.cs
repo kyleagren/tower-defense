@@ -11,7 +11,7 @@ public partial class EquippedLoadout : Resource
     [Export] public Boots Boots { get; set; }
     [Export] public Gloves Gloves { get; set; }
     [Export] public Belt Belt { get; set; }
-    [Export] public Necklace Necklace { get; set; }
+    [Export] public Amulet Amulet { get; set; }
     [Export] public LeftRing LeftRing { get; set; }
     [Export] public RightRing RightRing { get; set; }
     [Export] public Relic Relic { get; set; }
@@ -25,7 +25,7 @@ public partial class EquippedLoadout : Resource
         if (Boots != null) yield return Boots;
         if (Gloves != null) yield return Gloves;
         if (Belt != null) yield return Belt;
-        if (Necklace != null) yield return Necklace;
+        if (Amulet != null) yield return Amulet;
         if (LeftRing != null) yield return LeftRing;
         if (RightRing != null) yield return RightRing;
         if (Relic != null) yield return Relic;
