@@ -3,6 +3,9 @@
 [ext_resource type="Script" path="res://ui/InventoryPanel.cs" id="1_script"]
 [ext_resource type="Script" path="res://ui/TileGrid.cs" id="2_tilegrid"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel_bg"]
+bg_color = Color(0.12, 0.12, 0.12, 1)
+
 [node name="InventoryPanel" type="Control" node_paths=PackedStringArray("SlotArea", "Grid")]
 visible = false
 layout_mode = 3
@@ -23,6 +26,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel_bg")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1

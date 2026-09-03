@@ -52,6 +52,7 @@ public partial class InventoryPanel : Control
 
     private EquippedLoadout _loadout;
     private Item _heldItem;
+    private TextureRect _cursorIcon;
 
     // Fractional position within SlotArea, roughly a human silhouette: head row (Helmet/Amulet),
     // weapon+torso+relic row, ring+belt row, legs, then gloves/boots at the bottom.
@@ -81,6 +82,16 @@ public partial class InventoryPanel : Control
         _rightRingButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.RightRing, newItem => _loadout.RightRing = (Ring)newItem));
         _relicButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Relic, newItem => _loadout.Relic = (Relic)newItem));
 
+        _cursorIcon = new TextureRect
+        {
+            MouseFilter = MouseFilterEnum.Ignore,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            Size = new Vector2(72f, 72f),
+            Visible = false
+        };
+        AddChild(_cursorIcon);
+
         // Sit just below PhaseIndicator's actual height rather than a hardcoded number that could
         // silently drift out of sync with it - CallDeferred because a Control's Size isn't settled
         // until after the first layout pass, and Resized keeps it correct if that height ever changes.
@@ -91,6 +102,16 @@ public partial class InventoryPanel : Control
     private void UpdateTopOffset()
     {
         OffsetTop = PhaseIndicator.Size.Y + 4f;
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_heldItem == null)
+        {
+            return;
+        }
+
+        _cursorIcon.Position = GetLocalMousePosition() - _cursorIcon.Size / 2f;
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -156,6 +177,14 @@ public partial class InventoryPanel : Control
         CharacterSheetCache.Invalidate(ActiveCharacter);
         RefreshEquipmentSlots();
         RefreshGrid();
+        UpdateCursorIcon();
+    }
+
+    // Keeps the floating cursor icon in sync with _heldItem - shown only while something's picked up.
+    private void UpdateCursorIcon()
+    {
+        _cursorIcon.Visible = _heldItem != null;
+        _cursorIcon.Texture = _heldItem?.Icon;
     }
 
     private EquippedLoadout GetOrCreateLoadout()
