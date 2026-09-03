@@ -238,5 +238,6 @@ AttackDamage = 100.0
 
 [node name="Crosshair" parent="." unique_id=1213473900 instance=ExtResource("13_crosshair")]
 
-[node name="InventoryPanel" parent="." unique_id=928841354 instance=ExtResource("18_inventorypanel")]
+[node name="InventoryPanel" parent="." unique_id=928841354 instance=ExtResource("18_inventorypanel") node_paths=PackedStringArray("PhaseIndicator")]
 anchors_preset = -1
+PhaseIndicator = NodePath("../PhaseIndicator")

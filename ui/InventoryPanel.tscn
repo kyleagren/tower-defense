@@ -3,23 +3,18 @@
 [ext_resource type="Script" path="res://ui/InventoryPanel.cs" id="1_script"]
 [ext_resource type="Script" path="res://ui/TileGrid.cs" id="2_tilegrid"]
 
-[node name="InventoryPanel" type="Control" node_paths=PackedStringArray("Grid", "WeaponSlotButton", "HelmetSlotButton", "ChestSlotButton", "LegsSlotButton", "BootsSlotButton", "GlovesSlotButton")]
+[node name="InventoryPanel" type="Control" node_paths=PackedStringArray("SlotArea", "Grid")]
 visible = false
 layout_mode = 3
 anchors_preset = 15
-anchor_left = 0.6667
+anchor_left = 0.6
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
+SlotArea = NodePath("MarginContainer/VBoxContainer/SlotArea")
 Grid = NodePath("MarginContainer/VBoxContainer/Grid")
-WeaponSlotButton = NodePath("MarginContainer/VBoxContainer/SlotGrid/WeaponSlotButton")
-HelmetSlotButton = NodePath("MarginContainer/VBoxContainer/SlotGrid/HelmetSlotButton")
-ChestSlotButton = NodePath("MarginContainer/VBoxContainer/SlotGrid/ChestSlotButton")
-LegsSlotButton = NodePath("MarginContainer/VBoxContainer/SlotGrid/LegsSlotButton")
-BootsSlotButton = NodePath("MarginContainer/VBoxContainer/SlotGrid/BootsSlotButton")
-GlovesSlotButton = NodePath("MarginContainer/VBoxContainer/SlotGrid/GlovesSlotButton")
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
@@ -45,52 +40,17 @@ theme_override_constants/margin_bottom = 20
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="SlotGrid" type="GridContainer" parent="MarginContainer/VBoxContainer"]
+[node name="SlotArea" type="Control" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
-columns = 2
+custom_minimum_size = Vector2(0, 840)
 
-[node name="WeaponSlotButton" type="Button" parent="MarginContainer/VBoxContainer/SlotGrid"]
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 80)
-text = "Empty"
-
-[node name="HelmetSlotButton" type="Button" parent="MarginContainer/VBoxContainer/SlotGrid"]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 80)
-text = "Empty"
-
-[node name="ChestSlotButton" type="Button" parent="MarginContainer/VBoxContainer/SlotGrid"]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 80)
-text = "Empty"
-
-[node name="LegsSlotButton" type="Button" parent="MarginContainer/VBoxContainer/SlotGrid"]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 80)
-text = "Empty"
-
-[node name="BootsSlotButton" type="Button" parent="MarginContainer/VBoxContainer/SlotGrid"]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 80)
-text = "Empty"
-
-[node name="GlovesSlotButton" type="Button" parent="MarginContainer/VBoxContainer/SlotGrid"]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 80)
-text = "Empty"
 
 [node name="Grid" type="GridContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-columns = 3
+columns = 10
 script = ExtResource("2_tilegrid")

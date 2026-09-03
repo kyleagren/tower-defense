@@ -22,7 +22,13 @@ public partial class SaveManager : Node
     {
         Data = ResourceLoader.Exists(SavePath)
             ? ResourceLoader.Load<PlayerSaveData>(SavePath)
-            : new PlayerSaveData();
+            : null;
+
+        if (Data == null)
+        {
+            GD.PushWarning("SaveManager: existing save failed to load (likely a missing referenced resource) - starting fresh.");
+            Data = new PlayerSaveData();
+        }
 
         if (EnsureDefaultContent())
         {
