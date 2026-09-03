@@ -223,6 +223,8 @@ public partial class InventoryPanel : Control
         Label label = button.GetNode<Label>("Content/Label");
         Item equippedItem = slot.GetItem();
 
+        button.TooltipText = _heldItem == null && equippedItem != null ? BuildTooltip(equippedItem) : "";
+
         if (_heldItem != null && slot.CanAccept(_heldItem))
         {
             button.AddThemeStyleboxOverride("normal", CreateBackground(SelectedBg));
@@ -277,6 +279,7 @@ public partial class InventoryPanel : Control
                 SetIconOnlyVisual(button, slotItem.Icon);
                 Color background = IsCompatible(slotItem) ? RarityBackground(slotItem.Rarity) : DisabledBg;
                 button.AddThemeStyleboxOverride("normal", CreateBackground(background));
+                button.TooltipText = _heldItem == null ? BuildTooltip(slotItem) : "";
             }
 
             button.Pressed += () => OnSlotPressed(GridSlot(capturedIndex));
@@ -468,5 +471,26 @@ public partial class InventoryPanel : Control
     private bool IsCompatible(Item item)
     {
         return item.EquippableCharacter == ActiveCharacter || item.EquippableCharacter == CharacterId.AnySentinel;
+    }
+
+    // Builds the hover tooltip for an item: its name, an "X Only" line if it's character-restricted,
+    // then one line per rolled mod via that mod's own DescriptionTemplate. Every current affix is
+    // percentage-based (RolledAffix.Value is stored as a fraction, rounded to a whole percent) - a
+    // future flat-value affix would need a different formatting path here.
+    private static string BuildTooltip(Item item)
+    {
+        List<string> lines = new() { item.Name };
+
+        if (item.EquippableCharacter != CharacterId.AnySentinel)
+        {
+            lines.Add($"{item.EquippableCharacter} Only");
+        }
+
+        foreach (RolledAffix roll in item.Affixes)
+        {
+            lines.Add(string.Format(roll.Affix.DescriptionTemplate, Mathf.RoundToInt(roll.Value * 100f)));
+        }
+
+        return string.Join("\n", lines);
     }
 }
