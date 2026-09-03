@@ -1,19 +1,29 @@
 using System.Collections.Generic;
+using System.Linq;
 
 // The full mod pool, hardcoded rather than authored as assets - there are only a few dozen of
 // these at most, they're never touched by anything but us, and having them all in one file beats
 // clicking through two dozen .tres files to see the whole pool at once.
 public static class AffixTable
 {
+    private static readonly EquipmentSlot[] AccessorySlots =
+        { EquipmentSlot.Belt, EquipmentSlot.Amulet, EquipmentSlot.LeftRing, EquipmentSlot.RightRing, EquipmentSlot.Relic };
+
+    private static readonly EquipmentSlot[] ArmorSlots =
+        { EquipmentSlot.Helmet, EquipmentSlot.Chest, EquipmentSlot.Legs, EquipmentSlot.Boots, EquipmentSlot.Gloves };
+
+    private static readonly EquipmentSlot[] WeaponSlots = { EquipmentSlot.Weapon };
+
     private static readonly Dictionary<StatId, Affix> _affixes = new()
     {
-        // Ritual (Jewelry-bound)
+        // Ritual (Accessory-bound)
         [StatId.RitualRange] = new Affix
         {
             Name = "Reach",
             DescriptionTemplate = "+{0}% Ritual Range",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualRange,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 5, 8),
@@ -29,6 +39,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Cast Speed",
             AffixType = AffixType.Suffix,
             Stat = StatId.RitualCastSpeed,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 4, 6),
@@ -44,6 +55,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Cooldown Reduction",
             AffixType = AffixType.Suffix,
             Stat = StatId.RitualCooldownReduction,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 3, 5),
@@ -59,6 +71,7 @@ public static class AffixTable
             DescriptionTemplate = "-{0}% Mana Cost",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualManaCostReduction,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 3, 5),
@@ -74,6 +87,7 @@ public static class AffixTable
             DescriptionTemplate = "-{0}% Capacity Cost",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualCapacityCostReduction,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 3, 5),
@@ -89,6 +103,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualDamage,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 6, 10),
@@ -104,6 +119,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Fire Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualFireDamage,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 12, 20),
@@ -119,6 +135,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Water Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualWaterDamage,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 12, 20),
@@ -134,6 +151,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Cold Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualColdDamage,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 12, 20),
@@ -149,6 +167,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Lightning Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualLightningDamage,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 12, 20),
@@ -164,6 +183,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Wind Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualWindDamage,
+            AllowedSlots = AccessorySlots,
             TierTable =
             [
                 new PercentTierRange(5, 12, 20),
@@ -181,6 +201,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Max Health",
             AffixType = AffixType.Prefix,
             Stat = StatId.SentinelMaxHealth,
+            AllowedSlots = ArmorSlots,
             TierTable =
             [
                 new PercentTierRange(5, 5, 8),
@@ -196,6 +217,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Move Speed",
             AffixType = AffixType.Suffix,
             Stat = StatId.SentinelMoveSpeed,
+            AllowedSlots = ArmorSlots,
             TierTable =
             [
                 new PercentTierRange(5, 3, 5),
@@ -211,6 +233,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Armor",
             AffixType = AffixType.Suffix,
             Stat = StatId.SentinelArmor,
+            AllowedSlots = ArmorSlots,
             TierTable =
             [
                 new PercentTierRange(5, 3, 5),
@@ -226,6 +249,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Shield",
             AffixType = AffixType.Prefix,
             Stat = StatId.SentinelShield,
+            AllowedSlots = ArmorSlots,
             TierTable =
             [
                 new PercentTierRange(5, 5, 8),
@@ -241,6 +265,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Health Regeneration",
             AffixType = AffixType.Suffix,
             Stat = StatId.SentinelHealthRegen,
+            AllowedSlots = ArmorSlots,
             TierTable =
             [
                 new PercentTierRange(5, 5, 8),
@@ -256,6 +281,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Critical Strike Chance",
             AffixType = AffixType.Prefix,
             Stat = StatId.SentinelCritChance,
+            AllowedSlots = ArmorSlots,
             TierTable =
             [
                 new PercentTierRange(5, 2, 3),
@@ -271,6 +297,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Critical Strike Damage",
             AffixType = AffixType.Suffix,
             Stat = StatId.SentinelCritDamage,
+            AllowedSlots = ArmorSlots,
             TierTable =
             [
                 new PercentTierRange(5, 15, 25),
@@ -286,6 +313,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Ability Cooldown Reduction",
             AffixType = AffixType.Prefix,
             Stat = StatId.SentinelCooldownReduction,
+            AllowedSlots = ArmorSlots,
             TierTable =
             [
                 new PercentTierRange(5, 3, 5),
@@ -303,6 +331,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Attack Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.WeaponAttackDamage,
+            AllowedSlots = WeaponSlots,
             TierTable =
             [
                 new PercentTierRange(5, 5, 8),
@@ -314,8 +343,19 @@ public static class AffixTable
         }
     };
 
-    public static Affix Get(StatId stat)
+    public static Affix Get(StatId stat) => _affixes[stat];
+    public static IEnumerable<Affix> All => _affixes.Values;
+
+    // The flat weighted pool a roll actually draws from: every eligible affix's eligible tiers,
+    // flattened into individual (affix, tier) entries. Mirrors how PoE itself rolls - one weighted
+    // draw over every tier of every mod at once, not "pick a mod, then pick its tier" as two steps.
+    public static IEnumerable<AffixTierEntry> GetTierEntries(EquipmentSlot slot, AffixType type, int bestTier)
     {
-        return _affixes[stat];
+        return _affixes.Values
+            .Where(affix => affix.AffixType == type)
+            .Where(affix => affix.AllowedSlots.Length == 0 || affix.AllowedSlots.Contains(slot))
+            .SelectMany(affix => affix.TierTable
+                .Where(tier => tier.Tier >= bestTier)
+                .Select(tier => new AffixTierEntry(affix, tier)));
     }
 }

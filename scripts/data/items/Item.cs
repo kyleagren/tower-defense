@@ -15,4 +15,16 @@ public abstract partial class Item : Resource
     // to slot + rarity for now" call. The slot itself comes from the concrete type, not a
     // separate tag that would have to be kept in sync with it.
     public string Name => $"{Rarity} {GetType().Name}";
+
+    // The one place code (LootGenerator) is allowed to fill in a generated item's fields - keeps
+    // the properties above effectively read-only to everyone else. Godot's own .tres loader
+    // doesn't go through this at all (it sets exported properties directly via its own reflection,
+    // bypassing normal C# access rules), so hand-authored items are unaffected.
+    public void Initialize(Rarity rarity, Texture2D icon, CharacterId equippableCharacter, Godot.Collections.Array<RolledAffix> affixes)
+    {
+        Rarity = rarity;
+        Icon = icon;
+        EquippableCharacter = equippableCharacter;
+        Affixes = affixes;
+    }
 }

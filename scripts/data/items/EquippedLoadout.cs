@@ -12,8 +12,8 @@ public partial class EquippedLoadout : Resource
     [Export] public Gloves Gloves { get; set; }
     [Export] public Belt Belt { get; set; }
     [Export] public Amulet Amulet { get; set; }
-    [Export] public LeftRing LeftRing { get; set; }
-    [Export] public RightRing RightRing { get; set; }
+    [Export] public Ring LeftRing { get; set; }
+    [Export] public Ring RightRing { get; set; }
     [Export] public Relic Relic { get; set; }
 
     public IEnumerable<Item> EquippedItems()
