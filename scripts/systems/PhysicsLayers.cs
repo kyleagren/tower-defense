@@ -9,4 +9,5 @@ public static class PhysicsLayers
     public const uint Obstacles = 1 << 4;          // layer 5
     public const uint Rituals = 1 << 5;            // layer 6
     public const uint PlacementBlocked = 1 << 6;   // layer 7
+    public const uint Items = 1 << 7;              // layer 8
 }
