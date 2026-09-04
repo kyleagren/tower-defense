@@ -20,7 +20,7 @@ public partial class EnemySpawner : Node3D
             return;
         }
 
-        Enemy enemy = enemyScene.Instantiate<Enemy>();
+        WalkingEnemy enemy = enemyScene.Instantiate<WalkingEnemy>();
         GetParent().AddChild(enemy);
         enemy.GlobalPosition = GlobalPosition;
         enemy.SetInitialFacing((Lane.Waypoints[1] - Lane.Waypoints[0]).Normalized());
