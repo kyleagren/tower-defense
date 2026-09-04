@@ -12,6 +12,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public float DropChance = 0.3f;
     [Export] public int LootRolls = 1;
     [Export] public HealthBar3D HealthBar { get; private set; }
+    [Export] public PackedScene FloatingTextScene { get; private set; }
 
     // TODO placeholder: remove once there's a real way to display an enemy's element/ailments (Section 15 iconography).
     private static readonly Dictionary<Tag, StandardMaterial3D> _statusMaterials = new Dictionary<Tag, StandardMaterial3D>
@@ -107,6 +108,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         CurrentHealth -= amount.Total;
         HealthBar.SetFraction(CurrentHealth / MaxHealth);
+        OnDamageTaken(amount);
 
         if (updateStatus)
         {
@@ -171,6 +173,21 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // No-op by default — only an enemy with a ragdoll-capable rig (WalkingEnemy) does anything here.
     public virtual void ApplyExtraRagdollImpulse(Vector3 impulse)
     {
+    }
+
+    // Spawns a floating damage number for this hit, colored by its dominant element. Virtual so a
+    // subclass can also hook into "I just took damage" for its own purposes (TrainingDummy uses
+    // this for DPS tracking) without overriding all of TakeDamage.
+    protected virtual void OnDamageTaken(DamagePacket amount)
+    {
+        if (!DebugSettings.ShowFloatingCombatText || FloatingTextScene == null)
+        {
+            return;
+        }
+
+        FloatingCombatText text = FloatingTextScene.Instantiate<FloatingCombatText>();
+        GetTree().CurrentScene.AddChild(text);
+        text.Show(GetJitteredCenterMass(0.2f), amount.Total, DamageTypeColors.Get(amount.DominantElement));
     }
 
     private void TickAilments(float delta)

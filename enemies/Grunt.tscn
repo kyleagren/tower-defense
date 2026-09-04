@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://enemies/WalkingEnemy.cs" id="1_enemy"]
 [ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="2_healthbar"]
+[ext_resource type="PackedScene" path="res://visual_effects/FloatingCombatText.tscn" id="3_floatingtext"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_enemy"]
 radius = 0.4
@@ -56,6 +57,7 @@ BodyCollision = NodePath("CollisionShape3D")
 BoneSimulator = NodePath("Skeleton3D/PhysicalBoneSimulator3D")
 RootPhysicalBone = NodePath("Skeleton3D/PhysicalBoneSimulator3D/Physical Bone Body")
 HealthBar = NodePath("HealthBar3D")
+FloatingTextScene = ExtResource("3_floatingtext")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1656125769]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
