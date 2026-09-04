@@ -28,7 +28,12 @@ public partial class GameOverHandler : Node
 
         GetTree().CreateTimer(ReloadDelay).Timeout += () =>
         {
+            // Everything static that outlives the scene gets reset together here, so nothing from
+            // the finished match can leak into the next one.
             UiPanelStack.Reset();
+            EnemyRegistry.Clear();
+            IceWallSegmentRegistry.Clear();
+
             GetTree().ReloadCurrentScene();
         };
     }

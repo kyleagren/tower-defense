@@ -9,14 +9,24 @@ public partial class SaveManager : Node
     private const string RunesDirectory = "res://assets/runes/";
     private const string ItemsDirectory = "res://assets/items/";
     private const int InventorySize = 40;
+    private const float SaveDebounceSeconds = 1f;
 
     public static SaveManager Instance { get; private set; }
     public PlayerSaveData Data { get; private set; }
+
+    // Negative means nothing is pending. See RequestSave.
+    private float _saveCountdown = -1f;
 
     public override void _Ready()
     {
         Instance = this;
         Load();
+
+        // CharacterSheetCache is derived entirely from Data.Loadouts, so the node that owns that
+        // data is the one that hooks up its invalidation. Autoloads are readied in declaration
+        // order (EventBus first), so Instance is available here, and neither node ever leaves the
+        // tree - so there's no matching unsubscribe.
+        EventBus.Instance.InventoryChanged += CharacterSheetCache.InvalidateAll;
     }
 
     public void Load()
@@ -159,8 +169,51 @@ public partial class SaveManager : Node
         return true;
     }
 
+    // Coalesces bursts of small changes into one write. Inventory interaction saves on every click,
+    // swap, pickup and drop; serializing the whole PlayerSaveData synchronously on each of those is
+    // a hitch waiting to happen once the save grows past its current few kilobytes. Callers that
+    // genuinely need bytes on disk at that instant (match end, character selection) call Save().
+    public void RequestSave()
+    {
+        _saveCountdown = SaveDebounceSeconds;
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_saveCountdown < 0f)
+        {
+            return;
+        }
+
+        _saveCountdown -= (float)delta;
+
+        if (_saveCountdown <= 0f)
+        {
+            FlushPendingSave();
+        }
+    }
+
+    // A pending write must reach disk before the game goes away. Quitting finalizes the scene tree,
+    // which frees the autoloads too, so this is the last point a pending save can still be written.
+    public override void _ExitTree()
+    {
+        FlushPendingSave();
+    }
+
+    public void FlushPendingSave()
+    {
+        if (_saveCountdown < 0f)
+        {
+            return;
+        }
+
+        _saveCountdown = -1f;
+        Save();
+    }
+
     public void Save()
     {
+        _saveCountdown = -1f;
         ResourceSaver.Save(Data, SavePath);
     }
 }

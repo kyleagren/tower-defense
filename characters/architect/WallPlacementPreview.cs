@@ -43,9 +43,9 @@ public partial class WallPlacementPreview : Node3D
 
         for (int i = 0; i < segmentCount; i++)
         {
-            float t = segmentCount > 1 ? (float)i / (segmentCount - 1) : 0f;
+            Vector3 ground = IceWall.SegmentPosition(start, end, i, segmentCount);
 
-            _segmentMeshes[i].Position = start.Lerp(end, t) + Vector3.Up * wallData.SegmentWidth;
+            _segmentMeshes[i].Position = IceWall.SegmentBoxCenter(ground, wallData.SegmentWidth);
             _segmentMeshes[i].MaterialOverride = allValid ? PreviewMaterials.Valid : PreviewMaterials.Invalid;
         }
     }

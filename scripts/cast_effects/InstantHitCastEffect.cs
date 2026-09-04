@@ -23,7 +23,7 @@ public partial class InstantHitCastEffect : CastEffect
         if (targets.Count > 1)
         {
             Vector3 forkPoint = spawnPoint.GlobalPosition.Lerp(targets[0].GlobalPosition, ForkPointRatio);
-            ChainResolver.SpawnArcVisual(ArcVisualScene, spawnPoint.GlobalPosition, forkPoint);
+            ChainResolver.SpawnArcVisual(spawnPoint, ArcVisualScene, spawnPoint.GlobalPosition, forkPoint);
             visualOrigin = forkPoint;
         }
 
@@ -81,7 +81,7 @@ public partial class InstantHitCastEffect : CastEffect
         DamagePacket firstHitDamage = context.Damage * firstHitMultiplier;
         target.TakeDamage(firstHitDamage, ragdollImpulse, reaction: context.Reaction);
 
-        ChainResolver.SpawnArcVisual(ArcVisualScene, visualOrigin, targetPoint);
+        ChainResolver.SpawnArcVisual(spawnPoint, ArcVisualScene, visualOrigin, targetPoint);
 
         ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce.Value, chain.ChainCount, chain.ChainRange, chain.DamageModifier, context.Reaction, ArcVisualScene, chainTracker);
     }

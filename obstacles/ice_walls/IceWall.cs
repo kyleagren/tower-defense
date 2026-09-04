@@ -24,12 +24,9 @@ public partial class IceWall : Node3D
 
         for (int i = 0; i < segmentCount; i++)
         {
-            float t = segmentCount > 1 ? (float)i / (segmentCount - 1) : 0f;
-            Vector3 position = start.Lerp(end, t);
-
             IceWallSegment segment = data.SegmentScene.Instantiate<IceWallSegment>();
             AddChild(segment);
-            segment.GlobalPosition = position;
+            segment.GlobalPosition = SegmentPosition(start, end, i, segmentCount);
             segment.Initialize(this, data.SegmentWidth);
             _segments.Add(segment);
         }
@@ -104,11 +101,40 @@ public partial class IceWall : Node3D
         QueueFree();
     }
 
+    // --- Shared segment layout -------------------------------------------------------------
+    //
+    // Everything that has to agree on where a wall's segments sit goes through these: the real
+    // wall (above), the placement ghosts and overlap checks (RitualPlacer), the reserved-footprint
+    // collision (WallFootprintMarker), and the placement preview meshes (WallPlacementPreview).
+    // They used to each re-derive the same lerp, box size and vertical offset, which meant changing
+    // segment spacing needed five matching edits.
+
     // Adds a new segment as soon as the total empty space along the wall would reach one
     // segment's width, rather than capping the gap between any single pair of segments.
     public static int ComputeSegmentCount(float distance, float segmentWidth)
     {
         int count = Mathf.CeilToInt(distance / segmentWidth);
         return Mathf.Max(2, count);
+    }
+
+    // The ground point for segment `index`, with the first and last landing exactly on the wall's
+    // two endpoints.
+    public static Vector3 SegmentPosition(Vector3 start, Vector3 end, int index, int segmentCount)
+    {
+        float t = segmentCount > 1 ? (float)index / (segmentCount - 1) : 0f;
+        return start.Lerp(end, t);
+    }
+
+    // Matches the collision box IceWallSegment.Initialize builds for a real segment, so a
+    // reserved footprint or a placement overlap test occupies exactly the space the wall will.
+    public static Vector3 SegmentBoxSize(float segmentWidth)
+    {
+        return new Vector3(segmentWidth, segmentWidth * 2f, segmentWidth);
+    }
+
+    // A segment's box is centered a full width above its ground point (its height is 2x width).
+    public static Vector3 SegmentBoxCenter(Vector3 groundPosition, float segmentWidth)
+    {
+        return groundPosition + Vector3.Up * segmentWidth;
     }
 }

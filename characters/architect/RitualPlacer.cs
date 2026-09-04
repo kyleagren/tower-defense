@@ -26,6 +26,9 @@ public partial class RitualPlacer : Node
     private bool _wallCostApplied;
     private WallPlacementPreview _wallPreview;
 
+    private BoxShape3D _segmentQueryBox;
+    private PhysicsShapeQueryParameters3D _segmentQuery;
+
     private EconomyManager _economy;
 
     public override void _Ready()
@@ -169,31 +172,46 @@ public partial class RitualPlacer : Node
     // along the line instead of a single point - a wall can overlap something in the middle
     // without overlapping at either end, so a single pass/fail cutoff (like affordability) isn't
     // enough here.
+    // The shape and query params are built once and reused across segments and frames: this runs
+    // every physics frame for the whole length of a wall placement, and allocating a BoxShape3D
+    // plus a query per segment per frame churned dozens of engine objects a second while the
+    // cursor sat still.
     private bool[] ComputeSegmentValidity(Vector3 start, Vector3 end, WallCastData wallData, int affordableSegments)
     {
         int segmentCount = IceWall.ComputeSegmentCount(start.DistanceTo(end), wallData.SegmentWidth);
         bool[] valid = new bool[segmentCount];
+
+        PhysicsShapeQueryParameters3D query = GetSegmentQuery(wallData.SegmentWidth);
         PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
 
         for (int i = 0; i < segmentCount; i++)
         {
-            float t = segmentCount > 1 ? (float)i / (segmentCount - 1) : 0f;
-            Vector3 position = start.Lerp(end, t) + Vector3.Up * wallData.SegmentWidth;
-
-            PhysicsShapeQueryParameters3D query = new PhysicsShapeQueryParameters3D
-            {
-                Shape = new BoxShape3D { Size = new Vector3(wallData.SegmentWidth, wallData.SegmentWidth * 2f, wallData.SegmentWidth) },
-                Transform = new Transform3D(Basis.Identity, position),
-                CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked,
-                CollideWithBodies = true,
-                CollideWithAreas = false
-            };
+            Vector3 ground = IceWall.SegmentPosition(start, end, i, segmentCount);
+            query.Transform = new Transform3D(Basis.Identity, IceWall.SegmentBoxCenter(ground, wallData.SegmentWidth));
 
             bool overlaps = spaceState.IntersectShape(query).Count > 0;
             valid[i] = i < affordableSegments && !overlaps;
         }
 
         return valid;
+    }
+
+    private PhysicsShapeQueryParameters3D GetSegmentQuery(float segmentWidth)
+    {
+        if (_segmentQuery == null)
+        {
+            _segmentQueryBox = new BoxShape3D();
+            _segmentQuery = new PhysicsShapeQueryParameters3D
+            {
+                Shape = _segmentQueryBox,
+                CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked,
+                CollideWithBodies = true,
+                CollideWithAreas = false
+            };
+        }
+
+        _segmentQueryBox.Size = IceWall.SegmentBoxSize(segmentWidth);
+        return _segmentQuery;
     }
 
     private void ProcessRitualStage()
@@ -256,8 +274,7 @@ public partial class RitualPlacer : Node
 
         for (int i = 0; i < segmentCount; i++)
         {
-            float t = segmentCount > 1 ? (float)i / (segmentCount - 1) : 0f;
-            Vector3 segmentPosition = _wallStartPosition.Lerp(_wallEndPosition, t);
+            Vector3 segmentPosition = IceWall.SegmentPosition(_wallStartPosition, _wallEndPosition, i, segmentCount);
 
             if (_ghost.GlobalPosition.DistanceTo(segmentPosition) < wallData.SegmentWidth)
             {

@@ -14,17 +14,29 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public HealthBar3D HealthBar { get; private set; }
     [Export] public PackedScene FloatingTextScene { get; private set; }
 
+    // The elements that can actually be a Status - the same four DamagePacket.DominantElement
+    // considers, since Wind is consumer-only and never becomes one.
+    private static readonly Tag[] _statusElements = { Tag.Fire, Tag.Water, Tag.Cold, Tag.Lightning };
+
     // TODO placeholder: remove once there's a real way to display an enemy's element/ailments (Section 15 iconography).
-    private static readonly Dictionary<Tag, StandardMaterial3D> _statusMaterials = new Dictionary<Tag, StandardMaterial3D>
-    {
-        { Tag.Fire, CreateOverlayMaterial(new Color(1f, 0.5f, 0f)) },
-        { Tag.Water, CreateOverlayMaterial(new Color(0.05f, 0.15f, 0.55f)) },
-        { Tag.Cold, CreateOverlayMaterial(new Color(0.75f, 0.95f, 1f)) },
-        { Tag.Lightning, CreateOverlayMaterial(new Color(1f, 0.9f, 0.1f)) }
-    };
+    // Colors come from DamageTypeColors rather than a second hardcoded palette here, so the tint an
+    // enemy shows and the color its damage numbers use can't drift apart.
+    private static readonly Dictionary<Tag, StandardMaterial3D> _statusMaterials = BuildStatusMaterials();
 
     private static readonly StandardMaterial3D _burnFlashMaterial = CreateOverlayMaterial(new Color(0.5f, 0f, 0f));
     private const float BurnFlashDuration = 0.1f;
+
+    private static Dictionary<Tag, StandardMaterial3D> BuildStatusMaterials()
+    {
+        Dictionary<Tag, StandardMaterial3D> materials = new Dictionary<Tag, StandardMaterial3D>();
+
+        foreach (Tag element in _statusElements)
+        {
+            materials[element] = CreateOverlayMaterial(DamageTypeColors.GetStatusOverlay(element));
+        }
+
+        return materials;
+    }
 
     private static StandardMaterial3D CreateOverlayMaterial(Color color)
     {
@@ -39,6 +51,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     private readonly List<Ailment> _ailments = new List<Ailment>();
     // TODO placeholder: remove alongside StatusMaterials/BurnFlashMaterial above.
     private readonly List<MeshInstance3D> _meshInstances = new List<MeshInstance3D>();
+    private Material _appliedOverlay;
     private float _burnFlashTimer;
 
     public bool IsDead => _isDead;
@@ -71,13 +84,13 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         // Group membership is for editor / remote-debugger inspection only — code paths that need
         // living enemies go through EnemyRegistry, which excludes ragdolls.
-        AddToGroup("enemies");
+        AddToGroup(Groups.Enemies);
         EnemyRegistry.Register(this);
 
         HealthBar.SetFraction(1f);
         HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
 
-        CollectMeshInstances(this);
+        CollectMeshInstances();
     }
 
     // Safety net for enemies freed without dying — scene reload, in particular. Unregistering
@@ -161,7 +174,6 @@ public partial class Enemy : CharacterBody3D, IDamageable
         _isDead = true;
         EnemyRegistry.Unregister(this);
         HealthBar.Visible = false;
-        HealthBar.SetProcess(false);
         EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward, GlobalPosition, DropChance, LootRolls);
 
         SetPhysicsProcess(false);
@@ -231,22 +243,32 @@ public partial class Enemy : CharacterBody3D, IDamageable
             overlay = statusMaterial;
         }
 
+        // Only write on an actual transition. This runs every physics frame for every living enemy,
+        // and the overlay is unchanged (usually null) on the overwhelming majority of those ticks -
+        // reassigning it anyway meant a property write per mesh per enemy per frame for nothing.
+        if (overlay == _appliedOverlay)
+        {
+            return;
+        }
+
+        _appliedOverlay = overlay;
+
         foreach (MeshInstance3D meshInstance in _meshInstances)
         {
             meshInstance.MaterialOverlay = overlay;
         }
     }
 
-    private void CollectMeshInstances(Node node)
+    private void CollectMeshInstances()
     {
-        foreach (Node child in node.GetChildren())
+        // owned: false matches the hand-rolled recursion this replaced - it walks into instanced
+        // sub-scenes (the health bar included) rather than stopping at their roots.
+        foreach (Node node in FindChildren("*", nameof(MeshInstance3D), recursive: true, owned: false))
         {
-            if (child is MeshInstance3D meshInstance)
+            if (node is MeshInstance3D meshInstance)
             {
                 _meshInstances.Add(meshInstance);
             }
-
-            CollectMeshInstances(child);
         }
     }
 }

@@ -349,11 +349,12 @@ public static class AffixTable
     // The flat weighted pool a roll actually draws from: every eligible affix's eligible tiers,
     // flattened into individual (affix, tier) entries. Mirrors how PoE itself rolls - one weighted
     // draw over every tier of every mod at once, not "pick a mod, then pick its tier" as two steps.
-    public static IEnumerable<AffixTierEntry> GetTierEntries(EquipmentSlot slot, AffixType type, int bestTier)
+    public static IEnumerable<AffixTierEntry> GetTierEntries(EquipmentSlot slot, AffixType type, int bestTier, CharacterId character)
     {
         return _affixes.Values
             .Where(affix => affix.AffixType == type)
             .Where(affix => affix.AllowedSlots.Length == 0 || affix.AllowedSlots.Contains(slot))
+            .Where(affix => affix.IsAvailableTo(character))
             .SelectMany(affix => affix.TierTable
                 .Where(tier => tier.Tier <= bestTier)
                 .Select(tier => new AffixTierEntry(affix, tier)));

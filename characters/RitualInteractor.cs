@@ -1,83 +1,70 @@
 using Godot;
 
-public partial class RitualInteractor : Node
+// Repair (single press) / destroy (hold to confirm) on whichever Ritual the character is looking
+// at - README section 7's contextual world prompt.
+public partial class RitualInteractor : LookInteractor
 {
-    [Export] public PlayerCharacter Character { get; private set; }
-    [Export] public float InteractionRange = GameRules.RitualReach;
-    [Export] public PackedScene PromptScene { get; private set; }
+    [Export] public float InteractionRange { get; private set; } = GameRules.RitualReach;
     [Export] public float DestroyHoldDuration = 1f;
 
-    public Ritual TargetedRitual { get; private set; }
-
-    private InteractionPrompt _prompt;
     private string _promptText;
     private float _destroyHoldTime;
 
+    protected override uint CollisionMask => PhysicsLayers.Rituals;
+    protected override float Range => InteractionRange;
+
+    private Ritual TargetedRitual => (Ritual)Target;
+
     public override void _Ready()
     {
-        _prompt = PromptScene.Instantiate<InteractionPrompt>();
-        GetTree().CurrentScene.CallDeferred(Node.MethodName.AddChild, _prompt);
-        _prompt.HidePrompt();
+        base._Ready();
 
         string repairKey = InputPromptHelper.GetActionKeyName("repair_ritual");
         string destroyKey = InputPromptHelper.GetActionKeyName("destroy_ritual");
         _promptText = $"Press {repairKey} to Repair\nHold {destroyKey} to Destroy";
     }
 
-    public override void _PhysicsProcess(double delta)
+    // The raycast reports the Ritual's StaticBody3D child, not the Ritual itself.
+    protected override Node3D ResolveTarget(Node3D collider) => collider?.GetParent() as Ritual;
+
+    // Looking away mid-hold cancels the destroy, per README section 7.
+    protected override void OnTargetChanged(Node3D target)
     {
-        if (!Character.IsActive)
+        _destroyHoldTime = 0f;
+    }
+
+    protected override void UpdateTarget(Node3D target, float delta)
+    {
+        if (!Input.IsActionPressed("destroy_ritual"))
         {
-            TargetedRitual = null;
             _destroyHoldTime = 0f;
-            _prompt.HidePrompt();
             return;
         }
 
-        TargetedRitual = FindRitualAhead();
+        _destroyHoldTime += delta;
 
-        if (TargetedRitual == null)
+        if (_destroyHoldTime >= DestroyHoldDuration)
         {
-            _destroyHoldTime = 0f;
-            _prompt.HidePrompt();
-            return;
+            Ritual ritual = (Ritual)target;
+            ClearTarget();
+            ritual.Destroy();
+        }
+    }
+
+    protected override string BuildPromptText(Node3D target)
+    {
+        if (_destroyHoldTime <= 0f)
+        {
+            return _promptText;
         }
 
-        if (Input.IsActionPressed("destroy_ritual"))
-        {
-            _destroyHoldTime += (float)delta;
-
-            if (_destroyHoldTime >= DestroyHoldDuration)
-            {
-                Ritual ritual = TargetedRitual;
-                TargetedRitual = null;
-                _destroyHoldTime = 0f;
-                _prompt.HidePrompt();
-                ritual.Destroy();
-                return;
-            }
-        }
-        else
-        {
-            _destroyHoldTime = 0f;
-        }
-
-        Vector3 promptPosition = TargetedRitual.GlobalPosition + Vector3.Up * 0.3f;
-
-        if (_destroyHoldTime > 0f)
-        {
-            int percent = Mathf.RoundToInt(_destroyHoldTime / DestroyHoldDuration * 100f);
-            _prompt.ShowPrompt(promptPosition, $"Destroying... {percent}%");
-        }
-        else
-        {
-            _prompt.ShowPrompt(promptPosition, _promptText);
-        }
+        int percent = Mathf.RoundToInt(_destroyHoldTime / DestroyHoldDuration * 100f);
+        return $"Destroying... {percent}%";
     }
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!Character.IsActive || TargetedRitual == null)
+        if (Target == null)
         {
             return;
         }
@@ -86,25 +73,5 @@ public partial class RitualInteractor : Node
         {
             TargetedRitual.Repair();
         }
-    }
-
-    private Ritual FindRitualAhead()
-    {
-        Vector3 origin = Character.Camera.GlobalPosition;
-        Vector3 end = Character.GetCameraAimPoint(InteractionRange);
-
-        PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
-        PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
-        query.CollisionMask = PhysicsLayers.Rituals;
-
-        Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
-
-        if (result.Count == 0)
-        {
-            return null;
-        }
-
-        Node3D colliderNode = result["collider"].As<Node3D>();
-        return colliderNode?.GetParent() as Ritual;
     }
 }

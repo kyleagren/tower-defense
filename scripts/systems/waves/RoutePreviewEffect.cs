@@ -12,7 +12,6 @@ public partial class RoutePreviewEffect : Node3D
     [Export] public float MinTrailScale = 0.25f;
     [Export] public float MinTrailAlpha = 0.05f;
 
-    private const string SpawnerGroup = "enemy_spawners";
 
     private readonly List<PathFollow3D[]> _routes = new List<PathFollow3D[]>();
     private Timer _pulseTimer;
@@ -70,7 +69,7 @@ public partial class RoutePreviewEffect : Node3D
 
     private void BuildRoutes()
     {
-        foreach (Node node in GetTree().GetNodesInGroup(SpawnerGroup))
+        foreach (Node node in GetTree().GetNodesInGroup(Groups.EnemySpawners))
         {
             if (node is not EnemySpawner spawner || spawner.Lane == null)
             {

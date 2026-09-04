@@ -95,7 +95,7 @@ public partial class BuildMenu : Control
         {
             int socketIndex = i;
             Button socketButton = new Button();
-            CenterOnAnchor(socketButton, _socketAnchors[i], new Vector2(160f, 100f));
+            ControlLayout.CenterOnAnchor(socketButton, _socketAnchors[i], new Vector2(160f, 100f));
             socketButton.Pressed += () => ShowRunePicker(socketIndex);
             socketButton.MouseEntered += () => ShowSocketDescription(socketIndex);
             socketButton.FocusEntered += () => ShowSocketDescription(socketIndex);
@@ -104,12 +104,12 @@ public partial class BuildMenu : Control
         }
 
         Button clearAllButton = new Button { Text = "Clear All", ThemeTypeVariation = _clearAllVariation };
-        CenterOnAnchor(clearAllButton, new Vector2(1f / 3f, 0.95f), new Vector2(140f, 50f));
+        ControlLayout.CenterOnAnchor(clearAllButton, new Vector2(1f / 3f, 0.95f), new Vector2(140f, 50f));
         clearAllButton.Pressed += () => _clearAllDialog.PopupCentered();
         _socketScreen.AddChild(clearAllButton);
 
         Button confirmButton = new Button { Text = "Confirm", ThemeTypeVariation = _confirmVariation };
-        CenterOnAnchor(confirmButton, new Vector2(2f / 3f, 0.95f), new Vector2(140f, 50f));
+        ControlLayout.CenterOnAnchor(confirmButton, new Vector2(2f / 3f, 0.95f), new Vector2(140f, 50f));
         confirmButton.Pressed += OnConfirmPressed;
         _socketScreen.AddChild(confirmButton);
 
@@ -335,19 +335,6 @@ public partial class BuildMenu : Control
         new Vector2(0.25f, 0.75f),
         new Vector2(0.75f, 0.75f)
     };
-
-    private static void CenterOnAnchor(Control control, Vector2 anchorPoint, Vector2 size)
-    {
-        control.AnchorLeft = anchorPoint.X;
-        control.AnchorRight = anchorPoint.X;
-        control.AnchorTop = anchorPoint.Y;
-        control.AnchorBottom = anchorPoint.Y;
-
-        control.OffsetLeft = -size.X / 2f;
-        control.OffsetRight = size.X / 2f;
-        control.OffsetTop = -size.Y / 2f;
-        control.OffsetBottom = size.Y / 2f;
-    }
 
     private static Control CreateSpacer()
     {

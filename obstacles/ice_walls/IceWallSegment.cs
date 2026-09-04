@@ -44,8 +44,8 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
 
         // A fresh shape per segment: the one authored in IceWallSegment.tscn is shared by every
         // instance, so resizing it in place would resize every other segment already standing.
-        BodyCollision.Shape = new BoxShape3D { Size = new Vector3(width, width * 2f, width) };
-        BodyCollision.Position = new Vector3(0f, width, 0f);
+        BodyCollision.Shape = new BoxShape3D { Size = IceWall.SegmentBoxSize(width) };
+        BodyCollision.Position = IceWall.SegmentBoxCenter(Vector3.Zero, width);
     }
 
     // TODO: regrow cooldown after breaking (README section 6) isn't implemented yet.

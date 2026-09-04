@@ -27,7 +27,6 @@ public partial class WalkingEnemy : Enemy
 
     private enum MovementMode { FollowingLane, ChasingPlayer, AttackingWall, RejoiningLane, ApproachingObjective }
 
-    private const string SpawnerGroup = "enemy_spawners";
 
     private ProceduralWalkAnimator _walkAnimator;
     private Lane _lane;
@@ -239,7 +238,7 @@ public partial class WalkingEnemy : Enemy
         int bestIndex = -1;
         float bestDistance = float.MaxValue;
 
-        foreach (Node node in GetTree().GetNodesInGroup(SpawnerGroup))
+        foreach (Node node in GetTree().GetNodesInGroup(Groups.EnemySpawners))
         {
             if (node is not EnemySpawner spawner || spawner.Lane == null)
             {
@@ -286,7 +285,7 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
-        IceWallSegment nearestSegment = FindNearestWallSegmentInRange();
+        IceWallSegment nearestSegment = FindNearestSegment(WallDetectionRange);
         if (nearestSegment == null)
         {
             return;
@@ -299,13 +298,21 @@ public partial class WalkingEnemy : Enemy
         NavAgent.TargetPosition = _targetWall.ClosestPointOnWall(GlobalPosition);
     }
 
-    private IceWallSegment FindNearestWallSegmentInRange()
+    // One scan over the live segments, serving both the "is there any wall worth engaging?"
+    // acquire case (wall left null, wide detection range) and the "which segment of the wall I've
+    // already committed to can I actually hit?" case (wall set, attack range).
+    private IceWallSegment FindNearestSegment(float maxDistance, IceWall wall = null)
     {
         IceWallSegment nearest = null;
-        float bestDistance = WallDetectionRange;
+        float bestDistance = maxDistance;
 
         foreach (IceWallSegment segment in IceWallSegmentRegistry.Active)
         {
+            if (wall != null && segment.Wall != wall)
+            {
+                continue;
+            }
+
             float distance = GlobalPosition.DistanceTo(segment.GlobalPosition);
             if (distance <= bestDistance)
             {
@@ -331,7 +338,7 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
-        IceWallSegment target = FindNearestSegmentOnWall(_targetWall);
+        IceWallSegment target = FindNearestSegment(AttackRange, _targetWall);
 
         if (target != null)
         {
@@ -355,29 +362,6 @@ public partial class WalkingEnemy : Enemy
         }
 
         Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
-    }
-
-    private IceWallSegment FindNearestSegmentOnWall(IceWall wall)
-    {
-        IceWallSegment nearest = null;
-        float bestDistance = AttackRange;
-
-        foreach (IceWallSegment segment in IceWallSegmentRegistry.Active)
-        {
-            if (segment.Wall != wall)
-            {
-                continue;
-            }
-
-            float distance = GlobalPosition.DistanceTo(segment.GlobalPosition);
-            if (distance <= bestDistance)
-            {
-                bestDistance = distance;
-                nearest = segment;
-            }
-        }
-
-        return nearest;
     }
 
     private void ProcessChasingPlayer(double delta)

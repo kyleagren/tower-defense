@@ -11,6 +11,7 @@ public partial class Ritual : Node3D
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
 
     private SpellInstance _spellInstance;
+    private CharacterSheet _ownerSheet;
     private Enemy _currentTarget;
     private float _searchTimer;
     private int _manaCost;
@@ -45,23 +46,28 @@ public partial class Ritual : Node3D
         EventBus.Instance.InventoryChanged -= OnInventoryChanged;
     }
 
-    // Equipment changing anywhere invalidates this Ritual's cached context - cheap even when it
-    // wasn't really this Ritual's own owner, since Resolve() just rebuilds once on next use.
+    // Equipment changing anywhere drops both cached layers - the resolved context and the owner
+    // sheet it was resolved against. Cheap even when it wasn't really this Ritual's own owner,
+    // since both are rebuilt lazily on next use rather than here.
     private void OnInventoryChanged()
     {
+        _ownerSheet = null;
         _spellInstance?.InvalidateCache();
     }
 
     public void SetOwnerId(PlayerId owner)
     {
         OwnerId = owner;
+        _ownerSheet = null;
     }
 
-    // Looks up the owner's current equipment bonuses fresh each call - cheap (a dictionary read),
-    // and only actually used by Resolve() on the rare call where its cache needs rebuilding.
+    // The owner's sheet is held rather than re-fetched per frame: _Process calls this every tick,
+    // and the lookup behind it walks PlayerSentinels -> SaveManager -> a dictionary read. Both this
+    // and SpellInstance's own cache are dropped together by OnInventoryChanged.
     private SpellCastContext ResolveWithOwner()
     {
-        return _spellInstance.Resolve(CharacterSheetCache.GetSheet(PlayerSentinels.Get(OwnerId)));
+        _ownerSheet ??= CharacterSheetCache.GetSheet(PlayerSentinels.Get(OwnerId));
+        return _spellInstance.Resolve(_ownerSheet);
     }
 
     private void OnCastEffectConcluded()

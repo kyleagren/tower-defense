@@ -8,23 +8,37 @@ public partial class WaveController : Node
     [Export] public float SpawnInterval = 0.3f;
     [Export] public float EnemyCheckInterval = 0.5f;
 
-    private const string SpawnerGroup = "enemy_spawners";
 
     private Dictionary<string, EnemySpawner> _spawnersById;
     private int _nextWaveIndex;
     private GamePhase _currentPhase = GamePhase.Build;
+    private bool _matchOver;
 
     public override void _Ready()
     {
         _spawnersById = new Dictionary<string, EnemySpawner>();
 
-        foreach (Node node in GetTree().GetNodesInGroup(SpawnerGroup))
+        foreach (Node node in GetTree().GetNodesInGroup(Groups.EnemySpawners))
         {
             if (node is EnemySpawner spawner)
             {
                 _spawnersById[spawner.Id] = spawner;
             }
         }
+
+        EventBus.Instance.GameEnded += OnGameEnded;
+    }
+
+    public override void _ExitTree()
+    {
+        EventBus.Instance.GameEnded -= OnGameEnded;
+    }
+
+    // RunWave is a detached Task, so losing the match doesn't unwind it - without this it keeps
+    // spawning into a lost level for the whole of GameOverHandler's reload delay.
+    private void OnGameEnded(bool victory)
+    {
+        _matchOver = true;
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -75,9 +89,14 @@ public partial class WaveController : Node
 
         await Task.WhenAll(spawnerTasks);
 
-        while (EnemyRegistry.Active.Count > 0)
+        while (!_matchOver && EnemyRegistry.Active.Count > 0)
         {
             await ToSignal(GetTree().CreateTimer(EnemyCheckInterval), "timeout");
+        }
+
+        if (_matchOver)
+        {
+            return;
         }
 
         _currentPhase = GamePhase.Build;
@@ -118,6 +137,11 @@ public partial class WaveController : Node
 
         foreach (PackedScene enemyScene in spawnQueue)
         {
+            if (_matchOver)
+            {
+                return;
+            }
+
             spawner.Spawn(enemyScene);
             await ToSignal(GetTree().CreateTimer(SpawnInterval), "timeout");
         }

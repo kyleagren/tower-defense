@@ -24,6 +24,16 @@ public static class EnemyTargeting
         return FindBest(DistanceSquared, range, DistanceSquared, exclude, predicate);
     }
 
+    // Two exclusion sets instead of one merged set. A chaining projectile has both its own hit list
+    // and the shared per-cast tracker to skip; merging them meant allocating a HashSet on every
+    // single chain jump purely to ask a membership question.
+    public static Enemy FindNearest(Vector3 fromPosition, float range, ISet<Enemy> exclude, ISet<Enemy> alsoExclude)
+    {
+        float DistanceSquared(Enemy enemy) => fromPosition.DistanceSquaredTo(enemy.GlobalPosition);
+
+        return FindBest(DistanceSquared, range, DistanceSquared, exclude, null, alsoExclude);
+    }
+
     public static Enemy FindNearestToSegment(Vector3 segmentStart, Vector3 segmentEnd, float range, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null)
     {
         float DistanceSquared(Enemy enemy) => GeometryUtils.DistanceSquaredToSegment(enemy.GlobalPosition, segmentStart, segmentEnd);
@@ -37,7 +47,7 @@ public static class EnemyTargeting
     // exclude is an ISet rather than an IEnumerable so the membership test is a hash lookup per
     // candidate. Passing a lazy sequence (a Concat or an OfType) would silently degrade this to a
     // full re-scan for every enemy considered, which is what it used to do.
-    private static Enemy FindBest(Func<Enemy, float> rangeSquaredTo, float range, Func<Enemy, float> score, ISet<Enemy> exclude, Func<Enemy, bool> predicate)
+    private static Enemy FindBest(Func<Enemy, float> rangeSquaredTo, float range, Func<Enemy, float> score, ISet<Enemy> exclude, Func<Enemy, bool> predicate, ISet<Enemy> alsoExclude = null)
     {
         IReadOnlyList<Enemy> candidates = EnemyRegistry.Active;
         float rangeSquared = range * range;
@@ -56,6 +66,11 @@ public static class EnemyTargeting
                 continue;
             }
 
+            if (alsoExclude != null && alsoExclude.Contains(enemy))
+            {
+                continue;
+            }
+
             if (predicate != null && !predicate(enemy))
             {
                 continue;
@@ -67,7 +82,7 @@ public static class EnemyTargeting
             }
 
             float candidateScore = score(enemy);
-            if (candidateScore <= bestScore)
+            if (candidateScore < bestScore)
             {
                 bestScore = candidateScore;
                 best = enemy;

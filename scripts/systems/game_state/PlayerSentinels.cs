@@ -15,9 +15,16 @@ public static class PlayerSentinels
 
     private static readonly Dictionary<PlayerId, CharacterId> _selections = new();
 
+    // A remote player with no synced pick yet falls back to the same default a brand-new save
+    // uses, rather than throwing - the selection arrives over the network after the player does.
     public static CharacterId Get(PlayerId player)
     {
-        return player == Local ? SaveManager.Instance.Data.LastPlayedCharacter : _selections[player];
+        if (player == Local)
+        {
+            return SaveManager.Instance.Data.LastPlayedCharacter;
+        }
+
+        return _selections.TryGetValue(player, out CharacterId character) ? character : CharacterId.Soldier;
     }
 
     // The eventual Sentinel-selection screen calls this for the local player; a future network

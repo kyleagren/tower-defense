@@ -1,6 +1,5 @@
 using Godot;
 using System.Collections.Generic;
-using System.Linq;
 
 public partial class Projectile : Area3D
 {
@@ -28,6 +27,11 @@ public partial class Projectile : Area3D
     private const float ReturnArrivalDistance = 0.75f;
     private const float MaxReturnDistance = 10f;
     private readonly HashSet<Node3D> _alreadyHit = new HashSet<Node3D>();
+
+    // The enemy-only half of _alreadyHit, maintained alongside it. _alreadyHit also holds walls and
+    // terrain, so it can't be handed to EnemyTargeting directly, and building a filtered copy per
+    // chain jump is exactly the allocation this avoids.
+    private readonly HashSet<Enemy> _ownEnemyHits = new HashSet<Enemy>();
 
     // The trackers are shared across every projectile in one cast, so they're passed in rather
     // than read off the context. Everything else the projectile needs comes from the context —
@@ -103,6 +107,7 @@ public partial class Projectile : Area3D
 
         if (body is Enemy hitEnemy)
         {
+            _ownEnemyHits.Add(hitEnemy);
             ChainHitTracker?.Add(hitEnemy);
             ResolveOutcomeAfterEnemyHit(hitEnemy);
             return;
@@ -189,22 +194,16 @@ public partial class Projectile : Area3D
 
     private bool TryRedirectToChainTarget(Enemy hitEnemy)
     {
-        // Materialized as sets so the exclusion test is a hash lookup — the old lazy OfType/Concat
-        // made EnemyTargeting re-walk the whole sequence for every candidate enemy.
-        HashSet<Enemy> ownHits = new HashSet<Enemy>(_alreadyHit.OfType<Enemy>());
+        // Both exclusion sets are passed through as-is rather than merged into a new one: this runs
+        // on every chain jump, and the merge was two HashSet allocations per hit just to answer a
+        // membership question the targeting loop can ask of each set directly.
+        Enemy next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, _ownEnemyHits, ChainHitTracker);
 
-        HashSet<Enemy> allHits = ownHits;
-        if (ChainHitTracker != null)
-        {
-            allHits = new HashSet<Enemy>(ownHits);
-            allHits.UnionWith(ChainHitTracker);
-        }
-
-        Enemy next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, allHits);
-
+        // Nothing untouched in range — fall back to something a sibling chain already caught rather
+        // than dropping the remaining jumps entirely.
         if (next == null && ChainHitTracker != null)
         {
-            next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, ownHits);
+            next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, _ownEnemyHits);
         }
 
         if (next == null)

@@ -1,53 +1,43 @@
 using Godot;
 
-// Lets the character look at a WorldItem within range and pick it up with pickup_item - same
-// look-and-press pattern as RitualInteractor's repair/destroy prompt.
-public partial class ItemInteractor : Node
+// Look at a WorldItem within range and pick it up with pickup_item - the same look-and-press
+// pattern RitualInteractor uses, both built on LookInteractor.
+public partial class ItemInteractor : LookInteractor
 {
-    [Export] public PlayerCharacter Character { get; private set; }
-    [Export] public float InteractionRange = GameRules.ItemPickupReach;
-    [Export] public PackedScene PromptScene { get; private set; }
+    [Export] public float InteractionRange { get; private set; } = GameRules.ItemPickupReach;
 
-    public WorldItem TargetedItem { get; private set; }
+    private string _pickupText;
+    private string _cachedPromptText;
 
-    private InteractionPrompt _prompt;
-    private string _promptText;
+    protected override uint CollisionMask => PhysicsLayers.Items;
+    protected override float Range => InteractionRange;
+
+    private WorldItem TargetedItem => (WorldItem)Target;
 
     public override void _Ready()
     {
-        _prompt = PromptScene.Instantiate<InteractionPrompt>();
-        GetTree().CurrentScene.CallDeferred(Node.MethodName.AddChild, _prompt);
-        _prompt.HidePrompt();
+        base._Ready();
 
-        string pickupKey = InputPromptHelper.GetActionKeyName("pickup_item");
-        _promptText = $"Press {pickupKey} to Pick Up";
+        _pickupText = $"Press {InputPromptHelper.GetActionKeyName("pickup_item")} to Pick Up";
     }
 
-    public override void _PhysicsProcess(double delta)
+    // A WorldItem is its own StaticBody3D, so the collider is already the target.
+    protected override Node3D ResolveTarget(Node3D collider) => collider as WorldItem;
+
+    // The prompt embeds the item's full rolled-affix tooltip, which is a string.Format per affix
+    // plus a join - built once when the target changes rather than every physics tick.
+    protected override void OnTargetChanged(Node3D target)
     {
-        if (!Character.IsActive)
-        {
-            TargetedItem = null;
-            _prompt.HidePrompt();
-            return;
-        }
-
-        TargetedItem = FindItemAhead();
-
-        if (TargetedItem == null)
-        {
-            _prompt.HidePrompt();
-            return;
-        }
-
-        Vector3 promptPosition = TargetedItem.GlobalPosition + Vector3.Up * 0.3f;
-        string text = $"{_promptText}\n\n{TargetedItem.Item.BuildTooltip()}";
-        _prompt.ShowPrompt(promptPosition, text);
+        _cachedPromptText = target is WorldItem worldItem
+            ? $"{_pickupText}\n\n{worldItem.Item.BuildTooltip()}"
+            : null;
     }
+
+    protected override string BuildPromptText(Node3D target) => _cachedPromptText;
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!Character.IsActive || TargetedItem == null)
+        if (Target == null)
         {
             return;
         }
@@ -55,27 +45,7 @@ public partial class ItemInteractor : Node
         if (@event.IsActionPressed("pickup_item"))
         {
             TargetedItem.PickUp();
-            TargetedItem = null;
-            _prompt.HidePrompt();
+            ClearTarget();
         }
-    }
-
-    private WorldItem FindItemAhead()
-    {
-        Vector3 origin = Character.Camera.GlobalPosition;
-        Vector3 end = Character.GetCameraAimPoint(InteractionRange);
-
-        PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
-        PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
-        query.CollisionMask = PhysicsLayers.Items;
-
-        Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
-
-        if (result.Count == 0)
-        {
-            return null;
-        }
-
-        return result["collider"].As<Node3D>() as WorldItem;
     }
 }

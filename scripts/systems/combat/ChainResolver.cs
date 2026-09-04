@@ -42,7 +42,7 @@ public static class ChainResolver
             Vector3 nextPoint = next.GetJitteredCenterMass(0.25f);
             Vector3 ragdollImpulse = (nextPoint - currentPoint).Normalized() * ragdollForce;
             next.TakeDamage(currentDamage, ragdollImpulse, reaction: reaction);
-            SpawnArcVisual(arcVisualScene, currentPoint, nextPoint);
+            SpawnArcVisual(next, arcVisualScene, currentPoint, nextPoint);
 
             ownHits.Add(next);
             allHits.Add(next);
@@ -52,16 +52,18 @@ public static class ChainResolver
         }
     }
 
-    public static void SpawnArcVisual(PackedScene arcVisualScene, Vector3 from, Vector3 to)
+    // context is any node already in the tree - the caster's spawn point, or the enemy being struck.
+    // Taking one beats casting Engine.GetMainLoop(), which reached around the scene tree to get at
+    // something every caller already had in hand.
+    public static void SpawnArcVisual(Node context, PackedScene arcVisualScene, Vector3 from, Vector3 to)
     {
         if (arcVisualScene == null)
         {
             return;
         }
 
-        SceneTree tree = (SceneTree)Engine.GetMainLoop();
         ArcVisual visual = arcVisualScene.Instantiate<ArcVisual>();
-        tree.CurrentScene.AddChild(visual);
+        context.GetTree().CurrentScene.AddChild(visual);
         visual.Show(from, to);
     }
 }

@@ -64,13 +64,12 @@ public partial class WallFootprintMarker : StaticBody3D
 
         for (int i = 0; i < segmentCount; i++)
         {
-            float t = segmentCount > 1 ? (float)i / (segmentCount - 1) : 0f;
-            Vector3 position = localStart.Lerp(localEnd, t) + Vector3.Up * segmentWidth;
+            Vector3 ground = IceWall.SegmentPosition(localStart, localEnd, i, segmentCount);
 
             CollisionShape3D collisionShape = new CollisionShape3D
             {
-                Shape = new BoxShape3D { Size = new Vector3(segmentWidth, segmentWidth * 2f, segmentWidth) },
-                Position = position
+                Shape = new BoxShape3D { Size = IceWall.SegmentBoxSize(segmentWidth) },
+                Position = IceWall.SegmentBoxCenter(ground, segmentWidth)
             };
 
             AddChild(collisionShape);

@@ -36,7 +36,7 @@ public partial class WorldItem : StaticBody3D
 
         if (Item.IsCompatibleWith(character) && loadout.TryEquip(Item))
         {
-            SaveManager.Instance.Save();
+            SaveManager.Instance.RequestSave();
             EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
             QueueFree();
             return;
@@ -51,7 +51,7 @@ public partial class WorldItem : StaticBody3D
         }
 
         inventory[emptySlotIndex] = Item;
-        SaveManager.Instance.Save();
+        SaveManager.Instance.RequestSave();
         EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
         QueueFree();
     }
