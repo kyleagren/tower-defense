@@ -31,9 +31,10 @@ public partial class WorldItem : StaticBody3D
     // room, which beats InventoryPanel's own "displaced item is lost" fallback for the same case.
     public void PickUp()
     {
-        EquippedLoadout loadout = SaveManager.Instance.Data.GetOrCreateLoadout(SelectedSentinel.Current);
+        CharacterId character = PlayerSentinels.Get(PlayerSentinels.Local);
+        EquippedLoadout loadout = SaveManager.Instance.Data.GetOrCreateLoadout(character);
 
-        if (Item.IsCompatibleWith(SelectedSentinel.Current) && loadout.TryEquip(Item))
+        if (Item.IsCompatibleWith(character) && loadout.TryEquip(Item))
         {
             SaveManager.Instance.Save();
             EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);

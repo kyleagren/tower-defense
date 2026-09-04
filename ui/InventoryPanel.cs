@@ -181,13 +181,14 @@ public partial class InventoryPanel : Control
             ReturnToInventory(_heldItem);
             _heldItem = null;
             SaveManager.Instance.Save();
+            EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
         }
 
         Visible = false;
         UiPanelStack.Pop(this);
     }
 
-    private CharacterId ActiveCharacter => SelectedSentinel.Current;
+    private CharacterId ActiveCharacter => PlayerSentinels.Get(PlayerSentinels.Local);
 
     private void Refresh()
     {
@@ -331,6 +332,7 @@ public partial class InventoryPanel : Control
         inventory[gridIndex] = displaced;
 
         SaveManager.Instance.Save();
+        EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
         Refresh();
     }
 
@@ -352,6 +354,7 @@ public partial class InventoryPanel : Control
             slot.PlaceItem(_heldItem);
             _heldItem = displaced;
             SaveManager.Instance.Save();
+            EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
             Refresh();
             return;
         }

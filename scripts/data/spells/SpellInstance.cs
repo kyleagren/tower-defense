@@ -57,6 +57,13 @@ public class SpellInstance
         return _cachedContext;
     }
 
+    // Forces the next Resolve() to rebuild from scratch - used when something outside the normal
+    // rune-attach/detach flow needs the cached context thrown away, e.g. the owner's gear changing.
+    public void InvalidateCache()
+    {
+        _cachedContext = null;
+    }
+
     public void StartCast(float castTime, float cooldown)
     {
         _castTimeRemaining = castTime;

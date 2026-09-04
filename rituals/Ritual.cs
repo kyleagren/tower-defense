@@ -8,6 +8,7 @@ public partial class Ritual : Node3D
     [Export] public Rune[] RuneSlots { get; private set; } = new Rune[GameRules.MaxRuneSlots];
     [Export] public Node3D SpawnPoint { get; private set; }
     [Export] public float TargetSearchInterval = 0.25f;
+    [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
 
     private SpellInstance _spellInstance;
     private Enemy _currentTarget;
@@ -29,6 +30,8 @@ public partial class Ritual : Node3D
             effect.Concluded += OnCastEffectConcluded;
         }
 
+        EventBus.Instance.InventoryChanged += OnInventoryChanged;
+
         // A ritual placed by RitualPlacer is configured explicitly right after AddChild, so only
         // one authored into a scene with a Spell already assigned configures itself here.
         if (Spell != null)
@@ -37,9 +40,33 @@ public partial class Ritual : Node3D
         }
     }
 
+    public override void _ExitTree()
+    {
+        EventBus.Instance.InventoryChanged -= OnInventoryChanged;
+    }
+
+    // Equipment changing anywhere invalidates this Ritual's cached context - cheap even when it
+    // wasn't really this Ritual's own owner, since Resolve() just rebuilds once on next use.
+    private void OnInventoryChanged()
+    {
+        _spellInstance?.InvalidateCache();
+    }
+
+    public void SetOwnerId(PlayerId owner)
+    {
+        OwnerId = owner;
+    }
+
+    // Looks up the owner's current equipment bonuses fresh each call - cheap (a dictionary read),
+    // and only actually used by Resolve() on the rare call where its cache needs rebuilding.
+    private SpellCastContext ResolveWithOwner()
+    {
+        return _spellInstance.Resolve(CharacterSheetCache.GetSheet(PlayerSentinels.Get(OwnerId)));
+    }
+
     private void OnCastEffectConcluded()
     {
-        _spellInstance.EndOngoingEffect(_spellInstance.Resolve().ResolvedCooldown);
+        _spellInstance.EndOngoingEffect(ResolveWithOwner().ResolvedCooldown);
     }
 
     public void Repair()
@@ -105,7 +132,7 @@ public partial class Ritual : Node3D
             return;
         }
 
-        SpellCastContext context = _spellInstance.Resolve();
+        SpellCastContext context = ResolveWithOwner();
 
         _spellInstance.Tick((float)delta);
         _searchTimer -= (float)delta;

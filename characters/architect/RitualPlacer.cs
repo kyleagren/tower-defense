@@ -350,6 +350,7 @@ public partial class RitualPlacer : Node
         GetTree().CurrentScene.AddChild(placed);
         placed.GlobalTransform = _ghost.GlobalTransform;
         placed.Configure(_pendingSpell, _pendingRunes);
+        placed.SetOwnerId(PlayerSentinels.Local);
 
         if (_pendingContext.Wall != null)
         {
