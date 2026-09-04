@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://ql2bmt2vm1o6"]
 
-[ext_resource type="Script" path="res://enemies/WalkingEnemy.cs" id="1_enemy"]
+[ext_resource type="Script" uid="uid://bygl65ysw4uvk" path="res://enemies/WalkingEnemy.cs" id="1_enemy"]
 [ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="2_healthbar"]
 [ext_resource type="PackedScene" path="res://visual_effects/FloatingCombatText.tscn" id="3_floatingtext"]
 
@@ -47,15 +47,15 @@ height = 0.8
 radius = 0.08
 height = 0.8
 
-[node name="Enemy" type="CharacterBody3D" unique_id=1298715792 node_paths=PackedStringArray("NavAgent", "Skeleton", "BodyCollision", "BoneSimulator", "RootPhysicalBone", "HealthBar")]
+[node name="Enemy" type="CharacterBody3D" unique_id=1298715792 node_paths=PackedStringArray("NavAgent", "Skeleton", "BoneSimulator", "RootPhysicalBone", "BodyCollision", "HealthBar")]
 collision_layer = 2
 collision_mask = 51
 script = ExtResource("1_enemy")
 NavAgent = NodePath("NavigationAgent3D")
 Skeleton = NodePath("Skeleton3D")
-BodyCollision = NodePath("CollisionShape3D")
 BoneSimulator = NodePath("Skeleton3D/PhysicalBoneSimulator3D")
 RootPhysicalBone = NodePath("Skeleton3D/PhysicalBoneSimulator3D/Physical Bone Body")
+BodyCollision = NodePath("CollisionShape3D")
 HealthBar = NodePath("HealthBar3D")
 FloatingTextScene = ExtResource("3_floatingtext")
 

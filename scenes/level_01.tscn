@@ -20,7 +20,6 @@
 [ext_resource type="PackedScene" path="res://ui/InventoryPanel.tscn" id="18_inventorypanel"]
 [ext_resource type="Script" uid="uid://briq33cnkh3pc" path="res://scripts/systems/game_state/ItemDropManager.cs" id="19_itemdropmanager"]
 [ext_resource type="PackedScene" path="res://world_items/WorldItem.tscn" id="20_worlditem"]
-[ext_resource type="PackedScene" path="res://enemies/TrainingDummy.tscn" id="21_wqkcq"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
@@ -248,6 +247,3 @@ AttackDamage = 100.0
 [node name="InventoryPanel" parent="." unique_id=928841354 node_paths=PackedStringArray("PhaseIndicator") instance=ExtResource("18_inventorypanel")]
 anchors_preset = -1
 PhaseIndicator = NodePath("../PhaseIndicator")
-
-[node name="TrainingDummy" parent="." unique_id=1876894090 instance=ExtResource("21_wqkcq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.662427, 0, 1.0672004)

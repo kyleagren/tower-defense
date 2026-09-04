@@ -51,6 +51,8 @@ public partial class WalkingEnemy : Enemy
             NavAgent.Radius = capsuleShape.Radius;
         }
         NavAgent.VelocityComputed += OnVelocityComputed;
+
+        SetPhysicalBonesCollision(0, 0);
     }
 
     public void SetLane(Lane lane, DefendableObjective objective)
