@@ -29,7 +29,7 @@ public partial class ItemDropManager : Node
     private static readonly CharacterId[] _sentinels =
         { CharacterId.Soldier, CharacterId.Tank, CharacterId.Assassin, CharacterId.Templar };
 
-    // Common is far likelier than Mythic. Rarity.Unique is never rolled here, matching
+    // Common is far likelier than Legendary. Rarity.Unique is never rolled here, matching
     // LootGenerator's own rule that uniques are hand-authored, not generated.
     private static readonly (Rarity Rarity, int Weight)[] _rarityWeights =
     {
@@ -37,7 +37,7 @@ public partial class ItemDropManager : Node
         (Rarity.Uncommon, 45),
         (Rarity.Rare, 18),
         (Rarity.Epic, 6),
-        (Rarity.Mythic, 1)
+        (Rarity.Legendary, 1)
     };
 
     private static readonly System.Random _random = new();

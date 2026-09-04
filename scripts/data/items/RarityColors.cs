@@ -11,7 +11,7 @@ public static class RarityColors
         [Rarity.Uncommon] = new Color(0.08f, 0.30f, 0.06f),
         [Rarity.Rare] = new Color(0.06f, 0.24f, 0.38f),
         [Rarity.Epic] = new Color(0.30f, 0.10f, 0.42f),
-        [Rarity.Mythic] = new Color(0.40f, 0.38f, 0.05f),
+        [Rarity.Legendary] = new Color(0.40f, 0.38f, 0.05f),
         [Rarity.Unique] = new Color(0.42f, 0.14f, 0.02f)
     };
 

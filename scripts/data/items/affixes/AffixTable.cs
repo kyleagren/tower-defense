@@ -26,11 +26,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 5, 8),
-                new PercentTierRange(4, 9, 12),
+                new PercentTierRange(1, 5, 8),
+                new PercentTierRange(2, 9, 12),
                 new PercentTierRange(3, 13, 17),
-                new PercentTierRange(2, 18, 23),
-                new PercentTierRange(1, 24, 30)
+                new PercentTierRange(4, 18, 23),
+                new PercentTierRange(5, 24, 30)
             ]
         },
         [StatId.RitualCastSpeed] = new Affix
@@ -42,11 +42,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 4, 6),
-                new PercentTierRange(4, 7, 9),
+                new PercentTierRange(1, 4, 6),
+                new PercentTierRange(2, 7, 9),
                 new PercentTierRange(3, 10, 13),
-                new PercentTierRange(2, 14, 18),
-                new PercentTierRange(1, 19, 24)
+                new PercentTierRange(4, 14, 18),
+                new PercentTierRange(5, 19, 24)
             ]
         },
         [StatId.RitualCooldownReduction] = new Affix
@@ -58,11 +58,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 3, 5),
-                new PercentTierRange(4, 6, 8),
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
                 new PercentTierRange(3, 9, 12),
-                new PercentTierRange(2, 13, 16),
-                new PercentTierRange(1, 17, 20)
+                new PercentTierRange(4, 13, 16),
+                new PercentTierRange(5, 17, 20)
             ]
         },
         [StatId.RitualManaCostReduction] = new Affix
@@ -74,11 +74,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 3, 5),
-                new PercentTierRange(4, 6, 8),
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
                 new PercentTierRange(3, 9, 11),
-                new PercentTierRange(2, 12, 15),
-                new PercentTierRange(1, 16, 20)
+                new PercentTierRange(4, 12, 15),
+                new PercentTierRange(5, 16, 20)
             ]
         },
         [StatId.RitualCapacityCostReduction] = new Affix
@@ -90,11 +90,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 3, 5),
-                new PercentTierRange(4, 6, 8),
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
                 new PercentTierRange(3, 9, 11),
-                new PercentTierRange(2, 12, 15),
-                new PercentTierRange(1, 16, 20)
+                new PercentTierRange(4, 12, 15),
+                new PercentTierRange(5, 16, 20)
             ]
         },
         [StatId.RitualDamage] = new Affix
@@ -106,11 +106,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 6, 10),
-                new PercentTierRange(4, 11, 15),
+                new PercentTierRange(1, 6, 10),
+                new PercentTierRange(2, 11, 15),
                 new PercentTierRange(3, 16, 20),
-                new PercentTierRange(2, 21, 27),
-                new PercentTierRange(1, 28, 35)
+                new PercentTierRange(4, 21, 27),
+                new PercentTierRange(5, 28, 35)
             ]
         },
         [StatId.RitualFireDamage] = new Affix
@@ -122,11 +122,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 12, 20),
-                new PercentTierRange(4, 22, 30),
+                new PercentTierRange(1, 12, 20),
+                new PercentTierRange(2, 22, 30),
                 new PercentTierRange(3, 32, 40),
-                new PercentTierRange(2, 42, 54),
-                new PercentTierRange(1, 56, 70)
+                new PercentTierRange(4, 42, 54),
+                new PercentTierRange(5, 56, 70)
             ]
         },
         [StatId.RitualWaterDamage] = new Affix
@@ -138,11 +138,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 12, 20),
-                new PercentTierRange(4, 22, 30),
+                new PercentTierRange(1, 12, 20),
+                new PercentTierRange(2, 22, 30),
                 new PercentTierRange(3, 32, 40),
-                new PercentTierRange(2, 42, 54),
-                new PercentTierRange(1, 56, 70)
+                new PercentTierRange(4, 42, 54),
+                new PercentTierRange(5, 56, 70)
             ]
         },
         [StatId.RitualColdDamage] = new Affix
@@ -154,11 +154,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 12, 20),
-                new PercentTierRange(4, 22, 30),
+                new PercentTierRange(1, 12, 20),
+                new PercentTierRange(2, 22, 30),
                 new PercentTierRange(3, 32, 40),
-                new PercentTierRange(2, 42, 54),
-                new PercentTierRange(1, 56, 70)
+                new PercentTierRange(4, 42, 54),
+                new PercentTierRange(5, 56, 70)
             ]
         },
         [StatId.RitualLightningDamage] = new Affix
@@ -170,11 +170,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 12, 20),
-                new PercentTierRange(4, 22, 30),
+                new PercentTierRange(1, 12, 20),
+                new PercentTierRange(2, 22, 30),
                 new PercentTierRange(3, 32, 40),
-                new PercentTierRange(2, 42, 54),
-                new PercentTierRange(1, 56, 70)
+                new PercentTierRange(4, 42, 54),
+                new PercentTierRange(5, 56, 70)
             ]
         },
         [StatId.RitualWindDamage] = new Affix
@@ -186,11 +186,11 @@ public static class AffixTable
             AllowedSlots = AccessorySlots,
             TierTable =
             [
-                new PercentTierRange(5, 12, 20),
-                new PercentTierRange(4, 22, 30),
+                new PercentTierRange(1, 12, 20),
+                new PercentTierRange(2, 22, 30),
                 new PercentTierRange(3, 32, 40),
-                new PercentTierRange(2, 42, 54),
-                new PercentTierRange(1, 56, 70)
+                new PercentTierRange(4, 42, 54),
+                new PercentTierRange(5, 56, 70)
             ]
         },
 
@@ -204,11 +204,11 @@ public static class AffixTable
             AllowedSlots = ArmorSlots,
             TierTable =
             [
-                new PercentTierRange(5, 5, 8),
-                new PercentTierRange(4, 9, 13),
+                new PercentTierRange(1, 5, 8),
+                new PercentTierRange(2, 9, 13),
                 new PercentTierRange(3, 14, 19),
-                new PercentTierRange(2, 20, 26),
-                new PercentTierRange(1, 27, 35)
+                new PercentTierRange(4, 20, 26),
+                new PercentTierRange(5, 27, 35)
             ]
         },
         [StatId.SentinelMoveSpeed] = new Affix
@@ -220,11 +220,11 @@ public static class AffixTable
             AllowedSlots = ArmorSlots,
             TierTable =
             [
-                new PercentTierRange(5, 3, 5),
-                new PercentTierRange(4, 6, 8),
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
                 new PercentTierRange(3, 9, 11),
-                new PercentTierRange(2, 12, 15),
-                new PercentTierRange(1, 16, 20)
+                new PercentTierRange(4, 12, 15),
+                new PercentTierRange(5, 16, 20)
             ]
         },
         [StatId.SentinelArmor] = new Affix
@@ -236,11 +236,11 @@ public static class AffixTable
             AllowedSlots = ArmorSlots,
             TierTable =
             [
-                new PercentTierRange(5, 3, 5),
-                new PercentTierRange(4, 6, 8),
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
                 new PercentTierRange(3, 9, 12),
-                new PercentTierRange(2, 13, 17),
-                new PercentTierRange(1, 18, 22)
+                new PercentTierRange(4, 13, 17),
+                new PercentTierRange(5, 18, 22)
             ]
         },
         [StatId.SentinelShield] = new Affix
@@ -252,11 +252,11 @@ public static class AffixTable
             AllowedSlots = ArmorSlots,
             TierTable =
             [
-                new PercentTierRange(5, 5, 8),
-                new PercentTierRange(4, 9, 13),
+                new PercentTierRange(1, 5, 8),
+                new PercentTierRange(2, 9, 13),
                 new PercentTierRange(3, 14, 19),
-                new PercentTierRange(2, 20, 26),
-                new PercentTierRange(1, 27, 35)
+                new PercentTierRange(4, 20, 26),
+                new PercentTierRange(5, 27, 35)
             ]
         },
         [StatId.SentinelHealthRegen] = new Affix
@@ -268,11 +268,11 @@ public static class AffixTable
             AllowedSlots = ArmorSlots,
             TierTable =
             [
-                new PercentTierRange(5, 5, 8),
-                new PercentTierRange(4, 9, 13),
+                new PercentTierRange(1, 5, 8),
+                new PercentTierRange(2, 9, 13),
                 new PercentTierRange(3, 14, 19),
-                new PercentTierRange(2, 20, 26),
-                new PercentTierRange(1, 27, 35)
+                new PercentTierRange(4, 20, 26),
+                new PercentTierRange(5, 27, 35)
             ]
         },
         [StatId.SentinelCritChance] = new Affix
@@ -284,11 +284,11 @@ public static class AffixTable
             AllowedSlots = ArmorSlots,
             TierTable =
             [
-                new PercentTierRange(5, 2, 3),
-                new PercentTierRange(4, 4, 5),
+                new PercentTierRange(1, 2, 3),
+                new PercentTierRange(2, 4, 5),
                 new PercentTierRange(3, 6, 8),
-                new PercentTierRange(2, 9, 11),
-                new PercentTierRange(1, 12, 15)
+                new PercentTierRange(4, 9, 11),
+                new PercentTierRange(5, 12, 15)
             ]
         },
         [StatId.SentinelCritDamage] = new Affix
@@ -300,11 +300,11 @@ public static class AffixTable
             AllowedSlots = ArmorSlots,
             TierTable =
             [
-                new PercentTierRange(5, 15, 25),
-                new PercentTierRange(4, 26, 35),
+                new PercentTierRange(1, 15, 25),
+                new PercentTierRange(2, 26, 35),
                 new PercentTierRange(3, 36, 50),
-                new PercentTierRange(2, 51, 70),
-                new PercentTierRange(1, 71, 100)
+                new PercentTierRange(4, 51, 70),
+                new PercentTierRange(5, 71, 100)
             ]
         },
         [StatId.SentinelCooldownReduction] = new Affix
@@ -316,11 +316,11 @@ public static class AffixTable
             AllowedSlots = ArmorSlots,
             TierTable =
             [
-                new PercentTierRange(5, 3, 5),
-                new PercentTierRange(4, 6, 8),
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
                 new PercentTierRange(3, 9, 12),
-                new PercentTierRange(2, 13, 16),
-                new PercentTierRange(1, 17, 20)
+                new PercentTierRange(4, 13, 16),
+                new PercentTierRange(5, 17, 20)
             ]
         },
 
@@ -334,11 +334,11 @@ public static class AffixTable
             AllowedSlots = WeaponSlots,
             TierTable =
             [
-                new PercentTierRange(5, 5, 8),
-                new PercentTierRange(4, 9, 13),
+                new PercentTierRange(1, 5, 8),
+                new PercentTierRange(2, 9, 13),
                 new PercentTierRange(3, 14, 19),
-                new PercentTierRange(2, 20, 26),
-                new PercentTierRange(1, 27, 35)
+                new PercentTierRange(4, 20, 26),
+                new PercentTierRange(5, 27, 35)
             ]
         }
     };
@@ -355,7 +355,7 @@ public static class AffixTable
             .Where(affix => affix.AffixType == type)
             .Where(affix => affix.AllowedSlots.Length == 0 || affix.AllowedSlots.Contains(slot))
             .SelectMany(affix => affix.TierTable
-                .Where(tier => tier.Tier >= bestTier)
+                .Where(tier => tier.Tier <= bestTier)
                 .Select(tier => new AffixTierEntry(affix, tier)));
     }
 }

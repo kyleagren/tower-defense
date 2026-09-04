@@ -7,14 +7,16 @@ public static class LootGenerator
     private static readonly System.Random _random = new();
 
     // How good the best tier a given Rarity can roll is - each step up keeps every weaker tier
-    // available too (Rare can still roll a T5, it's just not capped there anymore).
+    // available too (Rare can still roll a T1, it's just not capped there anymore). Tier 1 is the
+    // weakest and ascending numbers are stronger (see AffixTierRange.Tier), so this is each
+    // Rarity's ceiling, not its floor.
     private static readonly Dictionary<Rarity, int> _bestTierByRarity = new()
     {
-        [Rarity.Common] = 5,
-        [Rarity.Uncommon] = 4,
+        [Rarity.Common] = 1,
+        [Rarity.Uncommon] = 2,
         [Rarity.Rare] = 3,
-        [Rarity.Epic] = 2,
-        [Rarity.Mythic] = 1
+        [Rarity.Epic] = 4,
+        [Rarity.Legendary] = 5
     };
 
     // Rarity.Unique isn't handled here - uniques are hand-authored per item (their own signature
