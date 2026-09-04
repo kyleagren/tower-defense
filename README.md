@@ -4,6 +4,45 @@
 
 Current state of the design, plus just enough "why" to avoid re-litigating settled decisions. Not a full history — see git log for that. Update this doc as decisions change; it's meant to stay short enough to actually read.
 
+---
+
+## ⚠ TEMP — Cleanup pass overview (delete this section once reviewed)
+
+A codebase-wide cleanup pass. **Compiles; not manually playtested yet.** Everything below is already reflected in the permanent sections — this is just a map of what moved, so the changes can be reviewed without re-reading the diff cold. Delete the whole section once you've been through it.
+
+**One real bug, fixed.** `CharacterSheetCache` was only ever invalidated by `InventoryPanel.Refresh`, and that only ran when the panel was *visible*. Picking an item up in the world (which auto-equips into an empty slot) therefore applied no stats at all until you opened and closed the inventory — Rituals dutifully re-resolved against a stale sheet. Invalidation now hangs off `EventBus.InventoryChanged`, wired once in `SaveManager._Ready`, which every mutating path already fires.
+
+**Perf — things running every frame that shouldn't have been.**
+
+| What | Was | Now |
+|---|---|---|
+| `HealthBar3D` | `_Process` per bar doing `GetViewport().GetCamera3D()` + `LookAt` — 50-70×/frame during a wave | Billboards via `StandardMaterial3D.BillboardMode`; no `_Process` at all |
+| `Enemy` status overlay | Reassigned `MaterialOverlay` on every mesh every physics tick, almost always to the same value | Only writes on an actual transition |
+| `Ritual._Process` | Re-walked `PlayerSentinels → SaveManager → dictionary` every frame per ritual | Holds the owner's sheet; dropped on `InventoryChanged` |
+| `ItemInteractor` | Rebuilt the item's full affix tooltip string every physics tick while looked at | Built once per target change |
+| `SaveManager` | Full synchronous `ResourceSaver.Save` on every inventory click | Debounced to one write/second, flushed on `_ExitTree` |
+| `InventoryPanel` grid | Freed and re-instantiated all 40 buttons on every click | Buttons persist; only their contents update |
+| `RitualPlacer` wall check | New `BoxShape3D` + query params per segment per frame | Built once, reused |
+| Chain jumps | Two `HashSet` allocations per jump to merge exclusion lists | `EnemyTargeting` takes two sets directly |
+
+**Duplication removed.**
+* Ice-wall segment geometry (the lerp, the box size, the vertical offset) existed in five places and now lives on `IceWall` as `SegmentPosition` / `SegmentBoxSize` / `SegmentBoxCenter`. This was the one with real bite — changing segment spacing needed five matching edits.
+* New `LookInteractor` base — `RitualInteractor` and `ItemInteractor` were the same forty lines twice. Non-generic on purpose: Godot's C# source generators skip generic script classes, so `[Export]`s on a generic base would silently stop registering and break the scenes' wiring.
+* New `ControlLayout.CenterOnAnchor` (was copy-pasted in `BuildMenu` and `InventoryPanel`), `Groups` (three copies of `"enemy_spawners"`), and `ActiveRegistry<T>` with `global using` aliases so `EnemyRegistry` / `IceWallSegmentRegistry` call sites read the same as before.
+* `InventoryPanel`'s eleven equipment slots were declared twice (click handlers, then visual refresh); now one table.
+* `WalkingEnemy`'s two wall-segment searches merged into one.
+
+**Correctness / hygiene.** `EnemyTargeting` tie-break `<=` → `<` (target choice no longer depends on spawn order); `PlayerSentinels.Get` no longer throws for an unsynced remote player; `WaveController` stops spawning once the match is lost; both registries clear on scene reload; `ChainResolver` takes a `Node` instead of casting `Engine.GetMainLoop()`; `Enemy` uses `FindChildren`; element colors unified onto `DamageTypeColors`; `Ritual.tscn` no longer bakes in Fireball; `Affix.RestrictedCharacter` is now actually enforced.
+
+**Needs a manual look when you're back.**
+* **The health bar** is the change most likely to be visibly wrong — billboarding moved to the GPU and the fill geometry is built from `QuadMesh.CenterOffset` rather than node offsets. Should be identical; worth one glance at an enemy taking damage.
+* Ice wall placement and casting, since five call sites now share one geometry helper.
+* Inventory drag/equip/drop, since the panel's internals were reworked.
+
+**Deliberately left alone** (all recorded permanently, with reasoning, so they don't get re-derived): six deferred cleanups in §15; the two gaps blocking limited-quantity runes in §5; the seven `StatId`s that roll on items but are read by nothing in §10.
+
+---
+
 ## 1. High Concept
 
 3D, low-poly stylized tower defense combining:
@@ -216,7 +255,7 @@ Difficulty tiers differentiate via composition and timing, not flat stat multipl
 
     **Ignition is bidirectional, and it's the only cell that is so far.** `IgnitionRune.OnHit` fires on Fire-hits-Lightning-Status *and* Lightning-hits-Fire-Status — one rune occupying two cells rather than two runes. Directionality is per-reaction, not a rule of the system: a reaction whose effect is clearly "the incoming element does something to the latent one" would sensibly stay one-way, but Ignition's effect (the two elements combusting) reads the same whichever landed second, and forcing the player to socket a different rune depending on their towers' firing order would be busywork. Its `RequiredAnyTags` is `Fire, Lightning` for the same reason.
 
-    **Not yet built:** the spreading half of Ignition. The Burn Ailment lands on the struck enemy only — `BurnAilment` has no propagation, and nothing calls `ApplyAilment` on neighbours. Spreading was part of the original sketch and is still wanted; it just isn't in the code.
+    **Ignition doesn't spread (decided — revises the original sketch).** The Burn lands on the struck enemy and nowhere else. An earlier version of this cell described the Burn spreading to nearby enemies; that was never built, and on reflection it shouldn't be. Spreading is Swirl's job (the Wind row) — giving Ignition its own propagation would blur the one reaction whose identity is explicitly "spread the tag around" and quietly hand a single rune both a damage reaction and an AoE conversion. Ignition stays a clean single-target detonation.
     | **Wind** *(baked into the spell, not a rune — see above)* | **Swirl** — flare of bonus damage matching the tagged element, and spreads/reapplies that element's tag to nearby enemies (small AoE). Same mechanic regardless of which element is swirled. | Swirl (see Fire cell — element-agnostic) | Swirl (see Fire cell) | Swirl (see Fire cell) | — |
   * **Per-element damage (decided, implemented): `DamagePacket`.** Originally scoped as a single `ElementTag` field riding alongside a flat `Damage` float, but that breaks the moment a Reaction/Ailment needs to know *how much* of a hit was a given element (e.g. a Lightning-Rod-style Ailment redirecting a percentage specifically of the Lightning portion of a hit) — a tag next to one number can't express that. Final shape: `DamagePacket` (`PhysicalDamage`/`FireDamage`/`WaterDamage`/`ColdDamage`/`LightningDamage`/`WindDamage`) replaced the flat `float Damage` throughout the cast/hit pipeline (`Spell.BaseDamage`, `SpellCastContext.Damage`, `Projectile.Damage`, `ChainResolver`, `Enemy.TakeDamage`), surviving all the way to `Enemy.TakeDamage` intact. `Enemy.Status` tracks `DamagePacket.DominantElement` (excluding Physical and Wind from candidacy, per Wind's consumer-only design above) on every elemental hit — the data a Reaction rune reads is in place, and now has a real consumer: `IgnitionRune` (Section 16, step 13) is the first Reaction rune built, reacting to a Lightning hit landing on an enemy with an existing Fire Status. `SpellInstance`'s "increased/more" formula and both chain-falloff implementations needed no logic changes for this, only a type change, since `DamagePacket` defines its own scalar multiplication operator.
   * **Lightning Bolt rune brainstorm — generalizability audit.** Every rune should hook into a *tag*, not a specific spell class, so it automatically applies to any future spell sharing that tag (same principle that already makes Pierce/Chain/Return/Increased Area work across any eligible spell) — worth explicitly checking each new idea against this rather than assuming it's fine:
@@ -291,7 +330,7 @@ Vertical slice was called feature-complete above prematurely — the loop it cov
     * **`NavigationAgent3D` avoidance, properly wired.** `AvoidanceEnabled`, radius pulled from the enemy's own capsule collision shape (not duplicated as a separate number), `VelocityComputed` → `MoveAndSlide`. Godot requires `TargetPosition` stay live even during lane-following for avoidance to produce non-zero velocity at all (confirmed against Godot's own docs after some trial and error) — costs a real navmesh query per waypoint reached rather than zero, still an order-of-magnitude-plus cheaper than the original live-per-frame-per-enemy system, just not the fully-zero-query ideal originally pitched.
     * **Known rough edge, not yet tuned:** several enemies converging on the same destination (player, objective, or a wall) can still crowd/jostle rather than cleanly spreading out — real level geometry (actual chokepoints, lane widths) will surface what's worth tuning better than guessing at it on the current test level.
 12. **Items/equipment** — core types, all 11 equipment slots (now in `InventoryPanel`'s UI too), the affix pool, loot generation, a first pass at mods-affecting-gameplay, the full 40-slot draggable inventory, item tooltips, and enemy world drops + pickup all now exist (Section 10). Still needed: Ritual-side stat wiring (folding `RitualRange`/etc. into `SpellCastContext`), and the spell-table crafting station (put an item in, randomly add/remove a mod) that gives Gold something to spend on.
-13. ~~At least one working Elemental Reaction~~ — `IgnitionRune` (Fire and Lightning crossing on the same enemy, either order → a Burn Ailment DoT) is built and proves the mechanism end-to-end (Section 15). **done.** The Burn doesn't spread to nearby enemies yet, and the rest of the combination map (Blister/Scalding Zone, Swirl, and every other still-TBD cell) stays open — neither blocks the slice.
+13. ~~At least one working Elemental Reaction~~ — `IgnitionRune` (Fire and Lightning crossing on the same enemy, either order → a single-target Burn Ailment DoT) is built and proves the mechanism end-to-end (Section 15). **done.** The rest of the combination map (Blister/Scalding Zone, Swirl, and every other still-TBD cell) stays open, but no longer blocks the slice.
 14. **Tokens** — pre-crafted, reactively-deployed mid-wave towers (Section 2 & 17). Right now the wave phase has no reactive-building option at all, which undersells a mechanic the design treats as core to why towers-can't-reposition doesn't feel restrictive.
 15. **Tower disable/repair loop** — `Ritual.Repair()` is currently a stub (`GD.Print` only), and nothing yet lets enemies damage a tower in the first place (Section 7). "Disabled, not destroyed, repaired by funneling mana" is the defining tower-damage identity, not yet real.
 
