@@ -11,6 +11,10 @@ public partial class PlayerSaveData : Resource
     [Export] public Godot.Collections.Array<Item> Inventory { get; set; } = new();
     [Export] public Godot.Collections.Dictionary<CharacterId, EquippedLoadout> Loadouts { get; set; } = new();
 
+    // Which Sentinel this player played most recently - also the sensible starting pick for a
+    // brand-new save. Read/written through PlayerSentinels, not directly.
+    [Export] public CharacterId LastPlayedCharacter { get; set; } = CharacterId.Soldier;
+
     public EquippedLoadout GetOrCreateLoadout(CharacterId character)
     {
         if (!Loadouts.TryGetValue(character, out EquippedLoadout loadout))
