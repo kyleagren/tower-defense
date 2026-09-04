@@ -62,17 +62,17 @@ public partial class InventoryPanel : Control
         _glovesButton = BuildSlotButton(new Vector2(0.30f, 0.90f));
         _bootsButton = BuildSlotButton(new Vector2(0.70f, 0.90f));
 
-        _weaponButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Weapon, newItem => _loadout.Weapon = (Weapon)newItem));
-        _helmetButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Helmet, newItem => _loadout.Helmet = (Helmet)newItem));
-        _chestButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Chest, newItem => _loadout.Chest = (Chest)newItem));
-        _legsButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Legs, newItem => _loadout.Legs = (Legs)newItem));
-        _bootsButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Boots, newItem => _loadout.Boots = (Boots)newItem));
-        _glovesButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Gloves, newItem => _loadout.Gloves = (Gloves)newItem));
-        _beltButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Belt, newItem => _loadout.Belt = (Belt)newItem));
-        _amuletButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Amulet, newItem => _loadout.Amulet = (Amulet)newItem));
-        _leftRingButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.LeftRing, newItem => _loadout.LeftRing = (Ring)newItem));
-        _rightRingButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.RightRing, newItem => _loadout.RightRing = (Ring)newItem));
-        _relicButton.Pressed += () => OnSlotPressed(SimpleSlot(() => _loadout.Relic, newItem => _loadout.Relic = (Relic)newItem));
+        _weaponButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.Weapon, newItem => _loadout.Weapon = (Weapon)newItem));
+        _helmetButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.Helmet, newItem => _loadout.Helmet = (Helmet)newItem));
+        _chestButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.Chest, newItem => _loadout.Chest = (Chest)newItem));
+        _legsButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.Legs, newItem => _loadout.Legs = (Legs)newItem));
+        _bootsButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.Boots, newItem => _loadout.Boots = (Boots)newItem));
+        _glovesButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.Gloves, newItem => _loadout.Gloves = (Gloves)newItem));
+        _beltButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.Belt, newItem => _loadout.Belt = (Belt)newItem));
+        _amuletButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.Amulet, newItem => _loadout.Amulet = (Amulet)newItem));
+        _leftRingButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.LeftRing, newItem => _loadout.LeftRing = (Ring)newItem));
+        _rightRingButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.RightRing, newItem => _loadout.RightRing = (Ring)newItem));
+        _relicButton.Pressed += () => OnEquipmentSlotPressed(SimpleSlot(() => _loadout.Relic, newItem => _loadout.Relic = (Relic)newItem));
 
         _cursorIcon = new TextureRect
         {
@@ -330,6 +330,36 @@ public partial class InventoryPanel : Control
 
         Item displaced = _loadout.ForceEquip(item);
         inventory[gridIndex] = displaced;
+
+        SaveManager.Instance.Save();
+        EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
+        Refresh();
+    }
+
+    // Shift-click a slot to skip the pick-up-then-place flow: an equipped item goes straight back
+    // to the earliest open Inventory slot, mirroring QuickEquip's grid-side shortcut in reverse.
+    private void OnEquipmentSlotPressed(SlotHandle slot)
+    {
+        if (_heldItem == null && Input.IsKeyPressed(Key.Shift))
+        {
+            QuickUnequip(slot);
+            return;
+        }
+
+        OnSlotPressed(slot);
+    }
+
+    private void QuickUnequip(SlotHandle slot)
+    {
+        Item item = slot.GetItem();
+
+        if (item == null)
+        {
+            return;
+        }
+
+        slot.PlaceItem(null);
+        ReturnToInventory(item);
 
         SaveManager.Instance.Save();
         EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
