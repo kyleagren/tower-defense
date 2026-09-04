@@ -39,7 +39,7 @@ public partial class Ritual : Node3D
 
     private void OnCastEffectConcluded()
     {
-        _spellInstance.EndOngoingEffect(_spellInstance.Resolve().Cooldown.Value);
+        _spellInstance.EndOngoingEffect(_spellInstance.Resolve().ResolvedCooldown);
     }
 
     public void Repair()
@@ -166,7 +166,7 @@ public partial class Ritual : Node3D
         }
         else
         {
-            _spellInstance.StartCast(context.ResolvedCastTime, context.Cooldown.Value);
+            _spellInstance.StartCast(context.ResolvedCastTime, context.ResolvedCooldown);
         }
     }
 

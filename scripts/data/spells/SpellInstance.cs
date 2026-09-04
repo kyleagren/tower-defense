@@ -35,7 +35,7 @@ public class SpellInstance
         }
     }
 
-    public SpellCastContext Resolve()
+    public SpellCastContext Resolve(CharacterSheet ownerSheet = null)
     {
         if (_cachedContext == null)
         {
@@ -46,6 +46,11 @@ public class SpellInstance
                 rune.Apply(_cachedContext);
                 _cachedContext.ManaCost.More *= rune.ManaCostMultiplier;
                 _cachedContext.DamageScale.More *= rune.DamageMultiplier;
+            }
+
+            if (ownerSheet != null)
+            {
+                _cachedContext.ApplyEquipmentBonuses(ownerSheet);
             }
         }
 
