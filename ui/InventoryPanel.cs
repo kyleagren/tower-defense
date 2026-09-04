@@ -27,6 +27,8 @@ public partial class InventoryPanel : Control
     [Export] public Control SlotArea { get; private set; }
     [Export] public TileGrid Grid { get; private set; }
     [Export] public Control PhaseIndicator { get; private set; }
+    [Export] public PackedScene WorldItemScene { get; private set; }
+    [Export] public float DropDistance = 1f;
 
     private Button _weaponButton;
     private Button _helmetButton;
@@ -87,6 +89,21 @@ public partial class InventoryPanel : Control
         // until after the first layout pass, and Resized keeps it correct if that height ever changes.
         PhaseIndicator.Resized += UpdateTopOffset;
         CallDeferred(nameof(UpdateTopOffset));
+
+        EventBus.Instance.InventoryChanged += OnInventoryChangedExternally;
+    }
+
+    public override void _ExitTree()
+    {
+        EventBus.Instance.InventoryChanged -= OnInventoryChangedExternally;
+    }
+
+    private void OnInventoryChangedExternally()
+    {
+        if (Visible)
+        {
+            Refresh();
+        }
     }
 
     private void UpdateTopOffset()
@@ -116,6 +133,17 @@ public partial class InventoryPanel : Control
         if (Visible && UiPanelStack.IsTop(this) && @event.IsActionPressed("ui_cancel"))
         {
             Close();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        if (_heldItem != null && Visible && UiPanelStack.IsTop(this)
+            && @event is InputEventMouseButton mouseButton && mouseButton.Pressed && mouseButton.ButtonIndex == MouseButton.Left)
+        {
+            DropInWorld(_heldItem);
+            _heldItem = null;
+            SaveManager.Instance.Save();
+            UpdateCursorIcon();
             GetViewport().SetInputAsHandled();
         }
     }
@@ -179,15 +207,7 @@ public partial class InventoryPanel : Control
 
     private EquippedLoadout GetOrCreateLoadout()
     {
-        Godot.Collections.Dictionary<CharacterId, EquippedLoadout> loadouts = SaveManager.Instance.Data.Loadouts;
-
-        if (!loadouts.TryGetValue(ActiveCharacter, out EquippedLoadout loadout))
-        {
-            loadout = new EquippedLoadout();
-            loadouts[ActiveCharacter] = loadout;
-        }
-
-        return loadout;
+        return SaveManager.Instance.Data.GetOrCreateLoadout(ActiveCharacter);
     }
 
     private void RefreshEquipmentSlots()
@@ -217,15 +237,20 @@ public partial class InventoryPanel : Control
 
         if (_heldItem != null && slot.CanAccept(_heldItem))
         {
-            button.AddThemeStyleboxOverride("normal", CreateBackground(SelectedBg));
+            StyleBoxFlat background = CreateBackground(SelectedBg);
+            button.AddThemeStyleboxOverride("normal", background);
+            button.AddThemeStyleboxOverride("hover", background);
         }
         else if (equippedItem != null)
         {
-            button.AddThemeStyleboxOverride("normal", CreateBackground(RarityColors.Get(equippedItem.Rarity)));
+            StyleBoxFlat background = CreateBackground(RarityColors.Get(equippedItem.Rarity));
+            button.AddThemeStyleboxOverride("normal", background);
+            button.AddThemeStyleboxOverride("hover", background);
         }
         else
         {
             button.RemoveThemeStyleboxOverride("normal");
+            button.RemoveThemeStyleboxOverride("hover");
         }
 
         if (equippedItem != null)
@@ -268,20 +293,51 @@ public partial class InventoryPanel : Control
             {
                 SetIconOnlyVisual(button, slotItem.Icon);
                 Color background = IsCompatible(slotItem) ? RarityColors.Get(slotItem.Rarity) : DisabledBg;
-                button.AddThemeStyleboxOverride("normal", CreateBackground(background));
+                StyleBoxFlat backgroundStyle = CreateBackground(background);
+                button.AddThemeStyleboxOverride("normal", backgroundStyle);
+                button.AddThemeStyleboxOverride("hover", backgroundStyle);
                 button.TooltipText = _heldItem == null ? slotItem.BuildTooltip() : "";
             }
 
-            button.Pressed += () => OnSlotPressed(GridSlot(capturedIndex));
+            button.Pressed += () =>
+            {
+                if (_heldItem == null && slotItem != null && Input.IsKeyPressed(Key.Shift))
+                {
+                    QuickEquip(capturedIndex);
+                }
+                else
+                {
+                    OnSlotPressed(GridSlot(capturedIndex));
+                }
+            };
 
             Grid.AddChild(button);
         }
     }
 
+    // Shift-click a grid item to equip it directly, skipping the click-to-pick-up-then-place flow.
+    // Whatever was already in the matching slot (if anything) swaps into the grid slot being vacated.
+    private void QuickEquip(int gridIndex)
+    {
+        Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
+        Item item = inventory[gridIndex];
+
+        if (item == null || !IsCompatible(item))
+        {
+            return;
+        }
+
+        Item displaced = _loadout.ForceEquip(item);
+        inventory[gridIndex] = displaced;
+
+        SaveManager.Instance.Save();
+        Refresh();
+    }
+
     // The single click-handler for every slot in the panel, grid and equipment alike:
     //  - nothing held + click a slot with an item -> pick it up (hold it, clear the slot).
-    //  - holding an item + click a slot that accepts it -> place it there, displacing whatever
-    //    was already in that slot back to the earliest open inventory slot.
+    //  - holding an item + click a slot that accepts it -> place it there; whatever was already
+    //    in that slot (if anything) becomes the newly held item, so it's a swap, not a loss.
     //  - holding an item + click a slot that rejects it (wrong type/character) -> do nothing.
     private void OnSlotPressed(SlotHandle slot)
     {
@@ -292,8 +348,9 @@ public partial class InventoryPanel : Control
                 return;
             }
 
+            Item displaced = slot.GetItem();
             slot.PlaceItem(_heldItem);
-            _heldItem = null;
+            _heldItem = displaced;
             SaveManager.Instance.Save();
             Refresh();
             return;
@@ -329,22 +386,15 @@ public partial class InventoryPanel : Control
     {
         return new SlotHandle(
             getItem: () => getEquipped(),
-            placeItem: newItem =>
-            {
-                if (newItem != null)
-                {
-                    ReturnToInventory(getEquipped());
-                }
-
-                assignEquipped(newItem);
-            },
+            placeItem: newItem => assignEquipped(newItem),
             canAccept: candidateItem => candidateItem == null || (candidateItem is T && IsCompatible(candidateItem)));
     }
 
-    // Drops a displaced item into the first empty Inventory slot (lowest index first).
-    // TODO: if Inventory is completely full, the item is currently just lost. At worst it should
-    // fall on the ground instead, but there's no world-drop/pickup functionality yet to do that.
-    private static void ReturnToInventory(Item item)
+    // Drops a displaced item into the first empty Inventory slot (lowest index first). Falls back
+    // to dropping it in the world at the player's feet if Inventory is completely full, rather
+    // than losing it — mirrors WorldItem.PickUp's own "leave it in the world until there's room"
+    // behavior for the same situation.
+    private void ReturnToInventory(Item item)
     {
         if (item == null)
         {
@@ -357,7 +407,21 @@ public partial class InventoryPanel : Control
         if (emptySlotIndex >= 0)
         {
             inventory[emptySlotIndex] = item;
+            return;
         }
+
+        DropInWorld(item);
+    }
+
+    private void DropInWorld(Item item)
+    {
+        PlayerCharacter player = PlayerCharacter.ActiveCombatant;
+        Vector3 forward = -player.GlobalTransform.Basis.Z;
+
+        WorldItem worldItem = WorldItemScene.Instantiate<WorldItem>();
+        worldItem.Initialize(item);
+        GetTree().CurrentScene.AddChild(worldItem);
+        worldItem.GlobalPosition = player.GlobalPosition + forward * DropDistance;
     }
 
     private static StyleBoxFlat CreateBackground(Color color)
@@ -455,6 +519,6 @@ public partial class InventoryPanel : Control
 
     private bool IsCompatible(Item item)
     {
-        return item.EquippableCharacter == ActiveCharacter || item.EquippableCharacter == CharacterId.AnySentinel;
+        return item.IsCompatibleWith(ActiveCharacter);
     }
 }

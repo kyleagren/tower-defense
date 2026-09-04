@@ -36,7 +36,7 @@ public partial class ItemDropManager : Node
         (Rarity.Common, 100),
         (Rarity.Uncommon, 45),
         (Rarity.Rare, 18),
-        (Rarity.Legendary, 6),
+        (Rarity.Epic, 6),
         (Rarity.Mythic, 1)
     };
 

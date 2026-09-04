@@ -31,6 +31,16 @@ public partial class WorldItem : StaticBody3D
     // room, which beats InventoryPanel's own "displaced item is lost" fallback for the same case.
     public void PickUp()
     {
+        EquippedLoadout loadout = SaveManager.Instance.Data.GetOrCreateLoadout(SelectedSentinel.Current);
+
+        if (Item.IsCompatibleWith(SelectedSentinel.Current) && loadout.TryEquip(Item))
+        {
+            SaveManager.Instance.Save();
+            EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
+            QueueFree();
+            return;
+        }
+
         Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
         int emptySlotIndex = inventory.IndexOf(null);
 
@@ -41,6 +51,7 @@ public partial class WorldItem : StaticBody3D
 
         inventory[emptySlotIndex] = Item;
         SaveManager.Instance.Save();
+        EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
         QueueFree();
     }
 }

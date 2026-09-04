@@ -3,7 +3,7 @@ public enum Rarity
     Common,
     Uncommon,
     Rare,
-    Legendary,
+    Epic,
     Mythic,
     Unique
 }

@@ -18,7 +18,7 @@
 [ext_resource type="Script" uid="uid://nsgeakgljfd8" path="res://scripts/systems/waves/RoutePreviewEffect.cs" id="16_routepreview"]
 [ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="17_playerhealthorb"]
 [ext_resource type="PackedScene" path="res://ui/InventoryPanel.tscn" id="18_inventorypanel"]
-[ext_resource type="Script" path="res://scripts/systems/game_state/ItemDropManager.cs" id="19_itemdropmanager"]
+[ext_resource type="Script" uid="uid://briq33cnkh3pc" path="res://scripts/systems/game_state/ItemDropManager.cs" id="19_itemdropmanager"]
 [ext_resource type="PackedScene" path="res://world_items/WorldItem.tscn" id="20_worlditem"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
@@ -210,7 +210,7 @@ Waves = Array[ExtResource("3_j60wy")]([ExtResource("7_wave01"), ExtResource("7_p
 [node name="EconomyManager" type="Node" parent="." unique_id=113653841]
 script = ExtResource("14_economymanager")
 
-[node name="ItemDropManager" type="Node" parent="."]
+[node name="ItemDropManager" type="Node" parent="." unique_id=1293764264]
 script = ExtResource("19_itemdropmanager")
 WorldItemScene = ExtResource("20_worlditem")
 
@@ -244,6 +244,6 @@ AttackDamage = 100.0
 
 [node name="Crosshair" parent="." unique_id=1213473900 instance=ExtResource("13_crosshair")]
 
-[node name="InventoryPanel" parent="." unique_id=928841354 instance=ExtResource("18_inventorypanel") node_paths=PackedStringArray("PhaseIndicator")]
+[node name="InventoryPanel" parent="." unique_id=928841354 node_paths=PackedStringArray("PhaseIndicator") instance=ExtResource("18_inventorypanel")]
 anchors_preset = -1
 PhaseIndicator = NodePath("../PhaseIndicator")

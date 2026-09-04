@@ -13,7 +13,7 @@ public static class LootGenerator
         [Rarity.Common] = 5,
         [Rarity.Uncommon] = 4,
         [Rarity.Rare] = 3,
-        [Rarity.Legendary] = 2,
+        [Rarity.Epic] = 2,
         [Rarity.Mythic] = 1
     };
 

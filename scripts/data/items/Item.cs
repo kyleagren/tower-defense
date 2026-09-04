@@ -12,6 +12,8 @@ public abstract partial class Item : Resource
     // all (see the Sentinel class, which is where character-identity and gear-scaled stats live).
     [Export] public CharacterId EquippableCharacter { get; private set; } = CharacterId.AnySentinel;
 
+    public bool IsCompatibleWith(CharacterId character) => EquippableCharacter == character || EquippableCharacter == CharacterId.AnySentinel;
+
     // No hand-authored flavor names yet - just rarity + slot, matching the "name corresponds
     // to slot + rarity for now" call. The slot itself comes from the concrete type, not a
     // separate tag that would have to be kept in sync with it.

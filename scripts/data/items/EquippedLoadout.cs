@@ -16,6 +16,52 @@ public partial class EquippedLoadout : Resource
     [Export] public Ring RightRing { get; set; }
     [Export] public Relic Relic { get; set; }
 
+    // Places item in its matching slot only if that slot is currently empty - used for auto-equip
+    // on world pickup, where silently overwriting something already equipped would be a bad surprise.
+    public bool TryEquip(Item item)
+    {
+        switch (item)
+        {
+            case Weapon weapon when Weapon == null: Weapon = weapon; return true;
+            case Helmet helmet when Helmet == null: Helmet = helmet; return true;
+            case Chest chest when Chest == null: Chest = chest; return true;
+            case Legs legs when Legs == null: Legs = legs; return true;
+            case Boots boots when Boots == null: Boots = boots; return true;
+            case Gloves gloves when Gloves == null: Gloves = gloves; return true;
+            case Belt belt when Belt == null: Belt = belt; return true;
+            case Amulet amulet when Amulet == null: Amulet = amulet; return true;
+            case Ring ring when LeftRing == null: LeftRing = ring; return true;
+            case Ring ring when RightRing == null: RightRing = ring; return true;
+            case Relic relic when Relic == null: Relic = relic; return true;
+            default: return false;
+        }
+    }
+
+    // Force-equips item into its matching slot regardless of whether it was already occupied,
+    // returning whatever got displaced (null if the slot was empty). Rings prefer whichever slot
+    // is open, bumping LeftRing specifically if both are already occupied - arbitrary but consistent.
+    public Item ForceEquip(Item item)
+    {
+        Item displaced;
+
+        switch (item)
+        {
+            case Weapon weapon: displaced = Weapon; Weapon = weapon; return displaced;
+            case Helmet helmet: displaced = Helmet; Helmet = helmet; return displaced;
+            case Chest chest: displaced = Chest; Chest = chest; return displaced;
+            case Legs legs: displaced = Legs; Legs = legs; return displaced;
+            case Boots boots: displaced = Boots; Boots = boots; return displaced;
+            case Gloves gloves: displaced = Gloves; Gloves = gloves; return displaced;
+            case Belt belt: displaced = Belt; Belt = belt; return displaced;
+            case Amulet amulet: displaced = Amulet; Amulet = amulet; return displaced;
+            case Ring ring when LeftRing == null: LeftRing = ring; return null;
+            case Ring ring when RightRing == null: RightRing = ring; return null;
+            case Ring ring: displaced = LeftRing; LeftRing = ring; return displaced;
+            case Relic relic: displaced = Relic; Relic = relic; return displaced;
+            default: return null;
+        }
+    }
+
     public IEnumerable<Item> EquippedItems()
     {
         if (Weapon != null) yield return Weapon;
