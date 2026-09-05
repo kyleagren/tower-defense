@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" path="res://ui/Crosshair.tscn" id="5_crosshair"]
 [ext_resource type="Script" uid="uid://c7mkc6ifdkhp8" path="res://characters/CharacterSelectStation.cs" id="6_charselectstation"]
 [ext_resource type="PackedScene" path="res://ui/CharacterSelectPanel.tscn" id="7_charselectpanel"]
+[ext_resource type="Script" uid="uid://cs7e675hoiaql" path="res://characters/LevelSelectStation.cs" id="8_levelselectstation"]
+[ext_resource type="PackedScene" path="res://ui/LevelSelectPanel.tscn" id="9_levelselectpanel"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -106,6 +108,14 @@ albedo_color = Color(0.1, 0.5, 0.6, 1)
 material = SubResource("StandardMaterial3D_charselect")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_charselect"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_levelselect"]
+albedo_color = Color(0.6, 0.15, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_levelselect"]
+material = SubResource("StandardMaterial3D_levelselect")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_levelselect"]
 
 [node name="Hub" type="Node3D" unique_id=1931328644]
 
@@ -338,3 +348,16 @@ mesh = SubResource("CapsuleMesh_charselect")
 shape = SubResource("CapsuleShape3D_charselect")
 
 [node name="CharacterSelectPanel" parent="." unique_id=1828954949 instance=ExtResource("7_charselectpanel")]
+
+[node name="LevelSelectStation" type="StaticBody3D" parent="." unique_id=1185886488]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, -10)
+collision_layer = 17
+script = ExtResource("8_levelselectstation")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LevelSelectStation" unique_id=1177271696]
+mesh = SubResource("BoxMesh_levelselect")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LevelSelectStation" unique_id=655471407]
+shape = SubResource("BoxShape3D_levelselect")
+
+[node name="LevelSelectPanel" parent="." unique_id=1282150362 instance=ExtResource("9_levelselectpanel")]
