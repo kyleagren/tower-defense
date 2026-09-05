@@ -92,10 +92,7 @@ public partial class SentinelSpawner : Node
                 character.GlobalRotation = new Vector3(0f, SpawnPoint.GlobalRotation.Y, 0f);
             }
 
-            if (character is Sentinel sentinel)
-            {
-                sentinel.ActivateStandalone();
-            }
+            character.ActivateStandalone();
         }
         else
         {

@@ -3,6 +3,8 @@
 // without caring about wave sequencing.
 public enum GamePhase
 {
+    Planning,
     Build,
-    Combat
+    Combat,
+    PostGame
 }

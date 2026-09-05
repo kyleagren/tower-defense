@@ -45,6 +45,13 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     public void SetOwnerId(PlayerId owner) => OwnerId = owner;
 
+    // Activates this character directly, without any phase system - for contexts like the hub,
+    // which has no phase system and nothing to hand control from.
+    public virtual void ActivateStandalone()
+    {
+        SetActive(true);
+    }
+
     public void HandoffFrom(PlayerCharacter previous)
     {
         GlobalPosition = previous.GlobalPosition;

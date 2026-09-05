@@ -11,7 +11,7 @@ public partial class WaveController : Node
 
     private Dictionary<string, EnemySpawner> _spawnersById;
     private int _nextWaveIndex;
-    private GamePhase _currentPhase = GamePhase.Build;
+    private GamePhase _currentPhase = GamePhase.Planning;
     private bool _matchOver;
 
     public override void _Ready()
@@ -27,11 +27,22 @@ public partial class WaveController : Node
         }
 
         EventBus.Instance.GameEnded += OnGameEnded;
+
+        EmitInitialPhase();
     }
 
     public override void _ExitTree()
     {
         EventBus.Instance.GameEnded -= OnGameEnded;
+    }
+
+    // A single CallDeferred only guarantees running after this node's own _Ready - it doesn't
+    // guarantee running after OTHER nodes' deferred work, like SentinelSpawner's own deferred spawn
+    // of the Sentinel that needs to hear this. Waiting a full process frame does.
+    private async void EmitInitialPhase()
+    {
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)_currentPhase);
     }
 
     // RunWave is a detached Task, so losing the match doesn't unwind it - without this it keeps
@@ -43,10 +54,21 @@ public partial class WaveController : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event.IsActionPressed("start_wave"))
+        if (!@event.IsActionPressed("start_wave"))
         {
-            StartNextWave();
+            return;
         }
+
+        // The first press each level just ends Planning and hands control to the Architect - it
+        // doesn't spawn anything on its own. The next press (now in Build) is what starts a wave.
+        if (_currentPhase == GamePhase.Planning)
+        {
+            _currentPhase = GamePhase.Build;
+            EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Build);
+            return;
+        }
+
+        StartNextWave();
     }
 
     public void StartNextWave()
@@ -99,10 +121,11 @@ public partial class WaveController : Node
             return;
         }
 
-        _currentPhase = GamePhase.Build;
-        EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Build);
+        bool isFinalWave = _nextWaveIndex >= Waves.Count;
+        _currentPhase = isFinalWave ? GamePhase.PostGame : GamePhase.Build;
+        EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)_currentPhase);
 
-        if (_nextWaveIndex >= Waves.Count)
+        if (isFinalWave)
         {
             EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, true);
         }

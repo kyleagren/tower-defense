@@ -14,11 +14,9 @@ public partial class Architect : PlayerCharacter
     {
         base._Ready();
         ByOwner[OwnerId] = this;
-        Input.MouseMode = Input.MouseModeEnum.Captured;
         BuildMenu.Closed += OnBuildMenuClosed;
         BuildMenu.Confirmed += OnBuildMenuConfirmed;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        SetActive(true);
     }
 
     public override void _ExitTree()

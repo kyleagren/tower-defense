@@ -5,7 +5,7 @@ public partial class PhaseIndicator : Control
     [Export] public Label PhaseLabel { get; private set; }
     [Export] public Label GoldLabel { get; private set; }
 
-    private GamePhase _currentPhase = GamePhase.Build;
+    private GamePhase _currentPhase = GamePhase.Planning;
 
     public override void _Ready()
     {
@@ -28,7 +28,15 @@ public partial class PhaseIndicator : Control
 
     private void Refresh()
     {
-        string phaseText = _currentPhase == GamePhase.Combat ? "Combat Phase" : "Build Phase";
+        string phaseText = _currentPhase switch
+        {
+            GamePhase.Planning => "Planning Phase",
+            GamePhase.Build => "Build Phase",
+            GamePhase.Combat => "Combat Phase",
+            GamePhase.PostGame => "Post-Game",
+            _ => _currentPhase.ToString()
+        };
+
         PhaseLabel.Text = $"{phaseText} — Mana: {EconomyManager.Instance.Mana} | Build Capacity: {EconomyManager.Instance.CapacityUsed}/{EconomyManager.Instance.MaxCapacity}";
 
         int totalGold = SaveManager.Instance.Data.Gold + EconomyManager.Instance.GoldEarned;

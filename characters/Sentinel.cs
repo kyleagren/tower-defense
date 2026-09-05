@@ -24,11 +24,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     private float _currentHealth;
 
-    // Activates this Sentinel directly, without an Architect handoff or a Combat-phase transition -
-    // for contexts like the hub, which has no phase system and nothing to hand control from.
-    public void ActivateStandalone()
+    public override void ActivateStandalone()
     {
-        SetActive(true);
+        base.ActivateStandalone();
         Weapon.Visible = true;
     }
 
@@ -68,13 +66,13 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     private void OnGamePhaseChanged(GamePhase phase)
     {
-        bool shouldBeActive = phase == GamePhase.Combat;
+        bool shouldBeActive = phase != GamePhase.Build;
 
-        if (shouldBeActive)
+        if (phase == GamePhase.Combat)
         {
             HandoffFrom(Architect.ByOwner[OwnerId]);
         }
-        else
+        else if (phase == GamePhase.Build)
         {
             HealToFull();
         }
