@@ -31,7 +31,7 @@ public partial class Tank : Sentinel
     private float _attackCooldown;
     private float _returnTimer;
     private bool _idleReturnStarted;
-    private float _idleTiltRotationX;
+    private float _idleTiltRotationZ;
     private bool _swingTowardLeft = true;
     private Tween _swordTween;
     private Tween _shieldTween;
@@ -42,7 +42,7 @@ public partial class Tank : Sentinel
     public override void _Ready()
     {
         base._Ready();
-        _idleTiltRotationX = SwordTilt.Rotation.X;
+        _idleTiltRotationZ = SwordTilt.Rotation.Z;
         SwordHitArea.Monitoring = false;
         SwordHitArea.BodyEntered += OnSwordHitBody;
     }
@@ -155,7 +155,7 @@ public partial class Tank : Sentinel
         _swordTween.SetParallel(true);
         _swordTween.TweenProperty(SwordOrbit, "rotation:y", Mathf.DegToRad(targetOrbitDegrees), SwingDuration)
             .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
-        _swordTween.TweenProperty(SwordTilt, "rotation:x", Mathf.DegToRad(SwingTiltDegrees), SwingDuration)
+        _swordTween.TweenProperty(SwordTilt, "rotation:z", Mathf.DegToRad(SwingTiltDegrees), SwingDuration)
             .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
         _swordTween.Chain().TweenCallback(Callable.From(() => SwordHitArea.Monitoring = false));
     }
@@ -169,7 +169,7 @@ public partial class Tank : Sentinel
         _swordTween.SetParallel(true);
         _swordTween.TweenProperty(SwordOrbit, "rotation:y", Mathf.DegToRad(IdleAngleDegrees), ReturnDuration)
             .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-        _swordTween.TweenProperty(SwordTilt, "rotation:x", _idleTiltRotationX, ReturnDuration)
+        _swordTween.TweenProperty(SwordTilt, "rotation:z", _idleTiltRotationZ, ReturnDuration)
             .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
     }
 
