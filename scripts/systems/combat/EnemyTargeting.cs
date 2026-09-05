@@ -53,7 +53,7 @@ public static class EnemyTargeting
         float rangeSquared = range * range;
 
         Enemy best = null;
-        float bestScore = float.MaxValue;
+        float bestScore = float.PositiveInfinity;
 
         // Indexed loop rather than foreach: iterating IReadOnlyList<T> with foreach boxes the
         // enumerator, and this runs per ritual per search interval plus once per chain jump.
