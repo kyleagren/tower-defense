@@ -130,6 +130,7 @@ public partial class Tank : Sentinel
                     _blockStateTimer = BlockCooldownDuration;
                     LowerShield();
                     SetShieldColor(ShieldCooldownColor, 0.3f);
+                    Shield.Scale = Vector3.One;
                 }
                 break;
 
@@ -212,6 +213,7 @@ public partial class Tank : Sentinel
             _blockState = BlockState.Immune;
             _blockStateTimer = BlockImmunityDuration;
             SetShieldColor(ShieldImmuneColor, 2f);
+            Shield.Scale = Vector3.One * 1.5f;
             return;
         }
 
