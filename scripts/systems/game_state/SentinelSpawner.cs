@@ -102,8 +102,6 @@ public partial class SentinelSpawner : Node
             character.HandoffFrom(Architect.ByOwner[OwnerId]);
         }
 
-        LogSwapFrames(character, previous);
-
         if (previous != null && IsInstanceValid(previous))
         {
             // Stop it driving interactors/input immediately, but keep the body itself alive for now.
@@ -122,31 +120,6 @@ public partial class SentinelSpawner : Node
             {
                 previous.QueueFree();
             }
-        }
-    }
-
-    // TEMPORARY diagnostic for the swap flicker - remove once we know the cause.
-    private async void LogSwapFrames(PlayerCharacter incoming, PlayerCharacter outgoing)
-    {
-        for (int frame = 0; frame < 8; frame++)
-        {
-            Camera3D viewportCamera = GetViewport().GetCamera3D();
-            string live = viewportCamera == null ? "<none>" : viewportCamera.GetPath().ToString();
-
-            string arm = "<freed>";
-
-            if (IsInstanceValid(incoming))
-            {
-                arm = $"spring={incoming.SpringArm.SpringLength:F2} hit={incoming.SpringArm.GetHitLength():F2} "
-                    + $"camDist={incoming.Camera.GlobalPosition.DistanceTo(incoming.GlobalPosition):F2} "
-                    + $"camCurrent={incoming.Camera.Current}";
-            }
-
-            string old = IsInstanceValid(outgoing) ? $"alive inTree={outgoing.IsInsideTree()}" : "freed";
-
-            GD.Print($"[swap f{frame} @{Engine.GetProcessFrames()}] live={live} | incoming={arm} | outgoing={old}");
-
-            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         }
     }
 
