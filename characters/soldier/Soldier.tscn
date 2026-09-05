@@ -1,7 +1,7 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dsutqhp5i2738"]
 
 [ext_resource type="PackedScene" path="res://characters/SentinelBody.tscn" id="1_base"]
-[ext_resource type="Script" path="res://characters/soldier/Soldier.cs" id="2_soldier"]
+[ext_resource type="Script" uid="uid://cw46e8ouy58md" path="res://characters/soldier/Soldier.cs" id="2_soldier"]
 [ext_resource type="PackedScene" path="res://visual_effects/ImpactFlash.tscn" id="3_impact"]
 [ext_resource type="PackedScene" path="res://visual_effects/BulletTracer.tscn" id="4_tracer"]
 
@@ -32,36 +32,37 @@ size = Vector3(0.06, 0.12, 0.2)
 material = SubResource("StandardMaterial3D_rifle")
 size = Vector3(0.05, 0.2, 0.06)
 
-[node name="Soldier" instance=ExtResource("1_base") node_paths=PackedStringArray("SpringArm", "Camera", "BodyMesh", "Weapon", "MuzzlePoint")]
+[node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
 script = ExtResource("2_soldier")
+AttackDamage = 100.0
+ImpactScene = ExtResource("3_impact")
+MuzzlePoint = NodePath("Weapon/MuzzlePoint")
+TracerScene = ExtResource("4_tracer")
+Weapon = NodePath("Weapon")
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
-Weapon = NodePath("Weapon")
-MuzzlePoint = NodePath("Weapon/MuzzlePoint")
-ImpactScene = ExtResource("3_impact")
-TracerScene = ExtResource("4_tracer")
 
-[node name="MeshInstance3D" parent="."]
+[node name="MeshInstance3D" parent="." index="1"]
 mesh = SubResource("CapsuleMesh_soldier")
 
-[node name="Weapon" type="Node3D" parent="."]
+[node name="Weapon" type="Node3D" parent="." index="5" unique_id=1450969779]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.15, -0.35)
 
-[node name="Body" type="MeshInstance3D" parent="Weapon"]
+[node name="Body" type="MeshInstance3D" parent="Weapon" index="0" unique_id=944443641]
 mesh = SubResource("BoxMesh_rifle_body")
 
-[node name="Barrel" type="MeshInstance3D" parent="Weapon"]
+[node name="Barrel" type="MeshInstance3D" parent="Weapon" index="1" unique_id=791998866]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.35)
 mesh = SubResource("BoxMesh_rifle_barrel")
 
-[node name="Stock" type="MeshInstance3D" parent="Weapon"]
+[node name="Stock" type="MeshInstance3D" parent="Weapon" index="2" unique_id=1203244717]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0.25)
 mesh = SubResource("BoxMesh_rifle_stock")
 
-[node name="Magazine" type="MeshInstance3D" parent="Weapon"]
+[node name="Magazine" type="MeshInstance3D" parent="Weapon" index="3" unique_id=1998442312]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.13, -0.05)
 mesh = SubResource("BoxMesh_rifle_magazine")
 
-[node name="MuzzlePoint" type="Marker3D" parent="Weapon"]
+[node name="MuzzlePoint" type="Marker3D" parent="Weapon" index="4" unique_id=1846459408]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.525)

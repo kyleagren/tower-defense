@@ -9,6 +9,7 @@ public partial class Tank : Sentinel
     [Export] public Node3D SwordTilt { get; private set; }
     [Export] public Area3D SwordHitArea { get; private set; }
     [Export] public Node3D ShieldOrbit { get; private set; }
+    [Export] public MeshInstance3D Shield { get; private set; }
     [Export] public float AttackDamage = 35f;
     [Export] public float AttackSpeed = 1.2f;
     [Export] public float SwingLeftAngleDegrees = 200f;
@@ -19,15 +20,20 @@ public partial class Tank : Sentinel
     [Export] public float ReturnDelay = 0.75f;
     [Export] public float ReturnDuration = 0.25f;
     [Export] public float BlockRaiseDuration = 0.15f;
-    [Export] public float BlockImmunityDuration = 1f;
+    [Export] public float BlockImmunityDuration = 1.5f;
     [Export] public float BlockCooldownDuration = 5f;
     [Export] public float BlockedMoveSpeedMultiplier = 0.8f;
     [Export] public float ShieldRestAngleDegrees = 180f;
     [Export] public float ShieldBlockAngleDegrees = 90f;
 
+    private static readonly Color ShieldNormalColor = new Color(0.4f, 0.32f, 0.15f);
+    private static readonly Color ShieldImmuneColor = new Color(1f, 1f, 1f);
+    private static readonly Color ShieldCooldownColor = new Color(0.35f, 0.05f, 0.05f);
+
     public override CharacterId Id => CharacterId.Tank;
     public override float Speed => base.Speed * (_blockState == BlockState.Armed ? BlockedMoveSpeedMultiplier : 1f);
 
+    private StandardMaterial3D _shieldMaterial;
     private float _attackCooldown;
     private float _returnTimer;
     private bool _idleReturnStarted;
@@ -45,6 +51,22 @@ public partial class Tank : Sentinel
         _idleTiltRotationZ = SwordTilt.Rotation.Z;
         SwordHitArea.Monitoring = false;
         SwordHitArea.BodyEntered += OnSwordHitBody;
+
+        _shieldMaterial = new StandardMaterial3D
+        {
+            AlbedoColor = ShieldNormalColor,
+            EmissionEnabled = true,
+            Emission = ShieldNormalColor,
+            EmissionEnergyMultiplier = 0f
+        };
+        Shield.MaterialOverride = _shieldMaterial;
+    }
+
+    private void SetShieldColor(Color color, float emissionEnergy)
+    {
+        _shieldMaterial.AlbedoColor = color;
+        _shieldMaterial.Emission = color;
+        _shieldMaterial.EmissionEnergyMultiplier = emissionEnergy;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -107,6 +129,7 @@ public partial class Tank : Sentinel
                     _blockState = BlockState.Cooldown;
                     _blockStateTimer = BlockCooldownDuration;
                     LowerShield();
+                    SetShieldColor(ShieldCooldownColor, 0.3f);
                 }
                 break;
 
@@ -115,6 +138,7 @@ public partial class Tank : Sentinel
                 if (_blockStateTimer <= 0f)
                 {
                     _blockState = BlockState.Idle;
+                    SetShieldColor(ShieldNormalColor, 0f);
                 }
                 break;
         }
@@ -187,6 +211,7 @@ public partial class Tank : Sentinel
         {
             _blockState = BlockState.Immune;
             _blockStateTimer = BlockImmunityDuration;
+            SetShieldColor(ShieldImmuneColor, 2f);
             return;
         }
 

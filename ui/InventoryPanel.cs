@@ -61,6 +61,7 @@ public partial class InventoryPanel : Control
     private Button _dragOriginButton;
     private Vector2 _dragStartPosition;
     private bool _isDragging;
+    private bool _dragJustHandled;
     private const float DragThreshold = 8f;
 
     public override void _Ready()
@@ -334,6 +335,12 @@ public partial class InventoryPanel : Control
 
     private void OnGridSlotPressed(int gridIndex)
     {
+        if (_dragJustHandled)
+        {
+            _dragJustHandled = false;
+            return;
+        }
+
         bool shiftHeld = _heldItem == null
             && SaveManager.Instance.Data.Inventory[gridIndex] != null
             && Input.IsKeyPressed(Key.Shift);
@@ -369,6 +376,12 @@ public partial class InventoryPanel : Control
     // to the earliest open Inventory slot, mirroring QuickEquip's grid-side shortcut in reverse.
     private void OnEquipmentSlotPressed(SlotHandle slot)
     {
+        if (_dragJustHandled)
+        {
+            _dragJustHandled = false;
+            return;
+        }
+
         if (_heldItem == null && Input.IsKeyPressed(Key.Shift))
         {
             QuickUnequip(slot);
@@ -481,6 +494,8 @@ public partial class InventoryPanel : Control
     private void EndDrag()
     {
         _isDragging = false;
+        _dragJustHandled = true;
+        CallDeferred(nameof(ClearDragJustHandled));
 
         Control hovered = GetViewport().GuiGetHoveredControl();
 
@@ -512,6 +527,11 @@ public partial class InventoryPanel : Control
         targetSlot.Value.PlaceItem(_heldItem);
         _heldItem = displaced;
         CommitChange();
+    }
+
+    private void ClearDragJustHandled()
+    {
+        _dragJustHandled = false;
     }
 
     // Maps whatever Control the mouse is over back to the SlotHandle it represents, so a drag
