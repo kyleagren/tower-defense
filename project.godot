@@ -31,6 +31,10 @@ window/stretch/aspect="expand"
 
 project/assembly_name="TowerDefense"
 
+[gui]
+
+timers/tooltip_delay_sec=0.0
+
 [input]
 
 ui_accept={

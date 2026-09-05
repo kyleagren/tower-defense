@@ -47,6 +47,7 @@ public partial class InventoryPanel : Control
     [Export] public Control PhaseIndicator { get; private set; }
     [Export] public PackedScene WorldItemScene { get; private set; }
     [Export] public float DropDistance = 1f;
+    [Export] public float DropDistanceVariance = 0.2f;
     [Export] public float DropAngleSpread = 45f;
 
     private EquipmentSlotView[] _equipmentSlots;
@@ -55,6 +56,12 @@ public partial class InventoryPanel : Control
     private EquippedLoadout _loadout;
     private Item _heldItem;
     private TextureRect _cursorIcon;
+
+    private SlotHandle? _dragSourceSlot;
+    private Button _dragOriginButton;
+    private Vector2 _dragStartPosition;
+    private bool _isDragging;
+    private const float DragThreshold = 8f;
 
     public override void _Ready()
     {
@@ -112,6 +119,7 @@ public partial class InventoryPanel : Control
     {
         Button button = BuildSlotButton(anchor);
         button.Pressed += () => OnEquipmentSlotPressed(slot);
+        button.GuiInput += @event => OnSlotGuiInput(slot, button, @event);
 
         return new EquipmentSlotView(button, placeholderName, slot);
     }
@@ -135,6 +143,7 @@ public partial class InventoryPanel : Control
 
             BuildIconOnlyVisual(button);
             button.Pressed += () => OnGridSlotPressed(slotIndex);
+            button.GuiInput += @event => OnSlotGuiInput(GridSlot(slotIndex), button, @event);
 
             Grid.AddChild(button);
             _gridButtons[i] = button;
@@ -417,6 +426,118 @@ public partial class InventoryPanel : Control
         Refresh();
     }
 
+    // Detects a press-drag-release gesture layered on top of the existing click-click flow. A
+    // plain click that never drifts past DragThreshold touches none of this - it falls straight
+    // through to Pressed exactly as before, which is why gamepad confirm (which never emits these
+    // event types) can't be affected by any of it.
+    private void OnSlotGuiInput(SlotHandle slot, Button button, InputEvent @event)
+    {
+        if (@event is InputEventMouseButton mouseButton && mouseButton.ButtonIndex == MouseButton.Left)
+        {
+            if (mouseButton.Pressed)
+            {
+                if (_heldItem == null && slot.GetItem() != null)
+                {
+                    _dragSourceSlot = slot;
+                    _dragOriginButton = button;
+                    _dragStartPosition = mouseButton.Position;
+                    _isDragging = false;
+                }
+
+                return;
+            }
+
+            if (_isDragging)
+            {
+                EndDrag();
+            }
+
+            _dragSourceSlot = null;
+            _dragOriginButton = null;
+            return;
+        }
+
+        if (@event is InputEventMouseMotion mouseMotion && _dragSourceSlot != null && !_isDragging
+            && mouseMotion.Position.DistanceTo(_dragStartPosition) >= DragThreshold)
+        {
+            BeginDrag();
+        }
+    }
+
+    // Lifts the item the moment the mouse actually moves, rather than waiting for release - the
+    // cursor icon (already driven by _heldItem in _Process) starts following the drag immediately.
+    private void BeginDrag()
+    {
+        _heldItem = _dragSourceSlot.Value.GetItem();
+        _dragSourceSlot.Value.PlaceItem(null);
+        _isDragging = true;
+        Refresh();
+    }
+
+    // Finishes a drag - but only for a release somewhere other than the slot it started from. If
+    // the cursor ended up back over the origin button, this does nothing: Button.Pressed fires for
+    // that release exactly like an ordinary click would, and OnSlotPressed's existing pick-up-then-
+    // place logic puts the item right back where it came from.
+    private void EndDrag()
+    {
+        _isDragging = false;
+
+        Control hovered = GetViewport().GuiGetHoveredControl();
+
+        if (hovered == _dragOriginButton)
+        {
+            return;
+        }
+
+        SlotHandle? targetSlot = FindSlotForControl(hovered);
+
+        if (targetSlot == null)
+        {
+            DropInWorld(_heldItem);
+            _heldItem = null;
+            SaveManager.Instance.RequestSave();
+            Refresh();
+            return;
+        }
+
+        if (!targetSlot.Value.CanAccept(_heldItem))
+        {
+            _dragSourceSlot.Value.PlaceItem(_heldItem);
+            _heldItem = null;
+            Refresh();
+            return;
+        }
+
+        Item displaced = targetSlot.Value.GetItem();
+        targetSlot.Value.PlaceItem(_heldItem);
+        _heldItem = displaced;
+        CommitChange();
+    }
+
+    // Maps whatever Control the mouse is over back to the SlotHandle it represents, so a drag
+    // release can target it the same way a click would - null if the cursor isn't over a slot at
+    // all (background, outside the panel), which EndDrag treats as "drop it in the world" instead.
+    private SlotHandle? FindSlotForControl(Control control)
+    {
+        for (int i = 0; i < _gridButtons.Length; i++)
+        {
+            if (_gridButtons[i] == control)
+            {
+                return GridSlot(i);
+            }
+        }
+
+        foreach (EquipmentSlotView view in _equipmentSlots)
+        {
+            if (view.Button == control)
+            {
+                return view.Slot;
+            }
+        }
+
+        return null;
+    }
+
     // Every mutating path ends the same way: persist, tell the rest of the game a loadout changed
     // (which is what drops the CharacterSheet and every Ritual's cached context), then redraw.
     private void CommitChange()
@@ -475,11 +596,12 @@ public partial class InventoryPanel : Control
         PlayerCharacter player = PlayerCharacter.ActiveCombatant;
         Vector3 forward = -player.GlobalTransform.Basis.Z;
         Vector3 direction = forward.Rotated(Vector3.Up, Mathf.DegToRad((float)GD.RandRange(-DropAngleSpread, DropAngleSpread)));
+        float distance = DropDistance + (float)GD.RandRange(-DropDistanceVariance, DropDistanceVariance);
 
         WorldItem worldItem = WorldItemScene.Instantiate<WorldItem>();
         worldItem.Initialize(item);
         GetTree().CurrentScene.AddChild(worldItem);
-        worldItem.GlobalPosition = player.GlobalPosition + direction * DropDistance;
+        worldItem.GlobalPosition = player.GlobalPosition + direction * distance;
     }
 
     private static void SetBackground(Button button, Color color)

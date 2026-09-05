@@ -7,12 +7,19 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // only a Sentinel has a health value to damage.
     public static Sentinel Active { get; private set; }
 
+    // The local player's Sentinel, set once at spawn regardless of whether it's the active
+    // combatant - unlike Active, this stays valid during Build phase too, so anything that needs
+    // to read a Sentinel's health before its first Combat phase (PlayerHealthOrb's initial value)
+    // has somewhere to look it up instead of only ever reacting to PlayerHealthChanged.
+    public static Sentinel Local { get; private set; }
+
     public abstract CharacterId Id { get; }
 
     [Export] public float BaseMaxHealth = 100f;
 
     public bool IsDead => _currentHealth <= 0f;
     public bool IsDestroyed => IsDead;
+    public float CurrentHealth => _currentHealth;
 
     public float MaxHealth => BaseMaxHealth * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMaxHealth));
     public override float Speed => BaseSpeed * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMoveSpeed));
@@ -23,6 +30,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         base._Ready();
         _currentHealth = MaxHealth;
+        Local = this;
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
     }
 
     protected override void SetActive(bool value)

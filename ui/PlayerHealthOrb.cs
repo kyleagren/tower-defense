@@ -22,6 +22,14 @@ public partial class PlayerHealthOrb : TextureProgressBar
         TextureProgress = BuildCircleTexture(FillColor);
 
         EventBus.Instance.PlayerHealthChanged += OnPlayerHealthChanged;
+
+        // Sentinel._Ready (which emits the initial PlayerHealthChanged) can run before this node's
+        // own _Ready subscribes, depending on scene tree order - pull the current value directly
+        // as a fallback so a well-timed emit isn't the only way this ever shows real numbers.
+        if (Sentinel.Local != null)
+        {
+            OnPlayerHealthChanged(Sentinel.Local.CurrentHealth, Sentinel.Local.MaxHealth);
+        }
     }
 
     public override void _ExitTree()
