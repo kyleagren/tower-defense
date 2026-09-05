@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://cs7e675hoiaql" path="res://characters/LevelSelectStation.cs" id="8_levelselectstation"]
 [ext_resource type="PackedScene" path="res://ui/LevelSelectPanel.tscn" id="9_levelselectpanel"]
 [ext_resource type="PackedScene" path="res://enemies/TrainingDummy.tscn" id="10_dummy"]
+[ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://scripts/dev/DebugToggle.cs" id="11_debugtoggle"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -317,7 +318,7 @@ script = ExtResource("2_economymanager")
 Unlimited = true
 
 [node name="ArchitectSelectStation" type="StaticBody3D" parent="." unique_id=708825174]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.42743, 0.99999964, 36.540924)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4684536, 0.9999987, 35.53236)
 collision_layer = 17
 script = ExtResource("3_archstation")
 
@@ -407,3 +408,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.9, 0, 45.1)
 
 [node name="TrainingDummy8" parent="TrainingDummiesOcto" unique_id=1287611460 instance=ExtResource("10_dummy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.7, 0, 45.1)
+
+[node name="DebugToggle" type="Node" parent="." unique_id=168619648]
+script = ExtResource("11_debugtoggle")

@@ -4,3 +4,4 @@
 // stay entirely independent.
 global using EnemyRegistry = ActiveRegistry<Enemy>;
 global using IceWallSegmentRegistry = ActiveRegistry<IceWallSegment>;
+global using FloatingCombatTextRegistry = ActiveRegistry<FloatingCombatText>;
