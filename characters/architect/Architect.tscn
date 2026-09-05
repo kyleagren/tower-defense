@@ -19,7 +19,7 @@ height = 1.8
 
 [node name="Architect" type="CharacterBody3D" unique_id=65489996 node_paths=PackedStringArray("SpringArm", "BuildMenu", "RitualPlacer", "BodyMesh", "Camera")]
 collision_layer = 8
-collision_mask = 33
+collision_mask = 49
 script = ExtResource("1_yt6xr")
 SpringArm = NodePath("SpringArm3D")
 BuildMenu = NodePath("BuildMenu")

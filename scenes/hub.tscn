@@ -101,7 +101,7 @@ size = Vector3(1, 2, 1)
 size = Vector3(1, 2, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_archzone"]
-size = Vector3(40, 10, 40)
+size = Vector3(40, 10, 43.320313)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_charselect"]
 albedo_color = Color(0.1, 0.5, 0.6, 1)
@@ -334,6 +334,7 @@ collision_mask = 8
 script = ExtResource("4_archzone")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="ArchitectTestZone" unique_id=1573708972]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6601563)
 shape = SubResource("BoxShape3D_archzone")
 
 [node name="Crosshair" parent="." unique_id=910279266 instance=ExtResource("5_crosshair")]

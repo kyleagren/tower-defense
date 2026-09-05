@@ -262,10 +262,13 @@ public partial class Enemy : CharacterBody3D, IDamageable
     private void CollectMeshInstances()
     {
         // owned: false matches the hand-rolled recursion this replaced - it walks into instanced
-        // sub-scenes (the health bar included) rather than stopping at their roots.
+        // sub-scenes rather than stopping at their roots, but that also means HealthBar's own Fill/
+        // Empty quads without excluding them - they'd get the elemental status overlay meant for the
+        // body, rendered with a material that doesn't share their careful no_depth_test/cull_mode
+        // setup, which is what looked like a stray second bar.
         foreach (Node node in FindChildren("*", nameof(MeshInstance3D), recursive: true, owned: false))
         {
-            if (node is MeshInstance3D meshInstance)
+            if (node is MeshInstance3D meshInstance && !HealthBar.IsAncestorOf(meshInstance))
             {
                 _meshInstances.Add(meshInstance);
             }
