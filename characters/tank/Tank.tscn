@@ -63,7 +63,7 @@ mesh = SubResource("CapsuleMesh_tank")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
 
 [node name="SwordArm" type="Node3D" parent="Weapon/SwordOrbit"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.65, 0, -0.1)
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.65, 0, -0.1)
 
 [node name="SwordTilt" type="Node3D" parent="Weapon/SwordOrbit/SwordArm"]
 transform = Transform3D(1, 0, 0, 0, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, 0, 0)
