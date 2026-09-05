@@ -78,6 +78,29 @@ public partial class Tank : Sentinel
                 BeginReturnToIdle();
             }
         }
+
+        UpdateDebugPoseTuning((float)delta);
+    }
+
+    // TEMPORARY: hold [ / ] to nudge heading (Y), , / . to nudge tilt (Z), ; / ' to nudge roll (X) -
+    // current values print to the output console. Remove once the idle pose is dialed in.
+    private void UpdateDebugPoseTuning(float delta)
+    {
+        float step = Mathf.DegToRad(30f) * delta;
+        bool changed = false;
+
+        if (Input.IsKeyPressed(Key.Bracketleft)) { SwordTilt.RotateY(-step); changed = true; }
+        if (Input.IsKeyPressed(Key.Bracketright)) { SwordTilt.RotateY(step); changed = true; }
+        if (Input.IsKeyPressed(Key.Comma)) { SwordTilt.RotateZ(-step); changed = true; }
+        if (Input.IsKeyPressed(Key.Period)) { SwordTilt.RotateZ(step); changed = true; }
+        if (Input.IsKeyPressed(Key.Semicolon)) { SwordTilt.RotateX(-step); changed = true; }
+        if (Input.IsKeyPressed(Key.Apostrophe)) { SwordTilt.RotateX(step); changed = true; }
+
+        if (changed)
+        {
+            Vector3 deg = new Vector3(Mathf.RadToDeg(SwordTilt.Rotation.X), Mathf.RadToDeg(SwordTilt.Rotation.Y), Mathf.RadToDeg(SwordTilt.Rotation.Z));
+            GD.Print($"SwordTilt rotation degrees: X={deg.X:F1} Y={deg.Y:F1} Z={deg.Z:F1}");
+        }
     }
 
     private void UpdateBlockState(float delta)
