@@ -2,7 +2,7 @@ public enum StatId
 {
     RitualRange,
     RitualCastSpeed,
-    RitualCooldownReduction,
+    RitualCooldownRecoveryRate,
     RitualManaCostReduction,
     RitualCapacityCostReduction,
     RitualDamage,
@@ -19,7 +19,7 @@ public enum StatId
     SentinelHealthRegen,
     SentinelCritChance,
     SentinelCritDamage,
-    SentinelCooldownReduction,
+    SentinelCooldownRecoveryRate,
 
     WeaponAttackDamage
 }

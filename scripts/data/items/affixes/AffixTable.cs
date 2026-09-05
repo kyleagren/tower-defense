@@ -49,12 +49,12 @@ public static class AffixTable
                 new PercentTierRange(5, 19, 24)
             ]
         },
-        [StatId.RitualCooldownReduction] = new Affix
+        [StatId.RitualCooldownRecoveryRate] = new Affix
         {
             Name = "Recovery",
-            DescriptionTemplate = "+{0}% Cooldown Reduction",
+            DescriptionTemplate = "+{0}% Cooldown Recovery Rate",
             AffixType = AffixType.Suffix,
-            Stat = StatId.RitualCooldownReduction,
+            Stat = StatId.RitualCooldownRecoveryRate,
             AllowedSlots = AccessorySlots,
             TierTable =
             [
@@ -307,12 +307,12 @@ public static class AffixTable
                 new PercentTierRange(5, 71, 100)
             ]
         },
-        [StatId.SentinelCooldownReduction] = new Affix
+        [StatId.SentinelCooldownRecoveryRate] = new Affix
         {
             Name = "Celerity",
-            DescriptionTemplate = "+{0}% Ability Cooldown Reduction",
+            DescriptionTemplate = "+{0}% Ability Cooldown Recovery Rate",
             AffixType = AffixType.Prefix,
-            Stat = StatId.SentinelCooldownReduction,
+            Stat = StatId.SentinelCooldownRecoveryRate,
             AllowedSlots = ArmorSlots,
             TierTable =
             [

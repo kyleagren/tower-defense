@@ -187,14 +187,14 @@ public partial class WalkingEnemy : Enemy
     private void UpdatePlayerLeash(float delta)
     {
         _playerCheckTimer -= delta;
-        if (_playerCheckTimer > 0f || PlayerCharacter.ActiveCombatant == null)
+        if (_playerCheckTimer > 0f || Sentinel.Active == null)
         {
             return;
         }
 
         _playerCheckTimer = PlayerCheckInterval;
 
-        float distanceToPlayer = GlobalPosition.DistanceTo(PlayerCharacter.ActiveCombatant.GlobalPosition);
+        float distanceToPlayer = GlobalPosition.DistanceTo(Sentinel.Active.GlobalPosition);
         bool withinLeash = distanceToPlayer <= LeashRange;
 
         if (withinLeash && _movementMode != MovementMode.ChasingPlayer)
@@ -209,7 +209,7 @@ public partial class WalkingEnemy : Enemy
 
         if (_movementMode == MovementMode.ChasingPlayer)
         {
-            NavAgent.TargetPosition = PlayerCharacter.ActiveCombatant.GlobalPosition;
+            NavAgent.TargetPosition = Sentinel.Active.GlobalPosition;
         }
     }
 
@@ -366,18 +366,23 @@ public partial class WalkingEnemy : Enemy
 
     private void ProcessChasingPlayer(double delta)
     {
-        float distanceToPlayer = GlobalPosition.DistanceTo(PlayerCharacter.ActiveCombatant.GlobalPosition);
+        if (Sentinel.Active == null)
+        {
+            return;
+        }
+
+        float distanceToPlayer = GlobalPosition.DistanceTo(Sentinel.Active.GlobalPosition);
         _attackCooldown -= (float)delta;
 
         if (distanceToPlayer <= AttackRange)
         {
             Stop(delta);
-            RotateTowardsMovement((PlayerCharacter.ActiveCombatant.GlobalPosition - GlobalPosition).Normalized(), delta);
+            RotateTowardsMovement((Sentinel.Active.GlobalPosition - GlobalPosition).Normalized(), delta);
 
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                PlayerCharacter.ActiveCombatant.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+                Sentinel.Active.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
             }
 
             return;

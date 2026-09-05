@@ -47,6 +47,7 @@ public partial class InventoryPanel : Control
     [Export] public Control PhaseIndicator { get; private set; }
     [Export] public PackedScene WorldItemScene { get; private set; }
     [Export] public float DropDistance = 1f;
+    [Export] public float DropAngleSpread = 45f;
 
     private EquipmentSlotView[] _equipmentSlots;
     private Button[] _gridButtons;
@@ -473,11 +474,12 @@ public partial class InventoryPanel : Control
     {
         PlayerCharacter player = PlayerCharacter.ActiveCombatant;
         Vector3 forward = -player.GlobalTransform.Basis.Z;
+        Vector3 direction = forward.Rotated(Vector3.Up, Mathf.DegToRad((float)GD.RandRange(-DropAngleSpread, DropAngleSpread)));
 
         WorldItem worldItem = WorldItemScene.Instantiate<WorldItem>();
         worldItem.Initialize(item);
         GetTree().CurrentScene.AddChild(worldItem);
-        worldItem.GlobalPosition = player.GlobalPosition + forward * DropDistance;
+        worldItem.GlobalPosition = player.GlobalPosition + direction * DropDistance;
     }
 
     private static void SetBackground(Button button, Color color)

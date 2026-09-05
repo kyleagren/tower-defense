@@ -8,7 +8,7 @@ public class SpellCastContext
     public ScaledStat CastTime = 0f;
     public ScaledStat CastSpeed = 1f;
     public ScaledStat Cooldown = 0f;
-    public ScaledStat CooldownRecoverySpeed = 1f;
+    public ScaledStat CooldownRecoveryRate = 1f;
     public ScaledStat RagdollForce = 0f;
     public ScaledStat ManaCost = 0f;
     public ScaledStat CapacityCost = 0f;
@@ -43,10 +43,10 @@ public class SpellCastContext
     // Cast speed reduces cast time rather than scaling it, so the two resolve together.
     public float ResolvedCastTime => CastTime.Value / CastSpeed.Value;
 
-    // Cooldown recovery speed works the same way cast speed does (and the same way PoE's own
-    // "increased cooldown recovery speed" stat works) - it divides into cooldown time rather than
+    // Cooldown recovery rate works the same way cast speed does (and the same way PoE's own
+    // "increased cooldown recovery rate" stat works) - it divides into cooldown time rather than
     // subtracting from it, so stacking it can never push the cooldown to zero or negative.
-    public float ResolvedCooldown => Cooldown.Value / CooldownRecoverySpeed.Value;
+    public float ResolvedCooldown => Cooldown.Value / CooldownRecoveryRate.Value;
 
     // Mana/capacity cost reduction is ordinary linear "Increased" (unlike cooldown), so it needs
     // an explicit floor instead - PoE's own rule that nothing can ever cost less than 1.
@@ -66,12 +66,12 @@ public class SpellCastContext
     // Folds an owner's equipment bonuses into this context, once, during resolve. Simple stats go
     // into the same ScaledStat.Increased fields Runes already use (equipment and Runes have always
     // legitimately shared those); the elemental bonus goes into the private-setter field above
-    // instead, and cooldown reduction feeds CooldownRecoverySpeed rather than Cooldown itself.
+    // instead, and cooldown recovery rate feeds CooldownRecoveryRate rather than Cooldown itself.
     public void ApplyEquipmentBonuses(CharacterSheet sheet)
     {
         Range.Increased += sheet.GetBonus(StatId.RitualRange);
         CastSpeed.Increased += sheet.GetBonus(StatId.RitualCastSpeed);
-        CooldownRecoverySpeed.Increased += sheet.GetBonus(StatId.RitualCooldownReduction);
+        CooldownRecoveryRate.Increased += sheet.GetBonus(StatId.RitualCooldownRecoveryRate);
         ManaCost.Increased -= sheet.GetBonus(StatId.RitualManaCostReduction);
         CapacityCost.Increased -= sheet.GetBonus(StatId.RitualCapacityCostReduction);
         DamageScale.Increased += sheet.GetBonus(StatId.RitualDamage);
