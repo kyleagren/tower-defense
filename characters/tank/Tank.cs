@@ -16,7 +16,7 @@ public partial class Tank : Sentinel
     [Export] public float IdleAngleDegrees = 0f;
     [Export] public float SwingTiltDegrees = 0f;
     [Export] public float SwingDuration = 0.22f;
-    [Export] public float ReturnDelay = 0.65f;
+    [Export] public float ReturnDelay = 0.75f;
     [Export] public float ReturnDuration = 0.25f;
     [Export] public float BlockRaiseDuration = 0.15f;
     [Export] public float BlockImmunityDuration = 1f;
@@ -163,6 +163,7 @@ public partial class Tank : Sentinel
     private void BeginReturnToIdle()
     {
         _idleReturnStarted = true;
+        _swingTowardLeft = true;
         _swordTween?.Kill();
         _swordTween = CreateTween();
         _swordTween.SetParallel(true);
