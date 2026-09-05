@@ -1,80 +1,82 @@
 [gd_scene format=3 uid="uid://ct3j8oj7yvja4"]
 
+[ext_resource type="Script" uid="uid://b2lh56ru63dye" path="res://scripts/systems/game_state/SentinelSpawner.cs" id="1_sentinelspawner"]
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground_a"]
 material = SubResource("StandardMaterial3D_ground")
-size = Vector2(15, 15)
+size = Vector2(30, 30)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground_a"]
-size = Vector3(15, 0.2, 15)
+size = Vector3(30, 0.2, 30)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_hallway"]
 material = SubResource("StandardMaterial3D_ground")
-size = Vector2(4, 10)
+size = Vector2(8, 20)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hallway"]
-size = Vector3(4, 0.2, 10)
+size = Vector3(8, 0.2, 20)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground_b"]
 material = SubResource("StandardMaterial3D_ground")
-size = Vector2(20, 20)
+size = Vector2(40, 40)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground_b"]
-size = Vector3(20, 0.2, 20)
+size = Vector3(40, 0.2, 40)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
 albedo_color = Color(0.3, 0.3, 0.32, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_wall_thin_long"]
-material = SubResource("StandardMaterial3D_wall")
-size = Vector3(1, 3, 10)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_wall_thin_long"]
-size = Vector3(1, 3, 10)
-
 [sub_resource type="BoxMesh" id="BoxMesh_wall_roomA_side"]
 material = SubResource("StandardMaterial3D_wall")
-size = Vector3(1, 3, 15)
+size = Vector3(2, 6, 30)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_roomA_side"]
-size = Vector3(1, 3, 15)
+size = Vector3(2, 6, 30)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_roomA_back"]
 material = SubResource("StandardMaterial3D_wall")
-size = Vector3(15, 3, 1)
+size = Vector3(30, 6, 2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_roomA_back"]
-size = Vector3(15, 3, 1)
+size = Vector3(30, 6, 2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_roomA_flank"]
 material = SubResource("StandardMaterial3D_wall")
-size = Vector3(5.5, 3, 1)
+size = Vector3(11, 6, 2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_roomA_flank"]
-size = Vector3(5.5, 3, 1)
+size = Vector3(11, 6, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_thin_long"]
+material = SubResource("StandardMaterial3D_wall")
+size = Vector3(2, 6, 20)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall_thin_long"]
+size = Vector3(2, 6, 20)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_thick_long"]
 material = SubResource("StandardMaterial3D_wall")
-size = Vector3(1, 3, 20)
+size = Vector3(2, 6, 40)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_thick_long"]
-size = Vector3(1, 3, 20)
+size = Vector3(2, 6, 40)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_roomB_back"]
 material = SubResource("StandardMaterial3D_wall")
-size = Vector3(20, 3, 1)
+size = Vector3(40, 6, 2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_roomB_back"]
-size = Vector3(20, 3, 1)
+size = Vector3(40, 6, 2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_roomB_flank"]
 material = SubResource("StandardMaterial3D_wall")
-size = Vector3(8, 3, 1)
+size = Vector3(16, 6, 2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_roomB_flank"]
-size = Vector3(8, 3, 1)
+size = Vector3(16, 6, 2)
 
 [sub_resource type="Environment" id="Environment_default"]
 
@@ -90,7 +92,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 shape = SubResource("BoxShape3D_ground_a")
 
 [node name="GroundHallway" type="StaticBody3D" parent="." unique_id=1141242834]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 25)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GroundHallway" unique_id=580069165]
 mesh = SubResource("PlaneMesh_hallway")
@@ -100,7 +102,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 shape = SubResource("BoxShape3D_hallway")
 
 [node name="GroundRoomB" type="StaticBody3D" parent="." unique_id=709098078]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 27.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 55)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GroundRoomB" unique_id=516041367]
 mesh = SubResource("PlaneMesh_ground_b")
@@ -112,7 +114,7 @@ shape = SubResource("BoxShape3D_ground_b")
 [node name="Boundary" type="Node3D" parent="." unique_id=1553001355]
 
 [node name="WallRoomA_West" type="StaticBody3D" parent="Boundary" unique_id=1016058963]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 3, 0)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomA_West" unique_id=693239613]
@@ -122,7 +124,7 @@ mesh = SubResource("BoxMesh_wall_roomA_side")
 shape = SubResource("BoxShape3D_wall_roomA_side")
 
 [node name="WallRoomA_East" type="StaticBody3D" parent="Boundary" unique_id=524600379]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 3, 0)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomA_East" unique_id=1120813338]
@@ -132,7 +134,7 @@ mesh = SubResource("BoxMesh_wall_roomA_side")
 shape = SubResource("BoxShape3D_wall_roomA_side")
 
 [node name="WallRoomA_Back" type="StaticBody3D" parent="Boundary" unique_id=476589094]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -15)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomA_Back" unique_id=1382659550]
@@ -142,7 +144,7 @@ mesh = SubResource("BoxMesh_wall_roomA_back")
 shape = SubResource("BoxShape3D_wall_roomA_back")
 
 [node name="WallRoomA_FlankLeft" type="StaticBody3D" parent="Boundary" unique_id=1499869908]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, 1.5, 7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 3, 15)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomA_FlankLeft" unique_id=165169518]
@@ -152,7 +154,7 @@ mesh = SubResource("BoxMesh_wall_roomA_flank")
 shape = SubResource("BoxShape3D_wall_roomA_flank")
 
 [node name="WallRoomA_FlankRight" type="StaticBody3D" parent="Boundary" unique_id=1591086984]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.75, 1.5, 7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 3, 15)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomA_FlankRight" unique_id=1253552905]
@@ -162,7 +164,7 @@ mesh = SubResource("BoxMesh_wall_roomA_flank")
 shape = SubResource("BoxShape3D_wall_roomA_flank")
 
 [node name="WallHallway_West" type="StaticBody3D" parent="Boundary" unique_id=1510637189]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, 12.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3, 25)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallHallway_West" unique_id=158048834]
@@ -172,7 +174,7 @@ mesh = SubResource("BoxMesh_wall_thin_long")
 shape = SubResource("BoxShape3D_wall_thin_long")
 
 [node name="WallHallway_East" type="StaticBody3D" parent="Boundary" unique_id=189350919]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, 12.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3, 25)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallHallway_East" unique_id=1761938606]
@@ -182,7 +184,7 @@ mesh = SubResource("BoxMesh_wall_thin_long")
 shape = SubResource("BoxShape3D_wall_thin_long")
 
 [node name="WallRoomB_West" type="StaticBody3D" parent="Boundary" unique_id=508091012]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1.5, 27.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 3, 55)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomB_West" unique_id=1552852324]
@@ -192,7 +194,7 @@ mesh = SubResource("BoxMesh_wall_thick_long")
 shape = SubResource("BoxShape3D_wall_thick_long")
 
 [node name="WallRoomB_East" type="StaticBody3D" parent="Boundary" unique_id=7529446]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1.5, 27.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 3, 55)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomB_East" unique_id=1622860240]
@@ -202,7 +204,7 @@ mesh = SubResource("BoxMesh_wall_thick_long")
 shape = SubResource("BoxShape3D_wall_thick_long")
 
 [node name="WallRoomB_Back" type="StaticBody3D" parent="Boundary" unique_id=929398891]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 37.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 75)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomB_Back" unique_id=966509240]
@@ -212,7 +214,7 @@ mesh = SubResource("BoxMesh_wall_roomB_back")
 shape = SubResource("BoxShape3D_wall_roomB_back")
 
 [node name="WallRoomB_FlankLeft" type="StaticBody3D" parent="Boundary" unique_id=502998065]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, 17.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 3, 35)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomB_FlankLeft" unique_id=880660983]
@@ -222,7 +224,7 @@ mesh = SubResource("BoxMesh_wall_roomB_flank")
 shape = SubResource("BoxShape3D_wall_roomB_flank")
 
 [node name="WallRoomB_FlankRight" type="StaticBody3D" parent="Boundary" unique_id=697860881]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, 17.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 3, 35)
 collision_layer = 17
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Boundary/WallRoomB_FlankRight" unique_id=1088987856]
@@ -232,7 +234,42 @@ mesh = SubResource("BoxMesh_wall_roomB_flank")
 shape = SubResource("BoxShape3D_wall_roomB_flank")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1865011256]
-transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46452135, 0, 8, 10)
+transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46452135, 0, 16, 20)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1158413761]
 environment = SubResource("Environment_default")
+
+[node name="SpawnPointP1" type="Marker3D" parent="." unique_id=1347966773]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+
+[node name="SpawnPointP2" type="Marker3D" parent="." unique_id=554468537]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 0)
+
+[node name="SpawnPointP3" type="Marker3D" parent="." unique_id=101297045]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
+[node name="SpawnPointP4" type="Marker3D" parent="." unique_id=161712994]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
+
+[node name="SentinelSpawnerP1" type="Node" parent="." unique_id=1027289134 node_paths=PackedStringArray("SpawnPoint")]
+script = ExtResource("1_sentinelspawner")
+ActivateImmediately = true
+SpawnPoint = NodePath("../SpawnPointP1")
+
+[node name="SentinelSpawnerP2" type="Node" parent="." unique_id=206408576 node_paths=PackedStringArray("SpawnPoint")]
+script = ExtResource("1_sentinelspawner")
+OwnerId = 0
+ActivateImmediately = true
+SpawnPoint = NodePath("../SpawnPointP2")
+
+[node name="SentinelSpawnerP3" type="Node" parent="." unique_id=1548015078 node_paths=PackedStringArray("SpawnPoint")]
+script = ExtResource("1_sentinelspawner")
+OwnerId = 0
+ActivateImmediately = true
+SpawnPoint = NodePath("../SpawnPointP3")
+
+[node name="SentinelSpawnerP4" type="Node" parent="." unique_id=2061658122 node_paths=PackedStringArray("SpawnPoint")]
+script = ExtResource("1_sentinelspawner")
+OwnerId = 0
+ActivateImmediately = true
+SpawnPoint = NodePath("../SpawnPointP4")

@@ -11,7 +11,37 @@ public partial class SentinelSpawner : Node
 
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
 
+    [Export] public bool ActivateImmediately { get; private set; } = false;
+    [Export] public Node3D SpawnPoint { get; private set; }
+
+    private PlayerCharacter _current;
+
     public override void _Ready()
+    {
+        if (OwnerId == default)
+        {
+            return;
+        }
+
+        CallDeferred(nameof(RespawnSelected));
+    }
+
+    // Despawns whatever Sentinel is currently spawned (if any) and spawns whichever one
+    // PlayerSentinels now selects, at the previous one's position - the same entry point serves
+    // both the initial spawn and the hub's live character-select swap.
+    public void RespawnSelected()
+    {
+        PlayerCharacter previous = _current;
+        SpawnSelected();
+
+        if (previous != null && IsInstanceValid(previous))
+        {
+            _current.HandoffFrom(previous);
+            previous.QueueFree();
+        }
+    }
+
+    private void SpawnSelected()
     {
         CharacterId selected = PlayerSentinels.Get(OwnerId);
         string path = ScenePathFor(selected);
@@ -25,13 +55,19 @@ public partial class SentinelSpawner : Node
 
         Sentinel sentinel = scene.Instantiate<Sentinel>();
         sentinel.SetOwnerId(OwnerId);
-        CallDeferred(nameof(SpawnSentinel), sentinel);
-    }
-
-    private void SpawnSentinel(Sentinel sentinel)
-    {
         GetParent().AddChild(sentinel);
-        sentinel.HandoffFrom(Architect.ByOwner[OwnerId]);
+        _current = sentinel;
+
+        if (ActivateImmediately)
+        {
+            sentinel.GlobalPosition = SpawnPoint.GlobalPosition;
+            sentinel.GlobalRotation = new Vector3(0f, SpawnPoint.GlobalRotation.Y, 0f);
+            sentinel.ActivateStandalone();
+        }
+        else
+        {
+            sentinel.HandoffFrom(Architect.ByOwner[OwnerId]);
+        }
     }
 
     private static string ScenePathFor(CharacterId character) => character switch

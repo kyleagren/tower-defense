@@ -27,6 +27,14 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     public void SetOwnerId(PlayerId owner) => OwnerId = owner;
 
+    // Activates this Sentinel directly, without an Architect handoff or a Combat-phase transition -
+    // for contexts like the hub, which has no phase system and nothing to hand control from.
+    public void ActivateStandalone()
+    {
+        SetActive(true);
+        Weapon.Visible = true;
+    }
+
     public override void _Ready()
     {
         base._Ready();
