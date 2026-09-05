@@ -1,7 +1,23 @@
 using Godot;
 
-// A "walk up, press E, become the Architect" hub marker - LookInteractor-based logic lives on
-// ArchitectSelectInteractor; this is just the target type ResolveTarget checks for.
-public partial class ArchitectSelectStation : StaticBody3D
+// The toggle: press it as a Sentinel to become the Architect for DPS testing, press it again as
+// the Architect to return to whichever Sentinel is actually selected.
+public partial class ArchitectSelectStation : StaticBody3D, IInteractable
 {
+    public string GetPromptText(PlayerCharacter character) =>
+        character is Architect ? "Press E to return to your Sentinel" : "Press E to test as Architect";
+
+    public void Interact(PlayerCharacter character)
+    {
+        SentinelSpawner spawner = SentinelSpawner.ByOwner[character.OwnerId];
+
+        if (character is Architect)
+        {
+            spawner.SelectSentinel(PlayerSentinels.Get(character.OwnerId));
+        }
+        else
+        {
+            spawner.SelectArchitect();
+        }
+    }
 }

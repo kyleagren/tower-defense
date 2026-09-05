@@ -5,6 +5,8 @@
 [ext_resource type="Script" uid="uid://bnmhdebgbiqya" path="res://characters/ArchitectSelectStation.cs" id="3_archstation"]
 [ext_resource type="Script" uid="uid://dsa3b2omiinqc" path="res://characters/ArchitectTestZone.cs" id="4_archzone"]
 [ext_resource type="PackedScene" path="res://ui/Crosshair.tscn" id="5_crosshair"]
+[ext_resource type="Script" uid="uid://c7mkc6ifdkhp8" path="res://characters/CharacterSelectStation.cs" id="6_charselectstation"]
+[ext_resource type="PackedScene" path="res://ui/CharacterSelectPanel.tscn" id="7_charselectpanel"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -96,6 +98,14 @@ size = Vector3(1, 2, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_archzone"]
 size = Vector3(40, 10, 40)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_charselect"]
+albedo_color = Color(0.1, 0.5, 0.6, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_charselect"]
+material = SubResource("StandardMaterial3D_charselect")
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_charselect"]
 
 [node name="Hub" type="Node3D" unique_id=1931328644]
 
@@ -296,7 +306,7 @@ script = ExtResource("2_economymanager")
 Unlimited = true
 
 [node name="ArchitectSelectStation" type="StaticBody3D" parent="." unique_id=708825174]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 40)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4854627, 0.99999976, 35.515903)
 collision_layer = 17
 script = ExtResource("3_archstation")
 
@@ -315,3 +325,16 @@ script = ExtResource("4_archzone")
 shape = SubResource("BoxShape3D_archzone")
 
 [node name="Crosshair" parent="." unique_id=910279266 instance=ExtResource("5_crosshair")]
+
+[node name="CharacterSelectStation" type="StaticBody3D" parent="." unique_id=1484671035]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, -10)
+collision_layer = 17
+script = ExtResource("6_charselectstation")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CharacterSelectStation" unique_id=1586588183]
+mesh = SubResource("CapsuleMesh_charselect")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterSelectStation" unique_id=1544075827]
+shape = SubResource("CapsuleShape3D_charselect")
+
+[node name="CharacterSelectPanel" parent="." unique_id=1828954949 instance=ExtResource("7_charselectpanel")]

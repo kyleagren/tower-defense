@@ -314,6 +314,11 @@ public partial class RitualPlacer : Node
     // something that needs checking per-segment independently.
     private int ComputeAffordableSegmentCount(WallCastData wallData)
     {
+        if (_economy.Unlimited)
+        {
+            return int.MaxValue;
+        }
+
         float manaPerSegment = wallData.ManaCostPerSegment * _pendingContext.ManaCost.Multiplier;
         float capacityPerSegment = wallData.CapacityCostPerSegment * _pendingContext.CapacityCost.Multiplier;
         int capacityRemaining = _economy.MaxCapacity - _economy.CapacityUsed;

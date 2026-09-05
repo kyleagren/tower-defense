@@ -38,6 +38,8 @@ public static class UiPanelStack
         return _open.Count > 0 && _open[^1] == panel;
     }
 
+    public static bool AnyOpen => _open.Count > 0;
+
     private static void ReassignZIndices()
     {
         for (int i = 0; i < _open.Count; i++)
