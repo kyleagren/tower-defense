@@ -1,0 +1,95 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://characters/SentinelBody.tscn" id="1_base"]
+[ext_resource type="Script" path="res://characters/tank/Tank.cs" id="2_tank"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_tank"]
+radius = 0.5
+height = 1.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tank"]
+albedo_color = Color(0.35, 0.3, 0.28, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_tank"]
+material = SubResource("StandardMaterial3D_tank")
+radius = 0.5
+height = 1.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_metal"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sword_grip"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.05, 0.05, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sword_blade"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.06, 0.02, 0.95)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sword_hit"]
+size = Vector3(0.1, 0.1, 0.95)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shield"]
+albedo_color = Color(0.4, 0.32, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_shield"]
+material = SubResource("StandardMaterial3D_shield")
+size = Vector3(0.6, 0.85, 0.06)
+
+[node name="Tank" instance=ExtResource("1_base") node_paths=PackedStringArray("SpringArm", "Camera", "BodyMesh", "Weapon", "SwordOrbit", "SwordTilt", "SwordHitArea", "ShieldOrbit")]
+script = ExtResource("2_tank")
+BaseSpeed = 3.5
+BaseMaxHealth = 180.0
+SpringArm = NodePath("SpringArm3D")
+Camera = NodePath("SpringArm3D/Camera3D")
+BodyMesh = NodePath("MeshInstance3D")
+Weapon = NodePath("Weapon")
+SwordOrbit = NodePath("Weapon/SwordOrbit")
+SwordTilt = NodePath("Weapon/SwordOrbit/SwordArm/SwordTilt")
+SwordHitArea = NodePath("Weapon/SwordOrbit/SwordArm/SwordTilt/SwordHitArea")
+ShieldOrbit = NodePath("Weapon/ShieldOrbit")
+
+[node name="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+shape = SubResource("CapsuleShape3D_tank")
+
+[node name="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+mesh = SubResource("CapsuleMesh_tank")
+
+[node name="Weapon" type="Node3D" parent="."]
+
+[node name="SwordOrbit" type="Node3D" parent="Weapon"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+
+[node name="SwordArm" type="Node3D" parent="Weapon/SwordOrbit"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.65, 0, -0.1)
+
+[node name="SwordTilt" type="Node3D" parent="Weapon/SwordOrbit/SwordArm"]
+transform = Transform3D(1, 0, 0, 0, 0.7071, -0.7071, 0, 0.7071, 0.7071, 0, 0, 0)
+
+[node name="Grip" type="MeshInstance3D" parent="Weapon/SwordOrbit/SwordArm/SwordTilt"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.1)
+mesh = SubResource("BoxMesh_sword_grip")
+
+[node name="Blade" type="MeshInstance3D" parent="Weapon/SwordOrbit/SwordArm/SwordTilt"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.475)
+mesh = SubResource("BoxMesh_sword_blade")
+
+[node name="SwordHitArea" type="Area3D" parent="Weapon/SwordOrbit/SwordArm/SwordTilt"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.475)
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Weapon/SwordOrbit/SwordArm/SwordTilt/SwordHitArea"]
+shape = SubResource("BoxShape3D_sword_hit")
+
+[node name="ShieldOrbit" type="Node3D" parent="Weapon"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1.05, 0)
+
+[node name="ShieldArm" type="Node3D" parent="Weapon/ShieldOrbit"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.65, 0, -0.1)
+
+[node name="Shield" type="MeshInstance3D" parent="Weapon/ShieldOrbit/ShieldArm"]
+mesh = SubResource("BoxMesh_shield")

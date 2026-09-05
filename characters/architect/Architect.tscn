@@ -48,12 +48,10 @@ script = ExtResource("3_ritualplacer")
 Character = NodePath("..")
 RitualScene = ExtResource("4_ritualscene")
 
-[node name="RitualInteractor" type="Node" parent="." unique_id=1141137759 node_paths=PackedStringArray("Character")]
+[node name="RitualInteractor" type="Node" parent="." unique_id=1141137759]
 script = ExtResource("5_k6jo8")
-Character = NodePath("..")
 PromptScene = ExtResource("6_8tgsg")
 
-[node name="ItemInteractor" type="Node" parent="." node_paths=PackedStringArray("Character")]
+[node name="ItemInteractor" type="Node" parent="."]
 script = ExtResource("7_iteminteractor")
-Character = NodePath("..")
 PromptScene = ExtResource("6_8tgsg")

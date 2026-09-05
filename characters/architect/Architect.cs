@@ -1,16 +1,20 @@
 using Godot;
+using System.Collections.Generic;
 
 public partial class Architect : PlayerCharacter
 {
+    public static Dictionary<PlayerId, Architect> ByOwner { get; } = new();
+
+    [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
     [Export] public BuildMenu BuildMenu { get; private set; }
     [Export] public RitualPlacer RitualPlacer { get; private set; }
-    [Export] public PlayerCharacter Soldier { get; private set; }
 
     private bool _buildMenuOpen;
 
     public override void _Ready()
     {
         base._Ready();
+        ByOwner[OwnerId] = this;
         Input.MouseMode = Input.MouseModeEnum.Captured;
         BuildMenu.Closed += OnBuildMenuClosed;
         BuildMenu.Confirmed += OnBuildMenuConfirmed;
@@ -69,7 +73,7 @@ public partial class Architect : PlayerCharacter
 
         if (shouldBeActive)
         {
-            HandoffFrom(Soldier);
+            HandoffFrom(Sentinel.ByOwner[OwnerId]);
         }
 
         SetActive(shouldBeActive);

@@ -2,12 +2,10 @@ using Godot;
 
 public partial class Soldier : Sentinel
 {
-    [Export] public PlayerCharacter Architect { get; private set; }
     [Export] public float AttackDamage = 8f;
     [Export] public float AttackRange = 30f;
     [Export] public float FireRate = 6f;
     [Export] public PackedScene ImpactScene { get; private set; }
-    [Export] public Node3D Rifle { get; private set; }
     [Export] public Node3D MuzzlePoint { get; private set; }
     [Export] public PackedScene TracerScene { get; private set; }
     [Export] public float NormalFov = 75f;
@@ -20,54 +18,6 @@ public partial class Soldier : Sentinel
     public override CharacterId Id => CharacterId.Soldier;
 
     private float _fireCooldown;
-
-    public override void _Ready()
-    {
-        base._Ready();
-        EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        SetActive(false);
-        Rifle.Visible = false;
-    }
-
-    public override void _ExitTree()
-    {
-        EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
-    }
-
-    private void OnGamePhaseChanged(GamePhase phase)
-    {
-        bool shouldBeActive = phase == GamePhase.Combat;
-
-        if (shouldBeActive)
-        {
-            HandoffFrom(Architect);
-        }
-        else
-        {
-            HealToFull();
-        }
-
-        SetActive(shouldBeActive);
-        Rifle.Visible = shouldBeActive;
-    }
-
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (!IsActive)
-        {
-            return;
-        }
-
-        if (@event is InputEventMouseMotion mouseMotion)
-        {
-            HandleLook(mouseMotion);
-        }
-
-        if (@event.IsActionPressed("ui_cancel"))
-        {
-            ToggleMouseCapture();
-        }
-    }
 
     public override void _PhysicsProcess(double delta)
     {
@@ -92,7 +42,7 @@ public partial class Soldier : Sentinel
 
     private void UpdateAim(double delta)
     {
-        bool isAiming = Input.IsActionPressed("aim");
+        bool isAiming = Input.IsActionPressed("alt_action");
         float targetFov = isAiming ? AdsFov : NormalFov;
         float targetSpringLength = isAiming ? AdsSpringLength : NormalSpringLength;
         float targetSensitivityMultiplier = isAiming ? AdsSensitivityMultiplier : 1f;

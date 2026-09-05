@@ -187,14 +187,14 @@ public partial class WalkingEnemy : Enemy
     private void UpdatePlayerLeash(float delta)
     {
         _playerCheckTimer -= delta;
-        if (_playerCheckTimer > 0f || Sentinel.Active == null)
+        if (_playerCheckTimer > 0f || Sentinel.Local == null || !Sentinel.Local.IsActive)
         {
             return;
         }
 
         _playerCheckTimer = PlayerCheckInterval;
 
-        float distanceToPlayer = GlobalPosition.DistanceTo(Sentinel.Active.GlobalPosition);
+        float distanceToPlayer = GlobalPosition.DistanceTo(Sentinel.Local.GlobalPosition);
         bool withinLeash = distanceToPlayer <= LeashRange;
 
         if (withinLeash && _movementMode != MovementMode.ChasingPlayer)
@@ -209,7 +209,7 @@ public partial class WalkingEnemy : Enemy
 
         if (_movementMode == MovementMode.ChasingPlayer)
         {
-            NavAgent.TargetPosition = Sentinel.Active.GlobalPosition;
+            NavAgent.TargetPosition = Sentinel.Local.GlobalPosition;
         }
     }
 
@@ -366,23 +366,23 @@ public partial class WalkingEnemy : Enemy
 
     private void ProcessChasingPlayer(double delta)
     {
-        if (Sentinel.Active == null)
+        if (Sentinel.Local == null || !Sentinel.Local.IsActive)
         {
             return;
         }
 
-        float distanceToPlayer = GlobalPosition.DistanceTo(Sentinel.Active.GlobalPosition);
+        float distanceToPlayer = GlobalPosition.DistanceTo(Sentinel.Local.GlobalPosition);
         _attackCooldown -= (float)delta;
 
         if (distanceToPlayer <= AttackRange)
         {
             Stop(delta);
-            RotateTowardsMovement((Sentinel.Active.GlobalPosition - GlobalPosition).Normalized(), delta);
+            RotateTowardsMovement((Sentinel.Local.GlobalPosition - GlobalPosition).Normalized(), delta);
 
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                Sentinel.Active.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+                Sentinel.Local.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
             }
 
             return;

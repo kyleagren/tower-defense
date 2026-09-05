@@ -22,5 +22,15 @@ public partial class DebugToggle : Node
         {
             DebugSettings.ShowFloatingCombatText = !DebugSettings.ShowFloatingCombatText;
         }
+        else if (keyEvent.PhysicalKeycode == Key.F3)
+        {
+            CharacterId next = PlayerSentinels.Get(PlayerSentinels.Local) == CharacterId.Soldier
+                ? CharacterId.Tank
+                : CharacterId.Soldier;
+
+            PlayerSentinels.Set(PlayerSentinels.Local, next);
+            UiPanelStack.Reset();
+            GetTree().ReloadCurrentScene();
+        }
     }
 }

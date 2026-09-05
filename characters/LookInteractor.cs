@@ -13,7 +13,15 @@ using Godot;
 // silently break. Target is a Node3D and subclasses cast - ResolveTarget guarantees the type.
 public abstract partial class LookInteractor : Node
 {
-    [Export] public PlayerCharacter Character { get; private set; }
+    // Not exported - resolved from the parent instead of a wired NodePath, since this is always a
+    // direct child of the character it belongs to and every PlayerCharacter subclass qualifies.
+    // Wiring it as an export meant Godot had to type-check the assignment while building the scene
+    // tree, which broke the moment the interactor lived in a shared base scene inherited by a
+    // subclass: the base scene's root has no script yet at that point, so the parent is still a
+    // bare CharacterBody3D and the cast fails. Resolving it here instead, once the whole merged,
+    // fully-scripted scene actually exists, sidesteps that entirely.
+    protected PlayerCharacter Character { get; private set; }
+
     [Export] public PackedScene PromptScene { get; private set; }
     [Export] public float PromptHeightOffset { get; private set; } = 0.3f;
 
@@ -44,6 +52,7 @@ public abstract partial class LookInteractor : Node
 
     public override void _Ready()
     {
+        Character = (PlayerCharacter)GetParent();
         _prompt = PromptScene.Instantiate<InteractionPrompt>();
         GetTree().CurrentScene.CallDeferred(Node.MethodName.AddChild, _prompt);
         _prompt.HidePrompt();

@@ -1,21 +1,20 @@
 using Godot;
+using System.Collections.Generic;
 
 public abstract partial class Sentinel : PlayerCharacter, IDamageable
 {
-    // The Sentinel currently in combat, if any - null during Build phase since nothing attacks
-    // the Architect. Enemies deal damage through this, not PlayerCharacter.ActiveCombatant, since
-    // only a Sentinel has a health value to damage.
-    public static Sentinel Active { get; private set; }
+    // Every spawned Sentinel, keyed by which player controls it - SentinelSpawner sets OwnerId
+    // before adding it to the tree, so this is always correct by the time _Ready registers it.
+    // Local is a convenience for "the local player's own Sentinel," built on top of this rather
+    // than tracked separately, so there's one source of truth instead of two that could disagree.
+    public static Dictionary<PlayerId, Sentinel> ByOwner { get; } = new();
+    public static Sentinel Local => ByOwner.GetValueOrDefault(PlayerSentinels.Local);
 
-    // The local player's Sentinel, set once at spawn regardless of whether it's the active
-    // combatant - unlike Active, this stays valid during Build phase too, so anything that needs
-    // to read a Sentinel's health before its first Combat phase (PlayerHealthOrb's initial value)
-    // has somewhere to look it up instead of only ever reacting to PlayerHealthChanged.
-    public static Sentinel Local { get; private set; }
+    [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
+    [Export] public Node3D Weapon { get; private set; }
+    [Export] public float BaseMaxHealth = 100f;
 
     public abstract CharacterId Id { get; }
-
-    [Export] public float BaseMaxHealth = 100f;
 
     public bool IsDead => _currentHealth <= 0f;
     public bool IsDestroyed => IsDead;
@@ -26,21 +25,60 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     private float _currentHealth;
 
+    public void SetOwnerId(PlayerId owner) => OwnerId = owner;
+
     public override void _Ready()
     {
         base._Ready();
         _currentHealth = MaxHealth;
-        Local = this;
+        ByOwner[OwnerId] = this;
+        SetActive(false);
+        Weapon.Visible = false;
+        EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
     }
 
-    protected override void SetActive(bool value)
+    public override void _ExitTree()
     {
-        base.SetActive(value);
-        Active = value ? this : null;
+        EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
     }
 
-    public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (!IsActive)
+        {
+            return;
+        }
+
+        if (@event is InputEventMouseMotion mouseMotion)
+        {
+            HandleLook(mouseMotion);
+        }
+
+        if (@event.IsActionPressed("ui_cancel"))
+        {
+            ToggleMouseCapture();
+        }
+    }
+
+    private void OnGamePhaseChanged(GamePhase phase)
+    {
+        bool shouldBeActive = phase == GamePhase.Combat;
+
+        if (shouldBeActive)
+        {
+            HandoffFrom(Architect.ByOwner[OwnerId]);
+        }
+        else
+        {
+            HealToFull();
+        }
+
+        SetActive(shouldBeActive);
+        Weapon.Visible = shouldBeActive;
+    }
+
+    public virtual void TakeDamage(DamagePacket damage, Vector3 impulse = default)
     {
         if (IsDead)
         {

@@ -9,7 +9,7 @@
 [ext_resource type="Resource" uid="uid://nco3nmkc8shy" path="res://assets/waves/wave_01.tres" id="7_wave01"]
 [ext_resource type="Resource" uid="uid://dw62crdfa2u3" path="res://assets/waves/wave_03.tres" id="8_2ucnx"]
 [ext_resource type="PackedScene" path="res://ui/PhaseIndicator.tscn" id="9_phaseindicator"]
-[ext_resource type="PackedScene" path="res://characters/soldier/Soldier.tscn" id="10_soldier"]
+[ext_resource type="Script" uid="uid://b2lh56ru63dye" path="res://scripts/systems/game_state/SentinelSpawner.cs" id="10_sentinelspawner"]
 [ext_resource type="Script" uid="uid://ci5j2r32p0w77" path="res://scripts/systems/game_state/GameOverHandler.cs" id="11_gameoverhandler"]
 [ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="12_healthbar"]
 [ext_resource type="PackedScene" path="res://ui/Crosshair.tscn" id="13_crosshair"]
@@ -229,14 +229,11 @@ transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1525073669]
 environment = SubResource("Environment_default")
 
-[node name="Architect" parent="." unique_id=65489996 node_paths=PackedStringArray("Soldier") instance=ExtResource("7_t0ybu")]
+[node name="Architect" parent="." unique_id=65489996 instance=ExtResource("7_t0ybu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 7.6874204)
-Soldier = NodePath("../Soldier")
 
-[node name="Soldier" parent="." unique_id=1563622236 node_paths=PackedStringArray("Architect") instance=ExtResource("10_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 4.6874204)
-Architect = NodePath("../Architect")
-AttackDamage = 100.0
+[node name="SentinelSpawner" type="Node" parent="." unique_id=920715578]
+script = ExtResource("10_sentinelspawner")
 
 [node name="PhaseIndicator" parent="." unique_id=756900810 instance=ExtResource("9_phaseindicator")]
 
