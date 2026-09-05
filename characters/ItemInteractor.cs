@@ -1,6 +1,6 @@
 using Godot;
 
-// Look at a WorldItem within range and pick it up with pickup_item - the same look-and-press
+// Look at a WorldItem within range and pick it up with interact - the same look-and-press
 // pattern RitualInteractor uses, both built on LookInteractor.
 public partial class ItemInteractor : LookInteractor
 {
@@ -18,7 +18,7 @@ public partial class ItemInteractor : LookInteractor
     {
         base._Ready();
 
-        _pickupText = $"Press {InputPromptHelper.GetActionKeyName("pickup_item")} to Pick Up";
+        _pickupText = $"Press {InputPromptHelper.GetActionKeyName("interact")} to Pick Up";
     }
 
     // A WorldItem is its own StaticBody3D, so the collider is already the target.
@@ -42,7 +42,7 @@ public partial class ItemInteractor : LookInteractor
             return;
         }
 
-        if (@event.IsActionPressed("pickup_item"))
+        if (@event.IsActionPressed("interact"))
         {
             TargetedItem.PickUp();
             ClearTarget();

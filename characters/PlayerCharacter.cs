@@ -8,6 +8,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     // it points at Architect — so no subclass needs to opt in or out individually.
     public static PlayerCharacter ActiveCombatant { get; private set; }
 
+    [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
     [Export] public float BaseSpeed = 5.0f;
     [Export] public float JumpVelocity = 4.5f;
     [Export] public float MouseSensitivity = 0.003f;
@@ -42,6 +43,8 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         return origin + forward * (distance + cameraSetback);
     }
 
+    public void SetOwnerId(PlayerId owner) => OwnerId = owner;
+
     public void HandoffFrom(PlayerCharacter previous)
     {
         GlobalPosition = previous.GlobalPosition;
@@ -58,8 +61,31 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         if (_active)
         {
             ActiveCombatant = this;
-            Camera.Current = true;
             Input.MouseMode = Input.MouseModeEnum.Captured;
+            MakeCameraCurrent();
+        }
+    }
+
+    private async void MakeCameraCurrent()
+    {
+        // SpringArm3D reports a hit length of 0 until it has run its first collision pass, and how
+        // many frames that takes depends on where in the physics/process interleave this character
+        // was spawned - one frame sometimes, three others. Going current before then renders the
+        // camera collapsed onto the character, which is the zoomed-in flicker on a hub swap.
+        // Bounded so a camera legitimately flush against geometry can't stall activation forever.
+        for (int frame = 0; frame < 10 && SpringArm.GetHitLength() <= 0f; frame++)
+        {
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+            if (!IsInstanceValid(this) || !_active)
+            {
+                return;
+            }
+        }
+
+        if (_active)
+        {
+            Camera.Current = true;
         }
     }
 

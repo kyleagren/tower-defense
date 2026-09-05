@@ -1,0 +1,36 @@
+using Godot;
+
+// Covers Room B's footprint in the hub - if the Architect specifically leaves this zone (walked
+// back toward Room A), swap back to whichever Sentinel the player actually has selected. A
+// Sentinel leaving does nothing; this only reacts to Architect.
+public partial class ArchitectTestZone : Area3D
+{
+    public override void _Ready()
+    {
+        BodyExited += OnBodyExited;
+    }
+
+    private void OnBodyExited(Node3D body)
+    {
+        // BodyExited fires mid-physics-step, while the scene tree is blocked against structural
+        // changes - SelectSentinel's AddChild/QueueFree calls need to happen after that, or Godot
+        // rejects them ("Parent node is busy setting up children").
+        if (body is Architect architect)
+        {
+            CallDeferred(nameof(RespawnSentinel), architect);
+        }
+    }
+
+    private void RespawnSentinel(Node body)
+    {
+        if (body is Architect architect && IsInstanceValid(architect))
+        {
+            SentinelSpawner spawner = SentinelSpawner.ByOwner[architect.OwnerId];
+
+            if (spawner.Current == architect)
+            {
+                spawner.SelectSentinel(PlayerSentinels.Get(architect.OwnerId));
+            }
+        }
+    }
+}

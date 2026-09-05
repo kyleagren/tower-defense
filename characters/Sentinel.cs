@@ -10,7 +10,6 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public static Dictionary<PlayerId, Sentinel> ByOwner { get; } = new();
     public static Sentinel Local => ByOwner.GetValueOrDefault(PlayerSentinels.Local);
 
-    [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
     [Export] public Node3D Weapon { get; private set; }
     [Export] public float BaseMaxHealth = 100f;
 
@@ -24,8 +23,6 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public override float Speed => BaseSpeed * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMoveSpeed));
 
     private float _currentHealth;
-
-    public void SetOwnerId(PlayerId owner) => OwnerId = owner;
 
     // Activates this Sentinel directly, without an Architect handoff or a Combat-phase transition -
     // for contexts like the hub, which has no phase system and nothing to hand control from.

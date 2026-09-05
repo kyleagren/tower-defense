@@ -58,8 +58,21 @@ public abstract partial class LookInteractor : Node
         _prompt.HidePrompt();
     }
 
+    public override void _ExitTree()
+    {
+        if (IsInstanceValid(_prompt))
+        {
+            _prompt.QueueFree();
+        }
+    }
+
     public override void _PhysicsProcess(double delta)
     {
+        if (!_prompt.IsInsideTree())
+        {
+            return;
+        }
+
         SetTarget(Character.IsActive ? FindTargetAhead() : null);
 
         if (Target == null)

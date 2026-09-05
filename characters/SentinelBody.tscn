@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://characters/RitualInteractor.cs" id="1_ritualinteractor"]
 [ext_resource type="PackedScene" path="res://ui/InteractionPrompt.tscn" id="2_prompt"]
 [ext_resource type="Script" path="res://characters/ItemInteractor.cs" id="3_iteminteractor"]
+[ext_resource type="Script" path="res://characters/ArchitectSelectInteractor.cs" id="4_archselect"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.4
@@ -37,4 +38,8 @@ PromptScene = ExtResource("2_prompt")
 
 [node name="ItemInteractor" type="Node" parent="."]
 script = ExtResource("3_iteminteractor")
+PromptScene = ExtResource("2_prompt")
+
+[node name="ArchitectSelectInteractor" type="Node" parent="."]
+script = ExtResource("4_archselect")
 PromptScene = ExtResource("2_prompt")

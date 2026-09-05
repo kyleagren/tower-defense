@@ -6,6 +6,7 @@ public partial class EconomyManager : Node
 
     [Export] public int StartingMana = 120;
     [Export] public int MaxCapacity = 1000;
+    [Export] public bool Unlimited = false;
 
     public int Mana { get; private set; }
     public int CapacityUsed { get; private set; }
@@ -55,6 +56,11 @@ public partial class EconomyManager : Node
 
     public bool CanAfford(SpellCastContext context)
     {
+        if (Unlimited)
+        {
+            return true;
+        }
+
         return CapacityUsed + context.ResolvedCapacityCost <= MaxCapacity && Mana >= context.ResolvedManaCost;
     }
 
@@ -62,16 +68,25 @@ public partial class EconomyManager : Node
     {
         int manaCost = context.ResolvedManaCost;
         int capacityCost = context.ResolvedCapacityCost;
-        Mana -= manaCost;
-        CapacityUsed += capacityCost;
+
+        if (!Unlimited)
+        {
+            Mana -= manaCost;
+            CapacityUsed += capacityCost;
+        }
+
         EmitSignal(SignalName.EconomyChanged);
         return (manaCost, capacityCost);
     }
 
     public void RefundRitual(int manaSpent, int capacityCost)
     {
-        Mana += manaSpent;
-        CapacityUsed -= capacityCost;
+        if (!Unlimited)
+        {
+            Mana += manaSpent;
+            CapacityUsed -= capacityCost;
+        }
+
         EmitSignal(SignalName.EconomyChanged);
     }
 }

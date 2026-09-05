@@ -5,7 +5,6 @@ public partial class Architect : PlayerCharacter
 {
     public static Dictionary<PlayerId, Architect> ByOwner { get; } = new();
 
-    [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
     [Export] public BuildMenu BuildMenu { get; private set; }
     [Export] public RitualPlacer RitualPlacer { get; private set; }
 

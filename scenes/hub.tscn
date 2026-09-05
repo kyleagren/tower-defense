@@ -1,6 +1,10 @@
 [gd_scene format=3 uid="uid://ct3j8oj7yvja4"]
 
 [ext_resource type="Script" uid="uid://b2lh56ru63dye" path="res://scripts/systems/game_state/SentinelSpawner.cs" id="1_sentinelspawner"]
+[ext_resource type="Script" uid="uid://beylbkijyxcr5" path="res://scripts/systems/game_state/EconomyManager.cs" id="2_economymanager"]
+[ext_resource type="Script" uid="uid://bnmhdebgbiqya" path="res://characters/ArchitectSelectStation.cs" id="3_archstation"]
+[ext_resource type="Script" uid="uid://dsa3b2omiinqc" path="res://characters/ArchitectTestZone.cs" id="4_archzone"]
+[ext_resource type="PackedScene" path="res://ui/Crosshair.tscn" id="5_crosshair"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -79,6 +83,19 @@ size = Vector3(16, 6, 2)
 size = Vector3(16, 6, 2)
 
 [sub_resource type="Environment" id="Environment_default"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_archstation"]
+albedo_color = Color(0.6, 0.4, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_archstation"]
+material = SubResource("StandardMaterial3D_archstation")
+size = Vector3(1, 2, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_archstation"]
+size = Vector3(1, 2, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_archzone"]
+size = Vector3(40, 10, 40)
 
 [node name="Hub" type="Node3D" unique_id=1931328644]
 
@@ -240,16 +257,16 @@ transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46
 environment = SubResource("Environment_default")
 
 [node name="SpawnPointP1" type="Marker3D" parent="." unique_id=1347966773]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -6)
 
 [node name="SpawnPointP2" type="Marker3D" parent="." unique_id=554468537]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 0)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 6, 0, 0)
 
 [node name="SpawnPointP3" type="Marker3D" parent="." unique_id=101297045]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 6)
 
 [node name="SpawnPointP4" type="Marker3D" parent="." unique_id=161712994]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -6, 0, 0)
 
 [node name="SentinelSpawnerP1" type="Node" parent="." unique_id=1027289134 node_paths=PackedStringArray("SpawnPoint")]
 script = ExtResource("1_sentinelspawner")
@@ -273,3 +290,28 @@ script = ExtResource("1_sentinelspawner")
 OwnerId = 0
 ActivateImmediately = true
 SpawnPoint = NodePath("../SpawnPointP4")
+
+[node name="EconomyManager" type="Node" parent="." unique_id=1149411335]
+script = ExtResource("2_economymanager")
+Unlimited = true
+
+[node name="ArchitectSelectStation" type="StaticBody3D" parent="." unique_id=708825174]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 40)
+collision_layer = 17
+script = ExtResource("3_archstation")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ArchitectSelectStation" unique_id=767876475]
+mesh = SubResource("BoxMesh_archstation")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ArchitectSelectStation" unique_id=1883760829]
+shape = SubResource("BoxShape3D_archstation")
+
+[node name="ArchitectTestZone" type="Area3D" parent="." unique_id=1186547468]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 55)
+collision_mask = 8
+script = ExtResource("4_archzone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ArchitectTestZone" unique_id=1573708972]
+shape = SubResource("BoxShape3D_archzone")
+
+[node name="Crosshair" parent="." unique_id=910279266 instance=ExtResource("5_crosshair")]

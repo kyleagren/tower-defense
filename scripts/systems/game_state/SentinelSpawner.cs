@@ -1,20 +1,36 @@
 using Godot;
+using System.Collections.Generic;
 
-// Instantiates only the Sentinel scene matching this owner's current PlayerSentinels selection,
-// rather than hardcoding every roster member as an always-present scene child (the old Architect/
-// Soldier pattern) - so there's never more than one Sentinel alive per player, and Sentinel.Local/
-// Architect.ByOwner never have to guess which of several simultaneous instances is the real one.
+// Instantiates only the PlayerCharacter matching this owner's current selection - a Sentinel via
+// PlayerSentinels, or the Architect for hub DPS-testing - rather than hardcoding every roster
+// member as an always-present scene child. There's never more than one body alive per player, so
+// Sentinel.Local/Architect.ByOwner never have to guess which of several simultaneous instances is
+// the real one.
 public partial class SentinelSpawner : Node
 {
     private const string SoldierScenePath = "res://characters/soldier/Soldier.tscn";
     private const string TankScenePath = "res://characters/tank/Tank.tscn";
+    private const string ArchitectScenePath = "res://characters/architect/Architect.tscn";
+
+    // Lets a station/trigger attached to a dynamically-spawned character (which has no scene-time
+    // link back to the spawner that made it) find "my own spawner" by shared OwnerId.
+    public static Dictionary<PlayerId, SentinelSpawner> ByOwner { get; } = new();
 
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
 
+    // The hub has no Architect to hand off from (initially) and no Combat-phase transition to wait
+    // for, so its spawner activates the character directly at SpawnPoint instead of the usual
+    // Architect-handoff flow a real level uses.
     [Export] public bool ActivateImmediately { get; private set; } = false;
     [Export] public Node3D SpawnPoint { get; private set; }
 
     private PlayerCharacter _current;
+
+    // Lets a trigger built for one specific transition (e.g. ArchitectTestZone's auto-revert) confirm
+    // the body it's reacting to is still the live one before acting - QueueFree()'ing a character can
+    // itself look like "leaving the zone" to physics, which would otherwise cause a second, redundant
+    // respawn.
+    public PlayerCharacter Current => _current;
 
     public override void _Ready()
     {
@@ -23,50 +39,114 @@ public partial class SentinelSpawner : Node
             return;
         }
 
-        CallDeferred(nameof(RespawnSelected));
+        ByOwner[OwnerId] = this;
+        CallDeferred(nameof(SelectPersistedSentinel));
     }
 
-    // Despawns whatever Sentinel is currently spawned (if any) and spawns whichever one
-    // PlayerSentinels now selects, at the previous one's position - the same entry point serves
-    // both the initial spawn and the hub's live character-select swap.
-    public void RespawnSelected()
+    private void SelectPersistedSentinel()
+    {
+        SelectSentinel(PlayerSentinels.Get(OwnerId));
+    }
+
+    // Persists the pick (this is "who to fight with" outside the hub too) and swaps the live body
+    // to match.
+    public void SelectSentinel(CharacterId character)
+    {
+        PlayerSentinels.Set(OwnerId, character);
+        Respawn(ScenePathFor(character));
+    }
+
+    // Session-local only - testing as Architect in the hub shouldn't overwrite the player's saved
+    // Sentinel pick, since that field specifically means "who to fight with," not "who's currently
+    // occupying my hub body."
+    public void SelectArchitect()
+    {
+        Respawn(ArchitectScenePath);
+    }
+
+    private async void Respawn(string scenePath)
     {
         PlayerCharacter previous = _current;
-        SpawnSelected();
-
-        if (previous != null && IsInstanceValid(previous))
-        {
-            _current.HandoffFrom(previous);
-            previous.QueueFree();
-        }
-    }
-
-    private void SpawnSelected()
-    {
-        CharacterId selected = PlayerSentinels.Get(OwnerId);
-        string path = ScenePathFor(selected);
-        PackedScene scene = path != null ? GD.Load<PackedScene>(path) : null;
+        PackedScene scene = scenePath != null ? GD.Load<PackedScene>(scenePath) : null;
 
         if (scene == null)
         {
-            GD.PushError($"SentinelSpawner: no scene registered for {selected}.");
+            GD.PushError($"SentinelSpawner: no scene registered for '{scenePath}'.");
             return;
         }
 
-        Sentinel sentinel = scene.Instantiate<Sentinel>();
-        sentinel.SetOwnerId(OwnerId);
-        GetParent().AddChild(sentinel);
-        _current = sentinel;
+        PlayerCharacter character = scene.Instantiate<PlayerCharacter>();
+        character.SetOwnerId(OwnerId);
+        GetParent().AddChild(character);
+        _current = character;
 
         if (ActivateImmediately)
         {
-            sentinel.GlobalPosition = SpawnPoint.GlobalPosition;
-            sentinel.GlobalRotation = new Vector3(0f, SpawnPoint.GlobalRotation.Y, 0f);
-            sentinel.ActivateStandalone();
+            if (previous != null && IsInstanceValid(previous))
+            {
+                character.HandoffFrom(previous);
+            }
+            else
+            {
+                character.GlobalPosition = SpawnPoint.GlobalPosition;
+                character.GlobalRotation = new Vector3(0f, SpawnPoint.GlobalRotation.Y, 0f);
+            }
+
+            if (character is Sentinel sentinel)
+            {
+                sentinel.ActivateStandalone();
+            }
         }
         else
         {
-            sentinel.HandoffFrom(Architect.ByOwner[OwnerId]);
+            character.HandoffFrom(Architect.ByOwner[OwnerId]);
+        }
+
+        LogSwapFrames(character, previous);
+
+        if (previous != null && IsInstanceValid(previous))
+        {
+            // Stop it driving interactors/input immediately, but keep the body itself alive for now.
+            previous.ProcessMode = ProcessModeEnum.Disabled;
+
+            // Hold the outgoing body - and with it the viewport's current camera - until the incoming
+            // camera has actually taken over. Freeing it sooner hands the viewport to the incoming
+            // camera through Godot's "current camera left the tree" fallback, bypassing the spring
+            // arm wait in PlayerCharacter.MakeCameraCurrent.
+            for (int frame = 0; frame < 12 && IsInstanceValid(character) && !character.Camera.Current; frame++)
+            {
+                await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            }
+
+            if (IsInstanceValid(previous))
+            {
+                previous.QueueFree();
+            }
+        }
+    }
+
+    // TEMPORARY diagnostic for the swap flicker - remove once we know the cause.
+    private async void LogSwapFrames(PlayerCharacter incoming, PlayerCharacter outgoing)
+    {
+        for (int frame = 0; frame < 8; frame++)
+        {
+            Camera3D viewportCamera = GetViewport().GetCamera3D();
+            string live = viewportCamera == null ? "<none>" : viewportCamera.GetPath().ToString();
+
+            string arm = "<freed>";
+
+            if (IsInstanceValid(incoming))
+            {
+                arm = $"spring={incoming.SpringArm.SpringLength:F2} hit={incoming.SpringArm.GetHitLength():F2} "
+                    + $"camDist={incoming.Camera.GlobalPosition.DistanceTo(incoming.GlobalPosition):F2} "
+                    + $"camCurrent={incoming.Camera.Current}";
+            }
+
+            string old = IsInstanceValid(outgoing) ? $"alive inTree={outgoing.IsInsideTree()}" : "freed";
+
+            GD.Print($"[swap f{frame} @{Engine.GetProcessFrames()}] live={live} | incoming={arm} | outgoing={old}");
+
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         }
     }
 
