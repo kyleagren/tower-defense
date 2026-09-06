@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 // Tracks which modal UI panels (build menu, inventory, ...) are open so they can stack -
@@ -7,11 +8,13 @@ using System.Collections.Generic;
 public static class UiPanelStack
 {
     private static readonly List<Control> _open = new();
+    private static readonly Dictionary<Control, Action> _closers = new();
 
-    public static void Push(Control panel)
+    public static void Push(Control panel, Action close)
     {
         _open.Remove(panel);
         _open.Add(panel);
+        _closers[panel] = close;
         ReassignZIndices();
         Input.MouseMode = Input.MouseModeEnum.Visible;
     }
@@ -19,6 +22,7 @@ public static class UiPanelStack
     public static void Pop(Control panel)
     {
         _open.Remove(panel);
+        _closers.Remove(panel);
         ReassignZIndices();
 
         if (_open.Count == 0)
@@ -27,9 +31,24 @@ public static class UiPanelStack
         }
     }
 
+    // Closes every currently-open panel in one Escape press instead of requiring one press per
+    // layered panel. Snapshots _open first - each closer calls Pop, which would otherwise mutate
+    // the list this loop is still iterating.
+    public static void CloseAll()
+    {
+        foreach (Control panel in _open.ToArray())
+        {
+            if (_closers.TryGetValue(panel, out Action close))
+            {
+                close();
+            }
+        }
+    }
+
     public static void Reset()
     {
         _open.Clear();
+        _closers.Clear();
         Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 

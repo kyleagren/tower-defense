@@ -349,7 +349,7 @@ public partial class BuildMenu : Control
     public void Open()
     {
         Visible = true;
-        UiPanelStack.Push(this);
+        UiPanelStack.Push(this, Close);
         ShowSpellGrid();
     }
 

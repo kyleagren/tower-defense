@@ -7,7 +7,6 @@ public partial class SaveManager : Node
     private const string SavePath = "user://save_data.tres";
     private const string SpellsDirectory = "res://assets/spells/";
     private const string RunesDirectory = "res://assets/runes/";
-    private const string ItemsDirectory = "res://assets/items/";
     private const int InventorySize = 40;
     private const float SaveDebounceSeconds = 1f;
 
@@ -63,8 +62,6 @@ public partial class SaveManager : Node
             changed |= EnsureKnownRune(path);
         }
 
-        changed |= EnsureStarterItems();
-
         return changed;
     }
 
@@ -81,51 +78,6 @@ public partial class SaveManager : Node
         }
 
         return changed;
-    }
-
-    // One-time starter kit so the grid has something in it. Items are meant to be earned over
-    // time, unlike spells/runes, so this seeds once instead of tracking each item forever.
-    private bool EnsureStarterItems()
-    {
-        if (Data.Inventory.Any(item => item != null))
-        {
-            return false;
-        }
-
-        int searchFrom = 0;
-        bool changed = false;
-
-        foreach (string path in ListResourceFiles(ItemsDirectory))
-        {
-            Item item = GD.Load<Item>(path);
-
-            if (item == null)
-            {
-                continue;
-            }
-
-            searchFrom = PlaceInNextEmptySlot(item, searchFrom);
-            searchFrom = PlaceInNextEmptySlot((Item)item.Duplicate(), searchFrom);
-            changed = true;
-        }
-
-        return changed;
-    }
-
-    // Returns the slot index just placed into, plus one, so the next call resumes searching from
-    // there instead of rescanning from the start every time.
-    private int PlaceInNextEmptySlot(Item item, int searchFrom)
-    {
-        for (int i = searchFrom; i < Data.Inventory.Count; i++)
-        {
-            if (Data.Inventory[i] == null)
-            {
-                Data.Inventory[i] = item;
-                return i + 1;
-            }
-        }
-
-        return Data.Inventory.Count;
     }
 
     private static string[] ListResourceFiles(string directoryPath)

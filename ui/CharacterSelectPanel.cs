@@ -27,7 +27,7 @@ public partial class CharacterSelectPanel : Control
         _owner = owner;
         RefreshList();
         Visible = true;
-        UiPanelStack.Push(this);
+        UiPanelStack.Push(this, Close);
     }
 
     private void RefreshList()
@@ -74,7 +74,7 @@ public partial class CharacterSelectPanel : Control
 
         if (@event.IsActionPressed("ui_cancel"))
         {
-            Close();
+            UiPanelStack.CloseAll();
             GetViewport().SetInputAsHandled();
         }
     }

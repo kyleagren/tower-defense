@@ -54,7 +54,7 @@ public partial class VendorPanel : Control
 
         Refresh();
         Visible = true;
-        UiPanelStack.Push(this);
+        UiPanelStack.Push(this, Close);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -66,7 +66,7 @@ public partial class VendorPanel : Control
 
         if (@event.IsActionPressed("ui_cancel"))
         {
-            Close();
+            UiPanelStack.CloseAll();
             GetViewport().SetInputAsHandled();
         }
     }
@@ -154,10 +154,10 @@ public partial class VendorPanel : Control
         {
             Text = $"{item.Name}  —  {item.SaleValue}g",
             Icon = item.Icon,
-            TooltipText = item.BuildTooltip(),
             CustomMinimumSize = new Vector2(0, 48)
         };
         button.Pressed += onPressed;
+        ItemTooltip.Instance.Register(button, () => item);
 
         return button;
     }

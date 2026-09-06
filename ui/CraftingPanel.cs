@@ -124,7 +124,7 @@ public partial class CraftingPanel : Control
 
         Refresh();
         Visible = true;
-        UiPanelStack.Push(this);
+        UiPanelStack.Push(this, Close);
     }
 
     private void AddSectionHeader(string text)
@@ -219,20 +219,8 @@ public partial class CraftingPanel : Control
 
         for (int i = 0; i < bars.Length; i++)
         {
-            bars[i].Text = i < rolls.Count ? DescribeBar(rolls[i]) : $"{type} — Empty";
+            bars[i].Text = i < rolls.Count ? rolls[i].BuildAdvancedDescription() : $"{type} — Empty";
         }
-    }
-
-    // Every current affix is percentage-based (same assumption Item.BuildTooltip makes) - a future
-    // flat-value affix would need a different formatting path here.
-    private static string DescribeBar(RolledAffix roll)
-    {
-        AffixTierRange range = roll.TierRange;
-        string description = string.Format(roll.Affix.DescriptionTemplate, Mathf.RoundToInt(roll.Value * 100f));
-        int minPercent = Mathf.RoundToInt(range.MinValue * 100f);
-        int maxPercent = Mathf.RoundToInt(range.MaxValue * 100f);
-
-        return $"{roll.Affix.Name} (T{roll.Tier})  {description}  [{minPercent}-{maxPercent}%]";
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -244,7 +232,7 @@ public partial class CraftingPanel : Control
 
         if (@event.IsActionPressed("ui_cancel"))
         {
-            Close();
+            UiPanelStack.CloseAll();
             GetViewport().SetInputAsHandled();
         }
     }

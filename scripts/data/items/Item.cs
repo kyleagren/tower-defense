@@ -38,11 +38,21 @@ public abstract partial class Item : Resource
     }
 
     // Multi-line hover text: name, an "X Only" line if character-restricted, then one line per
-    // rolled mod via that mod's own DescriptionTemplate. Every current affix is percentage-based
-    // (RolledAffix.Value is stored as a fraction, rounded to a whole percent) - a future flat-value
-    // affix would need a different formatting path here. Shared by InventoryPanel and
-    // ItemInteractor so both UI and world tooltips read identically.
+    // rolled mod via that mod's own DescriptionTemplate. Shared by InventoryPanel, VendorPanel,
+    // and ItemInteractor so UI and world tooltips read identically.
     public string BuildTooltip()
+    {
+        return BuildTooltipLines(roll => roll.BuildDescription());
+    }
+
+    // Same as BuildTooltip, but each mod line also shows its tier and roll range - the advanced
+    // view, shown by ItemTooltip while the advanced_tooltip modifier is held.
+    public string BuildAdvancedTooltip()
+    {
+        return BuildTooltipLines(roll => roll.BuildAdvancedDescription());
+    }
+
+    private string BuildTooltipLines(System.Func<RolledAffix, string> describeRoll)
     {
         List<string> lines = new() { Name };
 
@@ -53,7 +63,7 @@ public abstract partial class Item : Resource
 
         foreach (RolledAffix roll in Affixes)
         {
-            lines.Add(string.Format(roll.Affix.DescriptionTemplate, Mathf.RoundToInt(roll.Value * 100f)));
+            lines.Add(describeRoll(roll));
         }
 
         return string.Join("\n", lines);

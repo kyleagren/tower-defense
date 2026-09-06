@@ -113,6 +113,7 @@ public partial class InventoryPanel : Control
         button.Pressed += () => OnEquipmentSlotPressed(slot);
         button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(slot, button, @event);
         ItemDragController.Instance.RegisterSlot(button, slot);
+        ItemTooltip.Instance.Register(button, () => slot.GetItem());
 
         return new EquipmentSlotView(button, placeholderName, slot);
     }
@@ -138,6 +139,7 @@ public partial class InventoryPanel : Control
             button.Pressed += () => OnGridSlotPressed(slotIndex);
             button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(GridSlot(slotIndex), button, @event);
             ItemDragController.Instance.RegisterSlot(button, GridSlot(slotIndex));
+            ItemTooltip.Instance.Register(button, () => GridSlot(slotIndex).GetItem());
 
             Grid.AddChild(button);
             _gridButtons[i] = button;
@@ -168,7 +170,7 @@ public partial class InventoryPanel : Control
 
         if (Visible && UiPanelStack.IsTop(this) && @event.IsActionPressed("ui_cancel"))
         {
-            Close();
+            UiPanelStack.CloseAll();
             GetViewport().SetInputAsHandled();
         }
     }
@@ -195,7 +197,7 @@ public partial class InventoryPanel : Control
         Visible = true;
         Refresh();
         _equipmentSlots[0].Button.GrabFocus();
-        UiPanelStack.Push(this);
+        UiPanelStack.Push(this, Close);
     }
 
     private void Close()
@@ -246,8 +248,6 @@ public partial class InventoryPanel : Control
         Item equippedItem = view.Slot.GetItem();
         Item held = ItemDragController.Instance.Held;
 
-        button.TooltipText = held == null && equippedItem != null ? equippedItem.BuildTooltip() : "";
-
         if (held != null && view.Slot.CanAccept(held))
         {
             SetBackground(button, SelectedBg);
@@ -279,7 +279,6 @@ public partial class InventoryPanel : Control
     private void RefreshGrid()
     {
         Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
-        bool holding = ItemDragController.Instance.Held != null;
 
         for (int i = 0; i < _gridButtons.Length; i++)
         {
@@ -291,12 +290,10 @@ public partial class InventoryPanel : Control
             if (slotItem == null)
             {
                 ClearBackground(button);
-                button.TooltipText = "";
                 continue;
             }
 
             SetBackground(button, IsCompatible(slotItem) ? RarityColors.Get(slotItem.Rarity) : DisabledBg);
-            button.TooltipText = holding ? "" : slotItem.BuildTooltip();
         }
     }
 
