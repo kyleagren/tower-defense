@@ -56,7 +56,7 @@ public static class LootGenerator
     // caller's call, not guessed here - a Weapon drop can belong to any Sentinel, played or not.
     public static Item Generate(EquipmentSlot slot, Rarity rarity, CharacterId equippableCharacter = CharacterId.AnySentinel)
     {
-        Item item = CreateItemForSlot(slot);
+        Item item = CreateItemForSlot(slot, equippableCharacter);
         int bestTier = _bestTierByRarity[rarity];
 
         List<AffixTierEntry> prefixPool = AffixTable.GetTierEntries(slot, AffixType.Prefix, bestTier, equippableCharacter).ToList();
@@ -69,7 +69,7 @@ public static class LootGenerator
         RollAffixes(prefixPool, prefixCount, affixes);
         RollAffixes(suffixPool, suffixCount, affixes);
 
-        item.Initialize(rarity, DefaultItemIcons.Get(slot), equippableCharacter, affixes);
+        item.Initialize(rarity, DefaultItemIcons.Get(item.GetType()), equippableCharacter, affixes);
 
         return item;
     }
@@ -111,9 +111,9 @@ public static class LootGenerator
         return Rarity.Common;
     }
 
-    private static Item CreateItemForSlot(EquipmentSlot slot) => slot switch
+    private static Item CreateItemForSlot(EquipmentSlot slot, CharacterId equippableCharacter) => slot switch
     {
-        EquipmentSlot.Weapon => new Weapon(),
+        EquipmentSlot.Weapon => equippableCharacter == CharacterId.Tank ? new SwordAndShield() : new Gun(),
         EquipmentSlot.Helmet => new Helmet(),
         EquipmentSlot.Chest => new Chest(),
         EquipmentSlot.Legs => new Legs(),

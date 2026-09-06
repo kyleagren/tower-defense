@@ -25,6 +25,12 @@ public abstract partial class Item : Resource
     // separate tag that would have to be kept in sync with it.
     public string Name => $"{Rarity} {GetType().Name}";
 
+    // Name plus an "X Only" line if character-restricted - the shared header both the plain
+    // tooltip and ItemTooltip's own structured advanced view build on top of.
+    public string HeaderText => EquippableCharacter != CharacterId.AnySentinel
+        ? $"{Name}\n{EquippableCharacter} Only"
+        : Name;
+
     // The one place code (LootGenerator) is allowed to fill in a generated item's fields - keeps
     // the properties above effectively read-only to everyone else. Godot's own .tres loader
     // doesn't go through this at all (it sets exported properties directly via its own reflection,
@@ -37,33 +43,18 @@ public abstract partial class Item : Resource
         Affixes = affixes;
     }
 
-    // Multi-line hover text: name, an "X Only" line if character-restricted, then one line per
-    // rolled mod via that mod's own DescriptionTemplate. Shared by InventoryPanel, VendorPanel,
-    // and ItemInteractor so UI and world tooltips read identically.
+    // Multi-line hover text: header, then one line per rolled mod via that mod's own
+    // DescriptionTemplate. Shared by InventoryPanel, VendorPanel, and ItemInteractor so UI and
+    // world tooltips read identically. ItemTooltip's own advanced (Alt-held) view builds its own
+    // structured per-mod layout via AffixRowView instead of this, since it needs each mod grouped
+    // by type with its tier shown separately, not folded into one string.
     public string BuildTooltip()
     {
-        return BuildTooltipLines(roll => roll.BuildDescription());
-    }
-
-    // Same as BuildTooltip, but each mod line also shows its tier and roll range - the advanced
-    // view, shown by ItemTooltip while the advanced_tooltip modifier is held.
-    public string BuildAdvancedTooltip()
-    {
-        return BuildTooltipLines(roll => roll.BuildAdvancedDescription());
-    }
-
-    private string BuildTooltipLines(System.Func<RolledAffix, string> describeRoll)
-    {
-        List<string> lines = new() { Name };
-
-        if (EquippableCharacter != CharacterId.AnySentinel)
-        {
-            lines.Add($"{EquippableCharacter} Only");
-        }
+        List<string> lines = new() { HeaderText };
 
         foreach (RolledAffix roll in Affixes)
         {
-            lines.Add(describeRoll(roll));
+            lines.Add(roll.BuildDescription());
         }
 
         return string.Join("\n", lines);

@@ -1,25 +1,26 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 public static class DefaultItemIcons
 {
-    private static readonly Dictionary<EquipmentSlot, string> _iconPaths = new()
+    private static readonly Dictionary<Type, string> _iconPaths = new()
     {
-        [EquipmentSlot.Weapon] = "res://assets/thumbnails/gun.png",
-        [EquipmentSlot.Helmet] = "res://assets/thumbnails/helmet.png",
-        [EquipmentSlot.Chest] = "res://assets/thumbnails/chestplate.png",
-        [EquipmentSlot.Legs] = "res://assets/thumbnails/pants.png",
-        [EquipmentSlot.Boots] = "res://assets/thumbnails/boots.png",
-        [EquipmentSlot.Gloves] = "res://assets/thumbnails/gloves.png",
-        [EquipmentSlot.Belt] = "res://assets/thumbnails/belt.png",
-        [EquipmentSlot.Amulet] = "res://assets/thumbnails/amulet.png",
-        [EquipmentSlot.LeftRing] = "res://assets/thumbnails/ring.png",
-        [EquipmentSlot.RightRing] = "res://assets/thumbnails/ring.png",
-        [EquipmentSlot.Relic] = "res://assets/thumbnails/relic.png"
+        [typeof(Gun)] = "res://assets/thumbnails/gun.png",
+        [typeof(SwordAndShield)] = "res://assets/thumbnails/sword_shield.png",
+        [typeof(Helmet)] = "res://assets/thumbnails/helmet.png",
+        [typeof(Chest)] = "res://assets/thumbnails/chestplate.png",
+        [typeof(Legs)] = "res://assets/thumbnails/pants.png",
+        [typeof(Boots)] = "res://assets/thumbnails/boots.png",
+        [typeof(Gloves)] = "res://assets/thumbnails/gloves.png",
+        [typeof(Belt)] = "res://assets/thumbnails/belt.png",
+        [typeof(Amulet)] = "res://assets/thumbnails/amulet.png",
+        [typeof(Ring)] = "res://assets/thumbnails/ring.png",
+        [typeof(Relic)] = "res://assets/thumbnails/relic.png"
     };
 
-    public static Texture2D Get(EquipmentSlot slot)
+    public static Texture2D Get(Type itemType)
     {
-        return _iconPaths.TryGetValue(slot, out string path) ? GD.Load<Texture2D>(path) : null;
+        return _iconPaths.TryGetValue(itemType, out string path) ? GD.Load<Texture2D>(path) : null;
     }
 }

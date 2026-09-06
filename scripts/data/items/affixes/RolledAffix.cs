@@ -25,15 +25,25 @@ public partial class RolledAffix : Resource
         return string.Format(Affix.DescriptionTemplate, Mathf.RoundToInt(Value * 100f));
     }
 
-    // The advanced line - description plus which tier it rolled and the range that tier could
-    // have landed in. Shared by the crafting table's bars and the advanced (Alt-hover) tooltip,
-    // so there's one "how a rolled mod reads with its tier shown" format, not two copies.
-    public string BuildAdvancedDescription()
+    // PoE-style inline value+range ("+35(33-38)% Increased Energy Shield") - the rolled value
+    // immediately followed by its possible range in parens, substituted as one unit into the
+    // mod's own template. Shared by the crafting table's bars and ItemTooltip's advanced rows,
+    // both of which show tier separately (a bar's own text, or a row's tier badge).
+    public string BuildInlineRangeDescription()
     {
         AffixTierRange range = TierRange;
+        int value = Mathf.RoundToInt(Value * 100f);
         int minPercent = Mathf.RoundToInt(range.MinValue * 100f);
         int maxPercent = Mathf.RoundToInt(range.MaxValue * 100f);
 
-        return $"{Affix.Name} (T{Tier})  {BuildDescription()}  [{minPercent}-{maxPercent}%]";
+        return string.Format(Affix.DescriptionTemplate, $"{value}({minPercent}-{maxPercent})");
+    }
+
+    // The nested advanced-tooltip popup's header - which type of mod it is, its name, and tier.
+    // Its tag list is built separately by ItemTooltip, which renders "Tags" in a different color
+    // than the tags themselves.
+    public string BuildModHeaderText()
+    {
+        return $"{Affix.AffixType} Modifier \"{Affix.Name}\" (Tier: {Tier})";
     }
 }

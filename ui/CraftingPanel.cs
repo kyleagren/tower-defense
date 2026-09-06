@@ -54,8 +54,8 @@ public partial class CraftingPanel : Control
     [Export] public VBoxContainer ActionList { get; private set; }
 
     private ItemDragController.SlotHandle _slot;
-    private Label[] _prefixBars;
-    private Label[] _suffixBars;
+    private PanelContainer[] _prefixBars;
+    private PanelContainer[] _suffixBars;
     private Button[] _actionButtons;
 
     public override void _EnterTree()
@@ -135,10 +135,11 @@ public partial class CraftingPanel : Control
     }
 
     // Each bar sits in its own dark panel (matching the action buttons' own background) so an empty
-    // slot still reads as a reserved mod slot rather than blank space.
-    private Label[] BuildBarRow(int count)
+    // slot still reads as a reserved mod slot rather than blank space. Content (a mod row or an
+    // empty-placeholder label) is filled in by SetBars, since it changes on every refresh.
+    private PanelContainer[] BuildBarRow(int count)
     {
-        Label[] bars = new Label[count];
+        PanelContainer[] bars = new PanelContainer[count];
 
         for (int i = 0; i < count; i++)
         {
@@ -156,10 +157,8 @@ public partial class CraftingPanel : Control
                 CornerRadiusBottomRight = 4
             });
 
-            Label label = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
-            panel.AddChild(label);
             AffixList.AddChild(panel);
-            bars[i] = label;
+            bars[i] = panel;
         }
 
         return bars;
@@ -213,13 +212,18 @@ public partial class CraftingPanel : Control
         GoldLabel.Text = $"Gold: {SaveManager.Instance.Data.Gold}";
     }
 
-    private static void SetBars(Label[] bars, Item item, AffixType type)
+    private static void SetBars(PanelContainer[] bars, Item item, AffixType type)
     {
         List<RolledAffix> rolls = item?.Affixes.Where(roll => roll.Affix.AffixType == type).ToList() ?? new List<RolledAffix>();
 
         for (int i = 0; i < bars.Length; i++)
         {
-            bars[i].Text = i < rolls.Count ? rolls[i].BuildAdvancedDescription() : $"{type} — Empty";
+            foreach (Node child in bars[i].GetChildren())
+            {
+                child.QueueFree();
+            }
+
+            bars[i].AddChild(i < rolls.Count ? AffixRowView.Build(rolls[i]).Root : new Label { Text = $"{type} — Empty" });
         }
     }
 
