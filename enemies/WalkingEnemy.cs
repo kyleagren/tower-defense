@@ -75,9 +75,9 @@ public partial class WalkingEnemy : Enemy
         base._PhysicsProcess(delta);
 
         UpdateDistanceToGoal();
+        UpdateRitualEngagement();
         UpdatePlayerLeash((float)delta);
         UpdateWallEngagement();
-        UpdateRitualEngagement();
 
         switch (_movementMode)
         {
@@ -193,6 +193,13 @@ public partial class WalkingEnemy : Enemy
     // than every frame — a cheap distance check, not a live per-enemy nav query.
     private void UpdatePlayerLeash(float delta)
     {
+        // A ritual attack (Sapper's whole point) isn't interrupted by the player wandering past -
+        // UpdateRitualEngagement already ran this tick and gets first claim on the movement mode.
+        if (_movementMode == MovementMode.AttackingRitual)
+        {
+            return;
+        }
+
         _playerCheckTimer -= delta;
         if (_playerCheckTimer > 0f || Sentinel.Local == null || !Sentinel.Local.IsActive)
         {
@@ -375,7 +382,9 @@ public partial class WalkingEnemy : Enemy
     // Opt-in per enemy (CanAttackRituals) - most enemies never touch towers at all. Sapper sets an
     // effectively unlimited RitualDetectionRange so this fires the instant it spawns, regardless of
     // distance; other future CanAttackRituals enemies can use a short range for a wall-style "attack
-    // one if it happens to be nearby" interrupt instead.
+    // one if it happens to be nearby" interrupt instead. Runs first each tick, ahead of the player
+    // leash - towers outrank the player for anything that can attack them, unlike the wall/objective
+    // cases below, which the player still always interrupts.
     private void UpdateRitualEngagement()
     {
         if (!CanAttackRituals)
@@ -383,8 +392,7 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
-        if (_movementMode == MovementMode.ChasingPlayer || _movementMode == MovementMode.AttackingWall
-            || _movementMode == MovementMode.AttackingRitual)
+        if (_movementMode == MovementMode.AttackingWall || _movementMode == MovementMode.AttackingRitual)
         {
             return;
         }
