@@ -16,6 +16,10 @@ public abstract partial class Item : Resource
 
     public abstract EquipmentSlot Slot { get; }
 
+    // The vendor's buy/sell/buyback price, for now just the number of mods rolled - simple stand-in
+    // until pricing needs to account for rarity, tier, or anything else.
+    public int SaleValue => Affixes.Count;
+
     // No hand-authored flavor names yet - just rarity + slot, matching the "name corresponds
     // to slot + rarity for now" call. The slot itself comes from the concrete type, not a
     // separate tag that would have to be kept in sync with it.

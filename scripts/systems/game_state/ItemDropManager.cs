@@ -9,37 +9,6 @@ public partial class ItemDropManager : Node
 {
     [Export] public PackedScene WorldItemScene { get; private set; }
 
-    // Ring drops are slot-agnostic - LootGenerator.CreateItemForSlot maps both LeftRing and
-    // RightRing to the same Ring class, so only one appears here to avoid double-weighting rings
-    // against every other item type.
-    private static readonly EquipmentSlot[] _droppableSlots =
-    {
-        EquipmentSlot.Weapon,
-        EquipmentSlot.Helmet,
-        EquipmentSlot.Chest,
-        EquipmentSlot.Legs,
-        EquipmentSlot.Boots,
-        EquipmentSlot.Gloves,
-        EquipmentSlot.Belt,
-        EquipmentSlot.Amulet,
-        EquipmentSlot.LeftRing,
-        EquipmentSlot.Relic
-    };
-
-    private static readonly CharacterId[] _sentinels =
-        { CharacterId.Soldier, CharacterId.Tank, CharacterId.Assassin, CharacterId.Templar };
-
-    // Common is far likelier than Legendary. Rarity.Unique is never rolled here, matching
-    // LootGenerator's own rule that uniques are hand-authored, not generated.
-    private static readonly (Rarity Rarity, int Weight)[] _rarityWeights =
-    {
-        (Rarity.Common, 100),
-        (Rarity.Uncommon, 45),
-        (Rarity.Rare, 18),
-        (Rarity.Epic, 6),
-        (Rarity.Legendary, 1)
-    };
-
     private static readonly System.Random _random = new();
 
     public override void _Ready()
@@ -68,13 +37,7 @@ public partial class ItemDropManager : Node
 
     private void SpawnDrop(Vector3 position)
     {
-        EquipmentSlot slot = _droppableSlots[_random.Next(_droppableSlots.Length)];
-        Rarity rarity = RollRarity();
-        CharacterId equippableCharacter = slot == EquipmentSlot.Weapon
-            ? _sentinels[_random.Next(_sentinels.Length)]
-            : CharacterId.AnySentinel;
-
-        Item item = LootGenerator.Generate(slot, rarity, equippableCharacter);
+        Item item = LootGenerator.GenerateRandomDrop();
 
         WorldItem worldItem = WorldItemScene.Instantiate<WorldItem>();
         worldItem.Initialize(item);
@@ -89,28 +52,5 @@ public partial class ItemDropManager : Node
         float x = (float)(_random.NextDouble() * 0.6 - 0.3);
         float z = (float)(_random.NextDouble() * 0.6 - 0.3);
         return new Vector3(x, 0f, z);
-    }
-
-    private static Rarity RollRarity()
-    {
-        int totalWeight = 0;
-        foreach ((Rarity _, int weight) in _rarityWeights)
-        {
-            totalWeight += weight;
-        }
-
-        int roll = _random.Next(totalWeight);
-        int cumulative = 0;
-
-        foreach ((Rarity rarity, int weight) in _rarityWeights)
-        {
-            cumulative += weight;
-            if (roll < cumulative)
-            {
-                return rarity;
-            }
-        }
-
-        return Rarity.Common;
     }
 }

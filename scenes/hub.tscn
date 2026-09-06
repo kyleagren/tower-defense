@@ -2,18 +2,20 @@
 
 [ext_resource type="Script" uid="uid://b2lh56ru63dye" path="res://scripts/systems/game_state/SentinelSpawner.cs" id="1_sentinelspawner"]
 [ext_resource type="Script" uid="uid://beylbkijyxcr5" path="res://scripts/systems/game_state/EconomyManager.cs" id="2_economymanager"]
-[ext_resource type="Script" uid="uid://bnmhdebgbiqya" path="res://characters/ArchitectSelectStation.cs" id="3_archstation"]
-[ext_resource type="Script" uid="uid://dsa3b2omiinqc" path="res://characters/ArchitectTestZone.cs" id="4_archzone"]
+[ext_resource type="Script" uid="uid://bnmhdebgbiqya" path="res://hub/ArchitectSelectStation.cs" id="3_archstation"]
+[ext_resource type="Script" uid="uid://dsa3b2omiinqc" path="res://hub/ArchitectTestZone.cs" id="4_archzone"]
 [ext_resource type="PackedScene" path="res://ui/Crosshair.tscn" id="5_crosshair"]
-[ext_resource type="Script" uid="uid://c7mkc6ifdkhp8" path="res://characters/CharacterSelectStation.cs" id="6_charselectstation"]
+[ext_resource type="Script" uid="uid://c7mkc6ifdkhp8" path="res://hub/CharacterSelectStation.cs" id="6_charselectstation"]
 [ext_resource type="PackedScene" path="res://ui/CharacterSelectPanel.tscn" id="7_charselectpanel"]
-[ext_resource type="Script" uid="uid://cs7e675hoiaql" path="res://characters/LevelSelectStation.cs" id="8_levelselectstation"]
+[ext_resource type="Script" uid="uid://cs7e675hoiaql" path="res://hub/LevelSelectStation.cs" id="8_levelselectstation"]
 [ext_resource type="PackedScene" path="res://ui/LevelSelectPanel.tscn" id="9_levelselectpanel"]
 [ext_resource type="PackedScene" path="res://enemies/TrainingDummy.tscn" id="10_dummy"]
 [ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://scripts/dev/DebugToggle.cs" id="11_debugtoggle"]
 [ext_resource type="PackedScene" path="res://ui/InventoryPanel.tscn" id="12_inventorypanel"]
-[ext_resource type="Script" uid="uid://b0s58yrba60h5" path="res://characters/CraftingStation.cs" id="13_craftingstation"]
+[ext_resource type="Script" uid="uid://bwtg32js1gadv" path="res://hub/CraftingStation.cs" id="13_craftingstation"]
 [ext_resource type="PackedScene" path="res://ui/CraftingPanel.tscn" id="14_craftingpanel"]
+[ext_resource type="Script" uid="uid://cacefgtxix4nr" path="res://hub/VendorStation.cs" id="15_vendorstation"]
+[ext_resource type="PackedScene" path="res://ui/VendorPanel.tscn" id="16_vendorpanel"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -144,6 +146,14 @@ size = Vector3(1.2, 1.4, 2.4)
 material = SubResource("StandardMaterial3D_crafting")
 left_to_right = 1.0
 size = Vector3(0.3, 0.25, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vendor"]
+albedo_color = Color(0.8, 0.65, 0.1, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_vendor"]
+material = SubResource("StandardMaterial3D_vendor")
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_vendor"]
 
 [node name="Hub" type="Node3D" unique_id=1931328644]
 
@@ -476,3 +486,16 @@ mesh = SubResource("PrismMesh_crafting_ramp")
 [node name="RampB" type="MeshInstance3D" parent="CraftingStation" unique_id=1552673841]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 1.275, 1.125)
 mesh = SubResource("PrismMesh_crafting_ramp")
+
+[node name="VendorStation" type="StaticBody3D" parent="." unique_id=594946872]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 1, 9)
+collision_layer = 17
+script = ExtResource("15_vendorstation")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="VendorStation" unique_id=1990105689]
+mesh = SubResource("CylinderMesh_vendor")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="VendorStation" unique_id=366250269]
+shape = SubResource("CylinderShape3D_vendor")
+
+[node name="VendorPanel" parent="." unique_id=333437870 instance=ExtResource("16_vendorpanel")]

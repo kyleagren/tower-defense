@@ -6,6 +6,38 @@ public static class LootGenerator
 {
     private static readonly System.Random _random = new();
 
+    // Ring drops are slot-agnostic - CreateItemForSlot maps both LeftRing and RightRing to the
+    // same Ring class, so only one appears here to avoid double-weighting rings against every
+    // other item type. Moved here from ItemDropManager so vendor stock draws from the identical
+    // pool instead of a second hand-kept copy.
+    private static readonly EquipmentSlot[] _droppableSlots =
+    {
+        EquipmentSlot.Weapon,
+        EquipmentSlot.Helmet,
+        EquipmentSlot.Chest,
+        EquipmentSlot.Legs,
+        EquipmentSlot.Boots,
+        EquipmentSlot.Gloves,
+        EquipmentSlot.Belt,
+        EquipmentSlot.Amulet,
+        EquipmentSlot.LeftRing,
+        EquipmentSlot.Relic
+    };
+
+    private static readonly CharacterId[] _sentinels =
+        { CharacterId.Soldier, CharacterId.Tank, CharacterId.Assassin, CharacterId.Templar };
+
+    // Common is far likelier than Legendary. Rarity.Unique is never rolled here, matching this
+    // file's own rule elsewhere that uniques are hand-authored, not generated.
+    private static readonly (Rarity Rarity, int Weight)[] _rarityWeights =
+    {
+        (Rarity.Common, 100),
+        (Rarity.Uncommon, 45),
+        (Rarity.Rare, 18),
+        (Rarity.Epic, 6),
+        (Rarity.Legendary, 1)
+    };
+
     // How good the best tier a given Rarity can roll is - each step up keeps every weaker tier
     // available too (Rare can still roll a T1, it's just not capped there anymore). Tier 1 is the
     // weakest and ascending numbers are stronger (see AffixTierRange.Tier), so this is each
@@ -40,6 +72,43 @@ public static class LootGenerator
         item.Initialize(rarity, DefaultItemIcons.Get(slot), equippableCharacter, affixes);
 
         return item;
+    }
+
+    // A fully random item - random droppable slot, random weighted rarity, a random Sentinel if
+    // that slot happens to be Weapon. Shared by enemy drops (ItemDropManager) and the vendor's
+    // stock generation so both draw from the exact same distribution.
+    public static Item GenerateRandomDrop()
+    {
+        EquipmentSlot slot = _droppableSlots[_random.Next(_droppableSlots.Length)];
+        Rarity rarity = RollRarity();
+        CharacterId equippableCharacter = slot == EquipmentSlot.Weapon
+            ? _sentinels[_random.Next(_sentinels.Length)]
+            : CharacterId.AnySentinel;
+
+        return Generate(slot, rarity, equippableCharacter);
+    }
+
+    private static Rarity RollRarity()
+    {
+        int totalWeight = 0;
+        foreach ((Rarity _, int weight) in _rarityWeights)
+        {
+            totalWeight += weight;
+        }
+
+        int roll = _random.Next(totalWeight);
+        int cumulative = 0;
+
+        foreach ((Rarity rarity, int weight) in _rarityWeights)
+        {
+            cumulative += weight;
+            if (roll < cumulative)
+            {
+                return rarity;
+            }
+        }
+
+        return Rarity.Common;
     }
 
     private static Item CreateItemForSlot(EquipmentSlot slot) => slot switch
