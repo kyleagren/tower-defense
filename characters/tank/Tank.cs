@@ -20,8 +20,8 @@ public partial class Tank : Sentinel
     [Export] public float ReturnDelay = 0.75f;
     [Export] public float ReturnDuration = 0.25f;
     [Export] public float BlockRaiseDuration = 0.15f;
-    [Export] public float BlockImmunityDuration = 1.5f;
-    [Export] public float BlockCooldownDuration = 5f;
+    [Export] public float BlockImmunityDuration = 2f;
+    [Export] public float BlockCooldownDuration = 4f;
     [Export] public float BlockedMoveSpeedMultiplier = 0.8f;
     [Export] public float ShieldRestAngleDegrees = 180f;
     [Export] public float ShieldBlockAngleDegrees = 90f;
