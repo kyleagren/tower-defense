@@ -1,15 +1,62 @@
 using Godot;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
-// The crafting table. This first pass only wires up the item slot itself, sharing
-// ItemDragController with InventoryPanel so an item can be dragged in and back out - the actual
-// add/remove/reroll options come in a later pass, once dragging is confirmed working end to end.
+// The crafting table. An item in the slot exposes six mod bars (3 prefix, 3 suffix) and a
+// scrollable list of crafting actions - add/remove a random prefix or suffix, or reroll every
+// existing mod's value within its own tier's range. Every action costs a flat
+// GameRules.CraftingActionGoldCost, gated by current affix counts and how much Gold is banked.
 public partial class CraftingPanel : Control
 {
     public static CraftingPanel Instance { get; private set; }
 
+    // One entry in the scrollable action list: its label, whether it can currently be performed on
+    // the item in the slot, and what performing it does. A plain data list rather than one button
+    // per hardcoded field, since "there will be more someday" (per design discussion) should mean
+    // adding an entry here, not wiring up another button by hand.
+    private readonly struct CraftingAction
+    {
+        public readonly string Label;
+        public readonly Func<Item, bool> CanPerform;
+        public readonly Action<Item> Perform;
+
+        public CraftingAction(string label, Func<Item, bool> canPerform, Action<Item> perform)
+        {
+            Label = label;
+            CanPerform = canPerform;
+            Perform = perform;
+        }
+    }
+
+    private static readonly CraftingAction[] Actions =
+    {
+        new("Add Prefix",
+            item => CraftingActions.CanAddAffix(item, AffixType.Prefix),
+            item => CraftingActions.AddAffix(item, AffixType.Prefix)),
+        new("Remove Prefix",
+            item => CraftingActions.CanRemoveAffix(item, AffixType.Prefix),
+            item => CraftingActions.RemoveRandomAffix(item, AffixType.Prefix)),
+        new("Add Suffix",
+            item => CraftingActions.CanAddAffix(item, AffixType.Suffix),
+            item => CraftingActions.AddAffix(item, AffixType.Suffix)),
+        new("Remove Suffix",
+            item => CraftingActions.CanRemoveAffix(item, AffixType.Suffix),
+            item => CraftingActions.RemoveRandomAffix(item, AffixType.Suffix)),
+        new("Reroll All", CraftingActions.CanReroll, CraftingActions.RerollAll)
+    };
+
+    private static readonly Color BarBackground = new Color(0.16f, 0.16f, 0.16f);
+
     [Export] public Button ItemSlotButton { get; private set; }
+    [Export] public Label GoldLabel { get; private set; }
+    [Export] public VBoxContainer AffixList { get; private set; }
+    [Export] public VBoxContainer ActionList { get; private set; }
 
     private ItemDragController.SlotHandle _slot;
+    private Label[] _prefixBars;
+    private Label[] _suffixBars;
+    private Button[] _actionButtons;
 
     public override void _EnterTree()
     {
@@ -30,12 +77,18 @@ public partial class CraftingPanel : Control
         ItemDragController.Instance.RegisterSlot(ItemSlotButton, _slot);
         ItemSlotButton.Pressed += OnSlotPressed;
         ItemSlotButton.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(_slot, ItemSlotButton, @event);
-        ItemDragController.Instance.Changed += RefreshSlotVisual;
+        ItemDragController.Instance.Changed += Refresh;
+
+        AddSectionHeader("Prefixes");
+        _prefixBars = BuildBarRow(GameRules.MaxPrefixAffixes);
+        AddSectionHeader("Suffixes");
+        _suffixBars = BuildBarRow(GameRules.MaxSuffixAffixes);
+        BuildActionButtons();
     }
 
     public override void _ExitTree()
     {
-        ItemDragController.Instance.Changed -= RefreshSlotVisual;
+        ItemDragController.Instance.Changed -= Refresh;
     }
 
     private void OnSlotPressed()
@@ -55,16 +108,117 @@ public partial class CraftingPanel : Control
             InventoryPanel.Instance.Open();
         }
 
-        RefreshSlotVisual();
+        Refresh();
         Visible = true;
         UiPanelStack.Push(this);
     }
 
-    private void RefreshSlotVisual()
+    private void AddSectionHeader(string text)
+    {
+        Label header = new Label { Text = text };
+        header.AddThemeFontSizeOverride("font_size", 16);
+        AffixList.AddChild(header);
+    }
+
+    // Each bar sits in its own dark panel (matching the action buttons' own background) so an empty
+    // slot still reads as a reserved mod slot rather than blank space.
+    private Label[] BuildBarRow(int count)
+    {
+        Label[] bars = new Label[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            PanelContainer panel = new PanelContainer();
+            panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+            {
+                BgColor = BarBackground,
+                ContentMarginLeft = 8,
+                ContentMarginRight = 8,
+                ContentMarginTop = 4,
+                ContentMarginBottom = 4,
+                CornerRadiusTopLeft = 4,
+                CornerRadiusTopRight = 4,
+                CornerRadiusBottomLeft = 4,
+                CornerRadiusBottomRight = 4
+            });
+
+            Label label = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+            panel.AddChild(label);
+            AffixList.AddChild(panel);
+            bars[i] = label;
+        }
+
+        return bars;
+    }
+
+    private void BuildActionButtons()
+    {
+        _actionButtons = new Button[Actions.Length];
+
+        for (int i = 0; i < Actions.Length; i++)
+        {
+            CraftingAction action = Actions[i];
+            Button button = new Button { Text = $"{action.Label} ({GameRules.CraftingActionGoldCost}g)" };
+            button.Pressed += () => OnActionPressed(action);
+            ActionList.AddChild(button);
+            _actionButtons[i] = button;
+        }
+    }
+
+    private void OnActionPressed(CraftingAction action)
     {
         Item item = SaveManager.Instance.Data.CraftingSlotItem;
+
+        if (item == null || SaveManager.Instance.Data.Gold < GameRules.CraftingActionGoldCost || !action.CanPerform(item))
+        {
+            return;
+        }
+
+        SaveManager.Instance.Data.Gold -= GameRules.CraftingActionGoldCost;
+        action.Perform(item);
+        SaveManager.Instance.Save();
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        Item item = SaveManager.Instance.Data.CraftingSlotItem;
+
         ItemSlotButton.Icon = item?.Icon;
         ItemSlotButton.Text = item == null ? "Empty" : "";
+
+        SetBars(_prefixBars, item, AffixType.Prefix);
+        SetBars(_suffixBars, item, AffixType.Suffix);
+
+        bool canAfford = SaveManager.Instance.Data.Gold >= GameRules.CraftingActionGoldCost;
+        for (int i = 0; i < Actions.Length; i++)
+        {
+            _actionButtons[i].Disabled = item == null || !canAfford || !Actions[i].CanPerform(item);
+        }
+
+        GoldLabel.Text = $"Gold: {SaveManager.Instance.Data.Gold}";
+    }
+
+    private static void SetBars(Label[] bars, Item item, AffixType type)
+    {
+        List<RolledAffix> rolls = item?.Affixes.Where(roll => roll.Affix.AffixType == type).ToList() ?? new List<RolledAffix>();
+
+        for (int i = 0; i < bars.Length; i++)
+        {
+            bars[i].Text = i < rolls.Count ? DescribeBar(rolls[i]) : $"{type} — Empty";
+        }
+    }
+
+    // Every current affix is percentage-based (same assumption Item.BuildTooltip makes) - a future
+    // flat-value affix would need a different formatting path here.
+    private static string DescribeBar(RolledAffix roll)
+    {
+        AffixTierRange range = roll.TierRange;
+        string description = string.Format(roll.Affix.DescriptionTemplate, Mathf.RoundToInt(roll.Value * 100f));
+        int minPercent = Mathf.RoundToInt(range.MinValue * 100f);
+        int maxPercent = Mathf.RoundToInt(range.MaxValue * 100f);
+
+        return $"{roll.Affix.Name} (T{roll.Tier})  {description}  [{minPercent}-{maxPercent}%]";
     }
 
     public override void _UnhandledInput(InputEvent @event)

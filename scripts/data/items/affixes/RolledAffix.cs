@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 
 // The small, per-item record of one actual roll - which stat, which tier, what value landed.
@@ -11,4 +12,8 @@ public partial class RolledAffix : Resource
     [Export] public float Value { get; set; }
 
     public Affix Affix => AffixTable.Get(Stat);
+
+    // Looked up rather than stored - only the crafting bars and Reroll need the full range, and
+    // re-deriving it avoids a second copy of Min/Max drifting from AffixTable's own numbers.
+    public AffixTierRange TierRange => Affix.TierTable.First(tier => tier.Tier == Tier);
 }
