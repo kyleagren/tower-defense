@@ -5,6 +5,8 @@ using SlotHandle = ItemDragController.SlotHandle;
 
 public partial class InventoryPanel : Control
 {
+    public static InventoryPanel Instance { get; private set; }
+
     private static readonly Color DisabledBg = new Color(0.32f, 0.14f, 0.14f);
     private static readonly Color SelectedBg = new Color(0.20f, 0.45f, 0.20f);
     private static readonly Color PlaceholderTint = new Color(1f, 1f, 1f, 0.4f);
@@ -39,6 +41,11 @@ public partial class InventoryPanel : Control
     private Button[] _gridButtons;
 
     private EquippedLoadout _loadout;
+
+    public override void _EnterTree()
+    {
+        Instance = this;
+    }
 
     public override void _Ready()
     {
@@ -167,7 +174,7 @@ public partial class InventoryPanel : Control
         }
     }
 
-    private void Open()
+    public void Open()
     {
         if (PlayerCharacter.ActiveCombatant == null)
         {

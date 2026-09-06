@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" path="res://enemies/TrainingDummy.tscn" id="10_dummy"]
 [ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://scripts/dev/DebugToggle.cs" id="11_debugtoggle"]
 [ext_resource type="PackedScene" path="res://ui/InventoryPanel.tscn" id="12_inventorypanel"]
+[ext_resource type="Script" uid="uid://b0s58yrba60h5" path="res://characters/CraftingStation.cs" id="13_craftingstation"]
+[ext_resource type="PackedScene" path="res://ui/CraftingPanel.tscn" id="14_craftingpanel"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -440,9 +442,13 @@ script = ExtResource("11_debugtoggle")
 [node name="InventoryPanel" parent="." unique_id=37592620 instance=ExtResource("12_inventorypanel")]
 anchors_preset = -1
 
+[node name="CraftingPanel" parent="." unique_id=1481707128 instance=ExtResource("14_craftingpanel")]
+anchors_preset = -1
+
 [node name="CraftingStation" type="StaticBody3D" parent="." unique_id=1473973765]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 9)
 collision_layer = 17
+script = ExtResource("13_craftingstation")
 
 [node name="Slab" type="MeshInstance3D" parent="CraftingStation" unique_id=731930265]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)

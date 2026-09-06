@@ -11,6 +11,10 @@ public partial class PlayerSaveData : Resource
     [Export] public Godot.Collections.Array<Item> Inventory { get; set; } = new();
     [Export] public Godot.Collections.Dictionary<CharacterId, EquippedLoadout> Loadouts { get; set; } = new();
 
+    // The item currently sitting on the crafting table, if any - separate from Inventory so it
+    // survives a crash mid-crafting-session (saved immediately, not debounced, after every change).
+    [Export] public Item CraftingSlotItem { get; set; }
+
     // Which Sentinel this player played most recently - also the sensible starting pick for a
     // brand-new save. Read/written through PlayerSentinels, not directly.
     [Export] public CharacterId LastPlayedCharacter { get; set; } = CharacterId.Soldier;
