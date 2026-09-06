@@ -42,6 +42,9 @@ public partial class ItemDragController : CanvasLayer
 
     private readonly Dictionary<Control, SlotHandle> _slotsByControl = new();
     private readonly List<Control> _panelBounds = new();
+    private readonly List<(Func<bool> IsOpen, Func<Item, bool> TryAccept)> _quickMoveTargets = new();
+    private readonly List<(Control Bounds, Action<Item> OnSell)> _sellTargets = new();
+    private Func<Item, bool> _inventoryFallback;
 
     private TextureRect _cursorIcon;
 
@@ -93,6 +96,32 @@ public partial class ItemDragController : CanvasLayer
         _panelBounds.Add(panel);
     }
 
+    // Registers a Ctrl+click destination for "move this item somewhere else useful right now" -
+    // tried in registration order the moment Ctrl+click picks up an item, so whichever panel is
+    // open and can take it gets first claim. Both Crafting's single slot and the vendor's
+    // always-open sell zone register here.
+    public void RegisterQuickMoveTarget(Func<bool> isOpen, Func<Item, bool> tryAccept)
+    {
+        _quickMoveTargets.Add((isOpen, tryAccept));
+    }
+
+    // Registers a zone (typically a whole panel) where dropping a held item anywhere inside counts
+    // as selling it, rather than the usual "not a slot -> bounce back to source" rule.
+    public void RegisterSellTarget(Control bounds, Action<Item> onSell)
+    {
+        _sellTargets.Add((bounds, onSell));
+    }
+
+    // The one universal "nothing else wanted it -> send it home" destination, always tried last
+    // regardless of registration order - unlike the ordered, competing _quickMoveTargets list,
+    // there's exactly one Inventory, so it doesn't need a place in line. Registered by
+    // InventoryPanel itself, which knows how to reject an item that's already sitting in it (so a
+    // plain Ctrl+click on a grid item, with nothing else open, doesn't get silently reshuffled).
+    public void RegisterInventoryFallback(Func<Item, bool> tryAccept)
+    {
+        _inventoryFallback = tryAccept;
+    }
+
     // The single click-handler for every registered slot, across every panel:
     //  - nothing held + click a slot with an item -> pick it up (hold it, clear the slot).
     //  - holding an item + click a slot that accepts it -> place it there; whatever was already
@@ -138,6 +167,11 @@ public partial class ItemDragController : CanvasLayer
             {
                 if (Held == null && slot.GetItem() != null)
                 {
+                    if (Input.IsActionPressed("quick_move") && TryQuickMove(slot))
+                    {
+                        return;
+                    }
+
                     _dragSourceSlot = slot;
                     _dragOriginButton = button;
                     _dragStartPosition = mouseButton.Position;
@@ -182,6 +216,35 @@ public partial class ItemDragController : CanvasLayer
 
         _dragJustHandled = false;
         return true;
+    }
+
+    // Ctrl+click a slot with an item: offers it to each registered quick-move target in turn, and
+    // the first one that's open and accepts it wins. Falls through to a normal click/drag if no
+    // target wants it right now.
+    private bool TryQuickMove(SlotHandle sourceSlot)
+    {
+        Item item = sourceSlot.GetItem();
+
+        foreach (var (isOpen, tryAccept) in _quickMoveTargets)
+        {
+            if (!isOpen() || !tryAccept(item))
+            {
+                continue;
+            }
+
+            sourceSlot.PlaceItem(null);
+            CommitChange();
+            return true;
+        }
+
+        if (_inventoryFallback != null && _inventoryFallback(item))
+        {
+            sourceSlot.PlaceItem(null);
+            CommitChange();
+            return true;
+        }
+
+        return false;
     }
 
     // Never leave a picked-up item floating outside every slot - a panel calls this when it closes
@@ -236,13 +299,41 @@ public partial class ItemDragController : CanvasLayer
             return;
         }
 
-        if (IsInsideAnyOpenPanel(GetViewport().GetMousePosition()))
+        Vector2 mousePosition = GetViewport().GetMousePosition();
+
+        if (TryDropOnSellTarget(mousePosition))
+        {
+            return;
+        }
+
+        if (IsInsideAnyOpenPanel(mousePosition))
         {
             ReturnHeldToSource();
             return;
         }
 
         DropHeldInWorld();
+    }
+
+    // Dropped anywhere inside a registered sell zone (not necessarily on any particular control
+    // within it) - sells the held item instead of the usual bounce-back-if-not-a-slot rule.
+    private bool TryDropOnSellTarget(Vector2 mousePosition)
+    {
+        foreach (var (bounds, onSell) in _sellTargets)
+        {
+            if (!bounds.Visible || !bounds.GetGlobalRect().HasPoint(mousePosition))
+            {
+                continue;
+            }
+
+            Item item = Held;
+            SetHeld(null);
+            onSell(item);
+            CommitChange();
+            return true;
+        }
+
+        return false;
     }
 
     // Released somewhere that can't take the item - a slot that rejects it, the gap between grid

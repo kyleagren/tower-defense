@@ -66,6 +66,16 @@ public partial class InventoryPanel : Control
         EventBus.Instance.InventoryChanged += OnInventoryChangedExternally;
         ItemDragController.Instance.Changed += OnInventoryChangedExternally;
         ItemDragController.Instance.RegisterPanelBounds(this);
+        ItemDragController.Instance.RegisterInventoryFallback(item =>
+        {
+            if (SaveManager.Instance.Data.Inventory.Contains(item))
+            {
+                return false;
+            }
+
+            ReturnToInventory(item);
+            return true;
+        });
     }
 
     public override void _ExitTree()
@@ -297,11 +307,11 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        bool shiftHeld = ItemDragController.Instance.Held == null
+        bool quickEquip = ItemDragController.Instance.Held == null
             && SaveManager.Instance.Data.Inventory[gridIndex] != null
-            && Input.IsKeyPressed(Key.Shift);
+            && Input.IsActionPressed("quick_equip");
 
-        if (shiftHeld)
+        if (quickEquip)
         {
             QuickEquip(gridIndex);
             return;
@@ -337,7 +347,7 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        if (ItemDragController.Instance.Held == null && Input.IsKeyPressed(Key.Shift))
+        if (ItemDragController.Instance.Held == null && Input.IsActionPressed("quick_equip"))
         {
             QuickUnequip(slot);
             return;
@@ -395,7 +405,7 @@ public partial class InventoryPanel : Control
     // to dropping it in the world at the player's feet if Inventory is completely full, rather
     // than losing it — mirrors WorldItem.PickUp's own "leave it in the world until there's room"
     // behavior for the same situation.
-    private void ReturnToInventory(Item item)
+    public void ReturnToInventory(Item item)
     {
         if (item == null)
         {

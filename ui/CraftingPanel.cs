@@ -79,6 +79,18 @@ public partial class CraftingPanel : Control
         ItemSlotButton.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(_slot, ItemSlotButton, @event);
         ItemDragController.Instance.Changed += Refresh;
         ItemDragController.Instance.RegisterPanelBounds(this);
+        ItemDragController.Instance.RegisterQuickMoveTarget(
+            isOpen: () => Visible,
+            tryAccept: item =>
+            {
+                if (_slot.GetItem() != null || !_slot.CanAccept(item))
+                {
+                    return false;
+                }
+
+                _slot.PlaceItem(item);
+                return true;
+            });
 
         AddSectionHeader("Prefixes");
         _prefixBars = BuildBarRow(GameRules.MaxPrefixAffixes);

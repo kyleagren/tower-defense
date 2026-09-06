@@ -205,14 +205,12 @@ public partial class SaveManager : Node
     {
         if (what == NotificationWMCloseRequest)
         {
-            GD.Print($"[SaveManager] NotificationWMCloseRequest received, saveCountdown={_saveCountdown}");
             FlushPendingSave();
         }
     }
 
     public override void _ExitTree()
     {
-        GD.Print($"[SaveManager] _ExitTree, saveCountdown={_saveCountdown}");
         FlushPendingSave();
     }
 
@@ -220,11 +218,9 @@ public partial class SaveManager : Node
     {
         if (_saveCountdown < 0f)
         {
-            GD.Print("[SaveManager] FlushPendingSave: nothing pending");
             return;
         }
 
-        GD.Print("[SaveManager] FlushPendingSave: flushing");
         _saveCountdown = -1f;
         Save();
     }
@@ -232,7 +228,6 @@ public partial class SaveManager : Node
     public void Save()
     {
         _saveCountdown = -1f;
-        Error result = ResourceSaver.Save(Data, SavePath);
-        GD.Print($"[SaveManager] Save: result={result}, path={SavePath}");
+        ResourceSaver.Save(Data, SavePath);
     }
 }
