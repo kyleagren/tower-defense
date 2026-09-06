@@ -58,12 +58,12 @@ public static class LootGenerator
         _ => throw new System.ArgumentOutOfRangeException(nameof(slot), slot, null)
     };
 
-    // Total mods: 3-6, at least 1 prefix and 1 suffix, neither exceeding 3.
+    // Total mods: 3-6, at least 1 prefix and 1 suffix, neither exceeding GameRules' per-type max.
     private static (int prefixCount, int suffixCount) RollAffixCounts()
     {
-        int total = _random.Next(3, 7);
-        int minPrefix = Mathf.Max(1, total - 3);
-        int maxPrefix = Mathf.Min(3, total - 1);
+        int total = _random.Next(3, GameRules.MaxPrefixAffixes + GameRules.MaxSuffixAffixes + 1);
+        int minPrefix = Mathf.Max(1, total - GameRules.MaxSuffixAffixes);
+        int maxPrefix = Mathf.Min(GameRules.MaxPrefixAffixes, total - 1);
         int prefixCount = _random.Next(minPrefix, maxPrefix + 1);
         return (prefixCount, total - prefixCount);
     }
@@ -76,16 +76,17 @@ public static class LootGenerator
         {
             AffixTierEntry entry = WeightedPick(pool, e => e.Tier.Weight);
 
-            float value = entry.Tier.MinValue + (float)_random.NextDouble() * (entry.Tier.MaxValue - entry.Tier.MinValue);
-            value = Mathf.Round(value * 100f) / 100f;
-
-            results.Add(new RolledAffix { Stat = entry.Affix.Stat, Tier = entry.Tier.Tier, Value = value });
+            results.Add(new RolledAffix { Stat = entry.Affix.Stat, Tier = entry.Tier.Tier, Value = entry.Tier.RollValue(_random) });
 
             pool.RemoveAll(e => e.Affix.Stat == entry.Affix.Stat);
         }
     }
 
-    private static T WeightedPick<T>(IReadOnlyList<T> items, System.Func<T, int> weightSelector)
+    // Shared with the crafting table's "add a mod" action, so both draw from the exact same
+    // rarity-ceiling rule instead of a second copy of this table.
+    public static int BestTierFor(Rarity rarity) => _bestTierByRarity[rarity];
+
+    public static T WeightedPick<T>(IReadOnlyList<T> items, System.Func<T, int> weightSelector)
     {
         int totalWeight = items.Sum(weightSelector);
         int roll = _random.Next(totalWeight);

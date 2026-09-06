@@ -5,4 +5,7 @@ using Godot;
 [GlobalClass]
 public partial class Ring : Accessory
 {
+    // Slot-agnostic in practice - AffixTable's accessory pool already allows both LeftRing and
+    // RightRing, so which one this reports never actually changes affix eligibility.
+    public override EquipmentSlot Slot => EquipmentSlot.LeftRing;
 }
