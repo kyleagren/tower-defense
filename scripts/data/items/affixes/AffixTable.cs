@@ -24,6 +24,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualRange,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Range],
             TierTable =
             [
                 new PercentTierRange(1, 5, 8),
@@ -40,6 +41,7 @@ public static class AffixTable
             AffixType = AffixType.Suffix,
             Stat = StatId.RitualCastSpeed,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Speed],
             TierTable =
             [
                 new PercentTierRange(1, 4, 6),
@@ -56,6 +58,7 @@ public static class AffixTable
             AffixType = AffixType.Suffix,
             Stat = StatId.RitualCooldownRecoveryRate,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Cooldown],
             TierTable =
             [
                 new PercentTierRange(1, 3, 5),
@@ -72,6 +75,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualManaCostReduction,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Cost],
             TierTable =
             [
                 new PercentTierRange(1, 3, 5),
@@ -88,6 +92,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualCapacityCostReduction,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Cost],
             TierTable =
             [
                 new PercentTierRange(1, 3, 5),
@@ -104,6 +109,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualDamage,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Damage],
             TierTable =
             [
                 new PercentTierRange(1, 6, 10),
@@ -120,6 +126,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualFireDamage,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Damage, AffixTag.Fire],
             TierTable =
             [
                 new PercentTierRange(1, 12, 20),
@@ -136,6 +143,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualWaterDamage,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Damage, AffixTag.Water],
             TierTable =
             [
                 new PercentTierRange(1, 12, 20),
@@ -152,6 +160,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualColdDamage,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Damage, AffixTag.Cold],
             TierTable =
             [
                 new PercentTierRange(1, 12, 20),
@@ -168,6 +177,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualLightningDamage,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Damage, AffixTag.Lightning],
             TierTable =
             [
                 new PercentTierRange(1, 12, 20),
@@ -184,6 +194,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualWindDamage,
             AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Damage, AffixTag.Wind],
             TierTable =
             [
                 new PercentTierRange(1, 12, 20),
@@ -202,6 +213,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.SentinelMaxHealth,
             AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Health],
             TierTable =
             [
                 new PercentTierRange(1, 5, 8),
@@ -218,6 +230,7 @@ public static class AffixTable
             AffixType = AffixType.Suffix,
             Stat = StatId.SentinelMoveSpeed,
             AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Speed],
             TierTable =
             [
                 new PercentTierRange(1, 3, 5),
@@ -234,6 +247,7 @@ public static class AffixTable
             AffixType = AffixType.Suffix,
             Stat = StatId.SentinelArmor,
             AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Defences],
             TierTable =
             [
                 new PercentTierRange(1, 3, 5),
@@ -250,6 +264,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.SentinelShield,
             AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Defences],
             TierTable =
             [
                 new PercentTierRange(1, 5, 8),
@@ -266,6 +281,7 @@ public static class AffixTable
             AffixType = AffixType.Suffix,
             Stat = StatId.SentinelHealthRegen,
             AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Health],
             TierTable =
             [
                 new PercentTierRange(1, 5, 8),
@@ -282,6 +298,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.SentinelCritChance,
             AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Critical],
             TierTable =
             [
                 new PercentTierRange(1, 2, 3),
@@ -298,6 +315,7 @@ public static class AffixTable
             AffixType = AffixType.Suffix,
             Stat = StatId.SentinelCritDamage,
             AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Critical, AffixTag.Damage],
             TierTable =
             [
                 new PercentTierRange(1, 15, 25),
@@ -314,6 +332,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.SentinelCooldownRecoveryRate,
             AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Cooldown],
             TierTable =
             [
                 new PercentTierRange(1, 3, 5),
@@ -332,6 +351,7 @@ public static class AffixTable
             AffixType = AffixType.Prefix,
             Stat = StatId.WeaponAttackDamage,
             AllowedSlots = WeaponSlots,
+            Tags = [AffixTag.Damage],
             TierTable =
             [
                 new PercentTierRange(1, 5, 8),
