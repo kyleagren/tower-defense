@@ -17,7 +17,7 @@
 [ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://scripts/dev/DebugToggle.cs" id="15_debugtoggle"]
 [ext_resource type="Script" uid="uid://nsgeakgljfd8" path="res://scripts/systems/waves/RoutePreviewEffect.cs" id="16_routepreview"]
 [ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="17_playerhealthorb"]
-[ext_resource type="PackedScene" path="res://ui/InventoryPanel.tscn" id="18_inventorypanel"]
+[ext_resource type="PackedScene" path="res://ui/inventory/InventoryPanel.tscn" id="18_inventorypanel"]
 [ext_resource type="Script" uid="uid://briq33cnkh3pc" path="res://scripts/systems/game_state/ItemDropManager.cs" id="19_itemdropmanager"]
 [ext_resource type="PackedScene" path="res://world_items/WorldItem.tscn" id="20_worlditem"]
 

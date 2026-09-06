@@ -1,8 +1,8 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://ui/CharacterSelectPanel.cs" id="1_characterselectpanel"]
+[ext_resource type="Script" uid="uid://18vwhv33r1th" path="res://ui/hub/LevelSelectPanel.cs" id="1_levelselectpanel"]
 
-[node name="CharacterSelectPanel" type="Control" node_paths=PackedStringArray("ListContainer")]
+[node name="LevelSelectPanel" type="Control" node_paths=PackedStringArray("ListContainer")]
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -10,7 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_characterselectpanel")
+script = ExtResource("1_levelselectpanel")
 ListContainer = NodePath("Panel/MarginContainer/VBoxContainer/ListContainer")
 
 [node name="ColorRect" type="ColorRect" parent="."]
@@ -55,7 +55,7 @@ theme_override_constants/separation = 12
 [node name="TitleLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Choose your Sentinel"
+text = "Choose a Level"
 horizontal_alignment = 1
 
 [node name="ListContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]

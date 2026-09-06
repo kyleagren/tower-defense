@@ -1,11 +1,11 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://ui/VendorPanel.cs" id="1_vendorpanel"]
+[ext_resource type="Script" uid="uid://plqb3vkw4p41" path="res://ui/hub/CraftingPanel.cs" id="1_craftingpanel"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel_bg"]
 bg_color = Color(0.12, 0.12, 0.12, 1)
 
-[node name="VendorPanel" type="Control" node_paths=PackedStringArray("GoldLabel", "ForSaleList", "BuybackList")]
+[node name="CraftingPanel" type="Control" node_paths=PackedStringArray("ItemSlotButton", "GoldLabel", "AffixList", "ActionList")]
 visible = false
 layout_mode = 3
 anchors_preset = -1
@@ -13,10 +13,11 @@ anchor_right = 0.4
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_vendorpanel")
+script = ExtResource("1_craftingpanel")
+ItemSlotButton = NodePath("Panel/MarginContainer/VBoxContainer/ItemSlotButton")
 GoldLabel = NodePath("Panel/MarginContainer/VBoxContainer/GoldLabel")
-ForSaleList = NodePath("Panel/MarginContainer/VBoxContainer/Tabs/For Sale/ForSaleList")
-BuybackList = NodePath("Panel/MarginContainer/VBoxContainer/Tabs/Buyback/BuybackList")
+AffixList = NodePath("Panel/MarginContainer/VBoxContainer/AffixList")
+ActionList = NodePath("Panel/MarginContainer/VBoxContainer/ActionScroll/ActionList")
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
@@ -46,7 +47,7 @@ theme_override_constants/separation = 12
 [node name="TitleLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Vendor"
+text = "Crafting Table"
 horizontal_alignment = 1
 
 [node name="GoldLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer"]
@@ -54,23 +55,22 @@ layout_mode = 2
 horizontal_alignment = 1
 text = "Gold: 0"
 
-[node name="Tabs" type="TabContainer" parent="Panel/MarginContainer/VBoxContainer"]
+[node name="ItemSlotButton" type="Button" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+custom_minimum_size = Vector2(120, 120)
+text = "Empty"
+
+[node name="AffixList" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ActionScroll" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 160)
 
-[node name="For Sale" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer/Tabs"]
-layout_mode = 2
-
-[node name="ForSaleList" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/Tabs/For Sale"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 8
-
-[node name="Buyback" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer/Tabs"]
-visible = false
-layout_mode = 2
-
-[node name="BuybackList" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/Tabs/Buyback"]
+[node name="ActionList" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ActionScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8

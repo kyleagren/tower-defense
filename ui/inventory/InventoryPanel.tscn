@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://ui/InventoryPanel.cs" id="1_script"]
-[ext_resource type="Script" path="res://ui/TileGrid.cs" id="2_tilegrid"]
+[ext_resource type="Script" uid="uid://q1w31grspxu8" path="res://ui/inventory/InventoryPanel.cs" id="1_script"]
+[ext_resource type="Script" uid="uid://ts88p5kp3hvy" path="res://ui/TileGrid.cs" id="2_tilegrid"]
 [ext_resource type="PackedScene" path="res://world_items/WorldItem.tscn" id="3_worlditem"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel_bg"]
