@@ -28,7 +28,6 @@ public static class AffixRowView
         Label description = new Label
         {
             Text = roll.BuildInlineRangeDescription(),
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             MouseFilter = Control.MouseFilterEnum.Ignore
         };

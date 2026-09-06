@@ -8,8 +8,9 @@ public partial class InventoryPanel : Control
     public static InventoryPanel Instance { get; private set; }
 
     private static readonly Color DisabledBg = new Color(0.32f, 0.14f, 0.14f);
-    private static readonly Color SelectedBg = new Color(0.20f, 0.45f, 0.20f);
+    private static readonly Color AcceptBorderColor = new Color(0.3f, 0.9f, 0.3f);
     private static readonly Color PlaceholderTint = new Color(1f, 1f, 1f, 0.4f);
+    private const int AcceptBorderWidth = 3;
 
     // One equipment slot's button, its empty-state placeholder name, and how to read/write the
     // EquippedLoadout field behind it. Built once in _Ready and reused by both the click handlers
@@ -248,17 +249,15 @@ public partial class InventoryPanel : Control
         Item equippedItem = view.Slot.GetItem();
         Item held = ItemDragController.Instance.Held;
 
-        if (held != null && view.Slot.CanAccept(held))
+        bool canAcceptHeld = held != null && view.Slot.CanAccept(held);
+
+        if (equippedItem != null)
         {
-            SetBackground(button, SelectedBg);
-        }
-        else if (equippedItem != null)
-        {
-            SetBackground(button, RarityColors.Get(equippedItem.Rarity));
+            SetBackground(button, RarityColors.Get(equippedItem.Rarity), canAcceptHeld);
         }
         else
         {
-            ClearBackground(button);
+            ClearBackground(button, canAcceptHeld);
         }
 
         if (equippedItem != null)
@@ -434,7 +433,10 @@ public partial class InventoryPanel : Control
         worldItem.GlobalPosition = player.GlobalPosition + direction * distance;
     }
 
-    private static void SetBackground(Button button, Color color)
+    // highlighted draws a green border on top of whatever background applies (rarity tint, or none)
+    // rather than replacing it - so a slot holding an item you could swap into still shows what's
+    // currently there while you decide, instead of hiding it behind a flat highlight color.
+    private static void SetBackground(Button button, Color color, bool highlighted = false)
     {
         StyleBoxFlat background = new StyleBoxFlat
         {
@@ -445,14 +447,48 @@ public partial class InventoryPanel : Control
             CornerRadiusBottomRight = 6
         };
 
+        ApplyAcceptBorder(background, highlighted);
+
         button.AddThemeStyleboxOverride("normal", background);
         button.AddThemeStyleboxOverride("hover", background);
     }
 
-    private static void ClearBackground(Button button)
+    private static void ClearBackground(Button button, bool highlighted = false)
     {
-        button.RemoveThemeStyleboxOverride("normal");
-        button.RemoveThemeStyleboxOverride("hover");
+        if (!highlighted)
+        {
+            button.RemoveThemeStyleboxOverride("normal");
+            button.RemoveThemeStyleboxOverride("hover");
+            return;
+        }
+
+        StyleBoxFlat background = new StyleBoxFlat
+        {
+            BgColor = Colors.Transparent,
+            CornerRadiusTopLeft = 6,
+            CornerRadiusTopRight = 6,
+            CornerRadiusBottomLeft = 6,
+            CornerRadiusBottomRight = 6
+        };
+
+        ApplyAcceptBorder(background, true);
+
+        button.AddThemeStyleboxOverride("normal", background);
+        button.AddThemeStyleboxOverride("hover", background);
+    }
+
+    private static void ApplyAcceptBorder(StyleBoxFlat style, bool highlighted)
+    {
+        if (!highlighted)
+        {
+            return;
+        }
+
+        style.BorderColor = AcceptBorderColor;
+        style.BorderWidthTop = AcceptBorderWidth;
+        style.BorderWidthBottom = AcceptBorderWidth;
+        style.BorderWidthLeft = AcceptBorderWidth;
+        style.BorderWidthRight = AcceptBorderWidth;
     }
 
     private Button BuildSlotButton(Vector2 anchor)

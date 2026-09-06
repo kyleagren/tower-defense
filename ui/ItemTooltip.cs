@@ -244,13 +244,26 @@ public partial class ItemTooltip : CanvasLayer
         }
 
         _panel.Visible = true;
+
+        // Force a fresh fit to whatever's actually shown now - a Control's Size can grow above its
+        // computed minimum and Godot doesn't reliably shrink it back down on its own once that's
+        // happened, which is very likely what's leaving room for a previous, larger item's content.
+        // Godot always clamps Size back up to at least the current minimum on the next layout pass,
+        // so zeroing it here just asks for a fresh measurement instead of keeping the biggest one
+        // seen so far.
+        _panel.Size = Vector2.Zero;
     }
 
     private void BuildAdvancedBody(Item item)
     {
+        // Free() immediately, not QueueFree() - a deferred free leaves the old rows still parented
+        // until end-of-frame, so a second refresh landing before that (ItemDragController.Changed
+        // firing independently of the Alt-press refresh, e.g.) would add a new set alongside the
+        // still-present old one instead of replacing it. FloatingCombatText's eviction hit the
+        // same class of bug for the same reason (Section 18).
         foreach (Node child in _advancedBody.GetChildren())
         {
-            child.QueueFree();
+            child.Free();
         }
 
         List<RolledAffix> prefixes = item.Affixes.Where(roll => roll.Affix.AffixType == AffixType.Prefix).ToList();
@@ -279,7 +292,7 @@ public partial class ItemTooltip : CanvasLayer
         {
             Text = label,
             CustomMinimumSize = new Vector2(GroupLabelWidth, 0f),
-            VerticalAlignment = VerticalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Top,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             MouseFilter = Control.MouseFilterEnum.Ignore
         };

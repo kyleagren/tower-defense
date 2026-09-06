@@ -218,9 +218,11 @@ public partial class CraftingPanel : Control
 
         for (int i = 0; i < bars.Length; i++)
         {
+            // Free() immediately, not QueueFree() - see ItemTooltip.BuildAdvancedBody's identical
+            // fix for why a deferred free here risks old and new rows briefly coexisting.
             foreach (Node child in bars[i].GetChildren())
             {
-                child.QueueFree();
+                child.Free();
             }
 
             bars[i].AddChild(i < rolls.Count ? AffixRowView.Build(rolls[i]).Root : new Label { Text = $"{type} — Empty" });
