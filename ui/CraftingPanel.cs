@@ -20,7 +20,11 @@ public partial class CraftingPanel : Control
     {
         _slot = new ItemDragController.SlotHandle(
             getItem: () => SaveManager.Instance.Data.CraftingSlotItem,
-            placeItem: item => SaveManager.Instance.Data.CraftingSlotItem = item,
+            placeItem: item =>
+            {
+                SaveManager.Instance.Data.CraftingSlotItem = item;
+                SaveManager.Instance.Save();
+            },
             canAccept: item => true);
 
         ItemDragController.Instance.RegisterSlot(ItemSlotButton, _slot);
