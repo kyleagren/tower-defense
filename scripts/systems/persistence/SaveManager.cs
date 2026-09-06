@@ -189,14 +189,30 @@ public partial class SaveManager : Node
 
         if (_saveCountdown <= 0f)
         {
+            // Save() directly, not FlushPendingSave() - the decrement above can leave _saveCountdown
+            // at a tiny negative number rather than exactly 0, and FlushPendingSave's own "< 0f means
+            // nothing pending" guard would then wrongly treat that as already-flushed and no-op.
+            // This branch already knows a save is due (the early return above only lets non-negative
+            // countdowns reach here), so it can save unconditionally.
+            Save();
+        }
+    }
+
+    // Catches the OS close request (window X, Alt+F4, taskbar close) as early as possible - before
+    // quit() even starts tearing down the scene tree - so a pending debounced save isn't racing the
+    // shutdown. _ExitTree below is the backstop for any other path that frees this node.
+    public override void _Notification(int what)
+    {
+        if (what == NotificationWMCloseRequest)
+        {
+            GD.Print($"[SaveManager] NotificationWMCloseRequest received, saveCountdown={_saveCountdown}");
             FlushPendingSave();
         }
     }
 
-    // A pending write must reach disk before the game goes away. Quitting finalizes the scene tree,
-    // which frees the autoloads too, so this is the last point a pending save can still be written.
     public override void _ExitTree()
     {
+        GD.Print($"[SaveManager] _ExitTree, saveCountdown={_saveCountdown}");
         FlushPendingSave();
     }
 
@@ -204,9 +220,11 @@ public partial class SaveManager : Node
     {
         if (_saveCountdown < 0f)
         {
+            GD.Print("[SaveManager] FlushPendingSave: nothing pending");
             return;
         }
 
+        GD.Print("[SaveManager] FlushPendingSave: flushing");
         _saveCountdown = -1f;
         Save();
     }
@@ -214,6 +232,7 @@ public partial class SaveManager : Node
     public void Save()
     {
         _saveCountdown = -1f;
-        ResourceSaver.Save(Data, SavePath);
+        Error result = ResourceSaver.Save(Data, SavePath);
+        GD.Print($"[SaveManager] Save: result={result}, path={SavePath}");
     }
 }

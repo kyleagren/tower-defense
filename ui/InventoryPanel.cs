@@ -65,6 +65,7 @@ public partial class InventoryPanel : Control
 
         EventBus.Instance.InventoryChanged += OnInventoryChangedExternally;
         ItemDragController.Instance.Changed += OnInventoryChangedExternally;
+        ItemDragController.Instance.RegisterPanelBounds(this);
     }
 
     public override void _ExitTree()

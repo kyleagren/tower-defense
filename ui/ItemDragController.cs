@@ -41,6 +41,7 @@ public partial class ItemDragController : CanvasLayer
     public Item Held { get; private set; }
 
     private readonly Dictionary<Control, SlotHandle> _slotsByControl = new();
+    private readonly List<Control> _panelBounds = new();
 
     private TextureRect _cursorIcon;
 
@@ -83,6 +84,13 @@ public partial class ItemDragController : CanvasLayer
     public void RegisterSlot(Control button, SlotHandle slot)
     {
         _slotsByControl[button] = slot;
+    }
+
+    // Registers a panel's root Control so a drag release inside its bounds - but not on any slot -
+    // snaps back to source instead of being treated the same as a release out in the 3D world.
+    public void RegisterPanelBounds(Control panel)
+    {
+        _panelBounds.Add(panel);
     }
 
     // The single click-handler for every registered slot, across every panel:
@@ -219,24 +227,45 @@ public partial class ItemDragController : CanvasLayer
             return;
         }
 
-        if (hovered == null || !_slotsByControl.TryGetValue(hovered, out SlotHandle targetSlot))
+        if (hovered != null && _slotsByControl.TryGetValue(hovered, out SlotHandle targetSlot) && targetSlot.CanAccept(Held))
         {
-            DropHeldInWorld();
+            Item displaced = targetSlot.GetItem();
+            targetSlot.PlaceItem(Held);
+            SetHeld(displaced);
+            CommitChange();
             return;
         }
 
-        if (!targetSlot.CanAccept(Held))
+        if (IsInsideAnyOpenPanel(GetViewport().GetMousePosition()))
         {
-            _dragSourceSlot.Value.PlaceItem(Held);
-            SetHeld(null);
-            Changed?.Invoke();
+            ReturnHeldToSource();
             return;
         }
 
-        Item displaced = targetSlot.GetItem();
-        targetSlot.PlaceItem(Held);
-        SetHeld(displaced);
-        CommitChange();
+        DropHeldInWorld();
+    }
+
+    // Released somewhere that can't take the item - a slot that rejects it, the gap between grid
+    // squares, a margin, anything inside a panel that isn't itself a slot - snap back to wherever
+    // it was picked up from rather than losing it.
+    private void ReturnHeldToSource()
+    {
+        _dragSourceSlot.Value.PlaceItem(Held);
+        SetHeld(null);
+        Changed?.Invoke();
+    }
+
+    private bool IsInsideAnyOpenPanel(Vector2 mousePosition)
+    {
+        foreach (Control panel in _panelBounds)
+        {
+            if (panel.Visible && panel.GetGlobalRect().HasPoint(mousePosition))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ClearDragJustHandled()
