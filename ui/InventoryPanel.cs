@@ -1,28 +1,13 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using SlotHandle = ItemDragController.SlotHandle;
 
 public partial class InventoryPanel : Control
 {
     private static readonly Color DisabledBg = new Color(0.32f, 0.14f, 0.14f);
     private static readonly Color SelectedBg = new Color(0.20f, 0.45f, 0.20f);
     private static readonly Color PlaceholderTint = new Color(1f, 1f, 1f, 0.4f);
-
-    // A stand-in for "a place an Item can sit" - either a grid index or an equipment field, so
-    // OnSlotPressed can treat all 40 grid slots and all 11 equipment slots the same way.
-    private readonly struct SlotHandle
-    {
-        public readonly Func<Item> GetItem;
-        public readonly Action<Item> PlaceItem;
-        public readonly Func<Item, bool> CanAccept;
-
-        public SlotHandle(Func<Item> getItem, Action<Item> placeItem, Func<Item, bool> canAccept)
-        {
-            GetItem = getItem;
-            PlaceItem = placeItem;
-            CanAccept = canAccept;
-        }
-    }
 
     // One equipment slot's button, its empty-state placeholder name, and how to read/write the
     // EquippedLoadout field behind it. Built once in _Ready and reused by both the click handlers
@@ -54,30 +39,11 @@ public partial class InventoryPanel : Control
     private Button[] _gridButtons;
 
     private EquippedLoadout _loadout;
-    private Item _heldItem;
-    private TextureRect _cursorIcon;
-
-    private SlotHandle? _dragSourceSlot;
-    private Button _dragOriginButton;
-    private Vector2 _dragStartPosition;
-    private bool _isDragging;
-    private bool _dragJustHandled;
-    private const float DragThreshold = 8f;
 
     public override void _Ready()
     {
         BuildEquipmentSlots();
         BuildGrid();
-
-        _cursorIcon = new TextureRect
-        {
-            MouseFilter = MouseFilterEnum.Ignore,
-            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-            Size = new Vector2(72f, 72f),
-            Visible = false
-        };
-        AddChild(_cursorIcon);
 
         // Sit just below PhaseIndicator's actual height rather than a hardcoded number that could
         // silently drift out of sync with it - CallDeferred because a Control's Size isn't settled
@@ -91,11 +57,13 @@ public partial class InventoryPanel : Control
         }
 
         EventBus.Instance.InventoryChanged += OnInventoryChangedExternally;
+        ItemDragController.Instance.Changed += OnInventoryChangedExternally;
     }
 
     public override void _ExitTree()
     {
         EventBus.Instance.InventoryChanged -= OnInventoryChangedExternally;
+        ItemDragController.Instance.Changed -= OnInventoryChangedExternally;
     }
 
     // Fractional positions within SlotArea, roughly a human silhouette: head row (Helmet/Amulet),
@@ -125,7 +93,8 @@ public partial class InventoryPanel : Control
     {
         Button button = BuildSlotButton(anchor);
         button.Pressed += () => OnEquipmentSlotPressed(slot);
-        button.GuiInput += @event => OnSlotGuiInput(slot, button, @event);
+        button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(slot, button, @event);
+        ItemDragController.Instance.RegisterSlot(button, slot);
 
         return new EquipmentSlotView(button, placeholderName, slot);
     }
@@ -149,7 +118,8 @@ public partial class InventoryPanel : Control
 
             BuildIconOnlyVisual(button);
             button.Pressed += () => OnGridSlotPressed(slotIndex);
-            button.GuiInput += @event => OnSlotGuiInput(GridSlot(slotIndex), button, @event);
+            button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(GridSlot(slotIndex), button, @event);
+            ItemDragController.Instance.RegisterSlot(button, GridSlot(slotIndex));
 
             Grid.AddChild(button);
             _gridButtons[i] = button;
@@ -169,16 +139,6 @@ public partial class InventoryPanel : Control
         OffsetTop = PhaseIndicator.Size.Y + 4f;
     }
 
-    public override void _Process(double delta)
-    {
-        if (_heldItem == null)
-        {
-            return;
-        }
-
-        _cursorIcon.Position = GetLocalMousePosition() - _cursorIcon.Size / 2f;
-    }
-
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event.IsActionPressed("toggle_inventory"))
@@ -191,17 +151,6 @@ public partial class InventoryPanel : Control
         if (Visible && UiPanelStack.IsTop(this) && @event.IsActionPressed("ui_cancel"))
         {
             Close();
-            GetViewport().SetInputAsHandled();
-            return;
-        }
-
-        if (_heldItem != null && Visible && UiPanelStack.IsTop(this)
-            && @event is InputEventMouseButton mouseButton && mouseButton.Pressed && mouseButton.ButtonIndex == MouseButton.Left)
-        {
-            DropInWorld(_heldItem);
-            _heldItem = null;
-            SaveManager.Instance.RequestSave();
-            UpdateCursorIcon();
             GetViewport().SetInputAsHandled();
         }
     }
@@ -234,10 +183,11 @@ public partial class InventoryPanel : Control
     private void Close()
     {
         // Never leave a picked-up item floating outside both the loadout and Inventory.
-        if (_heldItem != null)
+        Item held = ItemDragController.Instance.TakeHeld();
+
+        if (held != null)
         {
-            ReturnToInventory(_heldItem);
-            _heldItem = null;
+            ReturnToInventory(held);
             SaveManager.Instance.RequestSave();
             EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
         }
@@ -253,14 +203,6 @@ public partial class InventoryPanel : Control
         _loadout = GetOrCreateLoadout();
         RefreshEquipmentSlots();
         RefreshGrid();
-        UpdateCursorIcon();
-    }
-
-    // Keeps the floating cursor icon in sync with _heldItem - shown only while something's picked up.
-    private void UpdateCursorIcon()
-    {
-        _cursorIcon.Visible = _heldItem != null;
-        _cursorIcon.Texture = _heldItem?.Icon;
     }
 
     private EquippedLoadout GetOrCreateLoadout()
@@ -284,10 +226,11 @@ public partial class InventoryPanel : Control
         Button button = view.Button;
         Label label = button.GetNode<Label>("Content/Label");
         Item equippedItem = view.Slot.GetItem();
+        Item held = ItemDragController.Instance.Held;
 
-        button.TooltipText = _heldItem == null && equippedItem != null ? equippedItem.BuildTooltip() : "";
+        button.TooltipText = held == null && equippedItem != null ? equippedItem.BuildTooltip() : "";
 
-        if (_heldItem != null && view.Slot.CanAccept(_heldItem))
+        if (held != null && view.Slot.CanAccept(held))
         {
             SetBackground(button, SelectedBg);
         }
@@ -318,6 +261,7 @@ public partial class InventoryPanel : Control
     private void RefreshGrid()
     {
         Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
+        bool holding = ItemDragController.Instance.Held != null;
 
         for (int i = 0; i < _gridButtons.Length; i++)
         {
@@ -334,19 +278,18 @@ public partial class InventoryPanel : Control
             }
 
             SetBackground(button, IsCompatible(slotItem) ? RarityColors.Get(slotItem.Rarity) : DisabledBg);
-            button.TooltipText = _heldItem == null ? slotItem.BuildTooltip() : "";
+            button.TooltipText = holding ? "" : slotItem.BuildTooltip();
         }
     }
 
     private void OnGridSlotPressed(int gridIndex)
     {
-        if (_dragJustHandled)
+        if (ItemDragController.Instance.ConsumeDragJustHandled())
         {
-            _dragJustHandled = false;
             return;
         }
 
-        bool shiftHeld = _heldItem == null
+        bool shiftHeld = ItemDragController.Instance.Held == null
             && SaveManager.Instance.Data.Inventory[gridIndex] != null
             && Input.IsKeyPressed(Key.Shift);
 
@@ -356,7 +299,7 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        OnSlotPressed(GridSlot(gridIndex));
+        ItemDragController.Instance.OnSlotPressed(GridSlot(gridIndex));
     }
 
     // Shift-click a grid item to equip it directly, skipping the click-to-pick-up-then-place flow.
@@ -381,19 +324,18 @@ public partial class InventoryPanel : Control
     // to the earliest open Inventory slot, mirroring QuickEquip's grid-side shortcut in reverse.
     private void OnEquipmentSlotPressed(SlotHandle slot)
     {
-        if (_dragJustHandled)
+        if (ItemDragController.Instance.ConsumeDragJustHandled())
         {
-            _dragJustHandled = false;
             return;
         }
 
-        if (_heldItem == null && Input.IsKeyPressed(Key.Shift))
+        if (ItemDragController.Instance.Held == null && Input.IsKeyPressed(Key.Shift))
         {
             QuickUnequip(slot);
             return;
         }
 
-        OnSlotPressed(slot);
+        ItemDragController.Instance.OnSlotPressed(slot);
     }
 
     private void QuickUnequip(SlotHandle slot)
@@ -409,158 +351,6 @@ public partial class InventoryPanel : Control
         ReturnToInventory(item);
 
         CommitChange();
-    }
-
-    // The single click-handler for every slot in the panel, grid and equipment alike:
-    //  - nothing held + click a slot with an item -> pick it up (hold it, clear the slot).
-    //  - holding an item + click a slot that accepts it -> place it there; whatever was already
-    //    in that slot (if anything) becomes the newly held item, so it's a swap, not a loss.
-    //  - holding an item + click a slot that rejects it (wrong type/character) -> do nothing.
-    private void OnSlotPressed(SlotHandle slot)
-    {
-        if (_heldItem != null)
-        {
-            if (!slot.CanAccept(_heldItem))
-            {
-                return;
-            }
-
-            Item displaced = slot.GetItem();
-            slot.PlaceItem(_heldItem);
-            _heldItem = displaced;
-            CommitChange();
-            return;
-        }
-
-        Item pickedUpItem = slot.GetItem();
-
-        if (pickedUpItem == null)
-        {
-            return;
-        }
-
-        _heldItem = pickedUpItem;
-        slot.PlaceItem(null);
-        Refresh();
-    }
-
-    // Detects a press-drag-release gesture layered on top of the existing click-click flow. A
-    // plain click that never drifts past DragThreshold touches none of this - it falls straight
-    // through to Pressed exactly as before, which is why gamepad confirm (which never emits these
-    // event types) can't be affected by any of it.
-    private void OnSlotGuiInput(SlotHandle slot, Button button, InputEvent @event)
-    {
-        if (@event is InputEventMouseButton mouseButton && mouseButton.ButtonIndex == MouseButton.Left)
-        {
-            if (mouseButton.Pressed)
-            {
-                if (_heldItem == null && slot.GetItem() != null)
-                {
-                    _dragSourceSlot = slot;
-                    _dragOriginButton = button;
-                    _dragStartPosition = mouseButton.Position;
-                    _isDragging = false;
-                }
-
-                return;
-            }
-
-            if (_isDragging)
-            {
-                EndDrag();
-            }
-
-            _dragSourceSlot = null;
-            _dragOriginButton = null;
-            return;
-        }
-
-        if (@event is InputEventMouseMotion mouseMotion && _dragSourceSlot != null && !_isDragging
-            && mouseMotion.Position.DistanceTo(_dragStartPosition) >= DragThreshold)
-        {
-            BeginDrag();
-        }
-    }
-
-    // Lifts the item the moment the mouse actually moves, rather than waiting for release - the
-    // cursor icon (already driven by _heldItem in _Process) starts following the drag immediately.
-    private void BeginDrag()
-    {
-        _heldItem = _dragSourceSlot.Value.GetItem();
-        _dragSourceSlot.Value.PlaceItem(null);
-        _isDragging = true;
-        Refresh();
-    }
-
-    // Finishes a drag - but only for a release somewhere other than the slot it started from. If
-    // the cursor ended up back over the origin button, this does nothing: Button.Pressed fires for
-    // that release exactly like an ordinary click would, and OnSlotPressed's existing pick-up-then-
-    // place logic puts the item right back where it came from.
-    private void EndDrag()
-    {
-        _isDragging = false;
-        _dragJustHandled = true;
-        CallDeferred(nameof(ClearDragJustHandled));
-
-        Control hovered = GetViewport().GuiGetHoveredControl();
-
-        if (hovered == _dragOriginButton)
-        {
-            return;
-        }
-
-        SlotHandle? targetSlot = FindSlotForControl(hovered);
-
-        if (targetSlot == null)
-        {
-            DropInWorld(_heldItem);
-            _heldItem = null;
-            SaveManager.Instance.RequestSave();
-            Refresh();
-            return;
-        }
-
-        if (!targetSlot.Value.CanAccept(_heldItem))
-        {
-            _dragSourceSlot.Value.PlaceItem(_heldItem);
-            _heldItem = null;
-            Refresh();
-            return;
-        }
-
-        Item displaced = targetSlot.Value.GetItem();
-        targetSlot.Value.PlaceItem(_heldItem);
-        _heldItem = displaced;
-        CommitChange();
-    }
-
-    private void ClearDragJustHandled()
-    {
-        _dragJustHandled = false;
-    }
-
-    // Maps whatever Control the mouse is over back to the SlotHandle it represents, so a drag
-    // release can target it the same way a click would - null if the cursor isn't over a slot at
-    // all (background, outside the panel), which EndDrag treats as "drop it in the world" instead.
-    private SlotHandle? FindSlotForControl(Control control)
-    {
-        for (int i = 0; i < _gridButtons.Length; i++)
-        {
-            if (_gridButtons[i] == control)
-            {
-                return GridSlot(i);
-            }
-        }
-
-        foreach (EquipmentSlotView view in _equipmentSlots)
-        {
-            if (view.Button == control)
-            {
-                return view.Slot;
-            }
-        }
-
-        return null;
     }
 
     // Every mutating path ends the same way: persist, tell the rest of the game a loadout changed

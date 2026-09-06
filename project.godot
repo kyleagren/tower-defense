@@ -18,6 +18,7 @@ config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 
 EventBus="*res://scripts/systems/EventBus.cs"
 SaveManager="*res://scripts/systems/persistence/SaveManager.cs"
+ItemDragController="*res://ui/ItemDragController.cs"
 
 [display]
 

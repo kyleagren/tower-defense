@@ -20,6 +20,11 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     public bool IsActive => _active;
 
+    // True only while this character is both the active combatant and no UI panel (inventory,
+    // build menu, etc.) is capturing input instead - combat actions check this rather than IsActive
+    // alone, so clicking inside an open panel doesn't also swing a sword or fire a gun.
+    protected bool CanUseCombatInput => IsActive && !UiPanelStack.AnyOpen;
+
     public virtual float Speed => BaseSpeed;
 
     // Subclasses read activity through IsActive and adjust look sensitivity through

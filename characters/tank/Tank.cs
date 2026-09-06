@@ -85,7 +85,7 @@ public partial class Tank : Sentinel
 
         bool isBlocking = _blockState == BlockState.Armed;
 
-        if (!isBlocking && Input.IsActionPressed("attack") && _attackCooldown <= 0f)
+        if (!isBlocking && CanUseCombatInput && Input.IsActionPressed("attack") && _attackCooldown <= 0f)
         {
             _attackCooldown = 1f / AttackSpeed;
             Swing();
@@ -107,7 +107,7 @@ public partial class Tank : Sentinel
         switch (_blockState)
         {
             case BlockState.Idle:
-                if (Input.IsActionPressed("alt_action"))
+                if (CanUseCombatInput && Input.IsActionPressed("alt_action"))
                 {
                     _blockState = BlockState.Armed;
                     RaiseShield();

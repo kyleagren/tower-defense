@@ -33,7 +33,7 @@ public partial class Soldier : Sentinel
 
         _fireCooldown -= (float)delta;
 
-        if (Input.IsActionPressed("attack") && _fireCooldown <= 0f)
+        if (CanUseCombatInput && Input.IsActionPressed("attack") && _fireCooldown <= 0f)
         {
             _fireCooldown = 1f / FireRate;
             FireShot();
@@ -42,7 +42,7 @@ public partial class Soldier : Sentinel
 
     private void UpdateAim(double delta)
     {
-        bool isAiming = Input.IsActionPressed("alt_action");
+        bool isAiming = CanUseCombatInput && Input.IsActionPressed("alt_action");
         float targetFov = isAiming ? AdsFov : NormalFov;
         float targetSpringLength = isAiming ? AdsSpringLength : NormalSpringLength;
         float targetSensitivityMultiplier = isAiming ? AdsSensitivityMultiplier : 1f;
