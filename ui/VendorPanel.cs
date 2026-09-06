@@ -4,8 +4,9 @@ using System;
 // The vendor. Two tabs - items currently for sale, and a buyback list of whatever's been sold
 // this hub visit - both regenerated fresh every time the hub loads (nothing here persists across
 // a hub departure/return, on purpose - see the crafting slot's own README notes on why that's
-// NOT true for crash-sensitive state, and why it's fine here). Buying spends gold and adds the
-// item to Inventory; selling and buying back come in later steps.
+// NOT true for crash-sensitive state, and why it's fine here). Buying and buying back both spend
+// gold for an item at its SaleValue; selling (drag onto this panel, or Ctrl+click while it's open)
+// pays that same value and moves the item into Buyback - no markup either direction.
 public partial class VendorPanel : Control
 {
     public static VendorPanel Instance { get; private set; }
@@ -33,6 +34,7 @@ public partial class VendorPanel : Control
 
         ItemDragController.Instance.RegisterSellTarget(this, Sell);
         ItemDragController.Instance.RegisterQuickMoveTarget(
+            owner: this,
             isOpen: () => Visible,
             tryAccept: item =>
             {
@@ -78,8 +80,9 @@ public partial class VendorPanel : Control
     // Spends gold and adds the item straight to Inventory (or drops it in the world if Inventory's
     // full - the same fallback ReturnToInventory already uses everywhere else). Immediate Save(),
     // not the debounced RequestSave() - matches the crafting table's own reasoning: a real gold-for-
-    // item trade is worth protecting the instant it happens, not a second later.
-    private void Buy(Item item)
+    // item trade is worth protecting the instant it happens, not a second later. Shared by buying
+    // from stock and buying back from the sold list - same transaction, different source list.
+    private void Purchase(Item item, Godot.Collections.Array<Item> source)
     {
         if (SaveManager.Instance.Data.Gold < item.SaleValue)
         {
@@ -87,7 +90,7 @@ public partial class VendorPanel : Control
         }
 
         SaveManager.Instance.Data.Gold -= item.SaleValue;
-        _stock.Remove(item);
+        source.Remove(item);
         InventoryPanel.Instance.ReturnToInventory(item);
 
         SaveManager.Instance.Save();
@@ -119,7 +122,7 @@ public partial class VendorPanel : Control
 
         foreach (Item item in _stock)
         {
-            Button button = BuildItemRow(item, () => Buy(item));
+            Button button = BuildItemRow(item, () => Purchase(item, _stock));
             button.Disabled = SaveManager.Instance.Data.Gold < item.SaleValue;
             ForSaleList.AddChild(button);
         }
@@ -131,7 +134,9 @@ public partial class VendorPanel : Control
 
         foreach (Item item in _buyback)
         {
-            BuybackList.AddChild(BuildItemRow(item, () => { }));
+            Button button = BuildItemRow(item, () => Purchase(item, _buyback));
+            button.Disabled = SaveManager.Instance.Data.Gold < item.SaleValue;
+            BuybackList.AddChild(button);
         }
     }
 

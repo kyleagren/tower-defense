@@ -42,7 +42,7 @@ public partial class ItemDragController : CanvasLayer
 
     private readonly Dictionary<Control, SlotHandle> _slotsByControl = new();
     private readonly List<Control> _panelBounds = new();
-    private readonly List<(Func<bool> IsOpen, Func<Item, bool> TryAccept)> _quickMoveTargets = new();
+    private readonly List<(GodotObject Owner, Func<bool> IsOpen, Func<Item, bool> TryAccept)> _quickMoveTargets = new();
     private readonly List<(Control Bounds, Action<Item> OnSell)> _sellTargets = new();
     private Func<Item, bool> _inventoryFallback;
 
@@ -83,10 +83,32 @@ public partial class ItemDragController : CanvasLayer
     }
 
     // Registers a button for its whole lifetime - the same "buttons live forever, only contents
-    // change" pattern InventoryPanel already used before this was extracted.
+    // change" pattern InventoryPanel already used before this was extracted. Sweeps out any dead
+    // keys first: this controller is an autoload and outlives every panel, so without this,
+    // leaving and re-entering the hub would pile a fresh registration on top of the previous
+    // visit's stale one on every visit instead of replacing it.
     public void RegisterSlot(Control button, SlotHandle slot)
     {
+        PruneDeadSlots();
         _slotsByControl[button] = slot;
+    }
+
+    private void PruneDeadSlots()
+    {
+        List<Control> deadKeys = new();
+
+        foreach (Control key in _slotsByControl.Keys)
+        {
+            if (!IsInstanceValid(key))
+            {
+                deadKeys.Add(key);
+            }
+        }
+
+        foreach (Control key in deadKeys)
+        {
+            _slotsByControl.Remove(key);
+        }
     }
 
     // Registers a panel's root Control so a drag release inside its bounds - but not on any slot -
@@ -99,10 +121,11 @@ public partial class ItemDragController : CanvasLayer
     // Registers a Ctrl+click destination for "move this item somewhere else useful right now" -
     // tried in registration order the moment Ctrl+click picks up an item, so whichever panel is
     // open and can take it gets first claim. Both Crafting's single slot and the vendor's
-    // always-open sell zone register here.
-    public void RegisterQuickMoveTarget(Func<bool> isOpen, Func<Item, bool> tryAccept)
+    // always-open sell zone register here. owner is used only to detect a stale registration left
+    // behind by a panel that's since been freed (see TryQuickMove) - pass the registering panel.
+    public void RegisterQuickMoveTarget(GodotObject owner, Func<bool> isOpen, Func<Item, bool> tryAccept)
     {
-        _quickMoveTargets.Add((isOpen, tryAccept));
+        _quickMoveTargets.Add((owner, isOpen, tryAccept));
     }
 
     // Registers a zone (typically a whole panel) where dropping a held item anywhere inside counts
@@ -223,9 +246,11 @@ public partial class ItemDragController : CanvasLayer
     // target wants it right now.
     private bool TryQuickMove(SlotHandle sourceSlot)
     {
+        _quickMoveTargets.RemoveAll(target => !IsInstanceValid(target.Owner));
+
         Item item = sourceSlot.GetItem();
 
-        foreach (var (isOpen, tryAccept) in _quickMoveTargets)
+        foreach (var (_, isOpen, tryAccept) in _quickMoveTargets)
         {
             if (!isOpen() || !tryAccept(item))
             {
@@ -319,6 +344,8 @@ public partial class ItemDragController : CanvasLayer
     // within it) - sells the held item instead of the usual bounce-back-if-not-a-slot rule.
     private bool TryDropOnSellTarget(Vector2 mousePosition)
     {
+        _sellTargets.RemoveAll(target => !IsInstanceValid(target.Bounds));
+
         foreach (var (bounds, onSell) in _sellTargets)
         {
             if (!bounds.Visible || !bounds.GetGlobalRect().HasPoint(mousePosition))
@@ -348,6 +375,8 @@ public partial class ItemDragController : CanvasLayer
 
     private bool IsInsideAnyOpenPanel(Vector2 mousePosition)
     {
+        _panelBounds.RemoveAll(panel => !IsInstanceValid(panel));
+
         foreach (Control panel in _panelBounds)
         {
             if (panel.Visible && panel.GetGlobalRect().HasPoint(mousePosition))

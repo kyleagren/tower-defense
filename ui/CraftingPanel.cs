@@ -80,6 +80,7 @@ public partial class CraftingPanel : Control
         ItemDragController.Instance.Changed += Refresh;
         ItemDragController.Instance.RegisterPanelBounds(this);
         ItemDragController.Instance.RegisterQuickMoveTarget(
+            owner: this,
             isOpen: () => Visible,
             tryAccept: item =>
             {
