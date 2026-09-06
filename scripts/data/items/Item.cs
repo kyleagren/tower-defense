@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 public abstract partial class Item : Resource
 {
@@ -23,7 +24,15 @@ public abstract partial class Item : Resource
     // No hand-authored flavor names yet - just rarity + slot, matching the "name corresponds
     // to slot + rarity for now" call. The slot itself comes from the concrete type, not a
     // separate tag that would have to be kept in sync with it.
-    public string Name => $"{Rarity} {GetType().Name}";
+    public string Name => $"{Rarity} {SpacedTypeName()}";
+
+    // Splits a PascalCase concrete class name into words ("SwordAndShield" -> "Sword And Shield")
+    // for player-facing display - matters for multi-word Item subclasses; single-word ones
+    // (Helmet, Gun, ...) pass through unchanged.
+    private string SpacedTypeName()
+    {
+        return Regex.Replace(GetType().Name, "(?<!^)([A-Z])", " $1");
+    }
 
     // Name plus an "X Only" line if character-restricted - the shared header both the plain
     // tooltip and ItemTooltip's own structured advanced view build on top of.

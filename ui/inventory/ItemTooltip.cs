@@ -181,10 +181,41 @@ public partial class ItemTooltip : CanvasLayer
         }
 
         Rect2 sourceRect = _hoveredSource.GetGlobalRect();
-        Vector2 mainPosition = new Vector2(sourceRect.Position.X - _mainPanel.Size.X - PanelGap, sourceRect.Position.Y);
+
+        // Anchoring to the left assumes there's room to the left - true for Inventory (right 40%
+        // of the screen) but not for Crafting/Vendor (left 40%), where it would render off-screen
+        // entirely. Flip to the right side of the source whenever the left doesn't actually fit -
+        // checked against the full leftward extent (main panel plus the widest visible comparison
+        // panel stacked further out), not just the main panel alone, so a comparison panel hanging
+        // off-screen flips everything together instead of only the piece that doesn't fit.
+        float leftExtent = _mainPanel.Size.X;
+        float maxComparisonWidth = 0f;
+        bool anyComparisonVisible = false;
+
+        foreach (TooltipPanelView panel in _comparisonPanels)
+        {
+            if (!panel.Visible)
+            {
+                continue;
+            }
+
+            anyComparisonVisible = true;
+            maxComparisonWidth = Mathf.Max(maxComparisonWidth, panel.Size.X);
+        }
+
+        if (anyComparisonVisible)
+        {
+            leftExtent += PanelGap + maxComparisonWidth;
+        }
+
+        bool fitsOnLeft = sourceRect.Position.X - leftExtent - PanelGap >= 0f;
+        float mainX = fitsOnLeft
+            ? sourceRect.Position.X - _mainPanel.Size.X - PanelGap
+            : sourceRect.Position.X + sourceRect.Size.X + PanelGap;
+
+        Vector2 mainPosition = new Vector2(mainX, sourceRect.Position.Y);
         _mainPanel.SetPosition(mainPosition);
 
-        float rightEdge = mainPosition.X - PanelGap;
         float y = mainPosition.Y;
 
         foreach (TooltipPanelView panel in _comparisonPanels)
@@ -194,7 +225,11 @@ public partial class ItemTooltip : CanvasLayer
                 continue;
             }
 
-            panel.SetPosition(new Vector2(rightEdge - panel.Size.X, y));
+            float panelX = fitsOnLeft
+                ? mainPosition.X - PanelGap - panel.Size.X
+                : mainPosition.X + _mainPanel.Size.X + PanelGap;
+
+            panel.SetPosition(new Vector2(panelX, y));
             y += panel.Size.Y + PanelGap;
         }
     }
@@ -251,7 +286,7 @@ public partial class ItemTooltip : CanvasLayer
         {
             if (i < comparisons.Count)
             {
-                _comparisonPanels[i].Show(comparisons[i], advanced);
+                _comparisonPanels[i].Show(comparisons[i], advanced, isEquipped: true);
             }
             else
             {
@@ -315,7 +350,10 @@ public partial class ItemTooltip : CanvasLayer
     // same rendering logic serves both the main hovered item and its comparison item(s).
     private class TooltipPanelView
     {
+        private static readonly Color EquippedLabelColor = new Color(0.6f, 0.9f, 0.6f);
+
         private readonly PanelContainer _panel;
+        private readonly Label _equippedLabel;
         private readonly Label _headerLabel;
         private readonly Label _plainBodyLabel;
         private readonly VBoxContainer _advancedBody;
@@ -336,7 +374,16 @@ public partial class ItemTooltip : CanvasLayer
             content.AddThemeConstantOverride("separation", 6);
             _panel.AddChild(content);
 
-            _headerLabel = new Label { MouseFilter = Control.MouseFilterEnum.Ignore };
+            _equippedLabel = new Label { Text = "Equipped", Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore };
+            _equippedLabel.AddThemeColorOverride("font_color", EquippedLabelColor);
+            content.AddChild(_equippedLabel);
+
+            _headerLabel = new Label
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
             content.AddChild(_headerLabel);
 
             _plainBodyLabel = new Label { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -356,8 +403,9 @@ public partial class ItemTooltip : CanvasLayer
             _panel.Position = position;
         }
 
-        public void Show(Item item, bool advanced)
+        public void Show(Item item, bool advanced, bool isEquipped = false)
         {
+            _equippedLabel.Visible = isEquipped;
             _headerLabel.Text = item.HeaderText;
             _plainBodyLabel.Visible = !advanced;
             _advancedBody.Visible = advanced;

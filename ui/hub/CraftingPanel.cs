@@ -75,6 +75,7 @@ public partial class CraftingPanel : Control
             canAccept: item => true);
 
         ItemDragController.Instance.RegisterSlot(ItemSlotButton, _slot);
+        ItemTooltip.Instance.Register(ItemSlotButton, () => _slot.GetItem());
         ItemSlotButton.Pressed += OnSlotPressed;
         ItemSlotButton.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(_slot, ItemSlotButton, @event);
         ItemDragController.Instance.Changed += Refresh;
