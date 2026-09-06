@@ -82,8 +82,13 @@ public partial class InventoryPanel : Control
         // Sit just below PhaseIndicator's actual height rather than a hardcoded number that could
         // silently drift out of sync with it - CallDeferred because a Control's Size isn't settled
         // until after the first layout pass, and Resized keeps it correct if that height ever changes.
-        PhaseIndicator.Resized += UpdateTopOffset;
-        CallDeferred(nameof(UpdateTopOffset));
+        // PhaseIndicator is optional - a scene with no phase/economy HUD (the hub) just anchors to
+        // the top of the screen instead.
+        if (PhaseIndicator != null)
+        {
+            PhaseIndicator.Resized += UpdateTopOffset;
+            CallDeferred(nameof(UpdateTopOffset));
+        }
 
         EventBus.Instance.InventoryChanged += OnInventoryChangedExternally;
     }

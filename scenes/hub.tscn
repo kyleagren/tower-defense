@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://ui/LevelSelectPanel.tscn" id="9_levelselectpanel"]
 [ext_resource type="PackedScene" path="res://enemies/TrainingDummy.tscn" id="10_dummy"]
 [ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://scripts/dev/DebugToggle.cs" id="11_debugtoggle"]
+[ext_resource type="PackedScene" path="res://ui/InventoryPanel.tscn" id="12_inventorypanel"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -118,6 +119,29 @@ albedo_color = Color(0.6, 0.15, 0.15, 1)
 material = SubResource("StandardMaterial3D_levelselect")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_levelselect"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_crafting"]
+albedo_color = Color(0.45, 0.3, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_crafting_slab"]
+material = SubResource("StandardMaterial3D_crafting")
+size = Vector3(1.2, 0.9, 2.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_crafting_sidetrim"]
+material = SubResource("StandardMaterial3D_crafting")
+size = Vector3(0.1, 0.5, 2.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_crafting_backtrim"]
+material = SubResource("StandardMaterial3D_crafting")
+size = Vector3(1.2, 0.25, 0.15)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_crafting"]
+size = Vector3(1.2, 1.4, 2.4)
+
+[sub_resource type="PrismMesh" id="PrismMesh_crafting_ramp"]
+material = SubResource("StandardMaterial3D_crafting")
+left_to_right = 1.0
+size = Vector3(0.3, 0.25, 0.15)
 
 [node name="Hub" type="Node3D" unique_id=1931328644]
 
@@ -412,3 +436,38 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.7, 0, 45.1)
 
 [node name="DebugToggle" type="Node" parent="." unique_id=168619648]
 script = ExtResource("11_debugtoggle")
+
+[node name="InventoryPanel" parent="." unique_id=37592620 instance=ExtResource("12_inventorypanel")]
+anchors_preset = -1
+
+[node name="CraftingStation" type="StaticBody3D" parent="." unique_id=1473973765]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 9)
+collision_layer = 17
+
+[node name="Slab" type="MeshInstance3D" parent="CraftingStation" unique_id=731930265]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("BoxMesh_crafting_slab")
+
+[node name="BackTrim" type="MeshInstance3D" parent="CraftingStation" unique_id=393359630]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 1.15, 0)
+mesh = SubResource("BoxMesh_crafting_sidetrim")
+
+[node name="SideTrimA" type="MeshInstance3D" parent="CraftingStation" unique_id=1094505587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.025, -1.125)
+mesh = SubResource("BoxMesh_crafting_backtrim")
+
+[node name="SideTrimB" type="MeshInstance3D" parent="CraftingStation" unique_id=1915896009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.025, 1.125)
+mesh = SubResource("BoxMesh_crafting_backtrim")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CraftingStation" unique_id=192545284]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+shape = SubResource("BoxShape3D_crafting")
+
+[node name="RampA" type="MeshInstance3D" parent="CraftingStation" unique_id=315703604]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 1.275, -1.125)
+mesh = SubResource("PrismMesh_crafting_ramp")
+
+[node name="RampB" type="MeshInstance3D" parent="CraftingStation" unique_id=1552673841]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 1.275, 1.125)
+mesh = SubResource("PrismMesh_crafting_ramp")
