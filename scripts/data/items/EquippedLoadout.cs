@@ -62,6 +62,31 @@ public partial class EquippedLoadout : Resource
         }
     }
 
+    // All items currently equipped in the given slot - usually 0 or 1, except a Ring query
+    // returns both LeftRing and RightRing (Item.Slot's own arbitrary "Ring reports LeftRing"
+    // convention doesn't matter here - either ring slot means "check both"). Used by
+    // ItemTooltip's compare-to-equipped view.
+    public IEnumerable<Item> GetEquipped(EquipmentSlot slot)
+    {
+        switch (slot)
+        {
+            case EquipmentSlot.Weapon: if (Weapon != null) yield return Weapon; break;
+            case EquipmentSlot.Helmet: if (Helmet != null) yield return Helmet; break;
+            case EquipmentSlot.Chest: if (Chest != null) yield return Chest; break;
+            case EquipmentSlot.Legs: if (Legs != null) yield return Legs; break;
+            case EquipmentSlot.Boots: if (Boots != null) yield return Boots; break;
+            case EquipmentSlot.Gloves: if (Gloves != null) yield return Gloves; break;
+            case EquipmentSlot.Belt: if (Belt != null) yield return Belt; break;
+            case EquipmentSlot.Amulet: if (Amulet != null) yield return Amulet; break;
+            case EquipmentSlot.LeftRing:
+            case EquipmentSlot.RightRing:
+                if (LeftRing != null) yield return LeftRing;
+                if (RightRing != null) yield return RightRing;
+                break;
+            case EquipmentSlot.Relic: if (Relic != null) yield return Relic; break;
+        }
+    }
+
     public IEnumerable<Item> EquippedItems()
     {
         if (Weapon != null) yield return Weapon;
