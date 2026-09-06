@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://b76any0nq6lkw" path="res://scripts/cast_effects/InstantHitCastEffect.cs" id="6_instanthit"]
 [ext_resource type="PackedScene" path="res://visual_effects/ArcVisual.tscn" id="7_arcvisual"]
 [ext_resource type="Script" uid="uid://cysbaidy1wie4" path="res://scripts/cast_effects/WallCastEffect.cs" id="8_wallcasteffect"]
+[ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="9_healthbar"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_ritual"]
 top_radius = 0.35
@@ -21,14 +22,19 @@ emission_energy_multiplier = 0.4
 radius = 0.5
 height = 1.6
 
-[node name="Ritual" type="Node3D" node_paths=PackedStringArray("SpawnPoint")]
+[node name="Ritual" type="Node3D" node_paths=PackedStringArray("SpawnPoint", "HealthBar", "CoreMesh")]
 script = ExtResource("1_ritual")
 SpawnPoint = NodePath("SpawnPoint")
+HealthBar = NodePath("HealthBar3D")
+CoreMesh = NodePath("MeshInstance3D")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 mesh = SubResource("CylinderMesh_ritual")
 material_override = SubResource("StandardMaterial3D_ritual")
+
+[node name="HealthBar3D" parent="." instance=ExtResource("9_healthbar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)

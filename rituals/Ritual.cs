@@ -2,13 +2,22 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 
-public partial class Ritual : Node3D
+public partial class Ritual : Node3D, IDamageable
 {
     [Export] public Spell Spell { get; private set; }
     [Export] public Rune[] RuneSlots { get; private set; } = new Rune[GameRules.MaxRuneSlots];
     [Export] public Node3D SpawnPoint { get; private set; }
     [Export] public float TargetSearchInterval = 0.25f;
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
+    [Export] public float MaxHealth = 100f;
+    [Export] public HealthBar3D HealthBar { get; private set; }
+    [Export] public MeshInstance3D CoreMesh { get; private set; }
+
+    private static readonly StandardMaterial3D _disabledMaterial = new StandardMaterial3D
+    {
+        AlbedoColor = new Color(0.35f, 0.35f, 0.35f),
+        ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
+    };
 
     private SpellInstance _spellInstance;
     private CharacterSheet _ownerSheet;
@@ -18,12 +27,23 @@ public partial class Ritual : Node3D
     private int _capacityCost;
     private List<CastEffect> _castEffects;
     private bool _hasWarnedAboutCastEffects;
+    private float _currentHealth;
+    private bool _disabled;
+    private Material _activeMaterial;
+
+    public bool IsDestroyed => _disabled;
 
     public Vector3? WallStart { get; private set; }
     public Vector3? WallEnd { get; private set; }
 
     public override void _Ready()
     {
+        _currentHealth = MaxHealth;
+        _activeMaterial = CoreMesh.MaterialOverride;
+        RitualRegistry.Register(this);
+        HealthBar.SetFraction(1f);
+        HealthBar.Visible = false;
+
         _castEffects = GetChildren().OfType<CastEffect>().ToList();
 
         foreach (CastEffect effect in _castEffects)
@@ -44,6 +64,7 @@ public partial class Ritual : Node3D
     public override void _ExitTree()
     {
         EventBus.Instance.InventoryChanged -= OnInventoryChanged;
+        RitualRegistry.Unregister(this);
     }
 
     // Equipment changing anywhere drops both cached layers - the resolved context and the owner
@@ -75,9 +96,42 @@ public partial class Ritual : Node3D
         _spellInstance.EndOngoingEffect(ResolveWithOwner().ResolvedCooldown);
     }
 
+    public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
+    {
+        if (_disabled)
+        {
+            return;
+        }
+
+        _currentHealth -= damage.Total;
+        HealthBar.SetFraction(Mathf.Max(0f, _currentHealth) / MaxHealth);
+        HealthBar.Visible = true;
+
+        if (_currentHealth <= 0f)
+        {
+            _currentHealth = 0f;
+            _disabled = true;
+            CoreMesh.MaterialOverride = _disabledMaterial;
+        }
+    }
+
     public void Repair()
     {
-        GD.Print($"Repairing {Spell?.Name} ritual...");
+        if (!_disabled && _currentHealth >= MaxHealth)
+        {
+            return;
+        }
+
+        if (!EconomyManager.Instance.TrySpendMana(_manaCost))
+        {
+            return;
+        }
+
+        _currentHealth = MaxHealth;
+        _disabled = false;
+        CoreMesh.MaterialOverride = _activeMaterial;
+        HealthBar.SetFraction(1f);
+        HealthBar.Visible = false;
     }
 
     public void SetCost(int manaCost, int capacityCost)
@@ -133,7 +187,7 @@ public partial class Ritual : Node3D
     {
         // Null until Configure runs — placement ghosts and scene-authored rituals with no Spell
         // assigned both sit in this state.
-        if (_spellInstance == null)
+        if (_spellInstance == null || _disabled)
         {
             return;
         }

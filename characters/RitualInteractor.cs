@@ -1,19 +1,19 @@
 using Godot;
 
-// Repair (single press) / destroy (hold to confirm) on whichever Ritual the character is looking
-// at - README section 7's contextual world prompt.
+// Repair (hold to confirm) / destroy (hold to confirm) on whichever Ritual the character is
+// looking at - README section 7's contextual world prompt.
 public partial class RitualInteractor : LookInteractor
 {
     [Export] public float InteractionRange { get; private set; } = GameRules.RitualReach;
+    [Export] public float RepairHoldDuration = 1f;
     [Export] public float DestroyHoldDuration = 1f;
 
     private string _promptText;
+    private float _repairHoldTime;
     private float _destroyHoldTime;
 
     protected override uint CollisionMask => PhysicsLayers.Rituals;
     protected override float Range => InteractionRange;
-
-    private Ritual TargetedRitual => (Ritual)Target;
 
     public override void _Ready()
     {
@@ -21,57 +21,69 @@ public partial class RitualInteractor : LookInteractor
 
         string repairKey = InputPromptHelper.GetActionKeyName("repair_ritual");
         string destroyKey = InputPromptHelper.GetActionKeyName("destroy_ritual");
-        _promptText = $"Press {repairKey} to Repair\nHold {destroyKey} to Destroy";
+        _promptText = $"Hold {repairKey} to Repair\nHold {destroyKey} to Destroy";
     }
 
     // The raycast reports the Ritual's StaticBody3D child, not the Ritual itself.
     protected override Node3D ResolveTarget(Node3D collider) => collider?.GetParent() as Ritual;
 
-    // Looking away mid-hold cancels the destroy, per README section 7.
+    // Looking away mid-hold cancels either action, per README section 7.
     protected override void OnTargetChanged(Node3D target)
     {
+        _repairHoldTime = 0f;
         _destroyHoldTime = 0f;
     }
 
     protected override void UpdateTarget(Node3D target, float delta)
     {
-        if (!Input.IsActionPressed("destroy_ritual"))
+        Ritual ritual = (Ritual)target;
+
+        if (Input.IsActionPressed("destroy_ritual"))
         {
-            _destroyHoldTime = 0f;
+            _repairHoldTime = 0f;
+            _destroyHoldTime += delta;
+
+            if (_destroyHoldTime >= DestroyHoldDuration)
+            {
+                ClearTarget();
+                ritual.Destroy();
+            }
+
             return;
         }
 
-        _destroyHoldTime += delta;
+        _destroyHoldTime = 0f;
 
-        if (_destroyHoldTime >= DestroyHoldDuration)
+        if (Input.IsActionPressed("repair_ritual"))
         {
-            Ritual ritual = (Ritual)target;
-            ClearTarget();
-            ritual.Destroy();
+            _repairHoldTime += delta;
+
+            if (_repairHoldTime >= RepairHoldDuration)
+            {
+                _repairHoldTime = 0f;
+                ritual.Repair();
+            }
+
+            return;
         }
+
+        _repairHoldTime = 0f;
     }
 
     protected override string BuildPromptText(Node3D target)
     {
-        if (_destroyHoldTime <= 0f)
+        if (_destroyHoldTime > 0f)
         {
-            return _promptText;
+            int percent = Mathf.RoundToInt(_destroyHoldTime / DestroyHoldDuration * 100f);
+            return $"Destroying... {percent}%";
         }
 
-        int percent = Mathf.RoundToInt(_destroyHoldTime / DestroyHoldDuration * 100f);
-        return $"Destroying... {percent}%";
-    }
-
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (Target == null)
+        if (_repairHoldTime > 0f)
         {
-            return;
+            int percent = Mathf.RoundToInt(_repairHoldTime / RepairHoldDuration * 100f);
+            return $"Repairing... {percent}%";
         }
 
-        if (@event.IsActionPressed("repair_ritual"))
-        {
-            TargetedRitual.Repair();
-        }
+        return _promptText;
     }
 }

@@ -89,4 +89,21 @@ public partial class EconomyManager : Node
 
         EmitSignal(SignalName.EconomyChanged);
     }
+
+    public bool TrySpendMana(int amount)
+    {
+        if (Unlimited)
+        {
+            return true;
+        }
+
+        if (Mana < amount)
+        {
+            return false;
+        }
+
+        Mana -= amount;
+        EmitSignal(SignalName.EconomyChanged);
+        return true;
+    }
 }

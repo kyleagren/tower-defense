@@ -12,6 +12,8 @@ public partial class WalkingEnemy : Enemy
     [Export] public float WaypointArrivalDistance = 0.5f;
     [Export] public float PlayerCheckInterval = 0.25f;
     [Export] public float WallDetectionRange = 4f;
+    [Export] public bool CanAttackRituals = false;
+    [Export] public float RitualDetectionRange = 4f;
     [Export] public float LeashRange = 6f;
     [Export] public float AttackRange = 1.5f;
     [Export] public float AttackDamage = 10f;
@@ -25,7 +27,7 @@ public partial class WalkingEnemy : Enemy
     [Export] public float LegSwingAmplitude = 0.5f;
     [Export] public float ArmSwingAmplitude = 0.2f;
 
-    private enum MovementMode { FollowingLane, ChasingPlayer, AttackingWall, RejoiningLane, ApproachingObjective }
+    private enum MovementMode { FollowingLane, ChasingPlayer, AttackingWall, AttackingRitual, RejoiningLane, ApproachingObjective }
 
 
     private ProceduralWalkAnimator _walkAnimator;
@@ -35,6 +37,7 @@ public partial class WalkingEnemy : Enemy
     private MovementMode _movementMode = MovementMode.FollowingLane;
     private float _playerCheckTimer;
     private IceWall _targetWall;
+    private Ritual _targetRitual;
     private float _attackCooldown;
     private bool _hasFacedInitialDirection;
 
@@ -74,6 +77,7 @@ public partial class WalkingEnemy : Enemy
         UpdateDistanceToGoal();
         UpdatePlayerLeash((float)delta);
         UpdateWallEngagement();
+        UpdateRitualEngagement();
 
         switch (_movementMode)
         {
@@ -82,6 +86,9 @@ public partial class WalkingEnemy : Enemy
                 break;
             case MovementMode.AttackingWall:
                 ProcessAttackingWall(delta);
+                break;
+            case MovementMode.AttackingRitual:
+                ProcessAttackingRitual(delta);
                 break;
             case MovementMode.RejoiningLane:
                 ProcessRejoiningLane(delta);
@@ -280,7 +287,8 @@ public partial class WalkingEnemy : Enemy
     // objective-attacking, but never interrupts chasing the player, who always outranks it.
     private void UpdateWallEngagement()
     {
-        if (_movementMode == MovementMode.ChasingPlayer || _movementMode == MovementMode.AttackingWall)
+        if (_movementMode == MovementMode.ChasingPlayer || _movementMode == MovementMode.AttackingWall
+            || _movementMode == MovementMode.AttackingRitual)
         {
             return;
         }
@@ -350,6 +358,95 @@ public partial class WalkingEnemy : Enemy
             {
                 _attackCooldown = AttackInterval;
                 target.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+            }
+
+            return;
+        }
+
+        if (NavAgent.IsNavigationFinished())
+        {
+            Stop(delta);
+            return;
+        }
+
+        Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
+    }
+
+    // Opt-in per enemy (CanAttackRituals) - most enemies never touch towers at all. Sapper sets an
+    // effectively unlimited RitualDetectionRange so this fires the instant it spawns, regardless of
+    // distance; other future CanAttackRituals enemies can use a short range for a wall-style "attack
+    // one if it happens to be nearby" interrupt instead.
+    private void UpdateRitualEngagement()
+    {
+        if (!CanAttackRituals)
+        {
+            return;
+        }
+
+        if (_movementMode == MovementMode.ChasingPlayer || _movementMode == MovementMode.AttackingWall
+            || _movementMode == MovementMode.AttackingRitual)
+        {
+            return;
+        }
+
+        Ritual nearestRitual = FindNearestRitual(RitualDetectionRange);
+        if (nearestRitual == null)
+        {
+            return;
+        }
+
+        _targetRitual = nearestRitual;
+        _movementMode = MovementMode.AttackingRitual;
+
+        NavAgent.TargetDesiredDistance = AttackRange;
+        NavAgent.TargetPosition = nearestRitual.GlobalPosition;
+    }
+
+    private Ritual FindNearestRitual(float maxDistance)
+    {
+        Ritual nearest = null;
+        float bestDistance = maxDistance;
+
+        foreach (Ritual ritual in RitualRegistry.Active)
+        {
+            if (ritual.IsDestroyed)
+            {
+                continue;
+            }
+
+            float distance = GlobalPosition.DistanceTo(ritual.GlobalPosition);
+            if (distance <= bestDistance)
+            {
+                bestDistance = distance;
+                nearest = ritual;
+            }
+        }
+
+        return nearest;
+    }
+
+    private void ProcessAttackingRitual(double delta)
+    {
+        if (_targetRitual == null || !IsInstanceValid(_targetRitual) || _targetRitual.IsDestroyed)
+        {
+            _targetRitual = null;
+            _movementMode = MovementMode.FollowingLane;
+            ProcessLaneFollowing(delta);
+            return;
+        }
+
+        float distance = GlobalPosition.DistanceTo(_targetRitual.GlobalPosition);
+
+        if (distance <= AttackRange)
+        {
+            Stop(delta);
+            RotateTowardsMovement((_targetRitual.GlobalPosition - GlobalPosition).Normalized(), delta);
+
+            _attackCooldown -= (float)delta;
+            if (_attackCooldown <= 0f)
+            {
+                _attackCooldown = AttackInterval;
+                _targetRitual.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
             }
 
             return;
