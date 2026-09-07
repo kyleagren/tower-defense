@@ -18,6 +18,7 @@
 [ext_resource type="Script" uid="uid://nsgeakgljfd8" path="res://scripts/systems/waves/RoutePreviewEffect.cs" id="16_routepreview"]
 [ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="17_playerhealthorb"]
 [ext_resource type="PackedScene" path="res://ui/inventory/InventoryPanel.tscn" id="18_inventorypanel"]
+[ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="19_charactersheetpanel"]
 [ext_resource type="Script" uid="uid://briq33cnkh3pc" path="res://scripts/systems/game_state/ItemDropManager.cs" id="19_itemdropmanager"]
 [ext_resource type="PackedScene" path="res://world_items/WorldItem.tscn" id="20_worlditem"]
 
@@ -244,3 +245,5 @@ script = ExtResource("10_sentinelspawner")
 [node name="InventoryPanel" parent="." unique_id=928841354 node_paths=PackedStringArray("PhaseIndicator") instance=ExtResource("18_inventorypanel")]
 anchors_preset = -1
 PhaseIndicator = NodePath("../PhaseIndicator")
+
+[node name="CharacterSheetPanel" parent="." instance=ExtResource("19_charactersheetpanel")]

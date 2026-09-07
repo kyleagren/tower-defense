@@ -191,6 +191,7 @@ public partial class ItemTooltip : CanvasLayer
         float leftExtent = _mainPanel.Size.X;
         float maxComparisonWidth = 0f;
         bool anyComparisonVisible = false;
+        float comparisonStackHeight = 0f;
 
         foreach (TooltipPanelView panel in _comparisonPanels)
         {
@@ -201,11 +202,13 @@ public partial class ItemTooltip : CanvasLayer
 
             anyComparisonVisible = true;
             maxComparisonWidth = Mathf.Max(maxComparisonWidth, panel.Size.X);
+            comparisonStackHeight += panel.Size.Y + PanelGap;
         }
 
         if (anyComparisonVisible)
         {
             leftExtent += PanelGap + maxComparisonWidth;
+            comparisonStackHeight -= PanelGap;
         }
 
         bool fitsOnLeft = sourceRect.Position.X - leftExtent - PanelGap >= 0f;
@@ -213,7 +216,15 @@ public partial class ItemTooltip : CanvasLayer
             ? sourceRect.Position.X - _mainPanel.Size.X - PanelGap
             : sourceRect.Position.X + sourceRect.Size.X + PanelGap;
 
-        Vector2 mainPosition = new Vector2(mainX, sourceRect.Position.Y);
+        // Clamp the whole stack (main panel, or the taller of main/comparison-stack) to the
+        // viewport height - a Ring showing two stacked comparison panels is the case that
+        // actually overflows.
+        float totalHeight = Mathf.Max(_mainPanel.Size.Y, comparisonStackHeight);
+        float viewportHeight = GetViewport().GetVisibleRect().Size.Y;
+        float maxY = Mathf.Max(0f, viewportHeight - totalHeight);
+        float mainY = Mathf.Clamp(sourceRect.Position.Y, 0f, maxY);
+
+        Vector2 mainPosition = new Vector2(mainX, mainY);
         _mainPanel.SetPosition(mainPosition);
 
         float y = mainPosition.Y;
@@ -351,10 +362,12 @@ public partial class ItemTooltip : CanvasLayer
     private class TooltipPanelView
     {
         private static readonly Color EquippedLabelColor = new Color(0.6f, 0.9f, 0.6f);
+        private static readonly Color ArmorStatsColor = new Color(0.4f, 0.65f, 0.95f);
 
         private readonly PanelContainer _panel;
         private readonly Label _equippedLabel;
         private readonly Label _headerLabel;
+        private readonly Label _armorStatsLabel;
         private readonly Label _plainBodyLabel;
         private readonly VBoxContainer _advancedBody;
         private readonly Action<Control, RolledAffix> _wireTierBadge;
@@ -386,6 +399,16 @@ public partial class ItemTooltip : CanvasLayer
             };
             content.AddChild(_headerLabel);
 
+            _armorStatsLabel = new Label
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                Visible = false,
+                MouseFilter = Control.MouseFilterEnum.Ignore
+            };
+            _armorStatsLabel.AddThemeColorOverride("font_color", ArmorStatsColor);
+            content.AddChild(_armorStatsLabel);
+
             _plainBodyLabel = new Label { MouseFilter = Control.MouseFilterEnum.Ignore };
             content.AddChild(_plainBodyLabel);
 
@@ -407,6 +430,17 @@ public partial class ItemTooltip : CanvasLayer
         {
             _equippedLabel.Visible = isEquipped;
             _headerLabel.Text = item.HeaderText;
+
+            if (item is Armor armor)
+            {
+                _armorStatsLabel.Text = BuildArmorStatsText(armor);
+                _armorStatsLabel.Visible = true;
+            }
+            else
+            {
+                _armorStatsLabel.Visible = false;
+            }
+
             _plainBodyLabel.Visible = !advanced;
             _advancedBody.Visible = advanced;
 
@@ -429,6 +463,25 @@ public partial class ItemTooltip : CanvasLayer
         public void Hide()
         {
             _panel.Visible = false;
+        }
+
+        private static string BuildArmorStatsText(Armor armor)
+        {
+            List<string> parts = new();
+            float armorValue = armor.ResolvedValue(StatId.SentinelArmor);
+            float shieldValue = armor.ResolvedValue(StatId.SentinelShield);
+
+            if (armorValue > 0f)
+            {
+                parts.Add($"Armor: {Mathf.RoundToInt(armorValue)}");
+            }
+
+            if (shieldValue > 0f)
+            {
+                parts.Add($"Shield: {Mathf.RoundToInt(shieldValue)}");
+            }
+
+            return string.Join("\n", parts);
         }
 
         private void BuildAdvancedBody(Item item)

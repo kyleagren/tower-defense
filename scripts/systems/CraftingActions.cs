@@ -54,7 +54,7 @@ public static class CraftingActions
         int bestTier = LootGenerator.BestTierFor(item.Rarity);
         HashSet<StatId> existing = item.Affixes.Select(roll => roll.Stat).ToHashSet();
 
-        return AffixTable.GetTierEntries(item.Slot, type, bestTier, item.EquippableCharacter)
+        return AffixTable.GetTierEntries(item, type, bestTier)
             .Where(entry => !existing.Contains(entry.Affix.Stat));
     }
 }

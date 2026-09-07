@@ -47,9 +47,11 @@ public static class CharacterSheetCache
         {
             foreach (RolledAffix roll in item.Affixes)
             {
-                // Armor/Shield resolve locally per-item (Armor.ResolvedValue) instead of stacking
-                // into the shared global pool every other stat uses.
-                if (roll.Stat == StatId.SentinelArmor || roll.Stat == StatId.SentinelShield)
+                // Armor/Shield (and the Vanguard hybrid roll) resolve locally per-item
+                // (Armor.ResolvedValue) instead of stacking into the shared global pool every
+                // other stat uses.
+                if (roll.Stat == StatId.SentinelArmor || roll.Stat == StatId.SentinelShield
+                    || roll.Stat == StatId.SentinelArmorAndShield)
                 {
                     continue;
                 }

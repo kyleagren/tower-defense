@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" path="res://ui/hub/CraftingPanel.tscn" id="14_craftingpanel"]
 [ext_resource type="Script" uid="uid://cacefgtxix4nr" path="res://hub/VendorStation.cs" id="15_vendorstation"]
 [ext_resource type="PackedScene" path="res://ui/hub/VendorPanel.tscn" id="16_vendorpanel"]
+[ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="17_charactersheetpanel"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -450,6 +451,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.7, 0, 45.1)
 script = ExtResource("11_debugtoggle")
 
 [node name="InventoryPanel" parent="." unique_id=37592620 instance=ExtResource("12_inventorypanel")]
+anchors_preset = -1
+
+[node name="CharacterSheetPanel" parent="." unique_id=599246340 instance=ExtResource("17_charactersheetpanel")]
 anchors_preset = -1
 
 [node name="CraftingPanel" parent="." unique_id=1481707128 instance=ExtResource("14_craftingpanel")]

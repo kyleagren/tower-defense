@@ -65,8 +65,8 @@ public static class LootGenerator
 
         int bestTier = _bestTierByRarity[rarity];
 
-        List<AffixTierEntry> prefixPool = AffixTable.GetTierEntries(slot, AffixType.Prefix, bestTier, equippableCharacter).ToList();
-        List<AffixTierEntry> suffixPool = AffixTable.GetTierEntries(slot, AffixType.Suffix, bestTier, equippableCharacter).ToList();
+        List<AffixTierEntry> prefixPool = AffixTable.GetTierEntries(item, AffixType.Prefix, bestTier).ToList();
+        List<AffixTierEntry> suffixPool = AffixTable.GetTierEntries(item, AffixType.Suffix, bestTier).ToList();
 
         (int prefixCount, int suffixCount) = RollAffixCounts();
 

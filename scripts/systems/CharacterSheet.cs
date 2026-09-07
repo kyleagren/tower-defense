@@ -20,6 +20,10 @@ public class CharacterSheet
         return _bonuses.TryGetValue(stat, out float value) ? value : 0f;
     }
 
+    // Exposed for UI (the Character Sheet panel) to enumerate every currently-active bonus without
+    // needing a matching GetBonus call per StatId hardcoded into the panel.
+    public IReadOnlyDictionary<StatId, float> Bonuses => _bonuses;
+
     // Already-resolved per-item totals (each item's own base * its own local % rolls, summed) -
     // for stats with no other character-level base at all (Armor/Shield - a naked Sentinel has
     // none). A further global multiplier (e.g. SentinelTotalArmor from jewelry) is a separate

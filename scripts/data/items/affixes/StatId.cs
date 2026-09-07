@@ -16,6 +16,7 @@ public enum StatId
     SentinelMoveSpeed,
     SentinelArmor,
     SentinelShield,
+    SentinelArmorAndShield,
     SentinelTotalArmor,
     SentinelTotalShield,
     SentinelHealthRegen,

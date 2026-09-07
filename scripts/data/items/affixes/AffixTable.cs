@@ -244,7 +244,7 @@ public static class AffixTable
         {
             Name = "Fortitude",
             DescriptionTemplate = "+{0}% Armor",
-            AffixType = AffixType.Suffix,
+            AffixType = AffixType.Prefix,
             Stat = StatId.SentinelArmor,
             AllowedSlots = ArmorSlots,
             Tags = [AffixTag.Defences],
@@ -272,6 +272,23 @@ public static class AffixTable
                 new PercentTierRange(3, 14, 19),
                 new PercentTierRange(4, 20, 26),
                 new PercentTierRange(5, 27, 35)
+            ]
+        },
+        [StatId.SentinelArmorAndShield] = new Affix
+        {
+            Name = "Vanguard",
+            DescriptionTemplate = "+{0}% Armor and Shield",
+            AffixType = AffixType.Prefix,
+            Stat = StatId.SentinelArmorAndShield,
+            AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Defences],
+            TierTable =
+            [
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
+                new PercentTierRange(3, 9, 12),
+                new PercentTierRange(4, 13, 17),
+                new PercentTierRange(5, 18, 22)
             ]
         },
         [StatId.SentinelTotalArmor] = new Affix
@@ -329,7 +346,7 @@ public static class AffixTable
         {
             Name = "Precision",
             DescriptionTemplate = "+{0}% Critical Strike Chance",
-            AffixType = AffixType.Prefix,
+            AffixType = AffixType.Suffix,
             Stat = StatId.SentinelCritChance,
             AllowedSlots = ArmorSlots,
             Tags = [AffixTag.Critical],
@@ -403,14 +420,34 @@ public static class AffixTable
     // The flat weighted pool a roll actually draws from: every eligible affix's eligible tiers,
     // flattened into individual (affix, tier) entries. Mirrors how PoE itself rolls - one weighted
     // draw over every tier of every mod at once, not "pick a mod, then pick its tier" as two steps.
-    public static IEnumerable<AffixTierEntry> GetTierEntries(EquipmentSlot slot, AffixType type, int bestTier, CharacterId character)
+    public static IEnumerable<AffixTierEntry> GetTierEntries(Item item, AffixType type, int bestTier)
     {
         return _affixes.Values
             .Where(affix => affix.AffixType == type)
-            .Where(affix => affix.AllowedSlots.Length == 0 || affix.AllowedSlots.Contains(slot))
-            .Where(affix => affix.IsAvailableTo(character))
+            .Where(affix => affix.AllowedSlots.Length == 0 || affix.AllowedSlots.Contains(item.Slot))
+            .Where(affix => affix.IsAvailableTo(item.EquippableCharacter))
+            .Where(affix => IsEligibleForBaseType(affix, item))
             .SelectMany(affix => affix.TierTable
                 .Where(tier => tier.Tier <= bestTier)
                 .Select(tier => new AffixTierEntry(affix, tier)));
+    }
+
+    // A defense mod (Armor/Shield/the Hybrid combo) is only eligible if it matches the item's own
+    // rolled BaseType - a Hybrid piece can only roll SentinelArmorAndShield, a pure Armor piece
+    // can only roll SentinelArmor, and so on. Every other mod is unaffected.
+    private static bool IsEligibleForBaseType(Affix affix, Item item)
+    {
+        if (item is not Armor armor)
+        {
+            return true;
+        }
+
+        return affix.Stat switch
+        {
+            StatId.SentinelArmor => armor.BaseType == BaseType.Armor,
+            StatId.SentinelShield => armor.BaseType == BaseType.Shield,
+            StatId.SentinelArmorAndShield => armor.BaseType == BaseType.Hybrid,
+            _ => true
+        };
     }
 }

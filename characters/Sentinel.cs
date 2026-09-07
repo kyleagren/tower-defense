@@ -32,6 +32,15 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
     }
 
+    public float TotalArmor
+    {
+        get
+        {
+            CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
+            return sheet.GetLocalTotal(StatId.SentinelArmor) * (1f + sheet.GetBonus(StatId.SentinelTotalArmor));
+        }
+    }
+
     private float _currentHealth;
     private float _currentShield;
     private float _timeSinceProjectileHit;
@@ -113,7 +122,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
         else
         {
-            remainingDamage *= (1f - MitigationPercent());
+            remainingDamage *= (1f - MeleeDamageReductionPercent);
         }
 
         _currentHealth = Mathf.Max(0f, _currentHealth - remainingDamage);
@@ -127,14 +136,16 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     // Armor mitigates melee only - Shield (above) is a separate pool, not a % reduction. S-curve
     // (exponent > 1): trivial gear barely registers, endgame gear feels strong, climbs faster in
-    // the middle than at either end.
-    private float MitigationPercent()
+    // the middle than at either end. Public so the Character Sheet UI can show the same number
+    // TakeDamage actually uses, rather than a second copy of this formula.
+    public float MeleeDamageReductionPercent
     {
-        CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
-        float armor = sheet.GetLocalTotal(StatId.SentinelArmor) * (1f + sheet.GetBonus(StatId.SentinelTotalArmor));
-        float armorPow = Mathf.Pow(armor, GameRules.SentinelArmorCurveExponent);
-        float kPow = Mathf.Pow(GameRules.SentinelArmorCurveConstant, GameRules.SentinelArmorCurveExponent);
-        return armorPow / (armorPow + kPow);
+        get
+        {
+            float armorPow = Mathf.Pow(TotalArmor, GameRules.SentinelArmorCurveExponent);
+            float kPow = Mathf.Pow(GameRules.SentinelArmorCurveConstant, GameRules.SentinelArmorCurveExponent);
+            return armorPow / (armorPow + kPow);
+        }
     }
 
     // Called by whichever Sentinel is active, from its own _PhysicsProcess - passively recharges

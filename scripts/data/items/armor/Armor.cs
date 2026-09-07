@@ -33,7 +33,10 @@ public abstract partial class Armor : Item
             return 0f;
         }
 
-        float localPercent = Affixes.Where(roll => roll.Stat == stat).Sum(roll => roll.Value);
+        float localPercent = Affixes
+            .Where(roll => roll.Stat == stat || roll.Stat == StatId.SentinelArmorAndShield)
+            .Sum(roll => roll.Value);
+
         return baseValue * (1f + localPercent);
     }
 }
