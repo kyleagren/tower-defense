@@ -2,7 +2,7 @@ using Godot;
 
 public partial class Soldier : Sentinel
 {
-    [Export] public float AttackDamage = 8f;
+    [Export] public float BaseAttackDamage = 8f;
     [Export] public float AttackRange = 30f;
     [Export] public float FireRate = 6f;
     [Export] public PackedScene ImpactScene { get; private set; }
@@ -17,6 +17,8 @@ public partial class Soldier : Sentinel
 
     public override CharacterId Id => CharacterId.Soldier;
 
+    public float AttackDamage => BaseAttackDamage * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.WeaponAttackDamage));
+
     private float _fireCooldown;
 
     public override void _PhysicsProcess(double delta)
@@ -25,6 +27,8 @@ public partial class Soldier : Sentinel
         {
             return;
         }
+
+        UpdateShieldRegen((float)delta);
 
         Vector2 inputDir = Input.GetVector("move_left", "move_right", "move_forward", "move_back");
         ApplyGroundMovement(delta, inputDir);

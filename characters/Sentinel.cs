@@ -18,11 +18,23 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public bool IsDead => _currentHealth <= 0f;
     public bool IsDestroyed => IsDead;
     public float CurrentHealth => _currentHealth;
+    public float CurrentShield => _currentShield;
 
     public float MaxHealth => BaseMaxHealth * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMaxHealth));
     public override float Speed => BaseSpeed * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMoveSpeed));
 
+    public float MaxShield
+    {
+        get
+        {
+            CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
+            return sheet.GetLocalTotal(StatId.SentinelShield) * (1f + sheet.GetBonus(StatId.SentinelTotalShield));
+        }
+    }
+
     private float _currentHealth;
+    private float _currentShield;
+    private float _timeSinceProjectileHit;
 
     public override void ActivateStandalone()
     {
@@ -34,6 +46,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         base._Ready();
         _currentHealth = MaxHealth;
+        _currentShield = MaxShield;
         ByOwner[OwnerId] = this;
         SetActive(false);
         Weapon.Visible = false;
@@ -88,7 +101,22 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             return;
         }
 
-        _currentHealth = Mathf.Max(0f, _currentHealth - damage.Total);
+        float remainingDamage = damage.Total;
+
+        if (damage.Origin == DamageOrigin.Projectile)
+        {
+            _timeSinceProjectileHit = 0f;
+
+            float absorbed = Mathf.Min(_currentShield, remainingDamage);
+            _currentShield -= absorbed;
+            remainingDamage -= absorbed;
+        }
+        else
+        {
+            remainingDamage *= (1f - MitigationPercent());
+        }
+
+        _currentHealth = Mathf.Max(0f, _currentHealth - remainingDamage);
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
 
         if (IsDead)
@@ -97,10 +125,42 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
     }
 
+    // Armor mitigates melee only - Shield (above) is a separate pool, not a % reduction. S-curve
+    // (exponent > 1): trivial gear barely registers, endgame gear feels strong, climbs faster in
+    // the middle than at either end.
+    private float MitigationPercent()
+    {
+        CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
+        float armor = sheet.GetLocalTotal(StatId.SentinelArmor) * (1f + sheet.GetBonus(StatId.SentinelTotalArmor));
+        float armorPow = Mathf.Pow(armor, GameRules.SentinelArmorCurveExponent);
+        float kPow = Mathf.Pow(GameRules.SentinelArmorCurveConstant, GameRules.SentinelArmorCurveExponent);
+        return armorPow / (armorPow + kPow);
+    }
+
+    // Called by whichever Sentinel is active, from its own _PhysicsProcess - passively recharges
+    // Shield once it's been GameRules.ShieldRegenDelay seconds since the last projectile hit.
+    public void UpdateShieldRegen(float delta)
+    {
+        if (_currentShield >= MaxShield)
+        {
+            return;
+        }
+
+        _timeSinceProjectileHit += delta;
+
+        if (_timeSinceProjectileHit < GameRules.ShieldRegenDelay)
+        {
+            return;
+        }
+
+        _currentShield = Mathf.Min(MaxShield, _currentShield + MaxShield * GameRules.ShieldRegenRatePercent * delta);
+    }
+
     // Full reset is a placeholder — a real healing mechanic (README §15) will replace this.
     protected void HealToFull()
     {
         _currentHealth = MaxHealth;
+        _currentShield = MaxShield;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
     }
 }
