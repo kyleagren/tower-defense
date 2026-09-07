@@ -124,7 +124,8 @@ public partial class ItemNameplateController : CanvasLayer
 
             if (item == _expandedItem)
             {
-                _expandedPanel.Show(item.Item, advanced: false, backgroundColor: RarityColors.Get(item.Item.Rarity));
+                bool advanced = Input.IsActionPressed("advanced_tooltip");
+                _expandedPanel.Show(item.Item, advanced, backgroundColor: RarityColors.Get(item.Item.Rarity));
                 _expandedPanelItem = item;
                 expandedShownThisFrame = true;
 
