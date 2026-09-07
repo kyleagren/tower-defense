@@ -274,6 +274,40 @@ public static class AffixTable
                 new PercentTierRange(5, 27, 35)
             ]
         },
+        [StatId.SentinelTotalArmor] = new Affix
+        {
+            Name = "Bulwark",
+            DescriptionTemplate = "+{0}% Total Armor",
+            AffixType = AffixType.Suffix,
+            Stat = StatId.SentinelTotalArmor,
+            AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Defences],
+            TierTable =
+            [
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
+                new PercentTierRange(3, 9, 12),
+                new PercentTierRange(4, 13, 17),
+                new PercentTierRange(5, 18, 22)
+            ]
+        },
+        [StatId.SentinelTotalShield] = new Affix
+        {
+            Name = "Ward",
+            DescriptionTemplate = "+{0}% Total Shield",
+            AffixType = AffixType.Prefix,
+            Stat = StatId.SentinelTotalShield,
+            AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Defences],
+            TierTable =
+            [
+                new PercentTierRange(1, 5, 8),
+                new PercentTierRange(2, 9, 13),
+                new PercentTierRange(3, 14, 19),
+                new PercentTierRange(4, 20, 26),
+                new PercentTierRange(5, 27, 35)
+            ]
+        },
         [StatId.SentinelHealthRegen] = new Affix
         {
             Name = "Renewal",

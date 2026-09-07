@@ -19,8 +19,22 @@ public static class DefaultItemIcons
         [typeof(Relic)] = "res://assets/thumbnails/relic.png"
     };
 
-    public static Texture2D Get(Type itemType)
+    public static Texture2D Get(Item item)
     {
-        return _iconPaths.TryGetValue(itemType, out string path) ? GD.Load<Texture2D>(path) : null;
+        if (!_iconPaths.TryGetValue(item.GetType(), out string path))
+        {
+            return null;
+        }
+
+        if (item is Armor armor)
+        {
+            string suffix = ArmorBaseTypeTable.GetIconSuffix(armor.BaseType);
+            if (!string.IsNullOrEmpty(suffix))
+            {
+                path = path.Replace(".png", suffix + ".png");
+            }
+        }
+
+        return GD.Load<Texture2D>(path);
     }
 }

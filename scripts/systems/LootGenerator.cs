@@ -57,6 +57,12 @@ public static class LootGenerator
     public static Item Generate(EquipmentSlot slot, Rarity rarity, CharacterId equippableCharacter = CharacterId.AnySentinel)
     {
         Item item = CreateItemForSlot(slot, equippableCharacter);
+
+        if (item is Armor armor)
+        {
+            armor.RollBaseStats(rarity, _random);
+        }
+
         int bestTier = _bestTierByRarity[rarity];
 
         List<AffixTierEntry> prefixPool = AffixTable.GetTierEntries(slot, AffixType.Prefix, bestTier, equippableCharacter).ToList();
@@ -69,7 +75,7 @@ public static class LootGenerator
         RollAffixes(prefixPool, prefixCount, affixes);
         RollAffixes(suffixPool, suffixCount, affixes);
 
-        item.Initialize(rarity, DefaultItemIcons.Get(item.GetType()), equippableCharacter, affixes);
+        item.Initialize(rarity, DefaultItemIcons.Get(item), equippableCharacter, affixes);
 
         return item;
     }

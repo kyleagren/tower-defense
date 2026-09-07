@@ -36,21 +36,38 @@ public static class CharacterSheetCache
     private static CharacterSheet Resolve(CharacterId character)
     {
         Dictionary<StatId, float> bonuses = new();
+        Dictionary<StatId, float> localTotals = new();
 
         if (!SaveManager.Instance.Data.Loadouts.TryGetValue(character, out EquippedLoadout loadout))
         {
-            return new CharacterSheet(bonuses);
+            return new CharacterSheet(bonuses, localTotals);
         }
 
         foreach (Item item in loadout.EquippedItems())
         {
             foreach (RolledAffix roll in item.Affixes)
             {
+                // Armor/Shield resolve locally per-item (Armor.ResolvedValue) instead of stacking
+                // into the shared global pool every other stat uses.
+                if (roll.Stat == StatId.SentinelArmor || roll.Stat == StatId.SentinelShield)
+                {
+                    continue;
+                }
+
                 bonuses.TryGetValue(roll.Stat, out float current);
                 bonuses[roll.Stat] = current + roll.Value;
             }
+
+            if (item is Armor armor)
+            {
+                localTotals.TryGetValue(StatId.SentinelArmor, out float armorTotal);
+                localTotals[StatId.SentinelArmor] = armorTotal + armor.ResolvedValue(StatId.SentinelArmor);
+
+                localTotals.TryGetValue(StatId.SentinelShield, out float shieldTotal);
+                localTotals[StatId.SentinelShield] = shieldTotal + armor.ResolvedValue(StatId.SentinelShield);
+            }
         }
 
-        return new CharacterSheet(bonuses);
+        return new CharacterSheet(bonuses, localTotals);
     }
 }
