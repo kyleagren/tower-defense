@@ -9,6 +9,7 @@ public partial class EventBus : Node
     [Signal] public delegate void GameEndedEventHandler(bool victory);
     [Signal] public delegate void EnemyKilledEventHandler(int reward, int goldReward, Vector3 position, float dropChance, int lootRolls);
     [Signal] public delegate void PlayerHealthChangedEventHandler(float currentHealth, float maxHealth);
+    [Signal] public delegate void PlayerShieldChangedEventHandler(float currentShield, float maxShield);
     [Signal] public delegate void InventoryChangedEventHandler();
 
     public override void _Ready()

@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://scripts/dev/DebugToggle.cs" id="15_debugtoggle"]
 [ext_resource type="Script" uid="uid://nsgeakgljfd8" path="res://scripts/systems/waves/RoutePreviewEffect.cs" id="16_routepreview"]
 [ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="17_playerhealthorb"]
+[ext_resource type="PackedScene" path="res://ui/PlayerShieldBar.tscn" id="22_playershieldbar"]
 [ext_resource type="PackedScene" path="res://ui/inventory/InventoryPanel.tscn" id="18_inventorypanel"]
 [ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="19_charactersheetpanel"]
 [ext_resource type="Script" uid="uid://briq33cnkh3pc" path="res://scripts/systems/game_state/ItemDropManager.cs" id="19_itemdropmanager"]
@@ -239,6 +240,8 @@ script = ExtResource("10_sentinelspawner")
 [node name="PhaseIndicator" parent="." unique_id=756900810 instance=ExtResource("9_phaseindicator")]
 
 [node name="PlayerHealthOrb" parent="." unique_id=505215148 instance=ExtResource("17_playerhealthorb")]
+
+[node name="PlayerShieldBar" parent="." instance=ExtResource("22_playershieldbar")]
 
 [node name="Crosshair" parent="." unique_id=1213473900 instance=ExtResource("13_crosshair")]
 

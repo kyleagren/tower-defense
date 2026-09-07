@@ -12,11 +12,18 @@ public partial class WaveController : Node
 
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
+    public static WaveController Instance { get; private set; }
+
     private List<Wave> _waves = new();
     private Dictionary<string, EnemySpawner> _spawnersById;
     private int _nextWaveIndex;
     private GamePhase _currentPhase = GamePhase.Planning;
     private bool _matchOver;
+
+    public override void _EnterTree()
+    {
+        Instance = this;
+    }
 
     public override void _Ready()
     {
@@ -88,6 +95,18 @@ public partial class WaveController : Node
             return;
         }
 
+        StartNextWave();
+    }
+
+    // Debug-only: swaps in a different wave file and immediately starts its first wave, skipping
+    // the normal Build-phase "press start_wave" step - for quickly testing a specific enemy/spawn
+    // setup without waiting through the level's real wave sequence.
+    public void DebugLoadAndStartWaveFile(string path)
+    {
+        WaveFilePath = path;
+        LoadWaves();
+        _nextWaveIndex = 0;
+        _currentPhase = GamePhase.Build;
         StartNextWave();
     }
 

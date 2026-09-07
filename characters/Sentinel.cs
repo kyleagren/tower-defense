@@ -63,6 +63,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         Weapon.Visible = false;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, _currentShield, MaxShield);
     }
 
     public override void _ExitTree()
@@ -121,6 +122,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             float absorbed = Mathf.Min(_currentShield, remainingDamage);
             _currentShield -= absorbed;
             remainingDamage -= absorbed;
+
+            EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, _currentShield, MaxShield);
         }
         else
         {
@@ -167,6 +170,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
 
         _currentShield = Mathf.Min(MaxShield, _currentShield + MaxShield * GameRules.ShieldRegenRatePercent * delta);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, _currentShield, MaxShield);
     }
 
     // Full reset is a placeholder — a real healing mechanic (README §15) will replace this.
@@ -175,5 +179,6 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         _currentHealth = MaxHealth;
         _currentShield = MaxShield;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, _currentShield, MaxShield);
     }
 }

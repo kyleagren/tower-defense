@@ -32,5 +32,9 @@ public partial class DebugToggle : Node
             UiPanelStack.Reset();
             GetTree().ReloadCurrentScene();
         }
+        else if (keyEvent.PhysicalKeycode == Key.F4)
+        {
+            WaveController.Instance?.DebugLoadAndStartWaveFile("res://assets/waves/test_marksman.json");
+        }
     }
 }
