@@ -12,11 +12,13 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     [Export] public Node3D Weapon { get; private set; }
     [Export] public float BaseMaxHealth = 100f;
+    [Export] public float AimPointHeight = 1.2f;
 
     public abstract CharacterId Id { get; }
 
     public bool IsDead => _currentHealth <= 0f;
     public bool IsDestroyed => IsDead;
+    public Vector3 AimPoint => GlobalPosition + Vector3.Up * AimPointHeight;
     public float CurrentHealth => _currentHealth;
     public float CurrentShield => _currentShield;
 

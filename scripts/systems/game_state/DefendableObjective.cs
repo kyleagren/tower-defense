@@ -4,12 +4,14 @@ public partial class DefendableObjective : Area3D, IDamageable
 {
     [Export] public float MaxHealth = 100f;
     [Export] public float ApproachRadius = 1.1f; // matches the solid collision shape's own radius — enemies physically can't get closer than this
+    [Export] public float AimPointHeight = 1f;
     [Export] public HealthBar3D HealthBar { get; private set; }
 
     private float _currentHealth;
     private bool _destroyed;
 
     public bool IsDestroyed => _destroyed;
+    public Vector3 AimPoint => GlobalPosition + Vector3.Up * AimPointHeight;
 
     public override void _Ready()
     {

@@ -32,6 +32,7 @@ public partial class Ritual : Node3D, IDamageable
     private Material _activeMaterial;
 
     public bool IsDestroyed => _disabled;
+    public Vector3 AimPoint => CoreMesh.GlobalPosition;
 
     public Vector3? WallStart { get; private set; }
     public Vector3? WallEnd { get; private set; }

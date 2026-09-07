@@ -66,6 +66,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     protected float CurrentHealth { get; set; }
 
     public Vector3 CenterMass => GlobalPosition + Vector3.Up * CenterMassHeight;
+    public Vector3 AimPoint => CenterMass;
 
     public Vector3 GetJitteredCenterMass(float jitterAmount)
     {

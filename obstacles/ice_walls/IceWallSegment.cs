@@ -15,6 +15,7 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
 
     public bool IsDestroyed => _isBroken;
     public IceWall Wall => _wall;
+    public Vector3 AimPoint => BodyMesh.GlobalPosition;
 
     public override void _Ready()
     {

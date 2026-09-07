@@ -187,7 +187,7 @@ public partial class WalkingEnemy : Enemy
         if (_attackCooldown <= 0f)
         {
             _attackCooldown = AttackInterval;
-            DealDamage(_objective, _objective.GlobalPosition);
+            DealDamage(_objective);
         }
     }
 
@@ -367,7 +367,7 @@ public partial class WalkingEnemy : Enemy
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                DealDamage(target, target.GlobalPosition);
+                DealDamage(target);
             }
 
             return;
@@ -457,7 +457,7 @@ public partial class WalkingEnemy : Enemy
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                DealDamage(_targetRitual, _targetRitual.GlobalPosition);
+                DealDamage(_targetRitual);
             }
 
             return;
@@ -490,7 +490,7 @@ public partial class WalkingEnemy : Enemy
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                DealDamage(Sentinel.Local, Sentinel.Local.GlobalPosition);
+                DealDamage(Sentinel.Local);
             }
 
             return;
@@ -508,14 +508,14 @@ public partial class WalkingEnemy : Enemy
     // Always uses a real traveling projectile when ProjectileScene is set - no instant-hit
     // fallback for a ranged enemy, regardless of target type. Only enemies with no ProjectileScene
     // (Grunt, Sapper) keep the instant-hit path.
-    private void DealDamage(IDamageable target, Vector3 targetPosition)
+    private void DealDamage(IDamageable target)
     {
         if (ProjectileScene != null)
         {
             EnemyProjectile projectile = ProjectileScene.Instantiate<EnemyProjectile>();
             GetTree().CurrentScene.AddChild(projectile);
             projectile.GlobalPosition = CenterMass;
-            projectile.Initialize(targetPosition, AttackDamage);
+            projectile.Initialize(target.AimPoint, AttackDamage);
             return;
         }
 
