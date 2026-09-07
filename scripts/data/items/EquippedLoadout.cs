@@ -7,7 +7,7 @@ public partial class EquippedLoadout : Resource
     [Export] public Weapon Weapon { get; set; }
     [Export] public Helmet Helmet { get; set; }
     [Export] public Chest Chest { get; set; }
-    [Export] public Legs Legs { get; set; }
+    [Export] public Legplates Legplates { get; set; }
     [Export] public Boots Boots { get; set; }
     [Export] public Gloves Gloves { get; set; }
     [Export] public Belt Belt { get; set; }
@@ -25,7 +25,7 @@ public partial class EquippedLoadout : Resource
             case Weapon weapon when Weapon == null: Weapon = weapon; return true;
             case Helmet helmet when Helmet == null: Helmet = helmet; return true;
             case Chest chest when Chest == null: Chest = chest; return true;
-            case Legs legs when Legs == null: Legs = legs; return true;
+            case Legplates legplates when Legplates == null: Legplates = legplates; return true;
             case Boots boots when Boots == null: Boots = boots; return true;
             case Gloves gloves when Gloves == null: Gloves = gloves; return true;
             case Belt belt when Belt == null: Belt = belt; return true;
@@ -49,7 +49,7 @@ public partial class EquippedLoadout : Resource
             case Weapon weapon: displaced = Weapon; Weapon = weapon; return displaced;
             case Helmet helmet: displaced = Helmet; Helmet = helmet; return displaced;
             case Chest chest: displaced = Chest; Chest = chest; return displaced;
-            case Legs legs: displaced = Legs; Legs = legs; return displaced;
+            case Legplates legplates: displaced = Legplates; Legplates = legplates; return displaced;
             case Boots boots: displaced = Boots; Boots = boots; return displaced;
             case Gloves gloves: displaced = Gloves; Gloves = gloves; return displaced;
             case Belt belt: displaced = Belt; Belt = belt; return displaced;
@@ -73,7 +73,7 @@ public partial class EquippedLoadout : Resource
             case EquipmentSlot.Weapon: if (Weapon != null) yield return Weapon; break;
             case EquipmentSlot.Helmet: if (Helmet != null) yield return Helmet; break;
             case EquipmentSlot.Chest: if (Chest != null) yield return Chest; break;
-            case EquipmentSlot.Legs: if (Legs != null) yield return Legs; break;
+            case EquipmentSlot.Legplates: if (Legplates != null) yield return Legplates; break;
             case EquipmentSlot.Boots: if (Boots != null) yield return Boots; break;
             case EquipmentSlot.Gloves: if (Gloves != null) yield return Gloves; break;
             case EquipmentSlot.Belt: if (Belt != null) yield return Belt; break;
@@ -92,7 +92,7 @@ public partial class EquippedLoadout : Resource
         if (Weapon != null) yield return Weapon;
         if (Helmet != null) yield return Helmet;
         if (Chest != null) yield return Chest;
-        if (Legs != null) yield return Legs;
+        if (Legplates != null) yield return Legplates;
         if (Boots != null) yield return Boots;
         if (Gloves != null) yield return Gloves;
         if (Belt != null) yield return Belt;

@@ -3,7 +3,7 @@ public enum EquipmentSlot
     Weapon,
     Helmet,
     Chest,
-    Legs,
+    Legplates,
     Boots,
     Gloves,
     Belt,

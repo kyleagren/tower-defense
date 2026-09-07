@@ -100,7 +100,7 @@ public partial class InventoryPanel : Control
             CreateEquipmentSlot("Ring", new Vector2(0.30f, 0.54f), SimpleSlot(() => _loadout.LeftRing, item => _loadout.LeftRing = (Ring)item)),
             CreateEquipmentSlot("Belt", new Vector2(0.50f, 0.54f), SimpleSlot(() => _loadout.Belt, item => _loadout.Belt = (Belt)item)),
             CreateEquipmentSlot("Ring", new Vector2(0.70f, 0.54f), SimpleSlot(() => _loadout.RightRing, item => _loadout.RightRing = (Ring)item)),
-            CreateEquipmentSlot("Legs", new Vector2(0.50f, 0.72f), SimpleSlot(() => _loadout.Legs, item => _loadout.Legs = (Legs)item)),
+            CreateEquipmentSlot("Legplates", new Vector2(0.50f, 0.72f), SimpleSlot(() => _loadout.Legplates, item => _loadout.Legplates = (Legplates)item)),
             CreateEquipmentSlot("Gloves", new Vector2(0.30f, 0.90f), SimpleSlot(() => _loadout.Gloves, item => _loadout.Gloves = (Gloves)item)),
             CreateEquipmentSlot("Boots", new Vector2(0.70f, 0.90f), SimpleSlot(() => _loadout.Boots, item => _loadout.Boots = (Boots)item))
         };

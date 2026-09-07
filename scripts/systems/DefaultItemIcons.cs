@@ -10,7 +10,7 @@ public static class DefaultItemIcons
         [typeof(SwordAndShield)] = "res://assets/thumbnails/sword_shield.png",
         [typeof(Helmet)] = "res://assets/thumbnails/helmet.png",
         [typeof(Chest)] = "res://assets/thumbnails/chestplate.png",
-        [typeof(Legs)] = "res://assets/thumbnails/pants.png",
+        [typeof(Legplates)] = "res://assets/thumbnails/legplates.png",
         [typeof(Boots)] = "res://assets/thumbnails/boots.png",
         [typeof(Gloves)] = "res://assets/thumbnails/gloves.png",
         [typeof(Belt)] = "res://assets/thumbnails/belt.png",

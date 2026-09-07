@@ -10,7 +10,7 @@ public static class AffixTable
         { EquipmentSlot.Belt, EquipmentSlot.Amulet, EquipmentSlot.LeftRing, EquipmentSlot.RightRing, EquipmentSlot.Relic };
 
     private static readonly EquipmentSlot[] ArmorSlots =
-        { EquipmentSlot.Helmet, EquipmentSlot.Chest, EquipmentSlot.Legs, EquipmentSlot.Boots, EquipmentSlot.Gloves };
+        { EquipmentSlot.Helmet, EquipmentSlot.Chest, EquipmentSlot.Legplates, EquipmentSlot.Boots, EquipmentSlot.Gloves };
 
     private static readonly EquipmentSlot[] WeaponSlots = { EquipmentSlot.Weapon };
 
