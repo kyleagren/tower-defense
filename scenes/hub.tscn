@@ -17,6 +17,7 @@
 [ext_resource type="Script" uid="uid://cacefgtxix4nr" path="res://hub/VendorStation.cs" id="15_vendorstation"]
 [ext_resource type="PackedScene" path="res://ui/hub/VendorPanel.tscn" id="16_vendorpanel"]
 [ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="17_charactersheetpanel"]
+[ext_resource type="Script" uid="uid://dr8emxep4ujsn" path="res://ui/ItemNameplateController.cs" id="18_itemnameplate"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -353,6 +354,9 @@ SpawnPoint = NodePath("../SpawnPointP4")
 [node name="EconomyManager" type="Node" parent="." unique_id=1149411335]
 script = ExtResource("2_economymanager")
 Unlimited = true
+
+[node name="ItemNameplateController" type="CanvasLayer" parent="." unique_id=1123372990]
+script = ExtResource("18_itemnameplate")
 
 [node name="ArchitectSelectStation" type="StaticBody3D" parent="." unique_id=708825174]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4684536, 0.9999987, 35.53236)

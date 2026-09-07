@@ -201,6 +201,15 @@ public partial class CraftingPanel : Control
         ItemSlotButton.Icon = item?.Icon;
         ItemSlotButton.Text = item == null ? "Empty" : "";
 
+        if (item != null)
+        {
+            ItemSlotBackground.Set(ItemSlotButton, RarityColors.Get(item.Rarity));
+        }
+        else
+        {
+            ItemSlotBackground.Clear(ItemSlotButton);
+        }
+
         SetBars(_prefixBars, item, AffixType.Prefix);
         SetBars(_suffixBars, item, AffixType.Suffix);
 

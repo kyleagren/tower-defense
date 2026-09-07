@@ -157,6 +157,7 @@ public partial class VendorPanel : Control
             CustomMinimumSize = new Vector2(0, 48)
         };
         button.Pressed += onPressed;
+        ItemSlotBackground.Set(button, RarityColors.Get(item.Rarity));
         ItemTooltip.Instance.Register(button, () => item);
 
         return button;

@@ -29,7 +29,6 @@ using System.Linq;
 public partial class ItemTooltip : CanvasLayer
 {
     private const float PanelGap = 12f;
-    private const float GroupLabelWidth = 50f;
     private const float NestedCursorOffsetX = 18f;
     private const float NestedCursorOffsetY = 18f;
     private const int MaxComparisonPanels = 2;
@@ -68,7 +67,7 @@ public partial class ItemTooltip : CanvasLayer
             Visible = false,
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
-        _nestedPanel.AddThemeStyleboxOverride("panel", TooltipPanelView.BuildBackgroundStyle());
+        _nestedPanel.AddThemeStyleboxOverride("panel", TooltipPanelView.BuildBackgroundStyle(TooltipPanelView.DefaultBackgroundColor));
 
         VBoxContainer nestedContent = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         _nestedPanel.AddChild(nestedContent);
@@ -356,203 +355,32 @@ public partial class ItemTooltip : CanvasLayer
         return _sources.TryGetValue(_hoveredSource, out Func<Item> getItem) ? getItem() : null;
     }
 
-    // One tooltip panel's Controls and content-building logic - header, plain body, or the
-    // advanced grouped-by-type body with per-mod tier badges. Multiple instances exist so the
-    // same rendering logic serves both the main hovered item and its comparison item(s).
-    private class TooltipPanelView
+    // Combined bounding rect of whatever tooltip panel(s) are currently visible - lets other
+    // world-space UI (the ground-item panel) avoid overlapping this.
+    public Rect2? GetOccupiedScreenRect()
     {
-        private static readonly Color EquippedLabelColor = new Color(0.6f, 0.9f, 0.6f);
-        private static readonly Color ArmorStatsColor = new Color(0.4f, 0.65f, 0.95f);
+        Rect2? combined = null;
 
-        private readonly PanelContainer _panel;
-        private readonly Label _equippedLabel;
-        private readonly Label _headerLabel;
-        private readonly Label _armorStatsLabel;
-        private readonly Label _plainBodyLabel;
-        private readonly VBoxContainer _advancedBody;
-        private readonly Action<Control, RolledAffix> _wireTierBadge;
-
-        public TooltipPanelView(CanvasLayer parent, Action<Control, RolledAffix> wireTierBadge)
+        void Include(bool visible, Vector2 position, Vector2 size)
         {
-            _wireTierBadge = wireTierBadge;
-
-            _panel = new PanelContainer
+            if (!visible)
             {
-                Visible = false,
-                MouseFilter = Control.MouseFilterEnum.Ignore
-            };
-            _panel.AddThemeStyleboxOverride("panel", BuildBackgroundStyle());
+                return;
+            }
 
-            VBoxContainer content = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-            content.AddThemeConstantOverride("separation", 6);
-            _panel.AddChild(content);
-
-            _equippedLabel = new Label { Text = "Equipped", Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore };
-            _equippedLabel.AddThemeColorOverride("font_color", EquippedLabelColor);
-            content.AddChild(_equippedLabel);
-
-            _headerLabel = new Label
-            {
-                HorizontalAlignment = HorizontalAlignment.Center,
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                MouseFilter = Control.MouseFilterEnum.Ignore
-            };
-            content.AddChild(_headerLabel);
-
-            _armorStatsLabel = new Label
-            {
-                HorizontalAlignment = HorizontalAlignment.Center,
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                Visible = false,
-                MouseFilter = Control.MouseFilterEnum.Ignore
-            };
-            _armorStatsLabel.AddThemeColorOverride("font_color", ArmorStatsColor);
-            content.AddChild(_armorStatsLabel);
-
-            _plainBodyLabel = new Label { MouseFilter = Control.MouseFilterEnum.Ignore };
-            content.AddChild(_plainBodyLabel);
-
-            _advancedBody = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-            content.AddChild(_advancedBody);
-
-            parent.AddChild(_panel);
+            Rect2 rect = new Rect2(position, size);
+            combined = combined.HasValue ? combined.Value.Merge(rect) : rect;
         }
 
-        public bool Visible => _panel.Visible;
-        public Vector2 Size => _panel.Size;
+        Include(_mainPanel.Visible, _mainPanel.Position, _mainPanel.Size);
 
-        public void SetPosition(Vector2 position)
+        foreach (TooltipPanelView panel in _comparisonPanels)
         {
-            _panel.Position = position;
+            Include(panel.Visible, panel.Position, panel.Size);
         }
 
-        public void Show(Item item, bool advanced, bool isEquipped = false)
-        {
-            _equippedLabel.Visible = isEquipped;
-            _headerLabel.Text = item.HeaderText;
+        Include(_nestedPanel.Visible, _nestedPanel.Position, _nestedPanel.Size);
 
-            if (item is Armor armor)
-            {
-                _armorStatsLabel.Text = BuildArmorStatsText(armor);
-                _armorStatsLabel.Visible = true;
-            }
-            else
-            {
-                _armorStatsLabel.Visible = false;
-            }
-
-            _plainBodyLabel.Visible = !advanced;
-            _advancedBody.Visible = advanced;
-
-            if (advanced)
-            {
-                BuildAdvancedBody(item);
-            }
-            else
-            {
-                _plainBodyLabel.Text = string.Join("\n", item.Affixes.Select(roll => roll.BuildDescription()));
-            }
-
-            _panel.Visible = true;
-
-            // Force a fresh fit to whatever's actually shown now - see ItemTooltip's own notes on
-            // why a Control's Size needs an explicit reset to shrink back down reliably.
-            _panel.Size = Vector2.Zero;
-        }
-
-        public void Hide()
-        {
-            _panel.Visible = false;
-        }
-
-        private static string BuildArmorStatsText(Armor armor)
-        {
-            List<string> parts = new();
-            float armorValue = armor.ResolvedValue(StatId.SentinelArmor);
-            float shieldValue = armor.ResolvedValue(StatId.SentinelShield);
-
-            if (armorValue > 0f)
-            {
-                parts.Add($"Armor: {Mathf.RoundToInt(armorValue)}");
-            }
-
-            if (shieldValue > 0f)
-            {
-                parts.Add($"Shield: {Mathf.RoundToInt(shieldValue)}");
-            }
-
-            return string.Join("\n", parts);
-        }
-
-        private void BuildAdvancedBody(Item item)
-        {
-            // Free() immediately, not QueueFree() - see ItemTooltip's own notes on why a deferred
-            // free here risks old and new rows briefly coexisting.
-            foreach (Node child in _advancedBody.GetChildren())
-            {
-                child.Free();
-            }
-
-            List<RolledAffix> prefixes = item.Affixes.Where(roll => roll.Affix.AffixType == AffixType.Prefix).ToList();
-            List<RolledAffix> suffixes = item.Affixes.Where(roll => roll.Affix.AffixType == AffixType.Suffix).ToList();
-
-            if (prefixes.Count > 0)
-            {
-                _advancedBody.AddChild(BuildGroup("Prefix", prefixes));
-            }
-
-            if (suffixes.Count > 0)
-            {
-                _advancedBody.AddChild(BuildGroup("Suffix", suffixes));
-            }
-        }
-
-        private HBoxContainer BuildGroup(string label, List<RolledAffix> rolls)
-        {
-            HBoxContainer group = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-
-            Label groupLabel = new Label
-            {
-                Text = label,
-                CustomMinimumSize = new Vector2(GroupLabelWidth, 0f),
-                VerticalAlignment = VerticalAlignment.Top,
-                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-                MouseFilter = Control.MouseFilterEnum.Ignore
-            };
-            group.AddChild(groupLabel);
-
-            VBoxContainer rows = new VBoxContainer
-            {
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                MouseFilter = Control.MouseFilterEnum.Ignore
-            };
-
-            foreach (RolledAffix roll in rolls)
-            {
-                AffixRow built = AffixRowView.Build(roll);
-                rows.AddChild(built.Root);
-                _wireTierBadge(built.TierBadge, roll);
-            }
-
-            group.AddChild(rows);
-
-            return group;
-        }
-
-        public static StyleBoxFlat BuildBackgroundStyle()
-        {
-            return new StyleBoxFlat
-            {
-                BgColor = new Color(0.08f, 0.08f, 0.08f, 0.95f),
-                ContentMarginLeft = 10,
-                ContentMarginRight = 10,
-                ContentMarginTop = 8,
-                ContentMarginBottom = 8,
-                CornerRadiusTopLeft = 4,
-                CornerRadiusTopRight = 4,
-                CornerRadiusBottomLeft = 4,
-                CornerRadiusBottomRight = 4
-            };
-        }
+        return combined;
     }
 }

@@ -49,6 +49,7 @@ public partial class LevelSelectPanel : Control
         UiPanelStack.Reset();
         EnemyRegistry.Clear();
         IceWallSegmentRegistry.Clear();
+        WorldItemRegistry.Clear();
 
         GetTree().ChangeSceneToFile(scenePath);
     }

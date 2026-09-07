@@ -53,6 +53,7 @@ public partial class GameOverHandler : Node
         UiPanelStack.Reset();
         EnemyRegistry.Clear();
         IceWallSegmentRegistry.Clear();
+        WorldItemRegistry.Clear();
 
         GetTree().ChangeSceneToFile(HubScenePath);
     }

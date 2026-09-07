@@ -6,3 +6,4 @@ global using EnemyRegistry = ActiveRegistry<Enemy>;
 global using IceWallSegmentRegistry = ActiveRegistry<IceWallSegment>;
 global using FloatingCombatTextRegistry = ActiveRegistry<FloatingCombatText>;
 global using RitualRegistry = ActiveRegistry<Ritual>;
+global using WorldItemRegistry = ActiveRegistry<WorldItem>;

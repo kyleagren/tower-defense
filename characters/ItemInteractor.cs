@@ -1,39 +1,36 @@
 using Godot;
 
 // Look at a WorldItem within range and pick it up with interact - the same look-and-press
-// pattern RitualInteractor uses, both built on LookInteractor.
+// pattern RitualInteractor uses, both built on LookInteractor. The actual visual (name, and the
+// full tooltip once directly targeted) is ItemNameplateController's job now, not the inherited
+// Label3D world prompt - this returns an empty prompt rather than duplicating that display.
 public partial class ItemInteractor : LookInteractor
 {
     [Export] public float InteractionRange { get; private set; } = GameRules.ItemPickupReach;
-
-    private string _pickupText;
-    private string _cachedPromptText;
 
     protected override uint CollisionMask => PhysicsLayers.Items;
     protected override float Range => InteractionRange;
 
     private WorldItem TargetedItem => (WorldItem)Target;
 
-    public override void _Ready()
-    {
-        base._Ready();
-
-        _pickupText = $"Press {InputPromptHelper.GetActionKeyName("interact")} to Pick Up";
-    }
-
     // A WorldItem is its own StaticBody3D, so the collider is already the target.
     protected override Node3D ResolveTarget(Node3D collider) => collider as WorldItem;
 
-    // The prompt embeds the item's full rolled-affix tooltip, which is a string.Format per affix
-    // plus a join - built once when the target changes rather than every physics tick.
-    protected override void OnTargetChanged(Node3D target)
+    // Targets whatever nameplate the crosshair is actually over, instead of raycasting for a small
+    // 3D collider that's fiddly to aim at precisely - ItemNameplateController already computes each
+    // visible item's on-screen rect every frame to keep nameplates from overlapping each other.
+    protected override Node3D FindTargetAhead()
     {
-        _cachedPromptText = target is WorldItem worldItem
-            ? $"{_pickupText}\n\n{worldItem.Item.BuildTooltip()}"
-            : null;
+        if (ItemNameplateController.Instance == null)
+        {
+            return null;
+        }
+
+        Vector2 crosshair = GetViewport().GetVisibleRect().Size / 2f;
+        return ItemNameplateController.Instance.GetItemAt(crosshair);
     }
 
-    protected override string BuildPromptText(Node3D target) => _cachedPromptText;
+    protected override string BuildPromptText(Node3D target) => string.Empty;
 
     public override void _UnhandledInput(InputEvent @event)
     {

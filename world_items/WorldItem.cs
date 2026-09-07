@@ -9,6 +9,16 @@ public partial class WorldItem : StaticBody3D
 
     public Item Item { get; private set; }
 
+    public override void _Ready()
+    {
+        WorldItemRegistry.Register(this);
+    }
+
+    public override void _ExitTree()
+    {
+        WorldItemRegistry.Unregister(this);
+    }
+
     // Assigns a fresh material rather than editing VisualMesh's shared scene material - every
     // WorldItem instance comes from the same packed scene, so mutating a shared sub-resource here
     // would recolor every other drop currently in the world too.

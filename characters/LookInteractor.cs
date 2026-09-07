@@ -108,7 +108,7 @@ public abstract partial class LookInteractor : Node
         OnTargetChanged(target);
     }
 
-    private Node3D FindTargetAhead()
+    protected virtual Node3D FindTargetAhead()
     {
         Vector3 origin = Character.Camera.GlobalPosition;
         Vector3 end = Character.GetCameraAimPoint(Range);

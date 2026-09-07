@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="19_charactersheetpanel"]
 [ext_resource type="Script" uid="uid://briq33cnkh3pc" path="res://scripts/systems/game_state/ItemDropManager.cs" id="19_itemdropmanager"]
 [ext_resource type="PackedScene" path="res://world_items/WorldItem.tscn" id="20_worlditem"]
+[ext_resource type="Script" path="res://ui/ItemNameplateController.cs" id="21_itemnameplate"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
@@ -206,6 +207,9 @@ WaveFilePath = "res://assets/waves/level_01.json"
 
 [node name="EconomyManager" type="Node" parent="." unique_id=113653841]
 script = ExtResource("14_economymanager")
+
+[node name="ItemNameplateController" type="CanvasLayer" parent="."]
+script = ExtResource("21_itemnameplate")
 
 [node name="ItemDropManager" type="Node" parent="." unique_id=1293764264]
 script = ExtResource("19_itemdropmanager")
