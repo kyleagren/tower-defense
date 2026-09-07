@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://enemies/EnemyProjectile.cs" id="1_script"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_projectile"]
+radius = 0.15
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_projectile"]
+albedo_color = Color(0.45, 0.28, 0.12, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_projectile"]
+material = SubResource("StandardMaterial3D_projectile")
+radius = 0.15
+height = 0.3
+
+[node name="EnemyProjectile" type="Area3D"]
+collision_layer = 0
+collision_mask = 24
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_projectile")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_projectile")

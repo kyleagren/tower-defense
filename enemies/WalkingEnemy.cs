@@ -14,6 +14,8 @@ public partial class WalkingEnemy : Enemy
     [Export] public float WallDetectionRange = 4f;
     [Export] public bool CanAttackRituals = false;
     [Export] public float RitualDetectionRange = 4f;
+    [Export] public bool RitualsOutrankPlayer = false;
+    [Export] public PackedScene ProjectileScene;
     [Export] public float LeashRange = 6f;
     [Export] public float AttackRange = 1.5f;
     [Export] public float AttackDamage = 10f;
@@ -185,7 +187,7 @@ public partial class WalkingEnemy : Enemy
         if (_attackCooldown <= 0f)
         {
             _attackCooldown = AttackInterval;
-            _objective.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+            DealDamage(_objective, _objective.GlobalPosition);
         }
     }
 
@@ -193,9 +195,10 @@ public partial class WalkingEnemy : Enemy
     // than every frame — a cheap distance check, not a live per-enemy nav query.
     private void UpdatePlayerLeash(float delta)
     {
-        // A ritual attack (Sapper's whole point) isn't interrupted by the player wandering past -
-        // UpdateRitualEngagement already ran this tick and gets first claim on the movement mode.
-        if (_movementMode == MovementMode.AttackingRitual)
+        // A ritual attack only blocks the leash for enemies where rituals outrank the player
+        // (Sapper). For everything else, the player can interrupt an opportunistic tower attack
+        // at any time.
+        if (RitualsOutrankPlayer && _movementMode == MovementMode.AttackingRitual)
         {
             return;
         }
@@ -364,7 +367,7 @@ public partial class WalkingEnemy : Enemy
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                target.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+                DealDamage(target, target.GlobalPosition);
             }
 
             return;
@@ -380,11 +383,10 @@ public partial class WalkingEnemy : Enemy
     }
 
     // Opt-in per enemy (CanAttackRituals) - most enemies never touch towers at all. Sapper sets an
-    // effectively unlimited RitualDetectionRange so this fires the instant it spawns, regardless of
-    // distance; other future CanAttackRituals enemies can use a short range for a wall-style "attack
-    // one if it happens to be nearby" interrupt instead. Runs first each tick, ahead of the player
-    // leash - towers outrank the player for anything that can attack them, unlike the wall/objective
-    // cases below, which the player still always interrupts.
+    // effectively unlimited RitualDetectionRange (and RitualsOutrankPlayer) so this fires the
+    // instant it spawns and outranks the player entirely; a short-range, RitualsOutrankPlayer=false
+    // enemy instead only attacks a tower opportunistically, and the player can interrupt it at any
+    // time via UpdatePlayerLeash's own matching check.
     private void UpdateRitualEngagement()
     {
         if (!CanAttackRituals)
@@ -392,7 +394,8 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
-        if (_movementMode == MovementMode.AttackingWall || _movementMode == MovementMode.AttackingRitual)
+        bool blockedByPlayer = !RitualsOutrankPlayer && _movementMode == MovementMode.ChasingPlayer;
+        if (blockedByPlayer || _movementMode == MovementMode.AttackingWall || _movementMode == MovementMode.AttackingRitual)
         {
             return;
         }
@@ -454,7 +457,7 @@ public partial class WalkingEnemy : Enemy
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                _targetRitual.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+                DealDamage(_targetRitual, _targetRitual.GlobalPosition);
             }
 
             return;
@@ -487,7 +490,7 @@ public partial class WalkingEnemy : Enemy
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                Sentinel.Local.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+                DealDamage(Sentinel.Local, Sentinel.Local.GlobalPosition);
             }
 
             return;
@@ -500,6 +503,23 @@ public partial class WalkingEnemy : Enemy
         }
 
         Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
+    }
+
+    // Always uses a real traveling projectile when ProjectileScene is set - no instant-hit
+    // fallback for a ranged enemy, regardless of target type. Only enemies with no ProjectileScene
+    // (Grunt, Sapper) keep the instant-hit path.
+    private void DealDamage(IDamageable target, Vector3 targetPosition)
+    {
+        if (ProjectileScene != null)
+        {
+            EnemyProjectile projectile = ProjectileScene.Instantiate<EnemyProjectile>();
+            GetTree().CurrentScene.AddChild(projectile);
+            projectile.GlobalPosition = CenterMass;
+            projectile.Initialize(targetPosition, AttackDamage);
+            return;
+        }
+
+        target.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
     }
 
     private void Stop(double delta)

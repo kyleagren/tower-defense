@@ -1,0 +1,38 @@
+{
+  "waves": [
+    {
+      "steps": [
+        {
+          "spawn": [
+            { "lane": "LaneA", "enemy": "Grunt", "count": 12 },
+            { "lane": "LaneA", "enemy": "Sapper", "count": 5 },
+            { "lane": "LaneA", "enemy": "Grunt", "count": 12 },
+            { "lane": "LaneB", "enemy": "Grunt", "count": 12 },
+            { "lane": "LaneB", "enemy": "Sapper", "count": 5 },
+            { "lane": "LaneB", "enemy": "Grunt", "count": 12 }
+          ]
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "spawn": [
+            { "lane": "LaneA", "enemy": "Grunt", "count": 30 },
+            { "lane": "LaneB", "enemy": "Grunt", "count": 30 }
+          ]
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "spawn": [
+            { "lane": "LaneA", "enemy": "Grunt", "count": 35 },
+            { "lane": "LaneB", "enemy": "Grunt", "count": 35 }
+          ]
+        }
+      ]
+    }
+  ]
+}

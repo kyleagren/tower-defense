@@ -1,14 +1,18 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 public partial class WaveController : Node
 {
-    [Export] public Godot.Collections.Array<WaveDefinition> Waves { get; private set; } = new();
+    [Export] public string WaveFilePath = "res://assets/waves/level_01.json";
     [Export] public float SpawnInterval = 0.3f;
     [Export] public float EnemyCheckInterval = 0.5f;
 
+    private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
+    private List<Wave> _waves = new();
     private Dictionary<string, EnemySpawner> _spawnersById;
     private int _nextWaveIndex;
     private GamePhase _currentPhase = GamePhase.Planning;
@@ -16,6 +20,8 @@ public partial class WaveController : Node
 
     public override void _Ready()
     {
+        LoadWaves();
+
         _spawnersById = new Dictionary<string, EnemySpawner>();
 
         foreach (Node node in GetTree().GetNodesInGroup(Groups.EnemySpawners))
@@ -34,6 +40,20 @@ public partial class WaveController : Node
     public override void _ExitTree()
     {
         EventBus.Instance.GameEnded -= OnGameEnded;
+    }
+
+    private void LoadWaves()
+    {
+        using FileAccess file = FileAccess.Open(WaveFilePath, FileAccess.ModeFlags.Read);
+        if (file == null)
+        {
+            GD.PushError($"WaveController: failed to open wave file \"{WaveFilePath}\".");
+            return;
+        }
+
+        string json = file.GetAsText();
+        WaveFile waveFile = JsonSerializer.Deserialize<WaveFile>(json, _jsonOptions);
+        _waves = waveFile.Waves;
     }
 
     // A single CallDeferred only guarantees running after this node's own _Ready - it doesn't
@@ -73,43 +93,37 @@ public partial class WaveController : Node
 
     public void StartNextWave()
     {
-        if (_currentPhase != GamePhase.Build || _nextWaveIndex >= Waves.Count)
+        if (_currentPhase != GamePhase.Build || _nextWaveIndex >= _waves.Count)
         {
             return;
         }
 
-        WaveDefinition wave = Waves[_nextWaveIndex];
+        Wave wave = _waves[_nextWaveIndex];
         _nextWaveIndex++;
 
         _ = RunWave(wave);
     }
 
-    private async Task RunWave(WaveDefinition wave)
+    private async Task RunWave(Wave wave)
     {
         _currentPhase = GamePhase.Combat;
         EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Combat);
 
-        Dictionary<string, List<WaveSpawnEntry>> entriesBySpawner = new Dictionary<string, List<WaveSpawnEntry>>();
-
-        foreach (WaveSpawnEntry entry in wave.Entries)
+        foreach (WaveStep step in wave.Steps)
         {
-            if (!entriesBySpawner.TryGetValue(entry.SpawnerId, out List<WaveSpawnEntry> entries))
+            if (_matchOver)
             {
-                entries = new List<WaveSpawnEntry>();
-                entriesBySpawner[entry.SpawnerId] = entries;
+                return;
             }
 
-            entries.Add(entry);
+            if (step.Wait.HasValue)
+            {
+                await ToSignal(GetTree().CreateTimer(step.Wait.Value), "timeout");
+                continue;
+            }
+
+            await RunSpawnStep(step.Spawn);
         }
-
-        List<Task> spawnerTasks = new List<Task>();
-
-        foreach (KeyValuePair<string, List<WaveSpawnEntry>> pair in entriesBySpawner)
-        {
-            spawnerTasks.Add(RunSpawnerQueue(pair.Key, pair.Value, wave.RandomizeSpawnOrder));
-        }
-
-        await Task.WhenAll(spawnerTasks);
 
         while (!_matchOver && EnemyRegistry.Active.Count > 0)
         {
@@ -121,7 +135,7 @@ public partial class WaveController : Node
             return;
         }
 
-        bool isFinalWave = _nextWaveIndex >= Waves.Count;
+        bool isFinalWave = _nextWaveIndex >= _waves.Count;
         _currentPhase = isFinalWave ? GamePhase.PostGame : GamePhase.Build;
         EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)_currentPhase);
 
@@ -131,7 +145,23 @@ public partial class WaveController : Node
         }
     }
 
-    private async Task RunSpawnerQueue(string spawnerId, List<WaveSpawnEntry> entries, bool randomizeOrder)
+    // Each lane's groups within a step still trickle out on SpawnInterval (so a burst doesn't spawn
+    // as one stacked pile) and different lanes still run in parallel - but the whole step is awaited
+    // before the next one (e.g. a wait) begins, so a "wait 10" after a burst means 10 seconds after
+    // everyone in that burst has actually finished spawning.
+    private async Task RunSpawnStep(List<WaveSpawnGroup> groups)
+    {
+        List<Task> spawnerTasks = new List<Task>();
+
+        foreach (IGrouping<string, WaveSpawnGroup> laneGroups in groups.GroupBy(group => group.Lane))
+        {
+            spawnerTasks.Add(RunSpawnerQueue(laneGroups.Key, laneGroups.ToList()));
+        }
+
+        await Task.WhenAll(spawnerTasks);
+    }
+
+    private async Task RunSpawnerQueue(string spawnerId, List<WaveSpawnGroup> groups)
     {
         if (!_spawnersById.TryGetValue(spawnerId, out EnemySpawner spawner))
         {
@@ -141,20 +171,12 @@ public partial class WaveController : Node
 
         List<PackedScene> spawnQueue = new List<PackedScene>();
 
-        foreach (WaveSpawnEntry entry in entries)
+        foreach (WaveSpawnGroup group in groups)
         {
-            for (int i = 0; i < entry.Count; i++)
+            PackedScene scene = EnemyCatalog.Get(group.Enemy);
+            for (int i = 0; i < group.Count; i++)
             {
-                spawnQueue.Add(entry.EnemyScene);
-            }
-        }
-
-        if (randomizeOrder)
-        {
-            for (int i = spawnQueue.Count - 1; i > 0; i--)
-            {
-                int j = GD.RandRange(0, i);
-                (spawnQueue[i], spawnQueue[j]) = (spawnQueue[j], spawnQueue[i]);
+                spawnQueue.Add(scene);
             }
         }
 
