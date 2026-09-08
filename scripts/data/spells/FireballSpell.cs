@@ -10,7 +10,7 @@ public partial class FireballSpell : Spell
     [Export] public float BaseSpeed { get; private set; } = 20f;
     [Export] public ProjectileHitEffect HitEffect { get; private set; }
 
-    [Export] public override float BaseFireDamage { get; protected set; } = 100f;
+    [Export] public override float BaseFireDamage { get; protected set; } = 50f;
     [Export] public override float BaseCastTime { get; protected set; } = 1.5f;
     [Export] public override float BaseRagdollForce { get; protected set; } = 20f;
     [Export] public override int BaseManaCost { get; protected set; } = 10;

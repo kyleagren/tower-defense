@@ -19,7 +19,11 @@ public abstract partial class Armor : Item
         BaseStats = new Godot.Collections.Array<RolledBaseStat>();
         foreach (StatId stat in grantedStats)
         {
-            BaseStats.Add(new RolledBaseStat { Stat = stat, Value = perStat });
+            // Shield is worth half as much per point as Armor - a pure Shield item gets half its
+            // slot's total, and a Hybrid item's Shield share is halved a second time on top of the
+            // even split it already takes with Armor (total/2 -> total/4).
+            float value = stat == StatId.SentinelShield ? perStat * 0.5f : perStat;
+            BaseStats.Add(new RolledBaseStat { Stat = stat, Value = value });
         }
     }
 

@@ -246,6 +246,11 @@ public partial class ItemNameplateController : CanvasLayer
     {
         foreach ((WorldItem item, Rect2 rect) in _currentRects)
         {
+            if (!IsInstanceValid(item))
+            {
+                continue;
+            }
+
             if (rect.HasPoint(screenPoint))
             {
                 return item;
