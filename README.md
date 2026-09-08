@@ -250,6 +250,8 @@ Difficulty tiers differentiate via composition and timing, not flat stat multipl
 
 ## 15. Open Questions
 
+- **Item nameplates cluster unreadably at turret chokepoints — no solution decided yet.** `ItemNameplateController` (Section 10) deliberately dropped overlap avoidance between nameplates, since an earlier distance-sorted version made labels visibly reshuffle position as the player approached a cluster, which made aiming worse than the overlap itself. That trade was fine for scattered drops, but turret placement concentrates a lot of enemy deaths into the same few chokepoints, so a real play session sees many items dropping on nearly the same spot — their nameplates end up fully stacked, unreadable, and hard to individually target. Needs a real fix, not yet designed: bringing back some form of separation without reintroducing the aim-jitter problem the removal was fixing (a stable, identity-based ordering rather than continuously-recomputed distance-based one is the likely direction, but untried).
+
 - Sniper vs. Assassin differentiation — both will ship, exact difference not yet designed.
 - Full scope of the elemental tag system — more elements beyond Fire/Water/Cold/Lightning/Wind, and how conversion runes work.
 - Damage roll ranges (PoE-style min/max per hit) vs. flat deterministic damage — undecided. Current multiplicative stacking (chain falloff, remaining-chain bonus, rune "more" multipliers) already makes exact breakpoints hard to hand-calculate, which weakens the "ranges hurt planning" argument against them.
