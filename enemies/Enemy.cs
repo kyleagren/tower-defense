@@ -9,7 +9,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public float CenterMassHeight = 1f;
     [Export] public int ManaReward = 1;
     [Export] public int GoldReward = 1;
-    [Export] public float DropChance = 0.3f;
+    [Export] public float DropChance = 0.15f;
     [Export] public int LootRolls = 1;
     [Export] public HealthBar3D HealthBar { get; private set; }
     [Export] public PackedScene FloatingTextScene { get; private set; }

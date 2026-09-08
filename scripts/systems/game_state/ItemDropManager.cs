@@ -1,24 +1,39 @@
 using Godot;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-// Rolls a chance to drop items wherever an enemy dies. Mirrors EconomyManager's shape: a plain
-// Node subscribed to EventBus.EnemyKilled, doing its own thing independent of the reward payout.
-// How many rolls happen and how likely each one is comes from the enemy itself (LootRolls/
-// DropChance on Enemy.cs), the same way ManaReward/GoldReward already vary per enemy type - a
-// bigger enemy is just authored with a higher LootRolls, no changes needed here.
+// Rolls a chance to drop items wherever an enemy dies, same as before - but instead of spawning
+// each drop into the world immediately, accumulates them for the whole level and sprays them all
+// out of LootObjective's position at once during PostGame, ordered common-to-legendary. LootObjective
+// itself is removed the moment the spray starts - the shield you spent the level defending becomes
+// the reward. A failed level never fires GameEnded(true), so undelivered loot in the queue just
+// never spawns - the existing "nothing to loot after a loss" rule, now covering everything.
 public partial class ItemDropManager : Node
 {
     [Export] public PackedScene WorldItemScene { get; private set; }
+    [Export] public DefendableObjective LootObjective { get; private set; }
+    [Export] public float ChestSprayRadius = 5f;
+    [Export] public float SprayArcHeight = 3f;
+    [Export] public float SprayItemDuration = 1.2f;
+    [Export] public float SprayStaggerInterval = 0.15f;
+
+    private const float GoldenAngle = 2.399963f;
 
     private static readonly System.Random _random = new();
+
+    private readonly List<Item> _pendingLoot = new();
 
     public override void _Ready()
     {
         EventBus.Instance.EnemyKilled += OnEnemyKilled;
+        EventBus.Instance.GameEnded += OnGameEnded;
     }
 
     public override void _ExitTree()
     {
         EventBus.Instance.EnemyKilled -= OnEnemyKilled;
+        EventBus.Instance.GameEnded -= OnGameEnded;
     }
 
     // PoE-style: quantity (LootRolls) increases the number of independent drop-chance rolls per
@@ -30,27 +45,63 @@ public partial class ItemDropManager : Node
         {
             if (_random.NextDouble() < dropChance)
             {
-                SpawnDrop(position);
+                _pendingLoot.Add(LootGenerator.GenerateRandomDrop());
             }
         }
     }
 
-    private void SpawnDrop(Vector3 position)
+    private void OnGameEnded(bool victory)
     {
-        Item item = LootGenerator.GenerateRandomDrop();
+        if (victory && _pendingLoot.Count > 0)
+        {
+            _ = SprayLoot();
+        }
+    }
 
+    private async Task SprayLoot()
+    {
+        List<Item> sorted = _pendingLoot.OrderBy(item => (int)item.Rarity).ToList();
+        _pendingLoot.Clear();
+
+        Vector3 chestPosition = LootObjective?.GlobalPosition ?? Vector3.Zero;
+        LootObjective?.QueueFree();
+
+        for (int i = 0; i < sorted.Count; i++)
+        {
+            LaunchItem(sorted[i], chestPosition, i, sorted.Count);
+            await ToSignal(GetTree().CreateTimer(SprayStaggerInterval), "timeout");
+        }
+    }
+
+    private void LaunchItem(Item item, Vector3 chestPosition, int index, int total)
+    {
         WorldItem worldItem = WorldItemScene.Instantiate<WorldItem>();
         worldItem.Initialize(item);
         GetTree().CurrentScene.AddChild(worldItem);
-        worldItem.GlobalPosition = position + RandomGroundOffset();
+        worldItem.GlobalPosition = chestPosition;
+
+        Vector3 landingPoint = SpiralLandingPoint(chestPosition, index, total);
+        float arcHeight = SprayArcHeight;
+
+        Tween tween = CreateTween();
+        tween.TweenMethod(
+            Callable.From((float t) => worldItem.GlobalPosition = ArcLerp(chestPosition, landingPoint, t, arcHeight)),
+            0f, 1f, SprayItemDuration);
     }
 
-    // Nudges each drop a bit so multiple items from one kill don't land exactly on top of each
-    // other and become impossible to pick out individually.
-    private Vector3 RandomGroundOffset()
+    private static Vector3 ArcLerp(Vector3 from, Vector3 to, float t, float arcHeight)
     {
-        float x = (float)(_random.NextDouble() * 0.6 - 0.3);
-        float z = (float)(_random.NextDouble() * 0.6 - 0.3);
-        return new Vector3(x, 0f, z);
+        Vector3 point = from.Lerp(to, t);
+        point.Y += 4f * arcHeight * t * (1f - t);
+        return point;
+    }
+
+    // Vogel's method / golden-angle spiral - spreads N points across a circle with even density
+    // and no overlap, so items don't need physics collision to separate themselves.
+    private Vector3 SpiralLandingPoint(Vector3 chestPosition, int index, int total)
+    {
+        float radius = ChestSprayRadius * Mathf.Sqrt((index + 1f) / total);
+        float angle = index * GoldenAngle;
+        return chestPosition + new Vector3(radius * Mathf.Cos(angle), 0f, radius * Mathf.Sin(angle));
     }
 }

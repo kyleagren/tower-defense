@@ -19,17 +19,17 @@ public abstract partial class Item : Resource
 
     // The vendor's buy/sell/buyback price, for now just the number of mods rolled - simple stand-in
     // until pricing needs to account for rarity, tier, or anything else.
-    public int SaleValue => Affixes.Count;
+    public virtual int SaleValue => Affixes.Count;
 
     // No hand-authored flavor names yet - just rarity + slot, matching the "name corresponds
     // to slot + rarity for now" call. The slot itself comes from the concrete type, not a
     // separate tag that would have to be kept in sync with it.
-    public string Name => $"{Rarity} {SpacedTypeName()}";
+    public virtual string Name => $"{Rarity} {SpacedTypeName()}";
 
     // Splits a PascalCase concrete class name into words ("SwordAndShield" -> "Sword And Shield")
     // for player-facing display - matters for multi-word Item subclasses; single-word ones
     // (Helmet, Gun, ...) pass through unchanged.
-    private string SpacedTypeName()
+    protected string SpacedTypeName()
     {
         return Regex.Replace(GetType().Name, "(?<!^)([A-Z])", " $1");
     }

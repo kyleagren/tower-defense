@@ -10,18 +10,23 @@ public static class LootGenerator
     // same Ring class, so only one appears here to avoid double-weighting rings against every
     // other item type. Moved here from ItemDropManager so vendor stock draws from the identical
     // pool instead of a second hand-kept copy.
-    private static readonly EquipmentSlot[] _droppableSlots =
+    // Weighted rather than flat - Weapon is worth double any other single slot since only one
+    // Sentinel (or fewer, character-restricted) can actually use a given dropped weapon, versus
+    // armor/accessories which fit any Sentinel. Currency sits in this same pool at one slot's own
+    // weight, so "what kind of thing dropped" is one roll, not two.
+    private static readonly (EquipmentSlot Slot, int Weight)[] _slotWeights =
     {
-        EquipmentSlot.Weapon,
-        EquipmentSlot.Helmet,
-        EquipmentSlot.Chest,
-        EquipmentSlot.Legplates,
-        EquipmentSlot.Boots,
-        EquipmentSlot.Gloves,
-        EquipmentSlot.Belt,
-        EquipmentSlot.Amulet,
-        EquipmentSlot.LeftRing,
-        EquipmentSlot.Relic
+        (EquipmentSlot.Weapon, 20),
+        (EquipmentSlot.Helmet, 10),
+        (EquipmentSlot.Chest, 10),
+        (EquipmentSlot.Legplates, 10),
+        (EquipmentSlot.Boots, 10),
+        (EquipmentSlot.Gloves, 10),
+        (EquipmentSlot.Belt, 10),
+        (EquipmentSlot.Amulet, 10),
+        (EquipmentSlot.LeftRing, 10),
+        (EquipmentSlot.Relic, 10),
+        (EquipmentSlot.Currency, 10)
     };
 
     private static readonly CharacterId[] _sentinels =
@@ -90,13 +95,42 @@ public static class LootGenerator
     // stock generation so both draw from the exact same distribution.
     public static Item GenerateRandomDrop()
     {
-        EquipmentSlot slot = _droppableSlots[_random.Next(_droppableSlots.Length)];
+        EquipmentSlot slot = WeightedPick(_slotWeights, entry => entry.Weight).Slot;
+
+        if (slot == EquipmentSlot.Currency)
+        {
+            return GenerateCurrencyDrop();
+        }
+
         Rarity rarity = RollRarity();
         CharacterId equippableCharacter = slot == EquipmentSlot.Weapon
-            ? _sentinels[_random.Next(_sentinels.Length)]
+            ? RollWeaponCharacter()
             : CharacterId.AnySentinel;
 
         return Generate(slot, rarity, equippableCharacter);
+    }
+
+    // Half the time a dropped weapon favors whichever Sentinel is currently played - immediately
+    // usable loot lands more often than a flat 1-in-4 chance would give, without ever guaranteeing it.
+    private static CharacterId RollWeaponCharacter()
+    {
+        CharacterId current = PlayerSentinels.Get(PlayerSentinels.Local);
+
+        if (_random.NextDouble() < 0.5)
+        {
+            return current;
+        }
+
+        CharacterId[] others = _sentinels.Where(id => id != current).ToArray();
+        return others[_random.Next(others.Length)];
+    }
+
+    // No affixes, no tier/rarity roll - Currency skips the gear pipeline entirely.
+    private static Item GenerateCurrencyDrop()
+    {
+        Currency currency = new GenericCurrency();
+        currency.Initialize(Rarity.Common, DefaultItemIcons.Get(currency), CharacterId.AnySentinel, new Godot.Collections.Array<RolledAffix>());
+        return currency;
     }
 
     private static Rarity RollRarity()

@@ -16,7 +16,8 @@ public static class DefaultItemIcons
         [typeof(Belt)] = "res://assets/thumbnails/belt.png",
         [typeof(Amulet)] = "res://assets/thumbnails/amulet.png",
         [typeof(Ring)] = "res://assets/thumbnails/ring.png",
-        [typeof(Relic)] = "res://assets/thumbnails/relic.png"
+        [typeof(Relic)] = "res://assets/thumbnails/relic.png",
+        [typeof(GenericCurrency)] = "res://assets/thumbnails/generic_currency.png"
     };
 
     public static Texture2D Get(Item item)

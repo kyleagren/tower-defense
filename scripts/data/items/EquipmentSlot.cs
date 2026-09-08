@@ -10,5 +10,6 @@ public enum EquipmentSlot
     Amulet,
     LeftRing,
     RightRing,
-    Relic
+    Relic,
+    Currency
 }

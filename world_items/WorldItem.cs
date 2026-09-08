@@ -9,6 +9,8 @@ public partial class WorldItem : StaticBody3D
 
     public Item Item { get; private set; }
 
+    private static readonly Color _currencyGoldColor = new Color(0.83f, 0.69f, 0.22f);
+
     public override void _Ready()
     {
         WorldItemRegistry.Register(this);
@@ -26,8 +28,15 @@ public partial class WorldItem : StaticBody3D
     {
         Item = item;
 
-        Color color = RarityColors.Get(item.Rarity);
-        VisualMesh.MaterialOverride = new StandardMaterial3D
+        VisualMesh.MaterialOverride = item is Currency
+            ? new StandardMaterial3D { AlbedoColor = _currencyGoldColor, Metallic = 1f, Roughness = 0.3f }
+            : BuildRarityMaterial(item.Rarity);
+    }
+
+    private static StandardMaterial3D BuildRarityMaterial(Rarity rarity)
+    {
+        Color color = RarityColors.Get(rarity);
+        return new StandardMaterial3D
         {
             AlbedoColor = color,
             EmissionEnabled = true,

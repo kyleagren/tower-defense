@@ -13,12 +13,12 @@
 [ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://scripts/dev/DebugToggle.cs" id="15_debugtoggle"]
 [ext_resource type="Script" uid="uid://nsgeakgljfd8" path="res://scripts/systems/waves/RoutePreviewEffect.cs" id="16_routepreview"]
 [ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="17_playerhealthorb"]
-[ext_resource type="PackedScene" path="res://ui/PlayerShieldBar.tscn" id="22_playershieldbar"]
 [ext_resource type="PackedScene" path="res://ui/inventory/InventoryPanel.tscn" id="18_inventorypanel"]
 [ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="19_charactersheetpanel"]
 [ext_resource type="Script" uid="uid://briq33cnkh3pc" path="res://scripts/systems/game_state/ItemDropManager.cs" id="19_itemdropmanager"]
 [ext_resource type="PackedScene" path="res://world_items/WorldItem.tscn" id="20_worlditem"]
-[ext_resource type="Script" path="res://ui/ItemNameplateController.cs" id="21_itemnameplate"]
+[ext_resource type="Script" uid="uid://dr8emxep4ujsn" path="res://ui/ItemNameplateController.cs" id="21_itemnameplate"]
+[ext_resource type="PackedScene" path="res://ui/PlayerShieldBar.tscn" id="22_playershieldbar"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
@@ -163,7 +163,7 @@ mesh = SubResource("BoxMesh_fence")
 shape = SubResource("BoxShape3D_fence")
 
 [node name="Objective" type="Area3D" parent="." unique_id=281504465 node_paths=PackedStringArray("HealthBar")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 9.856629)
 collision_mask = 2
 script = ExtResource("6_objective")
 HealthBar = NodePath("HealthBar3D")
@@ -204,18 +204,18 @@ Target = NodePath("../../../Objective")
 
 [node name="WaveController" type="Node" parent="." unique_id=196385774]
 script = ExtResource("2_wavecontroller")
-WaveFilePath = "res://assets/waves/level_01.json"
 
 [node name="EconomyManager" type="Node" parent="." unique_id=113653841]
 script = ExtResource("14_economymanager")
 
-[node name="ItemNameplateController" type="CanvasLayer" parent="."]
+[node name="ItemNameplateController" type="CanvasLayer" parent="." unique_id=1900512144]
 layer = -1
 script = ExtResource("21_itemnameplate")
 
-[node name="ItemDropManager" type="Node" parent="." unique_id=1293764264]
+[node name="ItemDropManager" type="Node" parent="." unique_id=1293764264 node_paths=PackedStringArray("LootObjective")]
 script = ExtResource("19_itemdropmanager")
 WorldItemScene = ExtResource("20_worlditem")
+LootObjective = NodePath("../Objective")
 
 [node name="DebugToggle" type="Node" parent="." unique_id=871018895]
 script = ExtResource("15_debugtoggle")
@@ -242,7 +242,7 @@ script = ExtResource("10_sentinelspawner")
 
 [node name="PlayerHealthOrb" parent="." unique_id=505215148 instance=ExtResource("17_playerhealthorb")]
 
-[node name="PlayerShieldBar" parent="." instance=ExtResource("22_playershieldbar")]
+[node name="PlayerShieldBar" parent="." unique_id=173243060 instance=ExtResource("22_playershieldbar")]
 
 [node name="Crosshair" parent="." unique_id=1213473900 instance=ExtResource("13_crosshair")]
 
@@ -250,4 +250,5 @@ script = ExtResource("10_sentinelspawner")
 anchors_preset = -1
 PhaseIndicator = NodePath("../PhaseIndicator")
 
-[node name="CharacterSheetPanel" parent="." instance=ExtResource("19_charactersheetpanel")]
+[node name="CharacterSheetPanel" parent="." unique_id=1851524766 instance=ExtResource("19_charactersheetpanel")]
+anchors_preset = -1

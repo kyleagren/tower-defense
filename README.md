@@ -6,45 +6,6 @@ Current state of the design, plus just enough "why" to avoid re-litigating settl
 
 ---
 
-## ⚠ TEMP — Cleanup pass overview (delete this section once reviewed)
-
-A codebase-wide cleanup pass. **Compiles; not manually playtested yet.** Everything below is already reflected in the permanent sections — this is just a map of what moved, so the changes can be reviewed without re-reading the diff cold. Delete the whole section once you've been through it.
-
-**One real bug, fixed.** `CharacterSheetCache` was only ever invalidated by `InventoryPanel.Refresh`, and that only ran when the panel was _visible_. Picking an item up in the world (which auto-equips into an empty slot) therefore applied no stats at all until you opened and closed the inventory — Rituals dutifully re-resolved against a stale sheet. Invalidation now hangs off `EventBus.InventoryChanged`, wired once in `SaveManager._Ready`, which every mutating path already fires.
-
-**Perf — things running every frame that shouldn't have been.**
-
-| What                      | Was                                                                                            | Now                                                                     |
-| ------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `HealthBar3D`             | `_Process` per bar doing `GetViewport().GetCamera3D()` + `LookAt` — 50-70×/frame during a wave | Billboards via `StandardMaterial3D.BillboardMode`; no `_Process` at all |
-| `Enemy` status overlay    | Reassigned `MaterialOverlay` on every mesh every physics tick, almost always to the same value | Only writes on an actual transition                                     |
-| `Ritual._Process`         | Re-walked `PlayerSentinels → SaveManager → dictionary` every frame per ritual                  | Holds the owner's sheet; dropped on `InventoryChanged`                  |
-| `ItemInteractor`          | Rebuilt the item's full affix tooltip string every physics tick while looked at                | Built once per target change                                            |
-| `SaveManager`             | Full synchronous `ResourceSaver.Save` on every inventory click                                 | Debounced to one write/second, flushed on `_ExitTree`                   |
-| `InventoryPanel` grid     | Freed and re-instantiated all 40 buttons on every click                                        | Buttons persist; only their contents update                             |
-| `RitualPlacer` wall check | New `BoxShape3D` + query params per segment per frame                                          | Built once, reused                                                      |
-| Chain jumps               | Two `HashSet` allocations per jump to merge exclusion lists                                    | `EnemyTargeting` takes two sets directly                                |
-
-**Duplication removed.**
-
-- Ice-wall segment geometry (the lerp, the box size, the vertical offset) existed in five places and now lives on `IceWall` as `SegmentPosition` / `SegmentBoxSize` / `SegmentBoxCenter`. This was the one with real bite — changing segment spacing needed five matching edits.
-- New `LookInteractor` base — `RitualInteractor` and `ItemInteractor` were the same forty lines twice. Non-generic on purpose: Godot's C# source generators skip generic script classes, so `[Export]`s on a generic base would silently stop registering and break the scenes' wiring.
-- New `ControlLayout.CenterOnAnchor` (was copy-pasted in `BuildMenu` and `InventoryPanel`), `Groups` (three copies of `"enemy_spawners"`), and `ActiveRegistry<T>` with `global using` aliases so `EnemyRegistry` / `IceWallSegmentRegistry` call sites read the same as before.
-- `InventoryPanel`'s eleven equipment slots were declared twice (click handlers, then visual refresh); now one table.
-- `WalkingEnemy`'s two wall-segment searches merged into one.
-
-**Correctness / hygiene.** `EnemyTargeting` tie-break `<=` → `<` (target choice no longer depends on spawn order); `PlayerSentinels.Get` no longer throws for an unsynced remote player; `WaveController` stops spawning once the match is lost; both registries clear on scene reload; `ChainResolver` takes a `Node` instead of casting `Engine.GetMainLoop()`; `Enemy` uses `FindChildren`; element colors unified onto `DamageTypeColors`; `Ritual.tscn` no longer bakes in Fireball; `Affix.RestrictedCharacter` is now actually enforced.
-
-**Needs a manual look when you're back.**
-
-- **The health bar** is the change most likely to be visibly wrong — billboarding moved to the GPU and the fill geometry is built from `QuadMesh.CenterOffset` rather than node offsets. Should be identical; worth one glance at an enemy taking damage.
-- Ice wall placement and casting, since five call sites now share one geometry helper.
-- Inventory drag/equip/drop, since the panel's internals were reworked.
-
-**Deliberately left alone** (all recorded permanently, with reasoning, so they don't get re-derived): six deferred cleanups in §15; the two gaps blocking limited-quantity runes in §5; the seven `StatId`s that roll on items but are read by nothing in §10.
-
----
-
 ## 1. High Concept
 
 3D, low-poly stylized tower defense combining:
@@ -148,7 +109,7 @@ Single-player is built first. Invite-a-friend co-op is a hard requirement of the
 ## 8. Economy
 
 - Two currencies: match-only **mana** (spent on towers/tokens, accrues passively over time, also spends to skip the death-respawn wait) and persistent **gold** (earned per mission, spent on meta-progression and at a spell-table crafting station — put an item in, randomly add/remove a mod).
-- Income tower: fires a "spirit" that an enemy absorbs; the player must personally kill that enemy in time to cash in bonus income (the carrier is immune to tower damage). Self-limiting via player attention. **One spirit in flight at a time.**
+- Income tower: fires a "spirit" that an enemy absorbs; the player must personally kill that enemy in time to cash in bonus income (the carrier is immune to tower damage). Self-limiting via player attention. **One spirit in flight at a time.** **Also doubles as the loot-goblin for the end-of-level loot direction (Section 10/15, tentative)** — since killing the carrier is already a deliberate, personally-committed action, seeding some of the level's accumulated loot onto it gives a real-time loot moment for free, without asking for any separate player attention.
 - Co-op: capacity and currency both shared during a match; leftover currency splits evenly at the end.
 
 ## 9. Enemy Design
@@ -198,6 +159,7 @@ Difficulty tiers differentiate via composition and timing, not flat stat multipl
     - **One real bug this surfaced, since fixed:** `WorldItem.PickUp()` calls `QueueFree()`, which doesn't actually remove the node from the tree (or `WorldItemRegistry`) until later that same frame — if the crosshair was still resting on the same spot the instant an item was picked up, `ItemNameplateController.GetItemAt` could hand back an already-disposed `WorldItem`, and the next line to touch it (`Target.GlobalPosition`) threw `ObjectDisposedException`. Fixed with an `IsInstanceValid` skip in `GetItemAt` — the same defensive pattern already used elsewhere in the codebase for a cached reference that can go stale between frames.
 - **Full-inventory displacement is handled (done).** A displaced item that can't fit in a full `Inventory` during in-panel rearranging drops into the world at the player's feet rather than being lost, mirroring `WorldItem.PickUp`'s own "leave it in the world until there's room" behavior for the same situation.
 - Not yet built: the spell-table crafting station.
+- **Loot timing/display direction (tentative, current direction — not a locked decision, revisit if it doesn't feel good in play).** Most loot doesn't drop in real time during a Wave at all — common drops accumulate invisibly through the level and pay out as a single loot-explosion moment at PostGame, once every wave is cleared. This sidesteps several problems at once (Section 15): the mid-combat "risk it or lose it" tension around every drop, the ground-display/clutter problem for dense clusters, and the future Build-phase-timer squeeze on evaluating finds. The cost is losing the moment-to-moment "glance down, ooh" real-time ARPG texture during combat. Two exceptions still drop for real, on the spot, mid-wave: bigger/elite enemies, and whichever enemy is currently carrying the Income tower's "spirit" (Section 8) — chasing that carrier down is already a deliberate, personally-committed action, so it does double duty as a loot-goblin. Both exceptions keep full lose-it-on-death stakes; the end-of-level pile doesn't, since a loss already skips PostGame entirely (Section 2). The 40-slot inventory cap becomes a real triage decision at the payout moment (what do I actually have room to keep) rather than a slow background nuisance throughout the run.
 
 ## 11. Multiplayer (Co-op)
 
@@ -250,7 +212,9 @@ Difficulty tiers differentiate via composition and timing, not flat stat multipl
 
 ## 15. Open Questions
 
-- **Item nameplates cluster unreadably at turret chokepoints — no solution decided yet.** `ItemNameplateController` (Section 10) deliberately dropped overlap avoidance between nameplates, since an earlier distance-sorted version made labels visibly reshuffle position as the player approached a cluster, which made aiming worse than the overlap itself. That trade was fine for scattered drops, but turret placement concentrates a lot of enemy deaths into the same few chokepoints, so a real play session sees many items dropping on nearly the same spot — their nameplates end up fully stacked, unreadable, and hard to individually target. Needs a real fix, not yet designed: bringing back some form of separation without reintroducing the aim-jitter problem the removal was fixing (a stable, identity-based ordering rather than continuously-recomputed distance-based one is the likely direction, but untried).
+- **Item nameplates cluster unreadably at turret chokepoints — no solution decided yet.** `ItemNameplateController` (Section 10) deliberately dropped overlap avoidance between nameplates, since an earlier distance-sorted version made labels visibly reshuffle position as the player approached a cluster, which made aiming worse than the overlap itself. That trade was fine for scattered drops, but turret placement concentrates a lot of enemy deaths into the same few chokepoints, so a real play session sees many items dropping on nearly the same spot — their nameplates end up fully stacked, unreadable, and hard to individually target. Needs a real fix, not yet designed: bringing back some form of separation without reintroducing the aim-jitter problem the removal was fixing (a stable, identity-based ordering rather than continuously-recomputed distance-based one is the likely direction, but untried). **Partially defused by the loot-timing direction (Section 10)** — if most drops stop rendering mid-combat at all, the only remaining real-time clutter is elite/goblin drops, a much smaller and sparser set than every kill's leavings. Still worth a real fix eventually, just lower urgency.
+
+- **PoE-style currency conversion for high-difficulty loot pressure (floated in conversation, not designed).** As difficulty scales, consider dropping fewer raw gear items on harder content and converting some of what would've dropped into stackable crafting currency instead (a Transmutation/Augmentation/Chaos-equivalent) — an SSF player buried in duplicate/useless gear could spend it to target-craft toward something specific rather than only ever getting what the RNG table hands them directly. Open problem: drops are currently rolled per-kill (`ItemDropManager`/`LootGenerator`), which has no natural signal for "are we in harder content" — would need an ambient difficulty scalar (Section 2 already has the concept via difficulty _setting_) threaded down to the drop roll, not something inferred from the enemy being killed.
 
 - Sniper vs. Assassin differentiation — both will ship, exact difference not yet designed.
 - Full scope of the elemental tag system — more elements beyond Fire/Water/Cold/Lightning/Wind, and how conversion runes work.
