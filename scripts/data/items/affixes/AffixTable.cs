@@ -394,12 +394,12 @@ public static class AffixTable
                 new PercentTierRange(5, 10, 12)
             ]
         },
-        [StatId.SentinelBaseAttackSpeed] = new Affix
+        [StatId.SentinelIncreasedAttackSpeed] = new Affix
         {
             Name = "Swiftness",
-            DescriptionTemplate = "+{0}% to Base Attack Speed",
+            DescriptionTemplate = "+{0}% Increased Attack Speed",
             AffixType = AffixType.Prefix,
-            Stat = StatId.SentinelBaseAttackSpeed,
+            Stat = StatId.SentinelIncreasedAttackSpeed,
             AllowedSlots = WeaponSlots,
             Tags = [AffixTag.Speed],
             TierTable =

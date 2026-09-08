@@ -23,7 +23,7 @@ public enum StatId
     SentinelHealthRegen,
     SentinelCritChance,
     SentinelBaseCritChance,
-    SentinelBaseAttackSpeed,
+    SentinelIncreasedAttackSpeed,
     SentinelCritDamage,
     SentinelMoreCritDamageBonus,
     SentinelCooldownRecoveryRate,

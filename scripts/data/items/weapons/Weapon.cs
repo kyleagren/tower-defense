@@ -25,5 +25,5 @@ public abstract partial class Weapon : Item
         1f + Affixes.Where(roll => roll.Stat == StatId.SentinelMoreCritDamageBonus).Sum(roll => roll.Value);
 
     public float ResolvedBaseAttackSpeed =>
-        BaseAttackSpeed * (1f + Affixes.Where(roll => roll.Stat == StatId.SentinelBaseAttackSpeed).Sum(roll => roll.Value));
+        BaseAttackSpeed * (1f + Affixes.Where(roll => roll.Stat == StatId.SentinelIncreasedAttackSpeed).Sum(roll => roll.Value));
 }

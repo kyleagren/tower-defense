@@ -53,7 +53,7 @@ public static class CharacterSheetCache
                 if (roll.Stat == StatId.SentinelArmor || roll.Stat == StatId.SentinelShield
                     || roll.Stat == StatId.SentinelArmorAndShield
                     || roll.Stat == StatId.SentinelBaseCritChance || roll.Stat == StatId.SentinelMoreCritDamageBonus
-                    || roll.Stat == StatId.SentinelBaseAttackSpeed)
+                    || roll.Stat == StatId.SentinelIncreasedAttackSpeed)
                 {
                     continue;
                 }
