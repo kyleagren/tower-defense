@@ -9,6 +9,11 @@ public abstract partial class Armor : Item
     // Chest/Legplates carry double the base total of the other three slots.
     protected virtual float SlotWeight => 1f;
 
+    // BaseType stands in for Rarity here, since color already conveys rarity everywhere an item
+    // shows up (ground material, slot tint) - this is the one piece of mechanical info that isn't
+    // otherwise visible at a glance.
+    public override string TypeLabel => $"{BaseType} {SpacedTypeName()}";
+
     public void RollBaseStats(Rarity rarity, System.Random random)
     {
         BaseType = ArmorBaseTypeTable.Random(random);

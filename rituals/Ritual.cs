@@ -182,6 +182,13 @@ public partial class Ritual : Node3D, IDamageable
                 _spellInstance.TryAttachRune(rune);
             }
         }
+
+        // Placeholder: colors the Ritual by its spell's dominant element instead of a flat scene
+        // default, reusing the same element->color mapping floating combat text and enemy status
+        // overlays already use.
+        Color elementColor = DamageTypeColors.Get(spell.BaseDamage.DominantElement);
+        _activeMaterial = new StandardMaterial3D { AlbedoColor = elementColor };
+        CoreMesh.MaterialOverride = _activeMaterial;
     }
 
     public override void _Process(double delta)

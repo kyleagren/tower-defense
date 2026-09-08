@@ -85,7 +85,7 @@ public static class LootGenerator
         RollAffixes(prefixPool, prefixCount, affixes);
         RollAffixes(suffixPool, suffixCount, affixes);
 
-        item.Initialize(rarity, DefaultItemIcons.Get(item), equippableCharacter, affixes);
+        item.Initialize(rarity, DefaultItemIcons.Get(item), equippableCharacter, affixes, NameGenerator.Generate(item));
 
         return item;
     }

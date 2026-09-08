@@ -14,6 +14,7 @@ public partial class ItemDropManager : Node
     [Export] public PackedScene WorldItemScene { get; private set; }
     [Export] public DefendableObjective LootObjective { get; private set; }
     [Export] public float ChestSprayRadius = 5f;
+    [Export] public float GroundHeight = 0f;
     [Export] public float SprayArcHeight = 3f;
     [Export] public float SprayItemDuration = 1.2f;
     [Export] public float SprayStaggerInterval = 0.15f;
@@ -97,11 +98,16 @@ public partial class ItemDropManager : Node
     }
 
     // Vogel's method / golden-angle spiral - spreads N points across a circle with even density
-    // and no overlap, so items don't need physics collision to separate themselves.
+    // and no overlap, so items don't need physics collision to separate themselves. Lands at
+    // GroundHeight rather than the chest's own Y - WorldItem's own mesh is already offset up by
+    // its radius internally (WorldItem.tscn), so GlobalPosition is meant to be the ground contact
+    // point, not the sphere's center.
     private Vector3 SpiralLandingPoint(Vector3 chestPosition, int index, int total)
     {
         float radius = ChestSprayRadius * Mathf.Sqrt((index + 1f) / total);
         float angle = index * GoldenAngle;
-        return chestPosition + new Vector3(radius * Mathf.Cos(angle), 0f, radius * Mathf.Sin(angle));
+        Vector3 groundPoint = chestPosition;
+        groundPoint.Y = GroundHeight;
+        return groundPoint + new Vector3(radius * Mathf.Cos(angle), 0f, radius * Mathf.Sin(angle));
     }
 }

@@ -6,6 +6,5 @@
 public abstract partial class Currency : Item
 {
     public override EquipmentSlot Slot => EquipmentSlot.Currency;
-    public override string Name => SpacedTypeName();
     public override int SaleValue => 1;
 }
