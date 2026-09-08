@@ -63,6 +63,11 @@ public static class LootGenerator
             armor.RollBaseStats(rarity, _random);
         }
 
+        if (item is Weapon weapon)
+        {
+            weapon.RollBaseStats(rarity);
+        }
+
         int bestTier = _bestTierByRarity[rarity];
 
         List<AffixTierEntry> prefixPool = AffixTable.GetTierEntries(item, AffixType.Prefix, bestTier).ToList();

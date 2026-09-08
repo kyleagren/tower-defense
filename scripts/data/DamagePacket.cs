@@ -1,6 +1,8 @@
 public struct DamagePacket
 {
     public DamageOrigin Origin;
+    public DamageSource Source;
+    public bool IsCrit;
     public float PhysicalDamage;
     public float FireDamage;
     public float WaterDamage;
@@ -31,6 +33,8 @@ public struct DamagePacket
         return new DamagePacket
         {
             Origin = packet.Origin,
+            Source = packet.Source,
+            IsCrit = packet.IsCrit,
             PhysicalDamage = packet.PhysicalDamage * scalar,
             FireDamage = packet.FireDamage * scalar,
             WaterDamage = packet.WaterDamage * scalar,

@@ -10,8 +10,6 @@ public partial class Tank : Sentinel
     [Export] public Area3D SwordHitArea { get; private set; }
     [Export] public Node3D ShieldOrbit { get; private set; }
     [Export] public MeshInstance3D Shield { get; private set; }
-    [Export] public float BaseAttackDamage = 35f;
-    [Export] public float AttackSpeed = 1.2f;
     [Export] public float SwingLeftAngleDegrees = 200f;
     [Export] public float SwingRightOvershootDegrees = -30f;
     [Export] public float IdleAngleDegrees = 0f;
@@ -33,7 +31,24 @@ public partial class Tank : Sentinel
     public override CharacterId Id => CharacterId.Tank;
     public override float Speed => base.Speed * (_blockState == BlockState.Armed ? BlockedMoveSpeedMultiplier : 1f);
 
-    public float AttackDamage => BaseAttackDamage * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.WeaponAttackDamage));
+    public float AttackDamage
+    {
+        get
+        {
+            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+            float baseDamage = weapon?.BaseAttackDamage ?? GameRules.UnarmedAttackDamage;
+            return baseDamage * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.WeaponAttackDamage));
+        }
+    }
+
+    public float AttackSpeed
+    {
+        get
+        {
+            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+            return weapon?.ResolvedBaseAttackSpeed ?? GameRules.UnarmedAttackSpeed;
+        }
+    }
 
     private StandardMaterial3D _shieldMaterial;
     private float _attackCooldown;
@@ -79,6 +94,7 @@ public partial class Tank : Sentinel
         }
 
         UpdateShieldRegen((float)delta);
+        UpdateHealthRegen((float)delta);
 
         Vector2 inputDir = Input.GetVector("move_left", "move_right", "move_forward", "move_back");
         ApplyGroundMovement(delta, inputDir);
@@ -206,7 +222,7 @@ public partial class Tank : Sentinel
     {
         if (body is Enemy enemy && _hitThisSwing.Add(enemy))
         {
-            enemy.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+            enemy.TakeDamage(RollAttackDamage(AttackDamage));
         }
     }
 

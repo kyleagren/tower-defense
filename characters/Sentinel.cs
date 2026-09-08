@@ -173,6 +173,51 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, _currentShield, MaxShield);
     }
 
+    // Rolls whether this hit crits and returns the final damage packet - shared by Soldier and Tank
+    // so the crit math lives in one place instead of being copy-pasted into both attack sites.
+    // Layers base (weapon-inherent, boosted by the weapon's own local rolls) -> increased (the
+    // global CharacterSheet pool from non-weapon gear) -> more (the weapon's own multiplier, on
+    // crit damage only).
+    public DamagePacket RollAttackDamage(float baseDamage)
+    {
+        CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
+        Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+
+        float baseCritChance = weapon?.ResolvedBaseCritChance ?? GameRules.UnarmedCritChance;
+        float baseCritDamageBonus = weapon?.BaseCritDamageBonus ?? GameRules.UnarmedCritDamageBonus;
+        float moreMultiplier = weapon?.CritDamageBonusMoreMultiplier ?? 1f;
+
+        float critChance = baseCritChance * (1f + sheet.GetBonus(StatId.SentinelCritChance));
+        bool isCrit = GD.Randf() < critChance;
+        float critDamageBonus = baseCritDamageBonus * (1f + sheet.GetBonus(StatId.SentinelCritDamage)) * moreMultiplier;
+        float multiplier = isCrit ? 1f + critDamageBonus : 1f;
+
+        return new DamagePacket { PhysicalDamage = baseDamage * multiplier, Source = DamageSource.Weapon, IsCrit = isCrit };
+    }
+
+    // Called by whichever Sentinel is active, from its own _PhysicsProcess, alongside
+    // UpdateShieldRegen. Continuous, not gated behind a no-damage-recently window like Shield -
+    // Health Regen only exists at all once gear grants it, so there's no baseline mechanic here to
+    // preserve the shape of.
+    public void UpdateHealthRegen(float delta)
+    {
+        if (IsDead || _currentHealth >= MaxHealth)
+        {
+            return;
+        }
+
+        CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
+        float baseRegen = sheet.GetBonus(StatId.SentinelBaseHealthRegen);
+        if (baseRegen <= 0f)
+        {
+            return;
+        }
+
+        float regenPerSecond = baseRegen * (1f + sheet.GetBonus(StatId.SentinelHealthRegen));
+        _currentHealth = Mathf.Min(MaxHealth, _currentHealth + regenPerSecond * delta);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
+    }
+
     // Full reset is a placeholder — a real healing mechanic (README §15) will replace this.
     protected void HealToFull()
     {

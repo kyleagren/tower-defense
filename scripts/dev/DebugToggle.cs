@@ -20,7 +20,7 @@ public partial class DebugToggle : Node
         }
         else if (keyEvent.PhysicalKeycode == Key.F2)
         {
-            DebugSettings.ShowFloatingCombatText = !DebugSettings.ShowFloatingCombatText;
+            DebugSettings.ShowWeaponDamageNumbers = !DebugSettings.ShowWeaponDamageNumbers;
         }
         else if (keyEvent.PhysicalKeycode == Key.F3)
         {
@@ -35,6 +35,10 @@ public partial class DebugToggle : Node
         else if (keyEvent.PhysicalKeycode == Key.F4)
         {
             WaveController.Instance?.DebugLoadAndStartWaveFile("res://assets/waves/test_marksman.json");
+        }
+        else if (keyEvent.PhysicalKeycode == Key.F5)
+        {
+            DebugSettings.ShowTowerDamageNumbers = !DebugSettings.ShowTowerDamageNumbers;
         }
     }
 }

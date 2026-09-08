@@ -2,9 +2,7 @@ using Godot;
 
 public partial class Soldier : Sentinel
 {
-    [Export] public float BaseAttackDamage = 8f;
     [Export] public float AttackRange = 30f;
-    [Export] public float FireRate = 6f;
     [Export] public PackedScene ImpactScene { get; private set; }
     [Export] public Node3D MuzzlePoint { get; private set; }
     [Export] public PackedScene TracerScene { get; private set; }
@@ -17,7 +15,24 @@ public partial class Soldier : Sentinel
 
     public override CharacterId Id => CharacterId.Soldier;
 
-    public float AttackDamage => BaseAttackDamage * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.WeaponAttackDamage));
+    public float AttackDamage
+    {
+        get
+        {
+            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+            float baseDamage = weapon?.BaseAttackDamage ?? GameRules.UnarmedAttackDamage;
+            return baseDamage * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.WeaponAttackDamage));
+        }
+    }
+
+    public float FireRate
+    {
+        get
+        {
+            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+            return weapon?.ResolvedBaseAttackSpeed ?? GameRules.UnarmedAttackSpeed;
+        }
+    }
 
     private float _fireCooldown;
 
@@ -29,6 +44,7 @@ public partial class Soldier : Sentinel
         }
 
         UpdateShieldRegen((float)delta);
+        UpdateHealthRegen((float)delta);
 
         Vector2 inputDir = Input.GetVector("move_left", "move_right", "move_forward", "move_back");
         ApplyGroundMovement(delta, inputDir);
@@ -76,7 +92,7 @@ public partial class Soldier : Sentinel
 
             if (result["collider"].As<Node3D>() is Enemy enemy)
             {
-                enemy.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+                enemy.TakeDamage(RollAttackDamage(AttackDamage));
             }
 
             if (ImpactScene != null)

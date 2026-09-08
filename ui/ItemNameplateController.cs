@@ -89,6 +89,7 @@ public partial class ItemNameplateController : CanvasLayer
         _currentRects.Clear();
         float smoothing = Mathf.Min(1f, PositionSmoothing * (float)delta);
         bool expandedShownThisFrame = false;
+        PanelContainer targetedNameplate = null;
 
         foreach (WorldItem item in WorldItemRegistry.Active)
         {
@@ -124,6 +125,8 @@ public partial class ItemNameplateController : CanvasLayer
 
             if (item == _expandedItem)
             {
+                targetedNameplate = nameplate;
+
                 bool advanced = Input.IsActionPressed("advanced_tooltip");
                 _expandedPanel.Show(item.Item, advanced, backgroundColor: RarityColors.Get(item.Item.Rarity));
                 _expandedPanelItem = item;
@@ -140,6 +143,22 @@ public partial class ItemNameplateController : CanvasLayer
         }
 
         PruneLabelsNotIn(visible);
+
+        // Bring the targeted item's own nameplate in front of its neighbors first, then the expanded
+        // panel/hint in front of that - both were created in _Ready, before any nameplate existed,
+        // so without this they'd sit earlier in the CanvasLayer's child order and draw underneath
+        // nameplates created later. Re-asserted every frame the panel is shown since new nameplates
+        // can appear at any point.
+        if (expandedShownThisFrame)
+        {
+            if (targetedNameplate != null)
+            {
+                MoveChild(targetedNameplate, -1);
+            }
+
+            MoveChild(_expandedPanel.Root, -1);
+            MoveChild(_pickupHintLabel, -1);
+        }
 
         bool expandedStillVisible = _expandedItem != null && visible.Contains(_expandedItem) && expandedShownThisFrame;
         if (!expandedStillVisible)

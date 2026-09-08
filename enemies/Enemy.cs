@@ -193,14 +193,15 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // this for DPS tracking) without overriding all of TakeDamage.
     protected virtual void OnDamageTaken(DamagePacket amount)
     {
-        if (!DebugSettings.ShowFloatingCombatText || FloatingTextScene == null)
+        bool enabled = amount.Source == DamageSource.Weapon ? DebugSettings.ShowWeaponDamageNumbers : DebugSettings.ShowTowerDamageNumbers;
+        if (!enabled || FloatingTextScene == null)
         {
             return;
         }
 
         FloatingCombatText text = FloatingTextScene.Instantiate<FloatingCombatText>();
         GetTree().CurrentScene.AddChild(text);
-        text.Show(GetJitteredCenterMass(0.2f), amount.Total, DamageTypeColors.Get(amount.DominantElement));
+        text.Show(GetJitteredCenterMass(0.2f), amount.Total, DamageTypeColors.Get(amount.DominantElement), amount.IsCrit);
     }
 
     private void TickAilments(float delta)

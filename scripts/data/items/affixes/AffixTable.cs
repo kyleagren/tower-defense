@@ -342,6 +342,24 @@ public static class AffixTable
                 new PercentTierRange(5, 27, 35)
             ]
         },
+        [StatId.SentinelBaseHealthRegen] = new Affix
+        {
+            Name = "Mending",
+            DescriptionTemplate = "+{0} Health Regenerated per Second",
+            AffixType = AffixType.Prefix,
+            Stat = StatId.SentinelBaseHealthRegen,
+            AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Health],
+            IsFlatValue = true,
+            TierTable =
+            [
+                new FlatTierRange(1, 1, 1),
+                new FlatTierRange(2, 2, 2),
+                new FlatTierRange(3, 3, 4),
+                new FlatTierRange(4, 5, 6),
+                new FlatTierRange(5, 7, 9)
+            ]
+        },
         [StatId.SentinelCritChance] = new Affix
         {
             Name = "Precision",
@@ -352,11 +370,45 @@ public static class AffixTable
             Tags = [AffixTag.Critical],
             TierTable =
             [
-                new PercentTierRange(1, 2, 3),
-                new PercentTierRange(2, 4, 5),
-                new PercentTierRange(3, 6, 8),
-                new PercentTierRange(4, 9, 11),
-                new PercentTierRange(5, 12, 15)
+                new PercentTierRange(1, 10, 15),
+                new PercentTierRange(2, 16, 22),
+                new PercentTierRange(3, 23, 30),
+                new PercentTierRange(4, 31, 40),
+                new PercentTierRange(5, 41, 55)
+            ]
+        },
+        [StatId.SentinelBaseCritChance] = new Affix
+        {
+            Name = "Edge",
+            DescriptionTemplate = "+{0}% to Base Critical Strike Chance",
+            AffixType = AffixType.Suffix,
+            Stat = StatId.SentinelBaseCritChance,
+            AllowedSlots = WeaponSlots,
+            Tags = [AffixTag.Critical],
+            TierTable =
+            [
+                new PercentTierRange(1, 1, 2),
+                new PercentTierRange(2, 3, 4),
+                new PercentTierRange(3, 5, 6),
+                new PercentTierRange(4, 7, 9),
+                new PercentTierRange(5, 10, 12)
+            ]
+        },
+        [StatId.SentinelBaseAttackSpeed] = new Affix
+        {
+            Name = "Swiftness",
+            DescriptionTemplate = "+{0}% to Base Attack Speed",
+            AffixType = AffixType.Prefix,
+            Stat = StatId.SentinelBaseAttackSpeed,
+            AllowedSlots = WeaponSlots,
+            Tags = [AffixTag.Speed],
+            TierTable =
+            [
+                new PercentTierRange(1, 4, 6),
+                new PercentTierRange(2, 7, 9),
+                new PercentTierRange(3, 10, 13),
+                new PercentTierRange(4, 14, 18),
+                new PercentTierRange(5, 19, 24)
             ]
         },
         [StatId.SentinelCritDamage] = new Affix
@@ -374,6 +426,23 @@ public static class AffixTable
                 new PercentTierRange(3, 36, 50),
                 new PercentTierRange(4, 51, 70),
                 new PercentTierRange(5, 71, 100)
+            ]
+        },
+        [StatId.SentinelMoreCritDamageBonus] = new Affix
+        {
+            Name = "Ruin",
+            DescriptionTemplate = "{0}% more Critical Damage Bonus",
+            AffixType = AffixType.Suffix,
+            Stat = StatId.SentinelMoreCritDamageBonus,
+            AllowedSlots = WeaponSlots,
+            Tags = [AffixTag.Critical, AffixTag.Damage],
+            TierTable =
+            [
+                new PercentTierRange(1, 4, 6),
+                new PercentTierRange(2, 7, 9),
+                new PercentTierRange(3, 10, 13),
+                new PercentTierRange(4, 14, 18),
+                new PercentTierRange(5, 19, 25)
             ]
         },
         [StatId.SentinelCooldownRecoveryRate] = new Affix

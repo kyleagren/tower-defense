@@ -34,7 +34,6 @@ size = Vector3(0.05, 0.2, 0.06)
 
 [node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
 script = ExtResource("2_soldier")
-BaseAttackDamage = 100.0
 ImpactScene = ExtResource("3_impact")
 MuzzlePoint = NodePath("Weapon/MuzzlePoint")
 TracerScene = ExtResource("4_tracer")

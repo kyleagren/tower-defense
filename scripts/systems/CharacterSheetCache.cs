@@ -51,7 +51,9 @@ public static class CharacterSheetCache
                 // (Armor.ResolvedValue) instead of stacking into the shared global pool every
                 // other stat uses.
                 if (roll.Stat == StatId.SentinelArmor || roll.Stat == StatId.SentinelShield
-                    || roll.Stat == StatId.SentinelArmorAndShield)
+                    || roll.Stat == StatId.SentinelArmorAndShield
+                    || roll.Stat == StatId.SentinelBaseCritChance || roll.Stat == StatId.SentinelMoreCritDamageBonus
+                    || roll.Stat == StatId.SentinelBaseAttackSpeed)
                 {
                     continue;
                 }

@@ -10,6 +10,7 @@ public class Affix
     public CharacterId RestrictedCharacter = CharacterId.AnySentinel;
     public AffixTierRange[] TierTable = System.Array.Empty<AffixTierRange>();
     public AffixTag[] Tags = System.Array.Empty<AffixTag>();
+    public bool IsFlatValue;
 
     // The character half of "can this mod roll here", parallel to AllowedSlots' slot half. An
     // unrestricted mod rolls on anything; a restricted one only on an item already bound to that

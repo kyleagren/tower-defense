@@ -19,9 +19,13 @@ public enum StatId
     SentinelArmorAndShield,
     SentinelTotalArmor,
     SentinelTotalShield,
+    SentinelBaseHealthRegen,
     SentinelHealthRegen,
     SentinelCritChance,
+    SentinelBaseCritChance,
+    SentinelBaseAttackSpeed,
     SentinelCritDamage,
+    SentinelMoreCritDamageBonus,
     SentinelCooldownRecoveryRate,
 
     WeaponAttackDamage

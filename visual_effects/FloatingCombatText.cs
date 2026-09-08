@@ -34,14 +34,14 @@ public partial class FloatingCombatText : Node3D
         FloatingCombatTextRegistry.Unregister(this);
     }
 
-    public void Show(Vector3 worldPosition, float amount, Color color)
+    public void Show(Vector3 worldPosition, float amount, Color color, bool isCrit = false)
     {
         GlobalPosition = worldPosition + new Vector3(
             (float)GD.RandRange(-RandomHorizontalSpread, RandomHorizontalSpread),
             0f,
             (float)GD.RandRange(-RandomHorizontalSpread, RandomHorizontalSpread));
 
-        Label.Text = Mathf.RoundToInt(amount).ToString();
+        Label.Text = isCrit ? $"{Mathf.RoundToInt(amount)}!" : Mathf.RoundToInt(amount).ToString();
         Label.Modulate = color;
 
         Vector3 targetPosition = GlobalPosition + Vector3.Up * RiseDistance;

@@ -22,7 +22,8 @@ public partial class RolledAffix : Resource
     // a future flat-value affix would need a different formatting path here.
     public string BuildDescription()
     {
-        return string.Format(Affix.DescriptionTemplate, Mathf.RoundToInt(Value * 100f));
+        object formattedValue = Affix.IsFlatValue ? Mathf.RoundToInt(Value) : Mathf.RoundToInt(Value * 100f);
+        return string.Format(Affix.DescriptionTemplate, formattedValue);
     }
 
     // PoE-style inline value+range ("+35(33-38)% Increased Energy Shield") - the rolled value
@@ -32,11 +33,20 @@ public partial class RolledAffix : Resource
     public string BuildInlineRangeDescription()
     {
         AffixTierRange range = TierRange;
-        int value = Mathf.RoundToInt(Value * 100f);
+
+        if (Affix.IsFlatValue)
+        {
+            int value = Mathf.RoundToInt(Value);
+            int minValue = Mathf.RoundToInt(range.MinValue);
+            int maxValue = Mathf.RoundToInt(range.MaxValue);
+            return string.Format(Affix.DescriptionTemplate, $"{value}({minValue}-{maxValue})");
+        }
+
+        int percentValue = Mathf.RoundToInt(Value * 100f);
         int minPercent = Mathf.RoundToInt(range.MinValue * 100f);
         int maxPercent = Mathf.RoundToInt(range.MaxValue * 100f);
 
-        return string.Format(Affix.DescriptionTemplate, $"{value}({minPercent}-{maxPercent})");
+        return string.Format(Affix.DescriptionTemplate, $"{percentValue}({minPercent}-{maxPercent})");
     }
 
     // The nested advanced-tooltip popup's header - which type of mod it is, its name, and tier.

@@ -356,6 +356,7 @@ script = ExtResource("2_economymanager")
 Unlimited = true
 
 [node name="ItemNameplateController" type="CanvasLayer" parent="." unique_id=1123372990]
+layer = -1
 script = ExtResource("18_itemnameplate")
 
 [node name="ArchitectSelectStation" type="StaticBody3D" parent="." unique_id=708825174]

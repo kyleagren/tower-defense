@@ -41,7 +41,6 @@ SwordTilt = NodePath("Weapon/SwordOrbit/SwordTilt")
 SwordHitArea = NodePath("Weapon/SwordOrbit/SwordTilt/SwordHitArea")
 ShieldOrbit = NodePath("Weapon/ShieldOrbit")
 Shield = NodePath("Weapon/ShieldOrbit/ShieldArm/Shield")
-BaseAttackDamage = 100.0
 Weapon = NodePath("Weapon")
 BaseMaxHealth = 180.0
 SpringArm = NodePath("SpringArm3D")
