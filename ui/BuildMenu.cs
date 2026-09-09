@@ -35,7 +35,12 @@ public partial class BuildMenu : Control
     private static readonly StringName _emptySocketVariation = "EmptySocketButton";
     private static readonly StringName _currentSocketVariation = "CurrentSocketButton";
 
-    private IEnumerable<Rune> AllRunes => SaveManager.Instance.Data.KnownRunes.Select(entry => entry.Rune);
+    // One tile per rune type, not per owned rarity tier - collapses to the highest tier owned until
+    // the tier picker (README Section 17) lets a socket deliberately hold a weaker one instead.
+    private IEnumerable<Rune> AllRunes => SaveManager.Instance.Data.KnownRunes
+        .Select(entry => entry.Rune)
+        .GroupBy(rune => rune.GetType())
+        .Select(group => group.OrderByDescending(rune => rune.Rarity).First());
 
     public override void _Ready()
     {
@@ -235,6 +240,7 @@ public partial class BuildMenu : Control
 
                 int costDelta = ComputeManaCost(WithSocket(socketIndex, rune)) - baseCost;
                 Button button = CreateTileButton($"{rune.Name}\n+{costDelta}", rune.Name, rune.Description);
+                ItemSlotBackground.Set(button, RarityColors.Get(rune.Rarity));
                 button.Disabled = disabled;
 
                 if (isCurrentSocketRune)
