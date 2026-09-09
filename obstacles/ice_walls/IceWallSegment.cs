@@ -49,7 +49,6 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
         BodyCollision.Position = IceWall.SegmentBoxCenter(Vector3.Zero, width);
     }
 
-    // TODO: regrow cooldown after breaking (README section 6) isn't implemented yet.
     public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
     {
         if (_isBroken)

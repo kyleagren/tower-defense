@@ -527,7 +527,7 @@ public partial class BuildMenu : Control
             {
                 Rune rune = compatibleRunes[i];
                 bool isCurrentSocketRune = rune == currentSocketRune;
-                bool disabled = IsSocketedElsewhere(rune, socketIndex);
+                bool disabled = IsSocketedElsewhere(rune, socketIndex) || !RuneCatalog.IsAvailable(rune);
 
                 int costDelta = ComputeManaCost(WithSocket(socketIndex, rune)) - baseCost;
                 Button button = CreateTileButton($"{rune.Name}\n+{costDelta}", rune.Name, rune.Description);
@@ -570,7 +570,7 @@ public partial class BuildMenu : Control
     {
         return AllRunes
             .Where(rune => rune.IsCompatibleWith(_selectedSpell.Tags))
-            .OrderBy(rune => IsSocketedElsewhere(rune, socketIndex))
+            .OrderBy(rune => IsSocketedElsewhere(rune, socketIndex) || !RuneCatalog.IsAvailable(rune))
             .ThenBy(rune => rune.Name)
             .ToList();
     }

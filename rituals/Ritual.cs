@@ -153,24 +153,7 @@ public partial class Ritual : Node3D, IDamageable
 
     public void Destroy()
     {
-        foreach (Rune rune in RuneSlots)
-        {
-            if (rune == null)
-            {
-                continue;
-            }
-
-            RuneInventoryEntry entry = SaveManager.Instance.Data.KnownRunes
-                .FirstOrDefault(e => e.Rune == rune);
-
-            if (entry != null && !entry.Unlimited)
-            {
-                entry.Quantity++;
-            }
-        }
-
         EconomyManager.Instance.RefundRitual(_manaCost, _capacityCost);
-
         QueueFree();
     }
 
@@ -178,6 +161,11 @@ public partial class Ritual : Node3D, IDamageable
     {
         Spell = spell;
         _spellInstance = new SpellInstance(spell);
+
+        for (int i = 0; i < RuneSlots.Length; i++)
+        {
+            RuneSlots[i] = i < runes.Count ? runes[i] : null;
+        }
 
         foreach (Rune rune in runes)
         {

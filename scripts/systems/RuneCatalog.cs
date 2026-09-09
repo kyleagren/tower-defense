@@ -23,6 +23,23 @@ public static class RuneCatalog
         return _byRarity.Values.SelectMany(list => list).Where(r => r.GetType() == rune.GetType());
     }
 
+    // A non-Unlimited rune's Quantity is the total ever owned, never decremented on socketing - what's
+    // actually available right now is derived live from how many currently-placed Rituals hold it, so
+    // a crash (or any other path that skips Ritual.Destroy) can never desync it the way a stored
+    // "remaining count" that's manually incremented back on destroy could.
+    public static bool IsAvailable(Rune rune)
+    {
+        RuneInventoryEntry entry = SaveManager.Instance.Data.KnownRunes.FirstOrDefault(e => e.Rune == rune);
+
+        if (entry == null || entry.Unlimited)
+        {
+            return true;
+        }
+
+        int inUse = RitualRegistry.Active.SelectMany(ritual => ritual.RuneSlots).Count(socketed => socketed == rune);
+        return inUse < entry.Quantity;
+    }
+
     private static void EnsureLoaded()
     {
         if (_byRarity != null)
