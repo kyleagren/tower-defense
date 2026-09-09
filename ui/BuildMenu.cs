@@ -32,6 +32,31 @@ public partial class BuildMenu : Control
 
     private ConfirmationDialog _clearAllDialog;
 
+    private Button _spellsTabButton;
+    private Button _favoritesTabButton;
+    private bool _showingFavorites;
+
+    private ConfirmationDialog _saveFavoriteDialog;
+    private LineEdit _favoriteNameInput;
+
+    private Panel _tokenBarBackground;
+    private Panel _tokenModeBorder;
+    private readonly Button[] _tokenButtons = new Button[GameRules.MaxTokens];
+    private readonly Label[] _tokenSpellLabels = new Label[GameRules.MaxTokens];
+    private readonly Label[] _tokenRuneLabels = new Label[GameRules.MaxTokens];
+    private readonly Label[] _tokenCostLabels = new Label[GameRules.MaxTokens];
+    private PopupMenu _tokenActionMenu;
+    private int _tokenActionMenuIndex = -1;
+    private int _editingTokenIndex = -1;
+    private Button _confirmButton;
+
+    private static readonly Color _tokenFilledColor = new Color(0.3f, 0.5f, 0.8f);
+    private static readonly Color _tokenAuthoringColor = new Color(0.85f, 0.75f, 0.15f);
+    private static readonly float[] _tokenAnchorsX = { 1f / 6f, 3f / 6f, 5f / 6f };
+    private const float TokenBarTop = 0.85f;
+    private const float TokenBarCenterY = 0.93f;
+    private const float TokenCircleSize = 70f;
+
     private EconomyManager _economy;
 
     // Button styling lives in ui/build_menu_theme.tres, assigned to this menu's root Control and
@@ -55,10 +80,53 @@ public partial class BuildMenu : Control
     public override void _Ready()
     {
         _economy = EconomyManager.Instance;
-        PopulateSpellGrid();
+        BuildSpellGridTabs();
         BuildSocketScreen();
         BuildRunePickerScreen();
         BuildTierPopup();
+        BuildTokenBar();
+    }
+
+    private void BuildSpellGridTabs()
+    {
+        Grid.AnchorTop = 0.08f;
+
+        _spellsTabButton = new Button { Text = "Spells", ToggleMode = true };
+        ControlLayout.CenterOnAnchor(_spellsTabButton, new Vector2(0.3f, 0.03f), new Vector2(160f, 40f));
+        _spellsTabButton.Pressed += () => SetShowingFavorites(false);
+        MenuRegion.AddChild(_spellsTabButton);
+
+        _favoritesTabButton = new Button { Text = "Favorites", ToggleMode = true };
+        ControlLayout.CenterOnAnchor(_favoritesTabButton, new Vector2(0.7f, 0.03f), new Vector2(160f, 40f));
+        _favoritesTabButton.Pressed += () => SetShowingFavorites(true);
+        MenuRegion.AddChild(_favoritesTabButton);
+
+        SetShowingFavorites(false);
+    }
+
+    private void SetShowingFavorites(bool showingFavorites)
+    {
+        _showingFavorites = showingFavorites;
+        _spellsTabButton.SetPressedNoSignal(!showingFavorites);
+        _favoritesTabButton.SetPressedNoSignal(showingFavorites);
+        RefreshSpellGrid();
+    }
+
+    private void RefreshSpellGrid()
+    {
+        foreach (Node child in Grid.GetChildren())
+        {
+            child.QueueFree();
+        }
+
+        if (_showingFavorites)
+        {
+            PopulateFavoritesGrid();
+        }
+        else
+        {
+            PopulateSpellGrid();
+        }
     }
 
     private void PopulateSpellGrid()
@@ -80,6 +148,231 @@ public partial class BuildMenu : Control
                 Grid.AddChild(CreateSpacer());
             }
         }
+    }
+
+    // Description panel shows the spell + all 4 rune slots (or "[Empty Socket]") instead of flavor
+    // text - a Favorite tile has no single description of its own, it's a bundle of other things' data.
+    private void PopulateFavoritesGrid()
+    {
+        List<FavoriteLoadout> favorites = SaveManager.Instance.Data.Favorites.OrderBy(f => f.Name).ToList();
+        int pageSize = Grid.Columns * Grid.Rows;
+
+        for (int i = 0; i < pageSize; i++)
+        {
+            if (i < favorites.Count)
+            {
+                FavoriteLoadout favorite = favorites[i];
+                string runeList = string.Join("\n", favorite.Runes.Select(r => r?.Name ?? "[Empty Socket]"));
+                string body = $"{favorite.Spell?.Name}\n{runeList}";
+                Button button = CreateTileButton(favorite.Name, favorite.Name, body);
+                button.Pressed += () => OnFavoriteSelected(favorite);
+                Grid.AddChild(button);
+            }
+            else
+            {
+                Grid.AddChild(CreateSpacer());
+            }
+        }
+    }
+
+    // Straight to placement, no socket-screen stop - a Favorite is a locked stamp, not a starting point.
+    // While authoring a token instead, it stamps the token slot the same way rather than placing a
+    // real tower.
+    private void OnFavoriteSelected(FavoriteLoadout favorite)
+    {
+        if (_editingTokenIndex >= 0)
+        {
+            SaveToken(_editingTokenIndex, favorite.Spell, favorite.Runes);
+            return;
+        }
+
+        Godot.Collections.Array<Rune> confirmedRunes = new Godot.Collections.Array<Rune>(favorite.Runes.Where(r => r != null));
+        EmitSignal(SignalName.Confirmed, favorite.Spell, confirmedRunes);
+        Close();
+    }
+
+    private void BuildTokenBar()
+    {
+        Grid.AnchorBottom = TokenBarTop;
+
+        _tokenBarBackground = new Panel { MouseFilter = MouseFilterEnum.Ignore };
+        _tokenBarBackground.AnchorLeft = 0f;
+        _tokenBarBackground.AnchorRight = 1f;
+        _tokenBarBackground.AnchorTop = TokenBarTop;
+        _tokenBarBackground.AnchorBottom = 1f;
+        _tokenBarBackground.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color(0f, 0f, 0f, 0.5f) });
+        MenuRegion.AddChild(_tokenBarBackground);
+
+        for (int i = 0; i < GameRules.MaxTokens; i++)
+        {
+            int tokenIndex = i;
+
+            Label spellLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center, MouseFilter = MouseFilterEnum.Ignore };
+            ControlLayout.CenterOnAnchor(spellLabel, new Vector2(_tokenAnchorsX[i], TokenBarTop + 0.02f), new Vector2(200f, 24f));
+            MenuRegion.AddChild(spellLabel);
+            _tokenSpellLabels[i] = spellLabel;
+
+            Label runeLabel = new Label { HorizontalAlignment = HorizontalAlignment.Right, MouseFilter = MouseFilterEnum.Ignore };
+            runeLabel.AddThemeFontSizeOverride("font_size", 12);
+            ControlLayout.CenterOnAnchor(runeLabel, new Vector2(_tokenAnchorsX[i] - 0.08f, TokenBarCenterY), new Vector2(140f, 70f));
+            MenuRegion.AddChild(runeLabel);
+            _tokenRuneLabels[i] = runeLabel;
+
+            Label costLabel = new Label { HorizontalAlignment = HorizontalAlignment.Left, MouseFilter = MouseFilterEnum.Ignore };
+            costLabel.AddThemeFontSizeOverride("font_size", 12);
+            ControlLayout.CenterOnAnchor(costLabel, new Vector2(_tokenAnchorsX[i] + 0.08f, TokenBarCenterY), new Vector2(120f, 70f));
+            MenuRegion.AddChild(costLabel);
+            _tokenCostLabels[i] = costLabel;
+
+            Button circle = new Button();
+            ControlLayout.CenterOnAnchor(circle, new Vector2(_tokenAnchorsX[i], TokenBarCenterY), new Vector2(TokenCircleSize, TokenCircleSize));
+            circle.Pressed += () => OnTokenSlotPressed(tokenIndex);
+            MenuRegion.AddChild(circle);
+            _tokenButtons[i] = circle;
+        }
+
+        _tokenActionMenu = new PopupMenu();
+        _tokenActionMenu.AddItem("New", 0);
+        _tokenActionMenu.AddItem("Edit", 1);
+        _tokenActionMenu.IdPressed += OnTokenActionSelected;
+        MenuRegion.AddChild(_tokenActionMenu);
+
+        // Added last so it draws over whichever sub-screen (grid, socket, rune picker) is currently
+        // visible - the one consistent "you're authoring a token" cue regardless of where that takes you.
+        _tokenModeBorder = new Panel { MouseFilter = MouseFilterEnum.Ignore, Visible = false };
+        _tokenModeBorder.SetAnchorsPreset(LayoutPreset.FullRect);
+        _tokenModeBorder.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        {
+            BgColor = Colors.Transparent,
+            BorderColor = _tokenAuthoringColor,
+            BorderWidthTop = 4,
+            BorderWidthBottom = 4,
+            BorderWidthLeft = 4,
+            BorderWidthRight = 4
+        });
+        MenuRegion.AddChild(_tokenModeBorder);
+    }
+
+    private void RefreshTokenBar()
+    {
+        Godot.Collections.Array<RuneLoadout> tokens = SaveManager.Instance.Data.Tokens;
+
+        for (int i = 0; i < GameRules.MaxTokens; i++)
+        {
+            RuneLoadout token = i < tokens.Count ? tokens[i] : null;
+            Color? highlight = i == _editingTokenIndex ? _tokenAuthoringColor : (Color?)null;
+
+            if (token == null)
+            {
+                if (highlight.HasValue)
+                {
+                    _tokenButtons[i].ThemeTypeVariation = "";
+                    SetCircularBackground(_tokenButtons[i], Colors.Transparent, highlight);
+                }
+                else
+                {
+                    _tokenButtons[i].ThemeTypeVariation = _emptySocketVariation;
+                    ItemSlotBackground.Clear(_tokenButtons[i]);
+                }
+
+                _tokenSpellLabels[i].Text = "";
+                _tokenRuneLabels[i].Text = "";
+                _tokenCostLabels[i].Text = "";
+                continue;
+            }
+
+            _tokenButtons[i].ThemeTypeVariation = "";
+            SetCircularBackground(_tokenButtons[i], _tokenFilledColor, highlight);
+
+            _tokenSpellLabels[i].Text = token.Spell?.Name ?? "";
+            _tokenRuneLabels[i].Text = string.Join("\n", token.Runes.Select(r => r?.Name ?? "[Empty Socket]"));
+
+            SpellCastContext context = SpellInstance.ResolvePreview(token.Spell, token.Runes.Where(r => r != null));
+            _tokenCostLabels[i].Text = $"Mana: {context.ResolvedManaCost}\nCapacity: {context.ResolvedCapacityCost}";
+        }
+
+        _tokenModeBorder.Visible = _editingTokenIndex >= 0;
+    }
+
+    // Token bar pieces are siblings of Grid under MenuRegion, not children of _tokenBarBackground -
+    // ControlLayout.CenterOnAnchor positions each against the full MenuRegion rect, not the
+    // background panel's own (smaller) one, so they can't just inherit its Visible.
+    private void SetTokenBarVisible(bool visible)
+    {
+        _tokenBarBackground.Visible = visible;
+
+        for (int i = 0; i < GameRules.MaxTokens; i++)
+        {
+            _tokenButtons[i].Visible = visible;
+            _tokenSpellLabels[i].Visible = visible;
+            _tokenRuneLabels[i].Visible = visible;
+            _tokenCostLabels[i].Visible = visible;
+        }
+    }
+
+    // Empty slot: straight into authoring, same screen we're already on. Filled slot: New (discard,
+    // same as empty) or Edit (jump straight to the socket screen, pre-filled).
+    private void OnTokenSlotPressed(int tokenIndex)
+    {
+        RuneLoadout token = SaveManager.Instance.Data.Tokens[tokenIndex];
+
+        if (token == null)
+        {
+            BeginTokenAuthoring(tokenIndex);
+            return;
+        }
+
+        _tokenActionMenuIndex = tokenIndex;
+        _tokenActionMenu.Position = (Vector2I)_tokenButtons[tokenIndex].GetGlobalRect().Position;
+        _tokenActionMenu.Popup();
+    }
+
+    private void OnTokenActionSelected(long id)
+    {
+        int tokenIndex = _tokenActionMenuIndex;
+
+        if (id == 1) // Edit
+        {
+            RuneLoadout token = SaveManager.Instance.Data.Tokens[tokenIndex];
+            _selectedSpell = token.Spell;
+
+            for (int i = 0; i < _socketedRunes.Length; i++)
+            {
+                _socketedRunes[i] = i < token.Runes.Count ? token.Runes[i] : null;
+            }
+
+            BeginTokenAuthoring(tokenIndex);
+            ShowSocketScreen();
+            return;
+        }
+
+        // New: discard the current loadout, stay on the grid to pick a spell or Favorite fresh.
+        BeginTokenAuthoring(tokenIndex);
+    }
+
+    private void BeginTokenAuthoring(int tokenIndex)
+    {
+        _editingTokenIndex = tokenIndex;
+        RefreshTokenBar();
+    }
+
+    private void EndTokenAuthoring()
+    {
+        _editingTokenIndex = -1;
+        RefreshTokenBar();
+    }
+
+    private void SaveToken(int tokenIndex, Spell spell, IEnumerable<Rune> runes)
+    {
+        SaveManager.Instance.Data.Tokens[tokenIndex] = new RuneLoadout
+        {
+            Spell = spell,
+            Runes = new Godot.Collections.Array<Rune>(runes)
+        };
+        SaveManager.Instance.Save();
+
+        EndTokenAuthoring();
+        ShowSpellGrid();
     }
 
     private void OnSpellSelected(Spell spell)
@@ -128,19 +421,78 @@ public partial class BuildMenu : Control
         clearAllButton.Pressed += () => _clearAllDialog.PopupCentered();
         _socketScreen.AddChild(clearAllButton);
 
-        Button confirmButton = new Button { Text = "Confirm", ThemeTypeVariation = _confirmVariation };
-        ControlLayout.CenterOnAnchor(confirmButton, new Vector2(2f / 3f, 0.95f), new Vector2(140f, 50f));
-        confirmButton.Pressed += OnConfirmPressed;
-        _socketScreen.AddChild(confirmButton);
+        _confirmButton = new Button { Text = "Confirm", ThemeTypeVariation = _confirmVariation };
+        ControlLayout.CenterOnAnchor(_confirmButton, new Vector2(2f / 3f, 0.95f), new Vector2(140f, 50f));
+        _confirmButton.Pressed += OnConfirmPressed;
+        _socketScreen.AddChild(_confirmButton);
 
         _clearAllDialog = new ConfirmationDialog { DialogText = "Remove all socketed runes?" };
         _clearAllDialog.Confirmed += OnClearAllConfirmed;
         _socketScreen.AddChild(_clearAllDialog);
+        SwapDialogButtonOrder(_clearAllDialog);
+
+        _favoriteNameInput = new LineEdit { PlaceholderText = "Favorite name" };
+        _saveFavoriteDialog = new ConfirmationDialog { Title = "Save as Favorite", DialogText = "Enter a name for this favorite:" };
+        _saveFavoriteDialog.AddChild(_favoriteNameInput);
+        _saveFavoriteDialog.Confirmed += OnSaveFavoriteConfirmed;
+        _socketScreen.AddChild(_saveFavoriteDialog);
+        SwapDialogButtonOrder(_saveFavoriteDialog);
+
+        Button saveFavoriteButton = new Button { Text = "Save as\nFavorite" };
+        ControlLayout.CenterOnAnchor(saveFavoriteButton, new Vector2(0.92f, 0.5f), new Vector2(130f, 60f));
+        saveFavoriteButton.Pressed += () =>
+        {
+            _favoriteNameInput.Text = "";
+            _saveFavoriteDialog.PopupCentered();
+        };
+        _socketScreen.AddChild(saveFavoriteButton);
+    }
+
+    private void OnSaveFavoriteConfirmed()
+    {
+        string name = _favoriteNameInput.Text.Trim();
+
+        if (string.IsNullOrEmpty(name))
+        {
+            return;
+        }
+
+        FavoriteLoadout favorite = new FavoriteLoadout
+        {
+            Name = DedupeFavoriteName(name),
+            Spell = _selectedSpell,
+            Runes = new Godot.Collections.Array<Rune>(_socketedRunes)
+        };
+
+        SaveManager.Instance.Data.Favorites.Add(favorite);
+        SaveManager.Instance.Save();
+    }
+
+    private static string DedupeFavoriteName(string name)
+    {
+        Godot.Collections.Array<FavoriteLoadout> favorites = SaveManager.Instance.Data.Favorites;
+
+        if (favorites.All(f => f.Name != name))
+        {
+            return name;
+        }
+
+        int suffix = 1;
+        string candidate;
+
+        do
+        {
+            candidate = $"{name}({suffix})";
+            suffix++;
+        } while (favorites.Any(f => f.Name == candidate));
+
+        return candidate;
     }
 
     private void ShowSocketScreen()
     {
         Grid.Visible = false;
+        SetTokenBarVisible(false);
         _runePickerScreen.Visible = false;
         _socketScreen.Visible = true;
 
@@ -153,6 +505,7 @@ public partial class BuildMenu : Control
     {
         int cost = ComputeManaCost(_socketedRunes);
         _centerSpellLabel.Text = $"{_selectedSpell?.Name}\nCost: {cost} / Mana: {_economy.Mana}";
+        _confirmButton.Text = _editingTokenIndex >= 0 ? "Save Token" : "Confirm";
 
         for (int i = 0; i < _socketButtons.Length; i++)
         {
@@ -224,6 +577,12 @@ public partial class BuildMenu : Control
 
     private void OnConfirmPressed()
     {
+        if (_editingTokenIndex >= 0)
+        {
+            SaveToken(_editingTokenIndex, _selectedSpell, _socketedRunes);
+            return;
+        }
+
         Godot.Collections.Array<Rune> confirmedRunes = new Godot.Collections.Array<Rune>(_socketedRunes.Where(r => r != null));
         EmitSignal(SignalName.Confirmed, _selectedSpell, confirmedRunes);
         Close();
@@ -319,9 +678,9 @@ public partial class BuildMenu : Control
         return style;
     }
 
-    private static void SetCircularBackground(Button button, Color color)
+    private static void SetCircularBackground(Button button, Color color, Color? borderColor = null)
     {
-        StyleBoxFlat style = BuildCircularStyle(color);
+        StyleBoxFlat style = BuildCircularStyle(color, borderColor);
         button.AddThemeStyleboxOverride("normal", style);
         button.AddThemeStyleboxOverride("hover", style);
     }
@@ -560,6 +919,7 @@ public partial class BuildMenu : Control
         }
 
         Grid.Visible = false;
+        SetTokenBarVisible(false);
         _socketScreen.Visible = false;
         _runePickerScreen.Visible = true;
 
@@ -646,6 +1006,15 @@ public partial class BuildMenu : Control
         new Vector2(0.58f, 0.65f)
     };
 
+    // Swaps the two buttons' positions within their shared container - project-wide preference,
+    // rather than relying on whatever order ConfirmationDialog defaults to.
+    private static void SwapDialogButtonOrder(ConfirmationDialog dialog)
+    {
+        Button okButton = dialog.GetOkButton();
+        Button cancelButton = dialog.GetCancelButton();
+        okButton.GetParent().MoveChild(cancelButton, okButton.GetIndex());
+    }
+
     private static Control CreateSpacer()
     {
         return new Control
@@ -660,12 +1029,18 @@ public partial class BuildMenu : Control
     {
         Visible = true;
         UiPanelStack.Push(this, Close);
+        SetShowingFavorites(false);
+        EndTokenAuthoring();
         ShowSpellGrid();
     }
 
     private void ShowSpellGrid()
     {
+        RefreshSpellGrid();
+        RefreshTokenBar();
+
         Grid.Visible = true;
+        SetTokenBarVisible(true);
         _socketScreen.Visible = false;
         _runePickerScreen.Visible = false;
 
@@ -717,6 +1092,7 @@ public partial class BuildMenu : Control
 
     private void Close()
     {
+        EndTokenAuthoring();
         Visible = false;
         UiPanelStack.Pop(this);
         EmitSignal(SignalName.Closed);
