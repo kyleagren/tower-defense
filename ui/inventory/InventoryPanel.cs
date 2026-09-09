@@ -340,9 +340,25 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        SaveManager.Instance.Data.KnownRunes.Add(new RuneInventoryEntry { Rune = tome.TaughtRune, Unlimited = true });
+        LearnRune(tome.TaughtRune);
+
+        foreach (Rune sibling in RuneCatalog.GetRunesOfType(tome.TaughtRune).Where(r => r.Rarity < tome.TaughtRune.Rarity))
+        {
+            LearnRune(sibling);
+        }
+
         SaveManager.Instance.Data.Inventory[gridIndex] = null;
         CommitChange();
+    }
+
+    private static void LearnRune(Rune rune)
+    {
+        if (SaveManager.Instance.Data.KnownRunes.Any(entry => entry.Rune == rune))
+        {
+            return;
+        }
+
+        SaveManager.Instance.Data.KnownRunes.Add(new RuneInventoryEntry { Rune = rune, Unlimited = true });
     }
 
     // Shift-click a grid item to equip it directly, skipping the click-to-pick-up-then-place flow.

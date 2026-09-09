@@ -17,6 +17,12 @@ public static class RuneCatalog
         return _byRarity.GetValueOrDefault(rarity, new List<Rune>());
     }
 
+    public static IEnumerable<Rune> GetRunesOfType(Rune rune)
+    {
+        EnsureLoaded();
+        return _byRarity.Values.SelectMany(list => list).Where(r => r.GetType() == rune.GetType());
+    }
+
     private static void EnsureLoaded()
     {
         if (_byRarity != null)
