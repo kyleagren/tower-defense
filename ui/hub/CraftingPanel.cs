@@ -113,7 +113,7 @@ public partial class CraftingPanel : Control
             return;
         }
 
-        ItemDragController.Instance.OnSlotPressed(_slot);
+        ItemDragController.Instance.OnSlotPressed(_slot, ItemSlotButton);
     }
 
     public void Open()

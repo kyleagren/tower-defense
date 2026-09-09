@@ -11,6 +11,7 @@ public partial class InventoryPanel : Control
     private static readonly Color DisabledBg = new Color(0.32f, 0.14f, 0.14f);
     private static readonly Color AcceptBorderColor = new Color(0.3f, 0.9f, 0.3f);
     private static readonly Color PlaceholderTint = new Color(1f, 1f, 1f, 0.4f);
+    private static readonly Color HeldOriginColor = new Color(0.85f, 0.75f, 0.15f);
     private const int AcceptBorderWidth = 3;
 
     // One equipment slot's button, its empty-state placeholder name, and how to read/write the
@@ -112,7 +113,7 @@ public partial class InventoryPanel : Control
     private EquipmentSlotView CreateEquipmentSlot(string placeholderName, Vector2 anchor, SlotHandle slot)
     {
         Button button = BuildSlotButton(anchor);
-        button.Pressed += () => OnEquipmentSlotPressed(slot);
+        button.Pressed += () => OnEquipmentSlotPressed(slot, button);
         button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(slot, button, @event);
         ItemDragController.Instance.RegisterSlot(button, slot);
         ItemTooltip.Instance.Register(button, () => slot.GetItem());
@@ -138,7 +139,7 @@ public partial class InventoryPanel : Control
             };
 
             BuildIconOnlyVisual(button);
-            button.Pressed += () => OnGridSlotPressed(slotIndex);
+            button.Pressed += () => OnGridSlotPressed(slotIndex, button);
             button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(GridSlot(slotIndex), button, @event);
             button.GuiInput += @event => OnGridSlotGuiInput(slotIndex, @event);
             ItemDragController.Instance.RegisterSlot(button, GridSlot(slotIndex));
@@ -259,7 +260,7 @@ public partial class InventoryPanel : Control
         }
         else
         {
-            ClearBackground(button, canAcceptHeld);
+            ClearBackground(button, canAcceptHeld, isHeldOrigin: ItemDragController.Instance.HeldOriginButton == button);
         }
 
         if (equippedItem != null)
@@ -290,7 +291,7 @@ public partial class InventoryPanel : Control
 
             if (slotItem == null)
             {
-                ClearBackground(button);
+                ClearBackground(button, isHeldOrigin: ItemDragController.Instance.HeldOriginButton == button);
                 continue;
             }
 
@@ -298,7 +299,7 @@ public partial class InventoryPanel : Control
         }
     }
 
-    private void OnGridSlotPressed(int gridIndex)
+    private void OnGridSlotPressed(int gridIndex, Control button)
     {
         if (ItemDragController.Instance.ConsumeDragJustHandled())
         {
@@ -315,7 +316,7 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        ItemDragController.Instance.OnSlotPressed(GridSlot(gridIndex));
+        ItemDragController.Instance.OnSlotPressed(GridSlot(gridIndex), button);
     }
 
     // Right-click (inventory_use) a Rune Tome in the grid to learn it immediately, removing it
@@ -381,7 +382,7 @@ public partial class InventoryPanel : Control
 
     // Shift-click a slot to skip the pick-up-then-place flow: an equipped item goes straight back
     // to the earliest open Inventory slot, mirroring QuickEquip's grid-side shortcut in reverse.
-    private void OnEquipmentSlotPressed(SlotHandle slot)
+    private void OnEquipmentSlotPressed(SlotHandle slot, Control button)
     {
         if (ItemDragController.Instance.ConsumeDragJustHandled())
         {
@@ -394,7 +395,7 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        ItemDragController.Instance.OnSlotPressed(slot);
+        ItemDragController.Instance.OnSlotPressed(slot, button);
     }
 
     private void QuickUnequip(SlotHandle slot)
@@ -498,8 +499,24 @@ public partial class InventoryPanel : Control
         button.AddThemeStyleboxOverride("hover", background);
     }
 
-    private static void ClearBackground(Button button, bool highlighted = false)
+    private static void ClearBackground(Button button, bool highlighted = false, bool isHeldOrigin = false)
     {
+        if (isHeldOrigin)
+        {
+            StyleBoxFlat originFill = new StyleBoxFlat
+            {
+                BgColor = HeldOriginColor,
+                CornerRadiusTopLeft = 6,
+                CornerRadiusTopRight = 6,
+                CornerRadiusBottomLeft = 6,
+                CornerRadiusBottomRight = 6
+            };
+
+            button.AddThemeStyleboxOverride("normal", originFill);
+            button.AddThemeStyleboxOverride("hover", originFill);
+            return;
+        }
+
         if (!highlighted)
         {
             button.RemoveThemeStyleboxOverride("normal");

@@ -39,6 +39,7 @@ public partial class ItemDragController : CanvasLayer
     public event Action Changed;
 
     public Item Held { get; private set; }
+    public Control HeldOriginButton { get; private set; }
 
     private readonly Dictionary<Control, SlotHandle> _slotsByControl = new();
     private readonly List<Control> _panelBounds = new();
@@ -150,7 +151,7 @@ public partial class ItemDragController : CanvasLayer
     //  - holding an item + click a slot that accepts it -> place it there; whatever was already
     //    in that slot (if anything) becomes the newly held item, so it's a swap, not a loss.
     //  - holding an item + click a slot that rejects it (wrong type/character) -> do nothing.
-    public void OnSlotPressed(SlotHandle slot)
+    public void OnSlotPressed(SlotHandle slot, Control button)
     {
         if (Held != null)
         {
@@ -162,6 +163,7 @@ public partial class ItemDragController : CanvasLayer
             Item displaced = slot.GetItem();
             slot.PlaceItem(Held);
             SetHeld(displaced);
+            HeldOriginButton = null;
             CommitChange();
             return;
         }
@@ -174,6 +176,7 @@ public partial class ItemDragController : CanvasLayer
         }
 
         SetHeld(pickedUpItem);
+        HeldOriginButton = button;
         slot.PlaceItem(null);
         Changed?.Invoke();
     }
@@ -293,6 +296,7 @@ public partial class ItemDragController : CanvasLayer
     private void BeginDrag()
     {
         SetHeld(_dragSourceSlot.Value.GetItem());
+        HeldOriginButton = _dragOriginButton;
         _dragSourceSlot.Value.PlaceItem(null);
         _isDragging = true;
         Changed?.Invoke();
@@ -319,7 +323,18 @@ public partial class ItemDragController : CanvasLayer
         {
             Item displaced = targetSlot.GetItem();
             targetSlot.PlaceItem(Held);
-            SetHeld(displaced);
+
+            if (displaced != null && _dragSourceSlot.HasValue && _dragSourceSlot.Value.CanAccept(displaced))
+            {
+                _dragSourceSlot.Value.PlaceItem(displaced);
+                SetHeld(null);
+            }
+            else
+            {
+                SetHeld(displaced);
+                HeldOriginButton = null;
+            }
+
             CommitChange();
             return;
         }
@@ -441,5 +456,10 @@ public partial class ItemDragController : CanvasLayer
         Held = item;
         _cursorIcon.Visible = Held != null;
         _cursorIcon.Texture = Held?.Icon;
+
+        if (item == null)
+        {
+            HeldOriginButton = null;
+        }
     }
 }

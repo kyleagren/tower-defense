@@ -222,9 +222,10 @@ public partial class ItemNameplateController : CanvasLayer
 
         Label label = new Label
         {
-            Text = item.Item.Name,
+            Text = item.Item.TypeLabel,
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
+        label.AddThemeFontSizeOverride("font_size", 20);
         label.AddThemeColorOverride("font_color", _nameplateColors.GetValueOrDefault(item.Item.Rarity, _nameplateColors[Rarity.Common]));
         label.AddThemeConstantOverride("outline_size", 0);
 
