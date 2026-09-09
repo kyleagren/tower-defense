@@ -27,6 +27,8 @@ public partial class BuildMenu : Control
     private Control _tierPopup;
     private int _tierPopupSocketIndex = -1;
     private const float TierRowHeight = 100f;
+    private const float TierRowPadding = 2f;
+    private const float TierRowPitch = TierRowHeight + TierRowPadding * 2f;
 
     private ConfirmationDialog _clearAllDialog;
 
@@ -265,7 +267,7 @@ public partial class BuildMenu : Control
     private void PositionPopupRow(Control row, int socketIndex, int rowSlot)
     {
         Vector2 anchor = _socketAnchors[socketIndex];
-        float verticalOffset = rowSlot * TierRowHeight;
+        float verticalOffset = rowSlot * TierRowPitch;
 
         row.AnchorLeft = anchor.X;
         row.AnchorRight = anchor.X;
@@ -324,7 +326,17 @@ public partial class BuildMenu : Control
         button.AddThemeStyleboxOverride("hover", style);
     }
 
-    // Just a centered label - the current row's own black background already provides the
+    // Transparent so the single shared background panel behind the whole tier popup shows through
+    // instead of each row drawing its own opaque square (which was clipping the focus ring on
+    // whichever edge touched a later-drawn neighbor).
+    private static void SetTransparentBackground(Button button)
+    {
+        StyleBoxFlat style = new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0) };
+        button.AddThemeStyleboxOverride("normal", style);
+        button.AddThemeStyleboxOverride("hover", style);
+    }
+
+    // Just a centered label - the tier popup's shared black background panel already provides the
     // "black bar" behind it; no separate backdrop element needed.
     private static Label AddCenteredLabel(Button button, string text)
     {
@@ -371,8 +383,30 @@ public partial class BuildMenu : Control
         int currentIndex = tiers.IndexOf(currentRune);
         int RowSlotFor(int listIndex) => listIndex - currentIndex;
 
+        // One shared background behind the tier column only - later-added rows draw on top of
+        // earlier ones with zero gap between them, which was clipping the focus ring on whichever
+        // edge touched a later-drawn neighbor. Sized to the actual topmost-to-bottommost tier
+        // span, which varies with how many tiers are owned. X gets its own separate black square
+        // below rather than sharing this column, since it isn't part of the vertical stack.
+        int topSlot = RowSlotFor(0);
+        int bottomSlot = RowSlotFor(tiers.Count - 1);
+
+        Vector2 anchor = _socketAnchors[socketIndex];
+        Panel background = new Panel { MouseFilter = MouseFilterEnum.Ignore };
+        background.AnchorLeft = anchor.X;
+        background.AnchorRight = anchor.X;
+        background.AnchorTop = anchor.Y;
+        background.AnchorBottom = anchor.Y;
+        background.OffsetLeft = -TierRowHeight / 2f;
+        background.OffsetRight = TierRowHeight / 2f;
+        background.OffsetTop = -TierRowHeight / 2f + topSlot * TierRowPitch;
+        background.OffsetBottom = TierRowHeight / 2f + bottomSlot * TierRowPitch;
+        background.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = Colors.Black });
+        _tierPopup.AddChild(background);
+
         Button removeButton = new Button();
-        ItemSlotBackground.Set(removeButton, Colors.Black);
+        removeButton.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = Colors.Black });
+        removeButton.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = Colors.Black });
 
         Label xLabel = new Label
         {
@@ -388,8 +422,9 @@ public partial class BuildMenu : Control
 
         removeButton.Pressed += () =>
         {
-            OnRuneSelected(null);
+            _socketedRunes[socketIndex] = null;
             HideTierPopup();
+            RefreshSocketScreen();
         };
         PositionXButton(removeButton, socketIndex);
         _tierPopup.AddChild(removeButton);
@@ -399,27 +434,26 @@ public partial class BuildMenu : Control
         for (int i = 0; i < tiers.Count; i++)
         {
             Rune tier = tiers[i];
-            string label = tier == currentRune ? currentRune.Name : tier.Rarity.ToString();
 
             Button tierButton = new Button();
-            AddCenteredLabel(tierButton, label);
+            AddCenteredLabel(tierButton, tier.Name);
             PositionPopupRow(tierButton, socketIndex, RowSlotFor(i));
+
+            SetTransparentBackground(tierButton);
+
+            // Same size as the button itself - the outer square stays square-cornered, and a
+            // circle at full size still can't cover a square's corners, so the black frame shows
+            // through there without needing an artificial margin. Moved behind the label
+            // AddCenteredLabel already added, so the text stays readable on top of it rather than
+            // the circle covering it.
+            Panel innerCircle = new Panel { MouseFilter = MouseFilterEnum.Ignore };
+            innerCircle.SetAnchorsPreset(LayoutPreset.FullRect);
+            innerCircle.AddThemeStyleboxOverride("panel", BuildCircularStyle(RarityColors.Get(tier.Rarity)));
+            tierButton.AddChild(innerCircle);
+            tierButton.MoveChild(innerCircle, 0);
 
             if (tier == currentRune)
             {
-                ItemSlotBackground.Set(tierButton, Colors.Black);
-
-                // Same size as every other row's circle, filling the button - the outer square
-                // stays square-cornered, and a circle at full size still can't cover a square's
-                // corners, so the black frame shows through there without needing an artificial
-                // margin. Moved behind the label AddCenteredLabel already added, so the text
-                // stays readable on top of it rather than the circle covering it.
-                Panel innerCircle = new Panel { MouseFilter = MouseFilterEnum.Ignore };
-                innerCircle.SetAnchorsPreset(LayoutPreset.FullRect);
-                innerCircle.AddThemeStyleboxOverride("panel", BuildCircularStyle(RarityColors.Get(tier.Rarity)));
-                tierButton.AddChild(innerCircle);
-                tierButton.MoveChild(innerCircle, 0);
-
                 Label arrowLabel = new Label { Text = "▸", MouseFilter = MouseFilterEnum.Ignore };
                 arrowLabel.SetAnchorsPreset(LayoutPreset.CenterRight);
                 arrowLabel.OffsetLeft = -20f;
@@ -434,7 +468,6 @@ public partial class BuildMenu : Control
             }
             else
             {
-                SetCircularBackground(tierButton, RarityColors.Get(tier.Rarity));
                 tierButton.Pressed += () =>
                 {
                     _socketedRunes[socketIndex] = tier;
@@ -513,11 +546,7 @@ public partial class BuildMenu : Control
                     ItemSlotBackground.Set(button, RarityColors.Get(rune.Rarity));
                 }
 
-                if (isCurrentSocketRune)
-                {
-                    button.Pressed += () => OnRuneSelected(null);
-                }
-                else if (!disabled)
+                if (!disabled)
                 {
                     button.Pressed += () => OnRuneSelected(rune);
                 }
