@@ -5,6 +5,8 @@ using System.Linq;
 
 public abstract partial class Rune : Resource
 {
+    [Export] public Rarity Rarity { get; private set; }
+
     public abstract string Name { get; }
     public abstract IReadOnlyList<Tag> RequiredTags { get; }
     public virtual IReadOnlyList<Tag> RequiredAnyTags => Array.Empty<Tag>();

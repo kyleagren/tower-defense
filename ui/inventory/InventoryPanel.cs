@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SlotHandle = ItemDragController.SlotHandle;
 
 public partial class InventoryPanel : Control
@@ -139,6 +140,7 @@ public partial class InventoryPanel : Control
             BuildIconOnlyVisual(button);
             button.Pressed += () => OnGridSlotPressed(slotIndex);
             button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(GridSlot(slotIndex), button, @event);
+            button.GuiInput += @event => OnGridSlotGuiInput(slotIndex, @event);
             ItemDragController.Instance.RegisterSlot(button, GridSlot(slotIndex));
             ItemTooltip.Instance.Register(button, () => GridSlot(slotIndex).GetItem());
 
@@ -314,6 +316,33 @@ public partial class InventoryPanel : Control
         }
 
         ItemDragController.Instance.OnSlotPressed(GridSlot(gridIndex));
+    }
+
+    // Right-click (inventory_use) a Rune Tome in the grid to learn it immediately, removing it
+    // from Inventory - the one item type that isn't meant to be equipped or just sit there.
+    private void OnGridSlotGuiInput(int gridIndex, InputEvent @event)
+    {
+        if (!@event.IsActionPressed("inventory_use"))
+        {
+            return;
+        }
+
+        if (SaveManager.Instance.Data.Inventory[gridIndex] is RuneTome tome)
+        {
+            LearnRuneTome(gridIndex, tome);
+        }
+    }
+
+    private void LearnRuneTome(int gridIndex, RuneTome tome)
+    {
+        if (tome.TaughtRune == null || SaveManager.Instance.Data.KnownRunes.Any(entry => entry.Rune == tome.TaughtRune))
+        {
+            return;
+        }
+
+        SaveManager.Instance.Data.KnownRunes.Add(new RuneInventoryEntry { Rune = tome.TaughtRune, Unlimited = true });
+        SaveManager.Instance.Data.Inventory[gridIndex] = null;
+        CommitChange();
     }
 
     // Shift-click a grid item to equip it directly, skipping the click-to-pick-up-then-place flow.

@@ -11,5 +11,6 @@ public enum EquipmentSlot
     LeftRing,
     RightRing,
     Relic,
-    Currency
+    Currency,
+    RuneTome
 }

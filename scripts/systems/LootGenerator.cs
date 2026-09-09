@@ -26,7 +26,8 @@ public static class LootGenerator
         (EquipmentSlot.Amulet, 10),
         (EquipmentSlot.LeftRing, 10),
         (EquipmentSlot.Relic, 10),
-        (EquipmentSlot.Currency, 10)
+        (EquipmentSlot.Currency, 10),
+        (EquipmentSlot.RuneTome, 10)
     };
 
     private static readonly CharacterId[] _sentinels =
@@ -97,11 +98,16 @@ public static class LootGenerator
     {
         EquipmentSlot slot = WeightedPick(_slotWeights, entry => entry.Weight).Slot;
 
-        if (slot == EquipmentSlot.Currency)
+        return slot switch
         {
-            return GenerateCurrencyDrop();
-        }
+            EquipmentSlot.Currency => GenerateCurrencyDrop(),
+            EquipmentSlot.RuneTome => GenerateRuneTomeDrop(),
+            _ => GenerateGearDrop(slot)
+        };
+    }
 
+    private static Item GenerateGearDrop(EquipmentSlot slot)
+    {
         Rarity rarity = RollRarity();
         CharacterId equippableCharacter = slot == EquipmentSlot.Weapon
             ? RollWeaponCharacter()
@@ -132,6 +138,34 @@ public static class LootGenerator
         currency.Initialize(Rarity.Common, DefaultItemIcons.Get(currency), CharacterId.AnySentinel, new Godot.Collections.Array<RolledAffix>());
         return currency;
     }
+
+    // Rarities with nothing left to teach just aren't in the pool - no fallback needed there. Only
+    // falls back to a gear roll in the rare case every rarity is fully known.
+    private static Item GenerateRuneTomeDrop()
+    {
+        List<(Rarity Rarity, int Weight)> availableRarities = _rarityWeights
+            .Where(entry => RuneCatalog.AllOfRarity(entry.Rarity).Any(rune => !IsRuneKnown(rune)))
+            .ToList();
+
+        if (availableRarities.Count == 0)
+        {
+            EquipmentSlot fallbackSlot = WeightedPick(
+                _slotWeights.Where(e => e.Slot != EquipmentSlot.Currency && e.Slot != EquipmentSlot.RuneTome).ToList(),
+                e => e.Weight).Slot;
+            return GenerateGearDrop(fallbackSlot);
+        }
+
+        Rarity rarity = WeightedPick(availableRarities, entry => entry.Weight).Rarity;
+        List<Rune> candidates = RuneCatalog.AllOfRarity(rarity).Where(rune => !IsRuneKnown(rune)).ToList();
+        Rune chosen = candidates[_random.Next(candidates.Count)];
+
+        RuneTome tome = new RuneTome();
+        tome.SetTaughtRune(chosen);
+        tome.Initialize(rarity, DefaultItemIcons.Get(tome), CharacterId.AnySentinel, new Godot.Collections.Array<RolledAffix>());
+        return tome;
+    }
+
+    private static bool IsRuneKnown(Rune rune) => SaveManager.Instance.Data.KnownRunes.Any(entry => entry.Rune == rune);
 
     private static Rarity RollRarity()
     {

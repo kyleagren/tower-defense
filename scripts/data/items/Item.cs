@@ -81,7 +81,7 @@ public abstract partial class Item : Resource
     // world tooltips read identically. ItemTooltip's own advanced (Alt-held) view builds its own
     // structured per-mod layout via AffixRowView instead of this, since it needs each mod grouped
     // by type with its tier shown separately, not folded into one string.
-    public string BuildTooltip()
+    public virtual string BuildTooltip()
     {
         List<string> lines = new() { HeaderText };
 

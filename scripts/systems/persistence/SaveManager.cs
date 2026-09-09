@@ -6,7 +6,6 @@ public partial class SaveManager : Node
 {
     private const string SavePath = "user://save_data.tres";
     private const string SpellsDirectory = "res://assets/spells/";
-    private const string RunesDirectory = "res://assets/runes/";
     private const int InventorySize = 40;
     private const float SaveDebounceSeconds = 1f;
 
@@ -57,9 +56,9 @@ public partial class SaveManager : Node
             changed |= EnsureKnownSpell(path);
         }
 
-        foreach (string path in ListResourceFiles(RunesDirectory))
+        foreach (Rune rune in RuneCatalog.AllOfRarity(Rarity.Common))
         {
-            changed |= EnsureKnownRune(path);
+            changed |= EnsureKnownRune(rune);
         }
 
         return changed;
@@ -108,10 +107,8 @@ public partial class SaveManager : Node
         return true;
     }
 
-    private bool EnsureKnownRune(string path)
+    private bool EnsureKnownRune(Rune rune)
     {
-        Rune rune = GD.Load<Rune>(path);
-
         if (rune == null || Data.KnownRunes.Any(entry => entry.Rune == rune))
         {
             return false;
