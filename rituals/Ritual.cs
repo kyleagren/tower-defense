@@ -118,12 +118,16 @@ public partial class Ritual : Node3D, IDamageable
 
     public void Repair()
     {
-        if (!_disabled && _currentHealth >= MaxHealth)
+        float missingFraction = 1f - (_currentHealth / MaxHealth);
+
+        if (missingFraction <= 0f)
         {
             return;
         }
 
-        if (!EconomyManager.Instance.TrySpendMana(_manaCost))
+        int repairCost = Mathf.CeilToInt(_manaCost * GameRules.RepairCostFraction * missingFraction);
+
+        if (!EconomyManager.Instance.TrySpendMana(repairCost))
         {
             return;
         }

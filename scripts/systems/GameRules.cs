@@ -10,6 +10,7 @@ public static class GameRules
     public const float SentinelArmorCurveExponent = 1.3f;
     public const float ShieldRegenDelay = 7f;
     public const float ShieldRegenRatePercent = 0.10f;
+    public const float RepairCostFraction = 0.5f;
     public const float UnarmedCritChance = 0.05f;
     public const float UnarmedCritDamageBonus = 0.5f;
     public const float UnarmedAttackDamage = 5f;

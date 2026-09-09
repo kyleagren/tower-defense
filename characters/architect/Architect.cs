@@ -22,6 +22,11 @@ public partial class Architect : PlayerCharacter
     public override void _ExitTree()
     {
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
+
+        if (ByOwner.TryGetValue(OwnerId, out Architect current) && current == this)
+        {
+            ByOwner.Remove(OwnerId);
+        }
     }
 
     public override void _UnhandledInput(InputEvent @event)
