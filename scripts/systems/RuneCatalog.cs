@@ -25,7 +25,14 @@ public static class RuneCatalog
         }
 
         _byRarity = new Dictionary<Rarity, List<Rune>>();
-        DirAccess dir = DirAccess.Open(RunesDirectory);
+        ScanDirectory(RunesDirectory);
+    }
+
+    // Recurses into subfolders - each rune type gets its own folder (e.g. assets/runes/chain/)
+    // to hold its five rarity-tier .tres files without the whole directory becoming one flat pile.
+    private static void ScanDirectory(string path)
+    {
+        DirAccess dir = DirAccess.Open(path);
 
         if (dir == null)
         {
@@ -34,7 +41,7 @@ public static class RuneCatalog
 
         foreach (string fileName in dir.GetFiles().Where(f => f.EndsWith(".tres")))
         {
-            Rune rune = GD.Load<Rune>(RunesDirectory + fileName);
+            Rune rune = GD.Load<Rune>(path + fileName);
 
             if (rune == null)
             {
@@ -48,6 +55,11 @@ public static class RuneCatalog
             }
 
             list.Add(rune);
+        }
+
+        foreach (string subDirectory in dir.GetDirectories())
+        {
+            ScanDirectory($"{path}{subDirectory}/");
         }
     }
 }
