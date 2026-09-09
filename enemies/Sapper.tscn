@@ -51,7 +51,6 @@ height = 0.55
 collision_layer = 2
 collision_mask = 51
 script = ExtResource("1_enemy")
-Speed = 7.0
 CanAttackRituals = true
 RitualDetectionRange = 500.0
 RitualsOutrankPlayer = true
@@ -60,7 +59,7 @@ Skeleton = NodePath("Skeleton3D")
 BoneSimulator = NodePath("Skeleton3D/PhysicalBoneSimulator3D")
 RootPhysicalBone = NodePath("Skeleton3D/PhysicalBoneSimulator3D/Physical Bone Body")
 BodyCollision = NodePath("CollisionShape3D")
-MaxHealth = 400.0
+MaxHealth = 200.0
 HealthBar = NodePath("HealthBar3D")
 FloatingTextScene = ExtResource("3_floatingtext")
 

@@ -18,10 +18,15 @@ public partial class BuildMenu : Control
     private Control _socketScreen;
     private Label _centerSpellLabel;
     private readonly Button[] _socketButtons = new Button[GameRules.MaxRuneSlots];
+    private readonly Label[] _socketLabels = new Label[GameRules.MaxRuneSlots];
 
     private Control _runePickerScreen;
     private TileGrid _runeGrid;
     private int _socketBeingAssigned = -1;
+
+    private Control _tierPopup;
+    private int _tierPopupSocketIndex = -1;
+    private const float TierRowHeight = 100f;
 
     private ConfirmationDialog _clearAllDialog;
 
@@ -33,7 +38,10 @@ public partial class BuildMenu : Control
     private static readonly StringName _confirmVariation = "ConfirmButton";
     private static readonly StringName _clearAllVariation = "ClearAllButton";
     private static readonly StringName _emptySocketVariation = "EmptySocketButton";
-    private static readonly StringName _currentSocketVariation = "CurrentSocketButton";
+
+    // Same golden color the old CurrentSocketButton theme variation used - kept as a border now
+    // instead of a full fill, so it can sit on top of a rune's rarity color instead of hiding it.
+    private static readonly Color _currentTierBorderColor = new Color(0.75f, 0.6f, 0.15f);
 
     // One tile per rune type, not per owned rarity tier - collapses to the highest tier owned until
     // the tier picker (README Section 17) lets a socket deliberately hold a weaker one instead.
@@ -48,6 +56,7 @@ public partial class BuildMenu : Control
         PopulateSpellGrid();
         BuildSocketScreen();
         BuildRunePickerScreen();
+        BuildTierPopup();
     }
 
     private void PopulateSpellGrid()
@@ -93,19 +102,23 @@ public partial class BuildMenu : Control
 
         _centerSpellLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
         _centerSpellLabel.AddThemeFontSizeOverride("font_size", 28);
-        _centerSpellLabel.SetAnchorsPreset(LayoutPreset.Center);
+        _centerSpellLabel.AnchorLeft = 0f;
+        _centerSpellLabel.AnchorRight = 1f;
+        _centerSpellLabel.AnchorTop = 0.5f;
+        _centerSpellLabel.AnchorBottom = 0.5f;
         _socketScreen.AddChild(_centerSpellLabel);
 
         for (int i = 0; i < _socketButtons.Length; i++)
         {
             int socketIndex = i;
             Button socketButton = new Button();
-            ControlLayout.CenterOnAnchor(socketButton, _socketAnchors[i], new Vector2(160f, 100f));
-            socketButton.Pressed += () => ShowRunePicker(socketIndex);
+            ControlLayout.CenterOnAnchor(socketButton, _socketAnchors[i], new Vector2(TierRowHeight, TierRowHeight));
+            socketButton.Pressed += () => OnSocketButtonPressed(socketIndex);
             socketButton.MouseEntered += () => ShowSocketDescription(socketIndex);
             socketButton.FocusEntered += () => ShowSocketDescription(socketIndex);
             _socketScreen.AddChild(socketButton);
             _socketButtons[i] = socketButton;
+            _socketLabels[i] = AddCenteredLabel(socketButton, "");
         }
 
         Button clearAllButton = new Button { Text = "Clear All", ThemeTypeVariation = _clearAllVariation };
@@ -142,10 +155,34 @@ public partial class BuildMenu : Control
         for (int i = 0; i < _socketButtons.Length; i++)
         {
             bool isEmpty = _socketedRunes[i] == null;
-            _socketButtons[i].Text = _socketedRunes[i]?.Name ?? "Empty";
+            _socketLabels[i].Text = _socketedRunes[i]?.Name ?? "Empty";
 
             // Empty string falls back to the theme's base Button type.
             _socketButtons[i].ThemeTypeVariation = isEmpty ? _emptySocketVariation : "";
+
+            if (isEmpty)
+            {
+                ItemSlotBackground.Clear(_socketButtons[i]);
+            }
+            else
+            {
+                SetCircularBackground(_socketButtons[i], RarityColors.Get(_socketedRunes[i].Rarity));
+            }
+        }
+    }
+
+    // Empty socket: straight to the picker, same as always. Filled socket: the tier popup instead,
+    // since there's now a choice between "browse a different rune" and "pick a different owned
+    // tier of this same one."
+    private void OnSocketButtonPressed(int socketIndex)
+    {
+        if (_socketedRunes[socketIndex] != null)
+        {
+            ShowTierPopup(socketIndex);
+        }
+        else
+        {
+            ShowRunePicker(socketIndex);
         }
     }
 
@@ -215,6 +252,227 @@ public partial class BuildMenu : Control
         _runePickerScreen.AddChild(unsocketButton);
     }
 
+    private void BuildTierPopup()
+    {
+        _tierPopup = new Control { Visible = false };
+        _tierPopup.SetAnchorsPreset(LayoutPreset.FullRect);
+        _socketScreen.AddChild(_tierPopup);
+    }
+
+    // Each row is anchored at the same fractional point the socket itself uses, offset by whole
+    // row heights - rowSlot 0 is exactly the socket's own rect ("home base"), negative slots stack
+    // upward, positive slots stack downward.
+    private void PositionPopupRow(Control row, int socketIndex, int rowSlot)
+    {
+        Vector2 anchor = _socketAnchors[socketIndex];
+        float verticalOffset = rowSlot * TierRowHeight;
+
+        row.AnchorLeft = anchor.X;
+        row.AnchorRight = anchor.X;
+        row.AnchorTop = anchor.Y;
+        row.AnchorBottom = anchor.Y;
+        row.OffsetLeft = -TierRowHeight / 2f;
+        row.OffsetRight = TierRowHeight / 2f;
+        row.OffsetTop = -TierRowHeight / 2f + verticalOffset;
+        row.OffsetBottom = TierRowHeight / 2f + verticalOffset;
+    }
+
+    // Fixed, immediately left of current - never recalculated, since current always sits at the
+    // socket's own position regardless of which tier that is.
+    private void PositionXButton(Control x, int socketIndex)
+    {
+        Vector2 anchor = _socketAnchors[socketIndex];
+
+        x.AnchorLeft = anchor.X;
+        x.AnchorRight = anchor.X;
+        x.AnchorTop = anchor.Y;
+        x.AnchorBottom = anchor.Y;
+        x.OffsetLeft = -TierRowHeight * 1.5f;
+        x.OffsetRight = -TierRowHeight * 0.5f;
+        x.OffsetTop = -TierRowHeight / 2f;
+        x.OffsetBottom = TierRowHeight / 2f;
+    }
+
+    // Circular styling for rune sockets/tier rows specifically - kept local to BuildMenu rather
+    // than added to the shared ItemSlotBackground, since Vendor/Crafting still want plain
+    // rectangular slots. A large fixed corner radius reads as fully round at any button size
+    // without needing to compute an exact half-size radius.
+    private static StyleBoxFlat BuildCircularStyle(Color fillColor, Color? borderColor = null)
+    {
+        StyleBoxFlat style = new StyleBoxFlat
+        {
+            BgColor = fillColor,
+            CornerRadiusTopLeft = 999,
+            CornerRadiusTopRight = 999,
+            CornerRadiusBottomLeft = 999,
+            CornerRadiusBottomRight = 999
+        };
+
+        if (borderColor.HasValue)
+        {
+            style.BorderColor = borderColor.Value;
+            style.SetBorderWidthAll(3);
+        }
+
+        return style;
+    }
+
+    private static void SetCircularBackground(Button button, Color color)
+    {
+        StyleBoxFlat style = BuildCircularStyle(color);
+        button.AddThemeStyleboxOverride("normal", style);
+        button.AddThemeStyleboxOverride("hover", style);
+    }
+
+    // Just a centered label - the current row's own black background already provides the
+    // "black bar" behind it; no separate backdrop element needed.
+    private static Label AddCenteredLabel(Button button, string text)
+    {
+        Label label = new Label
+        {
+            Text = text,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            MouseFilter = MouseFilterEnum.Ignore
+        };
+        label.AddThemeFontSizeOverride("font_size", 14);
+        label.SetAnchorsPreset(LayoutPreset.FullRect);
+        button.AddChild(label);
+
+        return label;
+    }
+
+    // Current tier boxed and focused by default at rowSlot 0, every owned tier up to the player's
+    // actual max for this rune type shown around it (not just tiers below current - a deliberate
+    // downgrade shouldn't hide the tiers you dropped down from). Fixed order: Legendary always
+    // above Common, regardless of which socket this is - _socketAnchors gives enough headroom in
+    // both directions for that not to need per-socket direction-flipping.
+    private void ShowTierPopup(int socketIndex)
+    {
+        _tierPopupSocketIndex = socketIndex;
+        Rune currentRune = _socketedRunes[socketIndex];
+
+        foreach (Node child in _tierPopup.GetChildren())
+        {
+            child.QueueFree();
+        }
+
+        Rune maxOwnedTier = SaveManager.Instance.Data.KnownRunes
+            .Select(entry => entry.Rune)
+            .Where(rune => rune.GetType() == currentRune.GetType())
+            .OrderByDescending(rune => rune.Rarity)
+            .First();
+
+        List<Rune> tiers = RuneCatalog.GetRunesOfType(currentRune)
+            .Where(r => r.Rarity <= maxOwnedTier.Rarity)
+            .OrderByDescending(r => r.Rarity)
+            .ToList();
+
+        int currentIndex = tiers.IndexOf(currentRune);
+        int RowSlotFor(int listIndex) => listIndex - currentIndex;
+
+        Button removeButton = new Button();
+        ItemSlotBackground.Set(removeButton, Colors.Black);
+
+        Label xLabel = new Label
+        {
+            Text = "X",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            MouseFilter = MouseFilterEnum.Ignore
+        };
+        xLabel.AddThemeColorOverride("font_color", Colors.Red);
+        xLabel.AddThemeFontSizeOverride("font_size", 48);
+        xLabel.SetAnchorsPreset(LayoutPreset.FullRect);
+        removeButton.AddChild(xLabel);
+
+        removeButton.Pressed += () =>
+        {
+            OnRuneSelected(null);
+            HideTierPopup();
+        };
+        PositionXButton(removeButton, socketIndex);
+        _tierPopup.AddChild(removeButton);
+
+        Button currentTierButton = null;
+
+        for (int i = 0; i < tiers.Count; i++)
+        {
+            Rune tier = tiers[i];
+            string label = tier == currentRune ? currentRune.Name : tier.Rarity.ToString();
+
+            Button tierButton = new Button();
+            AddCenteredLabel(tierButton, label);
+            PositionPopupRow(tierButton, socketIndex, RowSlotFor(i));
+
+            if (tier == currentRune)
+            {
+                ItemSlotBackground.Set(tierButton, Colors.Black);
+
+                // Same size as every other row's circle, filling the button - the outer square
+                // stays square-cornered, and a circle at full size still can't cover a square's
+                // corners, so the black frame shows through there without needing an artificial
+                // margin. Moved behind the label AddCenteredLabel already added, so the text
+                // stays readable on top of it rather than the circle covering it.
+                Panel innerCircle = new Panel { MouseFilter = MouseFilterEnum.Ignore };
+                innerCircle.SetAnchorsPreset(LayoutPreset.FullRect);
+                innerCircle.AddThemeStyleboxOverride("panel", BuildCircularStyle(RarityColors.Get(tier.Rarity)));
+                tierButton.AddChild(innerCircle);
+                tierButton.MoveChild(innerCircle, 0);
+
+                Label arrowLabel = new Label { Text = "▸", MouseFilter = MouseFilterEnum.Ignore };
+                arrowLabel.SetAnchorsPreset(LayoutPreset.CenterRight);
+                arrowLabel.OffsetLeft = -20f;
+                tierButton.AddChild(arrowLabel);
+
+                tierButton.Pressed += () =>
+                {
+                    HideTierPopup();
+                    ShowRunePicker(socketIndex);
+                };
+                currentTierButton = tierButton;
+            }
+            else
+            {
+                SetCircularBackground(tierButton, RarityColors.Get(tier.Rarity));
+                tierButton.Pressed += () =>
+                {
+                    _socketedRunes[socketIndex] = tier;
+                    HideTierPopup();
+                    RefreshSocketScreen();
+                };
+            }
+
+            _tierPopup.AddChild(tierButton);
+        }
+
+        _tierPopup.Visible = true;
+        AnimateSocketExpand(socketIndex, true);
+        currentTierButton?.GrabFocus();
+    }
+
+    private void HideTierPopup()
+    {
+        if (_tierPopupSocketIndex >= 0)
+        {
+            AnimateSocketExpand(_tierPopupSocketIndex, false);
+        }
+
+        _tierPopup.Visible = false;
+        _tierPopupSocketIndex = -1;
+    }
+
+    // Scales the socket button up slightly around its own center (not the default top-left pivot)
+    // while its popup is open, as a lightweight "this is the one being edited" cue.
+    private void AnimateSocketExpand(int socketIndex, bool expand)
+    {
+        Button socketButton = _socketButtons[socketIndex];
+        socketButton.PivotOffset = socketButton.Size / 2f;
+
+        Tween tween = CreateTween();
+        tween.TweenProperty(socketButton, "scale", expand ? new Vector2(1.06f, 1.06f) : Vector2.One, 0.12f);
+    }
+
     private void ShowRunePicker(int socketIndex)
     {
         _socketBeingAssigned = socketIndex;
@@ -240,12 +498,23 @@ public partial class BuildMenu : Control
 
                 int costDelta = ComputeManaCost(WithSocket(socketIndex, rune)) - baseCost;
                 Button button = CreateTileButton($"{rune.Name}\n+{costDelta}", rune.Name, rune.Description);
-                ItemSlotBackground.Set(button, RarityColors.Get(rune.Rarity));
                 button.Disabled = disabled;
+
+                if (disabled)
+                {
+                    ItemSlotBackground.SetUnavailable(button);
+                }
+                else if (isCurrentSocketRune)
+                {
+                    ItemSlotBackground.SetBorder(button, RarityColors.Get(rune.Rarity), _currentTierBorderColor);
+                }
+                else
+                {
+                    ItemSlotBackground.Set(button, RarityColors.Get(rune.Rarity));
+                }
 
                 if (isCurrentSocketRune)
                 {
-                    button.ThemeTypeVariation = _currentSocketVariation;
                     button.Pressed += () => OnRuneSelected(null);
                 }
                 else if (!disabled)
@@ -288,7 +557,7 @@ public partial class BuildMenu : Control
     {
         for (int i = 0; i < _socketedRunes.Length; i++)
         {
-            if (i != socketIndex && _socketedRunes[i] == rune)
+            if (i != socketIndex && _socketedRunes[i] != null && _socketedRunes[i].GetType() == rune.GetType())
             {
                 return true;
             }
@@ -334,12 +603,18 @@ public partial class BuildMenu : Control
         DescriptionBodyLabel.Text = body ?? "";
     }
 
+    // X no longer sits in the vertical stack, so worst case is 4 rows (not 5) in a single
+    // direction from current - at TierRowHeight px that's ~450px needed above and below any
+    // socket alike (fixed ordering still means both directions matter for every socket). X
+    // spread to match, not the same fraction as Y - the 2560x1440 viewport is wider than tall,
+    // so equal fractions would give a visibly wide rectangle; these keep the actual on-screen
+    // distance from center roughly equal in both directions (~216px X, ~216px Y).
     private static readonly Vector2[] _socketAnchors =
     {
-        new Vector2(0.25f, 0.25f),
-        new Vector2(0.75f, 0.25f),
-        new Vector2(0.25f, 0.75f),
-        new Vector2(0.75f, 0.75f)
+        new Vector2(0.42f, 0.35f),
+        new Vector2(0.58f, 0.35f),
+        new Vector2(0.42f, 0.65f),
+        new Vector2(0.58f, 0.65f)
     };
 
     private static Control CreateSpacer()
@@ -382,7 +657,15 @@ public partial class BuildMenu : Control
 
         if (@event.IsActionPressed("ui_cancel"))
         {
-            GoBack();
+            if (_tierPopup.Visible)
+            {
+                HideTierPopup();
+            }
+            else
+            {
+                GoBack();
+            }
+
             GetViewport().SetInputAsHandled();
         }
     }

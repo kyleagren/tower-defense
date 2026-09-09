@@ -12,6 +12,29 @@ public static class ItemSlotBackground
         button.AddThemeStyleboxOverride("hover", BuildStyle(color));
     }
 
+    // Rarity fill plus a colored border on top - marks a specific state (e.g. "currently socketed
+    // here") without losing the rarity color underneath, unlike swapping to a full
+    // ThemeTypeVariation, whose own styles a local stylebox override like Set's always shadows.
+    public static void SetBorder(Button button, Color fillColor, Color borderColor)
+    {
+        StyleBoxFlat style = BuildStyle(fillColor);
+        style.BorderColor = borderColor;
+        style.SetBorderWidthAll(3);
+        button.AddThemeStyleboxOverride("normal", style);
+        button.AddThemeStyleboxOverride("hover", style);
+    }
+
+    // Flat black, explicitly covering the "disabled" style too rather than relying on Godot's
+    // fallback - a tile the player categorically cannot pick right now doesn't need its rarity
+    // legible, it needs to read as unavailable at a glance.
+    public static void SetUnavailable(Button button)
+    {
+        StyleBoxFlat style = BuildStyle(Colors.Black);
+        button.AddThemeStyleboxOverride("normal", style);
+        button.AddThemeStyleboxOverride("hover", style);
+        button.AddThemeStyleboxOverride("disabled", style);
+    }
+
     public static void Clear(Button button)
     {
         button.RemoveThemeStyleboxOverride("normal");

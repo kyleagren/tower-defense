@@ -40,5 +40,23 @@ public partial class DebugToggle : Node
         {
             DebugSettings.ShowTowerDamageNumbers = !DebugSettings.ShowTowerDamageNumbers;
         }
+        else if (keyEvent.PhysicalKeycode == Key.F6)
+        {
+            Rune legendarySalvo = GD.Load<Rune>("res://assets/runes/multi_projectile/multi_projectile_rune_legendary.tres");
+
+            RuneTome tome = new RuneTome();
+            tome.SetTaughtRune(legendarySalvo);
+            tome.Initialize(legendarySalvo.Rarity, DefaultItemIcons.Get(tome), CharacterId.AnySentinel, new Godot.Collections.Array<RolledAffix>());
+
+            Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
+            int emptySlotIndex = inventory.IndexOf(null);
+
+            if (emptySlotIndex >= 0)
+            {
+                inventory[emptySlotIndex] = tome;
+                SaveManager.Instance.RequestSave();
+                EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
+            }
+        }
     }
 }

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MultiProjectileRune" format=3]
+
+[ext_resource type="Script" uid="uid://78qm0x0wdcm7" path="res://scripts/data/runes/MultiProjectileRune.cs" id="1_prnpo"]
+
+[resource]
+script = ExtResource("1_prnpo")
+ExtraProjectiles = 4
+DamageMultiplier = 0.95
+Rarity = 3
+metadata/_custom_type_script = "uid://78qm0x0wdcm7"
