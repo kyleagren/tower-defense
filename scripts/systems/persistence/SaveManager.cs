@@ -50,6 +50,7 @@ public partial class SaveManager : Node
         bool changed = false;
 
         changed |= EnsureInventorySize();
+        changed |= EnsureTokenSlots();
 
         foreach (string path in ListResourceFiles(SpellsDirectory))
         {
@@ -73,6 +74,21 @@ public partial class SaveManager : Node
         while (Data.Inventory.Count < InventorySize)
         {
             Data.Inventory.Add(null);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    // Fixed-size like Inventory, for the same reason - "slot 2" is a meaningful, stable position
+    // (the token bar UI), not just list membership.
+    private bool EnsureTokenSlots()
+    {
+        bool changed = false;
+
+        while (Data.Tokens.Count < GameRules.MaxTokens)
+        {
+            Data.Tokens.Add(null);
             changed = true;
         }
 

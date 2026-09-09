@@ -10,6 +10,8 @@ public partial class PlayerSaveData : Resource
     [Export] public Godot.Collections.Array<RuneInventoryEntry> KnownRunes { get; set; } = new();
     [Export] public Godot.Collections.Array<Item> Inventory { get; set; } = new();
     [Export] public Godot.Collections.Dictionary<CharacterId, EquippedLoadout> Loadouts { get; set; } = new();
+    [Export] public Godot.Collections.Array<FavoriteLoadout> Favorites { get; set; } = new();
+    [Export] public Godot.Collections.Array<RuneLoadout> Tokens { get; set; } = new();
 
     // The item currently sitting on the crafting table, if any - separate from Inventory so it
     // survives a crash mid-crafting-session (saved immediately, not debounced, after every change).
