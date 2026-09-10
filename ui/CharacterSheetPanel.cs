@@ -77,6 +77,7 @@ public partial class CharacterSheetPanel : Control
     private void Close()
     {
         Visible = false;
+        UiPanelStack.Pop(this);
     }
 
     private void RefreshTopSection()
@@ -109,17 +110,28 @@ public partial class CharacterSheetPanel : Control
 
         CharacterSheet sheet = CharacterSheetCache.GetSheet(sentinel.Id);
 
+        if (sentinel.BaseHealthRegenPerSecond > 0f)
+        {
+            AddStatRow($"Base Health Regenerated per Second: {Mathf.RoundToInt(sentinel.BaseHealthRegenPerSecond)}");
+            AddStatRow($"Total Health Regenerated per Second: {Mathf.RoundToInt(sentinel.TotalHealthRegenPerSecond)}");
+        }
+
         foreach (StatId stat in Enum.GetValues<StatId>())
         {
+            if (stat == StatId.SentinelBaseHealthRegen)
+            {
+                continue;
+            }
+
             if (!sheet.Bonuses.TryGetValue(stat, out float bonus) || Mathf.IsZeroApprox(bonus))
             {
                 continue;
             }
 
-            // Every DescriptionTemplate follows "+{0}% X" or, for the two cost-reduction stats,
-            // "-{0}% X" - stripping whichever prefix applies leaves just the readable stat name,
-            // so rows read "X : +N%" (or "Reduced X : -N%" for the two reductions) instead of the
-            // raw "+{0}% X" template.
+            // Every remaining DescriptionTemplate follows "+{0}% X" or, for the two cost-reduction
+            // stats, "-{0}% X" - stripping whichever prefix applies leaves just the readable stat
+            // name, so rows read "X : +N%" (or "Reduced X : -N%" for the two reductions) instead of
+            // the raw "+{0}% X" template.
             Affix affix = AffixTable.Get(stat);
             bool isReduction = affix.DescriptionTemplate.StartsWith("-{0}% ");
             string statName = affix.DescriptionTemplate.Replace(isReduction ? "-{0}% " : "+{0}% ", "");
@@ -130,8 +142,12 @@ public partial class CharacterSheetPanel : Control
             }
 
             string sign = isReduction ? "-" : "+";
-            Label row = new Label { Text = $"{statName} : {sign}{Mathf.RoundToInt(bonus * 100f)}%" };
-            StatsList.AddChild(row);
+            AddStatRow($"{statName} : {sign}{Mathf.RoundToInt(bonus * 100f)}%");
         }
+    }
+
+    private void AddStatRow(string text)
+    {
+        StatsList.AddChild(new Label { Text = text });
     }
 }

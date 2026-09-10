@@ -169,6 +169,13 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
     }
 
+    // Public so the Character Sheet UI can show the same numbers UpdateHealthRegen actually uses,
+    // rather than a second copy of this formula.
+    public float BaseHealthRegenPerSecond => CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelBaseHealthRegen);
+
+    public float TotalHealthRegenPerSecond =>
+        BaseHealthRegenPerSecond * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelHealthRegen));
+
     // Called by whichever Sentinel is active, from its own _PhysicsProcess - passively recharges
     // Shield once it's been GameRules.ShieldRegenDelay seconds since the last projectile hit.
     public void UpdateShieldRegen(float delta)
@@ -194,7 +201,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // Layers base (weapon-inherent, boosted by the weapon's own local rolls) -> increased (the
     // global CharacterSheet pool from non-weapon gear) -> more (the weapon's own multiplier, on
     // crit damage only).
-    public DamagePacket RollAttackDamage(float baseDamage)
+    public DamagePacket RollAttackDamage(float baseDamage, bool guaranteedCrit = false)
     {
         CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
         Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
@@ -204,7 +211,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         float moreMultiplier = weapon?.CritDamageBonusMoreMultiplier ?? 1f;
 
         float critChance = baseCritChance * (1f + sheet.GetBonus(StatId.SentinelCritChance));
-        bool isCrit = GD.Randf() < critChance;
+        bool isCrit = guaranteedCrit || GD.Randf() < critChance;
         float critDamageBonus = baseCritDamageBonus * (1f + sheet.GetBonus(StatId.SentinelCritDamage)) * moreMultiplier;
         float multiplier = isCrit ? 1f + critDamageBonus : 1f;
 
@@ -217,20 +224,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // preserve the shape of.
     public void UpdateHealthRegen(float delta)
     {
-        if (IsDead || _currentHealth >= MaxHealth)
+        if (IsDead || _currentHealth >= MaxHealth || BaseHealthRegenPerSecond <= 0f)
         {
             return;
         }
 
-        CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
-        float baseRegen = sheet.GetBonus(StatId.SentinelBaseHealthRegen);
-        if (baseRegen <= 0f)
-        {
-            return;
-        }
-
-        float regenPerSecond = baseRegen * (1f + sheet.GetBonus(StatId.SentinelHealthRegen));
-        _currentHealth = Mathf.Min(MaxHealth, _currentHealth + regenPerSecond * delta);
+        _currentHealth = Mathf.Min(MaxHealth, _currentHealth + TotalHealthRegenPerSecond * delta);
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
     }
 

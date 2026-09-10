@@ -9,7 +9,7 @@ public abstract partial class Weapon : Item
     [Export] public float BaseAttackDamage { get; protected set; }
     [Export] public virtual float BaseAttackSpeed { get; protected set; }
     [Export] public float BaseCritChance { get; protected set; } = 0.05f;
-    [Export] public float BaseCritDamageBonus { get; protected set; } = 0.5f;
+    [Export] public virtual float BaseCritDamageBonus { get; protected set; } = 0.5f;
 
     public override EquipmentSlot Slot => EquipmentSlot.Weapon;
 

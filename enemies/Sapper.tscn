@@ -8,6 +8,9 @@
 radius = 0.35
 height = 1.31
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_head"]
+size = Vector3(0.26, 0.26, 0.26)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sapper"]
 albedo_color = Color(0.82, 0.82, 0.85, 1)
 
@@ -47,7 +50,7 @@ height = 0.55
 radius = 0.08
 height = 0.55
 
-[node name="Sapper" type="CharacterBody3D" unique_id=803744385 node_paths=PackedStringArray("NavAgent", "Skeleton", "BoneSimulator", "RootPhysicalBone", "BodyCollision", "HealthBar")]
+[node name="Sapper" type="CharacterBody3D" unique_id=803744385 node_paths=PackedStringArray("NavAgent", "Skeleton", "BoneSimulator", "RootPhysicalBone", "BodyCollision", "HeadCollision", "HealthBar")]
 collision_layer = 2
 collision_mask = 51
 script = ExtResource("1_enemy")
@@ -59,6 +62,7 @@ Skeleton = NodePath("Skeleton3D")
 BoneSimulator = NodePath("Skeleton3D/PhysicalBoneSimulator3D")
 RootPhysicalBone = NodePath("Skeleton3D/PhysicalBoneSimulator3D/Physical Bone Body")
 BodyCollision = NodePath("CollisionShape3D")
+HeadCollision = NodePath("Skeleton3D/HeadAttachment/HeadCollision")
 MaxHealth = 200.0
 HealthBar = NodePath("HealthBar3D")
 FloatingTextScene = ExtResource("3_floatingtext")
@@ -173,6 +177,10 @@ bone_idx = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
 material_override = SubResource("StandardMaterial3D_sapper")
 mesh = SubResource("BoxMesh_head")
+
+[node name="HeadCollision" type="CollisionShape3D" parent="Skeleton3D/HeadAttachment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
+shape = SubResource("BoxShape3D_head")
 
 [node name="ArmLAttachment" type="BoneAttachment3D" parent="Skeleton3D" unique_id=1485958891]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.29, 0.967, 0)

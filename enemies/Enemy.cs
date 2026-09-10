@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public partial class Enemy : CharacterBody3D, IDamageable
 {
     [Export] public CollisionShape3D BodyCollision { get; private set; }
+    [Export] public CollisionShape3D HeadCollision { get; private set; }
     [Export] public float RagdollCleanupDelay = 2f;
     [Export] public float MaxHealth = 100f;
     [Export] public float CenterMassHeight = 1f;
@@ -67,6 +68,11 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     public Vector3 CenterMass => GlobalPosition + Vector3.Up * CenterMassHeight;
     public Vector3 AimPoint => CenterMass;
+
+    // Optional - an enemy with no HeadCollision wired (e.g. TrainingDummy) just never registers a
+    // headshot. Shape index comes straight from a raycast result's "shape" key.
+    public bool IsHeadshot(int shapeIndex) =>
+        HeadCollision != null && ShapeOwnerGetOwner(ShapeFindOwner(shapeIndex)) == HeadCollision;
 
     public Vector3 GetJitteredCenterMass(float jitterAmount)
     {

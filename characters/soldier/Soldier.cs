@@ -92,7 +92,8 @@ public partial class Soldier : Sentinel
 
             if (result["collider"].As<Node3D>() is Enemy enemy)
             {
-                enemy.TakeDamage(RollAttackDamage(AttackDamage));
+                bool isHeadshot = enemy.IsHeadshot((int)result["shape"]);
+                enemy.TakeDamage(RollAttackDamage(AttackDamage, isHeadshot));
             }
 
             if (ImpactScene != null)

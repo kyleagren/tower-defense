@@ -370,6 +370,7 @@ public partial class BuildMenu : Control
             Name = name
         };
         SaveManager.Instance.Save();
+        EventBus.Instance.EmitSignal(EventBus.SignalName.TokensChanged);
 
         EndTokenAuthoring();
         ShowSpellGrid();

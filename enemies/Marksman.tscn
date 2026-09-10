@@ -9,6 +9,9 @@
 radius = 0.3
 height = 1.93
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_head"]
+size = Vector3(0.28, 0.28, 0.28)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_marksman"]
 albedo_color = Color(0.82, 0.82, 0.85, 1)
 
@@ -48,7 +51,7 @@ height = 0.95
 radius = 0.07
 height = 0.95
 
-[node name="Marksman" type="CharacterBody3D" node_paths=PackedStringArray("NavAgent", "Skeleton", "BoneSimulator", "RootPhysicalBone", "BodyCollision", "HealthBar")]
+[node name="Marksman" type="CharacterBody3D" node_paths=PackedStringArray("NavAgent", "Skeleton", "BoneSimulator", "RootPhysicalBone", "BodyCollision", "HeadCollision", "HealthBar")]
 collision_layer = 2
 collision_mask = 51
 script = ExtResource("1_enemy")
@@ -61,6 +64,7 @@ Skeleton = NodePath("Skeleton3D")
 BoneSimulator = NodePath("Skeleton3D/PhysicalBoneSimulator3D")
 RootPhysicalBone = NodePath("Skeleton3D/PhysicalBoneSimulator3D/Physical Bone Body")
 BodyCollision = NodePath("CollisionShape3D")
+HeadCollision = NodePath("Skeleton3D/HeadAttachment/HeadCollision")
 HealthBar = NodePath("HealthBar3D")
 FloatingTextScene = ExtResource("3_floatingtext")
 
@@ -174,6 +178,10 @@ bone_idx = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, 0)
 material_override = SubResource("StandardMaterial3D_marksman")
 mesh = SubResource("BoxMesh_head")
+
+[node name="HeadCollision" type="CollisionShape3D" parent="Skeleton3D/HeadAttachment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, 0)
+shape = SubResource("BoxShape3D_head")
 
 [node name="ArmLAttachment" type="BoneAttachment3D" parent="Skeleton3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.245, 1.533, 0)
