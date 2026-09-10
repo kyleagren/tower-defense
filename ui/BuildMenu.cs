@@ -50,7 +50,6 @@ public partial class BuildMenu : Control
     private int _editingTokenIndex = -1;
     private Button _confirmButton;
 
-    private static readonly Color _tokenFilledColor = new Color(0.3f, 0.5f, 0.8f);
     private static readonly Color _tokenAuthoringColor = new Color(0.85f, 0.75f, 0.15f);
     private static readonly float[] _tokenAnchorsX = { 1f / 6f, 3f / 6f, 5f / 6f };
     private const float TokenBarTop = 0.85f;
@@ -182,7 +181,7 @@ public partial class BuildMenu : Control
     {
         if (_editingTokenIndex >= 0)
         {
-            SaveToken(_editingTokenIndex, favorite.Spell, favorite.Runes);
+            SaveToken(_editingTokenIndex, favorite.Spell, favorite.Runes, favorite.Name);
             return;
         }
 
@@ -282,7 +281,7 @@ public partial class BuildMenu : Control
             }
 
             _tokenButtons[i].ThemeTypeVariation = "";
-            SetCircularBackground(_tokenButtons[i], _tokenFilledColor, highlight);
+            SetCircularBackground(_tokenButtons[i], DamageTypeColors.GetForSpell(token.Spell), highlight);
 
             _tokenSpellLabels[i].Text = token.Spell?.Name ?? "";
             _tokenRuneLabels[i].Text = string.Join("\n", token.Runes.Select(r => r?.Name ?? "[Empty Socket]"));
@@ -362,12 +361,13 @@ public partial class BuildMenu : Control
         RefreshTokenBar();
     }
 
-    private void SaveToken(int tokenIndex, Spell spell, IEnumerable<Rune> runes)
+    private void SaveToken(int tokenIndex, Spell spell, IEnumerable<Rune> runes, string name = "")
     {
         SaveManager.Instance.Data.Tokens[tokenIndex] = new RuneLoadout
         {
             Spell = spell,
-            Runes = new Godot.Collections.Array<Rune>(runes)
+            Runes = new Godot.Collections.Array<Rune>(runes),
+            Name = name
         };
         SaveManager.Instance.Save();
 
@@ -615,9 +615,22 @@ public partial class BuildMenu : Control
 
     private void BuildTierPopup()
     {
-        _tierPopup = new Control { Visible = false };
+        _tierPopup = new Control { Visible = false, MouseFilter = MouseFilterEnum.Pass };
         _tierPopup.SetAnchorsPreset(LayoutPreset.FullRect);
+        _tierPopup.GuiInput += OnTierPopupBackgroundInput;
         _socketScreen.AddChild(_tierPopup);
+    }
+
+    // Pass lets every click still reach whatever's actually underneath (a different socket, Clear
+    // All, Confirm, ...) once it's done here - this only needs to close the popup on the way
+    // through. Never fires for a click on one of the popup's own buttons (X, a tier row) - those
+    // sit in front with the default Stop filter and consume the event before it gets here.
+    private void OnTierPopupBackgroundInput(InputEvent @event)
+    {
+        if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed)
+        {
+            HideTierPopup();
+        }
     }
 
     // Each row is anchored at the same fractional point the socket itself uses, offset by whole

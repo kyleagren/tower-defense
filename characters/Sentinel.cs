@@ -13,6 +13,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     [Export] public Node3D Weapon { get; private set; }
     [Export] public float BaseMaxHealth = 100f;
     [Export] public float AimPointHeight = 1.2f;
+    [Export] public RitualPlacer RitualTokenPlacer { get; private set; }
+    [Export] public TokenDeployer TokenDeployer { get; private set; }
 
     public abstract CharacterId Id { get; }
 
@@ -42,6 +44,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             return sheet.GetLocalTotal(StatId.SentinelArmor) * (1f + sheet.GetBonus(StatId.SentinelTotalArmor));
         }
     }
+
+    protected override bool ExtraCombatInputGate => !RitualTokenPlacer.IsPlacing;
 
     private float _currentHealth;
     private float _currentShield;
@@ -90,7 +94,14 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
         if (@event.IsActionPressed("ui_cancel"))
         {
-            ToggleMouseCapture();
+            if (TokenDeployer.IsPickModeActive)
+            {
+                TokenDeployer.ExitPickMode();
+            }
+            else if (!RitualTokenPlacer.IsPlacing)
+            {
+                ToggleMouseCapture();
+            }
         }
     }
 

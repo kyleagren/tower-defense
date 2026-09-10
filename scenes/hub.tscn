@@ -18,6 +18,9 @@
 [ext_resource type="PackedScene" path="res://ui/hub/VendorPanel.tscn" id="16_vendorpanel"]
 [ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="17_charactersheetpanel"]
 [ext_resource type="Script" uid="uid://dr8emxep4ujsn" path="res://ui/ItemNameplateController.cs" id="18_itemnameplate"]
+[ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="19_playerhealthorb"]
+[ext_resource type="PackedScene" path="res://ui/PlayerShieldBar.tscn" id="20_playershieldbar"]
+[ext_resource type="PackedScene" path="res://ui/TokenBar.tscn" id="21_tokenbar"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -380,6 +383,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6601563)
 shape = SubResource("BoxShape3D_archzone")
 
 [node name="Crosshair" parent="." unique_id=910279266 instance=ExtResource("5_crosshair")]
+
+[node name="PlayerHealthOrb" parent="." unique_id=363077634 instance=ExtResource("19_playerhealthorb")]
+
+[node name="PlayerShieldBar" parent="." unique_id=1470659503 instance=ExtResource("20_playershieldbar")]
+
+[node name="TokenBar" parent="." unique_id=500076295 instance=ExtResource("21_tokenbar")]
+layout_mode = 3
 
 [node name="CharacterSelectStation" type="StaticBody3D" parent="." unique_id=1484671035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, -10)

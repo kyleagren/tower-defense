@@ -11,6 +11,8 @@ public partial class EventBus : Node
     [Signal] public delegate void PlayerHealthChangedEventHandler(float currentHealth, float maxHealth);
     [Signal] public delegate void PlayerShieldChangedEventHandler(float currentShield, float maxShield);
     [Signal] public delegate void InventoryChangedEventHandler();
+    [Signal] public delegate void TokensChangedEventHandler();
+    [Signal] public delegate void TokenPickModeChangedEventHandler(bool isActive);
 
     public override void _Ready()
     {

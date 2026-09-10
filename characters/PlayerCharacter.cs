@@ -23,7 +23,12 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     // True only while this character is both the active combatant and no UI panel (inventory,
     // build menu, etc.) is capturing input instead - combat actions check this rather than IsActive
     // alone, so clicking inside an open panel doesn't also swing a sword or fire a gun.
-    protected bool CanUseCombatInput => IsActive && !UiPanelStack.AnyOpen;
+    protected bool CanUseCombatInput => IsActive && !UiPanelStack.AnyOpen && ExtraCombatInputGate;
+
+    // Hook for a subclass with its own reason to suppress combat input beyond the checks above
+    // (e.g. a Sentinel mid-token-placement, where attack/confirm_placement share the left-click
+    // binding) - defaults to unrestricted so PlayerCharacter itself imposes no extra gate.
+    protected virtual bool ExtraCombatInputGate => true;
 
     public virtual float Speed => BaseSpeed;
 

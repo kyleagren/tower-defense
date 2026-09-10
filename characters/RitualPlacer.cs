@@ -1,11 +1,26 @@
 using Godot;
+using System;
 
 public partial class RitualPlacer : Node
 {
-    [Export] public PlayerCharacter Character { get; private set; }
+    // Not exported - resolved from the parent instead of a wired NodePath, since this is always a
+    // direct child of the character it belongs to and every PlayerCharacter subclass qualifies.
+    // Wiring it as an export meant Godot had to type-check the assignment while building the scene
+    // tree, which broke for the Sentinel's instance (living in the shared SentinelBody.tscn base
+    // scene, inherited by Soldier/Tank): the base scene's root has no script yet at that point, so
+    // the parent is still a bare CharacterBody3D and the cast fails. Same fix LookInteractor already
+    // uses for the same reason.
+    public PlayerCharacter Character { get; private set; }
+
     [Export] public PackedScene RitualScene { get; private set; }
     [Export] public float PlacementDistance = GameRules.RitualReach;
     [Export] public float GroundRaycastRange = 10f;
+
+    // Which phase transition should cancel an in-progress placement for this placer's owner - the
+    // Architect's own instance cancels on entering Combat (placement only happens during Build);
+    // the Sentinel's instance (README section 17's mid-wave deployment) needs the opposite: cancel
+    // on entering Build, since that's when the Sentinel itself goes inactive.
+    [Export] public GamePhase CancelOnPhase = GamePhase.Combat;
 
     public bool IsPlacing { get; private set; }
 
@@ -20,6 +35,10 @@ public partial class RitualPlacer : Node
     private SpellCastContext _pendingContext;
     private bool _isValidPlacement;
 
+    // Invoked once placement is actually confirmed (not on cancel) - lets a caller like
+    // TokenDeployer know it should consume the token that was just spent.
+    private Action _onConfirmed;
+
     private Vector3 _cursorPosition;
     private Vector3 _wallStartPosition;
     private Vector3 _wallEndPosition;
@@ -33,6 +52,7 @@ public partial class RitualPlacer : Node
 
     public override void _Ready()
     {
+        Character = (PlayerCharacter)GetParent();
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         _economy = EconomyManager.Instance;
     }
@@ -40,17 +60,26 @@ public partial class RitualPlacer : Node
     public override void _ExitTree()
     {
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
-    }
 
-    private void OnGamePhaseChanged(GamePhase phase)
-    {
-        if (phase == GamePhase.Combat && IsPlacing)
+        // If the owning character is being torn down mid-placement (e.g. swapping bodies via a hub
+        // station while a ghost is out), the ghost/wall preview would otherwise leak - they're
+        // parented to the scene root, not to this node, so they have no other relationship to this
+        // character being freed.
+        if (IsPlacing)
         {
             CancelPlacement();
         }
     }
 
-    public void BeginPlacement(Spell spell, Godot.Collections.Array<Rune> runes)
+    private void OnGamePhaseChanged(GamePhase phase)
+    {
+        if (phase == CancelOnPhase && IsPlacing)
+        {
+            CancelPlacement();
+        }
+    }
+
+    public void BeginPlacement(Spell spell, Godot.Collections.Array<Rune> runes, Action onConfirmed = null)
     {
         if (IsPlacing)
         {
@@ -60,6 +89,7 @@ public partial class RitualPlacer : Node
         _pendingSpell = spell;
         _pendingRunes = runes;
         _pendingContext = SpellInstance.ResolvePreview(spell, runes);
+        _onConfirmed = onConfirmed;
         _wallCostApplied = false;
 
         IsPlacing = true;
@@ -100,7 +130,7 @@ public partial class RitualPlacer : Node
                 break;
         }
 
-        if (Input.IsActionJustPressed("ui_cancel"))
+        if (Input.IsActionJustPressed("ui_cancel") || Input.IsActionJustPressed("alt_action"))
         {
             CancelPlacement();
         }
@@ -386,7 +416,9 @@ public partial class RitualPlacer : Node
         (int manaCost, int capacityCost) = _economy.SpendOnRitual(_pendingContext);
         placed.SetCost(manaCost, capacityCost);
 
+        Action onConfirmed = _onConfirmed;
         EndPlacement();
+        onConfirmed?.Invoke();
     }
 
     private void CancelPlacement()
@@ -409,6 +441,7 @@ public partial class RitualPlacer : Node
             _ghost = null;
         }
 
+        _onConfirmed = null;
         IsPlacing = false;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, false);
     }

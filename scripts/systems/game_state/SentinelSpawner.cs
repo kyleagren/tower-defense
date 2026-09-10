@@ -77,6 +77,12 @@ public partial class SentinelSpawner : Node
 
         PlayerCharacter character = scene.Instantiate<PlayerCharacter>();
         character.SetOwnerId(OwnerId);
+
+        if (character is Sentinel sentinel)
+        {
+            sentinel.TokenDeployer.AllowOutsideCombat = ActivateImmediately;
+        }
+
         GetParent().AddChild(character);
         _current = character;
 

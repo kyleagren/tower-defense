@@ -177,8 +177,9 @@ public partial class Ritual : Node3D, IDamageable
 
         // Placeholder: colors the Ritual by its spell's dominant element instead of a flat scene
         // default, reusing the same element->color mapping floating combat text and enemy status
-        // overlays already use.
-        Color elementColor = DamageTypeColors.Get(spell.BaseDamage.DominantElement);
+        // overlays already use. GetForSpell (not the raw Get) so a damage-less elemental spell like
+        // Ice Wall still resolves to its Tag.Cold color instead of falling through to white/grey.
+        Color elementColor = DamageTypeColors.GetForSpell(spell);
         _activeMaterial = new StandardMaterial3D { AlbedoColor = elementColor };
         CoreMesh.MaterialOverride = _activeMaterial;
     }

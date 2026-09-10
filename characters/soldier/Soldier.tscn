@@ -32,7 +32,7 @@ size = Vector3(0.06, 0.12, 0.2)
 material = SubResource("StandardMaterial3D_rifle")
 size = Vector3(0.05, 0.2, 0.06)
 
-[node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
+[node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "SpringArm", "Camera", "BodyMesh", "RitualTokenPlacer", "TokenDeployer") instance=ExtResource("1_base")]
 script = ExtResource("2_soldier")
 ImpactScene = ExtResource("3_impact")
 MuzzlePoint = NodePath("Weapon/MuzzlePoint")
@@ -41,6 +41,8 @@ Weapon = NodePath("Weapon")
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
+RitualTokenPlacer = NodePath("RitualTokenPlacer")
+TokenDeployer = NodePath("TokenDeployer")
 
 [node name="MeshInstance3D" parent="." index="1"]
 mesh = SubResource("CapsuleMesh_soldier")

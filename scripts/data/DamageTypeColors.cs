@@ -14,7 +14,7 @@ public static class DamageTypeColors
     {
         [Tag.Fire] = new Color(1f, 0.5f, 0f),
         [Tag.Water] = new Color(0.3f, 0.55f, 1f),
-        [Tag.Cold] = new Color(0.75f, 0.95f, 1f),
+        [Tag.Cold] = new Color(0.6f, 0.85f, 1f),
         [Tag.Lightning] = new Color(1f, 0.9f, 0.1f),
         [Tag.Wind] = new Color(0.75f, 1f, 0.85f)
     };
@@ -29,6 +29,32 @@ public static class DamageTypeColors
     public static Color Get(Tag? element)
     {
         return element.HasValue && _elementColors.TryGetValue(element.Value, out Color color) ? color : Physical;
+    }
+
+    // A spell's own dominant damage element misses anything that deals no direct damage at all -
+    // Ice Wall carries Tag.Cold for identity/build-crafting purposes (README section 5) but has no
+    // FireDamage/ColdDamage/etc. of its own to be dominant, so Get(spell.BaseDamage.DominantElement)
+    // always fell through to the neutral white/grey for it. Falling back to the spell's own Tags
+    // list catches that case (and any future damage-less elemental spell) without special-casing
+    // Ice Wall specifically.
+    public static Color GetForSpell(Spell spell)
+    {
+        Tag? dominant = spell.BaseDamage.DominantElement;
+
+        if (dominant.HasValue && _elementColors.TryGetValue(dominant.Value, out Color dominantColor))
+        {
+            return dominantColor;
+        }
+
+        foreach (Tag tag in spell.Tags)
+        {
+            if (_elementColors.TryGetValue(tag, out Color tagColor))
+            {
+                return tagColor;
+            }
+        }
+
+        return Physical;
     }
 
     // The tint for an enemy currently carrying this element as its Status, applied as an unshaded

@@ -59,12 +59,17 @@ public static class UiPanelStack
 
     public static bool AnyOpen => _open.Count > 0;
 
+    // Base offset keeps a stacked panel above ordinary always-on HUD content (health orb, shield
+    // bar, token bar, ...), which sits at the default z_index 0 and would otherwise win by tree
+    // order alone against a panel like BuildMenu that happens to live earlier in the tree.
+    private const int ZIndexBase = 100;
+
     private static void ReassignZIndices()
     {
         for (int i = 0; i < _open.Count; i++)
         {
             _open[i].ZAsRelative = false;
-            _open[i].ZIndex = i;
+            _open[i].ZIndex = ZIndexBase + i;
         }
     }
 }

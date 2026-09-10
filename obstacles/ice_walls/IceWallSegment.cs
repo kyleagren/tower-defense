@@ -7,7 +7,7 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
 
     private static readonly StandardMaterial3D _iceMaterial = new StandardMaterial3D
     {
-        AlbedoColor = new Color(0.6f, 0.85f, 1f)
+        AlbedoColor = DamageTypeColors.Get(Tag.Cold)
     };
 
     private IceWall _wall;
