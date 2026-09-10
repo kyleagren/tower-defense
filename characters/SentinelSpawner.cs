@@ -8,10 +8,6 @@ using System.Collections.Generic;
 // the real one.
 public partial class SentinelSpawner : Node
 {
-    private const string SoldierScenePath = "res://characters/soldier/Soldier.tscn";
-    private const string TankScenePath = "res://characters/tank/Tank.tscn";
-    private const string ArchitectScenePath = "res://characters/architect/Architect.tscn";
-
     // Lets a station/trigger attached to a dynamically-spawned character (which has no scene-time
     // link back to the spawner that made it) find "my own spawner" by shared OwnerId.
     public static Dictionary<PlayerId, SentinelSpawner> ByOwner { get; } = new();
@@ -23,6 +19,10 @@ public partial class SentinelSpawner : Node
     // Architect-handoff flow a real level does.
     [Export] public bool ActivateImmediately { get; private set; } = false;
     [Export] public Node3D SpawnPoint { get; private set; }
+
+    [Export] public PackedScene SoldierScene { get; private set; }
+    [Export] public PackedScene TankScene { get; private set; }
+    [Export] public PackedScene ArchitectScene { get; private set; }
 
     private PlayerCharacter _current;
 
@@ -53,7 +53,7 @@ public partial class SentinelSpawner : Node
     public void SelectSentinel(CharacterId character)
     {
         PlayerSentinels.Set(OwnerId, character);
-        Respawn(ScenePathFor(character));
+        Respawn(SceneFor(character));
     }
 
     // Session-local only - testing as Architect in the hub shouldn't overwrite the player's saved
@@ -61,30 +61,32 @@ public partial class SentinelSpawner : Node
     // occupying my hub body."
     public void SelectArchitect()
     {
-        Respawn(ArchitectScenePath);
+        Respawn(ArchitectScene);
     }
 
-    private async void Respawn(string scenePath)
+    private async void Respawn(PackedScene scene)
     {
         PlayerCharacter previous = _current;
-        PackedScene scene = scenePath != null ? GD.Load<PackedScene>(scenePath) : null;
 
         if (scene == null)
         {
-            GD.PushError($"SentinelSpawner: no scene registered for '{scenePath}'.");
+            GD.PushError($"SentinelSpawner ({OwnerId}): no scene assigned for this selection.");
             return;
         }
 
         PlayerCharacter character = scene.Instantiate<PlayerCharacter>();
         character.SetOwnerId(OwnerId);
 
+        // TokenDeployer resolves itself in Sentinel._Ready() (GetNode, not an export - see
+        // Sentinel.cs), which only runs once the node actually enters the tree. AddChild has to
+        // come first, or this reads null exactly like it did back when this was an export.
+        GetParent().AddChild(character);
+        _current = character;
+
         if (character is Sentinel sentinel)
         {
             sentinel.TokenDeployer.AllowOutsideCombat = ActivateImmediately;
         }
-
-        GetParent().AddChild(character);
-        _current = character;
 
         if (ActivateImmediately)
         {
@@ -126,10 +128,10 @@ public partial class SentinelSpawner : Node
         }
     }
 
-    private static string ScenePathFor(CharacterId character) => character switch
+    private PackedScene SceneFor(CharacterId character) => character switch
     {
-        CharacterId.Soldier => SoldierScenePath,
-        CharacterId.Tank => TankScenePath,
+        CharacterId.Soldier => SoldierScene,
+        CharacterId.Tank => TankScene,
         _ => null
     };
 }

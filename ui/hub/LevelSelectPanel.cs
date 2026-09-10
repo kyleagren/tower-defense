@@ -10,7 +10,7 @@ public partial class LevelSelectPanel : Control
     // Grows alongside the level roster - one entry per playable level.
     private static readonly (string Name, string ScenePath)[] _levels =
     {
-        ("Level 01", "res://scenes/level_01.tscn")
+        ("Level 01", "uid://vqr88ehteuiw")
     };
 
     [Export] public Control ListContainer { get; private set; }
@@ -46,10 +46,17 @@ public partial class LevelSelectPanel : Control
     {
         // Static trackers that outlive the scene - stale entries from here would otherwise leak
         // into the level being loaded, same cleanup GameOverHandler does on a match-end reload.
+        // Architect/Sentinel/SentinelSpawner's ByOwner dictionaries are included for the same
+        // reason GameOverHandler clears them: a scene change frees the hub's old nodes on a
+        // deferred timer, so their own _ExitTree unregistration can land after the level's fresh
+        // nodes have already registered the same PlayerId.
         UiPanelStack.Reset();
         EnemyRegistry.Clear();
         IceWallSegmentRegistry.Clear();
         WorldItemRegistry.Clear();
+        Architect.ByOwner.Clear();
+        Sentinel.ByOwner.Clear();
+        SentinelSpawner.ByOwner.Clear();
 
         GetTree().ChangeSceneToFile(scenePath);
     }

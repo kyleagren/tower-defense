@@ -164,7 +164,7 @@ Repair and destroy both use the same reticle raycast as placement, capped to a s
 
 **Any player, mid-wave — token deployment.** `Q` toggles a lightweight pick mode that remaps `1`/`2`/`3` to the player's tokens. Right-click, `Q`, or Escape all back out. Pressing a mapped number drops into the same ghost/reticle placement a real tower uses; confirming spends live and consumes the token, cancelling doesn't. No browsing, no sockets — optimized for speed under pressure. Tokens are consumable: destroying a tower built from one doesn't give it back.
 
-The field HUD (`TokenBar`) is two permanent rows — 3 token slots colored by spell element and labeled, above 4 ability slots. Both always display, but only one shows number badges at a time since they share the `1`/`2`/`3` keys: abilities normally, tokens while pick mode is active. **The ability row still renders empty** — real `Ability` nodes exist and are bound to those keys, but `TokenBar` isn't wired to read their `DisplayName`/`CooldownFraction` yet.
+The field HUD (`AbilityHud`, holding `TokenBar` and `AbilityBar` as independent siblings rather than one combined class) is two permanent rows — 3 token slots colored by spell element and labeled, above 4 ability slots showing each ability's name and a cooldown-fraction fill. Both always display, but only one shows number badges at a time since they share the `1`/`2`/`3` keys: abilities normally, tokens while pick mode is active — each row decides its own badge visibility off the same `TokenPickModeChanged` signal, with no shared state between them.
 
 **Navigation is gamepad-first**, not mouse-first-then-retrofit: discrete grid focus navigation via Godot's focus-neighbor system rather than hover, with tag filters on their own input path so they don't collide with grid movement.
 
@@ -442,7 +442,7 @@ The vertical slice is complete: place towers, survive waves, win or lose, with g
 
 Next, in order:
 
-1. **Sentinel ability kits.** The `Ability` framework, four-slot array, input actions and cooldown resolution exist; `WeakPointVisorAbility` is a timing shell only. Remaining: the weak-point mechanic on `Enemy`, Health Link, Elemental-Sapping Nanites, a Tank kit, and wiring `TokenBar`'s ability row so any of it is visible in play. Prerequisite for the per-ability-slot mod pool (Section 6).
+1. **Sentinel ability kits.** The `Ability` framework, four-slot array, input actions, cooldown resolution, and the `AbilityBar` HUD row all exist; `WeakPointVisorAbility` is a timing shell only. Remaining: the weak-point mechanic on `Enemy`, Health Link, Elemental-Sapping Nanites, and a Tank kit. Prerequisite for the per-ability-slot mod pool (Section 6).
 2. **New spells.**
 3. **New runes** — worth pairing with authoring the missing Uncommon–Legendary tiers for the ten single-tier rune types (Section 4), since both touch the same authoring surface.
 4. **New enemies** — a Flyer is the leading candidate, which is also when the "is movement style its own reusable axis" question (Section 5) needs a real answer.

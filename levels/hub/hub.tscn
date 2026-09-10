@@ -20,7 +20,10 @@
 [ext_resource type="Script" uid="uid://dr8emxep4ujsn" path="res://ui/ItemNameplateController.cs" id="18_itemnameplate"]
 [ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="19_playerhealthorb"]
 [ext_resource type="PackedScene" path="res://ui/PlayerShieldBar.tscn" id="20_playershieldbar"]
-[ext_resource type="PackedScene" path="res://ui/TokenBar.tscn" id="21_tokenbar"]
+[ext_resource type="PackedScene" path="res://ui/AbilityHud.tscn" id="21_abilityhud"]
+[ext_resource type="PackedScene" uid="uid://dsutqhp5i2738" path="res://characters/soldier/Soldier.tscn" id="22_soldierscene"]
+[ext_resource type="PackedScene" uid="uid://de5pbikw458xe" path="res://characters/tank/Tank.tscn" id="23_tankscene"]
+[ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://characters/architect/Architect.tscn" id="24_architectscene"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -335,24 +338,36 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -6, 0, 0)
 script = ExtResource("1_sentinelspawner")
 ActivateImmediately = true
 SpawnPoint = NodePath("../SpawnPointP1")
+SoldierScene = ExtResource("22_soldierscene")
+TankScene = ExtResource("23_tankscene")
+ArchitectScene = ExtResource("24_architectscene")
 
 [node name="SentinelSpawnerP2" type="Node" parent="." unique_id=206408576 node_paths=PackedStringArray("SpawnPoint")]
 script = ExtResource("1_sentinelspawner")
 OwnerId = 0
 ActivateImmediately = true
 SpawnPoint = NodePath("../SpawnPointP2")
+SoldierScene = ExtResource("22_soldierscene")
+TankScene = ExtResource("23_tankscene")
+ArchitectScene = ExtResource("24_architectscene")
 
 [node name="SentinelSpawnerP3" type="Node" parent="." unique_id=1548015078 node_paths=PackedStringArray("SpawnPoint")]
 script = ExtResource("1_sentinelspawner")
 OwnerId = 0
 ActivateImmediately = true
 SpawnPoint = NodePath("../SpawnPointP3")
+SoldierScene = ExtResource("22_soldierscene")
+TankScene = ExtResource("23_tankscene")
+ArchitectScene = ExtResource("24_architectscene")
 
 [node name="SentinelSpawnerP4" type="Node" parent="." unique_id=2061658122 node_paths=PackedStringArray("SpawnPoint")]
 script = ExtResource("1_sentinelspawner")
 OwnerId = 0
 ActivateImmediately = true
 SpawnPoint = NodePath("../SpawnPointP4")
+SoldierScene = ExtResource("22_soldierscene")
+TankScene = ExtResource("23_tankscene")
+ArchitectScene = ExtResource("24_architectscene")
 
 [node name="EconomyManager" type="Node" parent="." unique_id=1149411335]
 script = ExtResource("2_economymanager")
@@ -388,7 +403,7 @@ shape = SubResource("BoxShape3D_archzone")
 
 [node name="PlayerShieldBar" parent="." unique_id=1470659503 instance=ExtResource("20_playershieldbar")]
 
-[node name="TokenBar" parent="." unique_id=500076295 instance=ExtResource("21_tokenbar")]
+[node name="AbilityHud" parent="." unique_id=500076295 instance=ExtResource("21_abilityhud")]
 layout_mode = 3
 
 [node name="CharacterSelectStation" type="StaticBody3D" parent="." unique_id=1484671035]

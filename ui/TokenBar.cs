@@ -1,40 +1,28 @@
 using Godot;
 
-// Field HUD readout: a permanent 3-slot token row above a 4-slot ability row. Tokens always show
-// their filled/empty state and spell color, so they read at a glance without entering pick mode.
-// The ability row renders as empty circles - Sentinel.AbilitySlots holds real Ability nodes, but
-// nothing here reads their DisplayName/CooldownFraction yet.
-//
-// Both rows share the 1/2/3 keys, so only one shows number badges at a time - abilities normally,
-// tokens while pick mode (Q) is active - rather than implying one key does two things at once.
+// The field HUD's 3-slot token row. Filled/empty state and spell color always show, so status
+// reads at a glance without entering pick mode; number badges only show while pick mode (Q) is
+// active, since 1/2/3 map to tokens only then. AbilityBar (its sibling under AbilityHud) shows its
+// own badges the rest of the time - each row decides independently off the same
+// TokenPickModeChanged signal, with no shared state between them.
 public partial class TokenBar : Control
 {
-    private const int AbilitySlotCount = 4;
-    private const float CircleSize = 83f;
-    private const float Spacing = 16f;
-    private const float BadgeSize = 29f;
-    private const float RowGap = BadgeSize;
-
     private static readonly Color _emptyColor = new Color(0.15f, 0.15f, 0.15f, 0.6f);
     private static readonly Color _pickModeBorder = new Color(0.85f, 0.75f, 0.15f);
-    private static readonly Color _badgeColor = new Color(0f, 0f, 0f, 0.85f);
 
     private readonly Panel[] _tokenCircles = new Panel[GameRules.MaxTokens];
     private readonly Label[] _tokenNameLabels = new Label[GameRules.MaxTokens];
     private readonly Panel[] _tokenBadges = new Panel[GameRules.MaxTokens];
-    private readonly Panel[] _abilityBadges = new Panel[AbilitySlotCount];
 
     private bool _pickModeActive;
 
     public override void _Ready()
     {
-        float width = AbilitySlotCount * CircleSize + (AbilitySlotCount - 1) * Spacing;
-        float height = CircleSize * 2f + RowGap + BadgeSize / 2f;
-        CustomMinimumSize = new Vector2(width, height);
+        CustomMinimumSize = new Vector2(HudCircle.RowWidth(GameRules.MaxTokens), HudCircle.RowHeight);
 
         for (int i = 0; i < GameRules.MaxTokens; i++)
         {
-            Panel circle = CreateCircle(new Vector2(i * (CircleSize + Spacing), 0f));
+            Panel circle = HudCircle.CreateCircle(this, new Vector2(i * (HudCircle.CircleSize + HudCircle.Spacing), 0f));
             _tokenCircles[i] = circle;
 
             Label nameLabel = new Label
@@ -52,19 +40,7 @@ public partial class TokenBar : Control
             circle.AddChild(nameLabel);
             _tokenNameLabels[i] = nameLabel;
 
-            _tokenBadges[i] = CreateBadge(circle, i + 1);
-        }
-
-        // Nothing here reads ability state yet, so their fill is set
-        // once here rather than recomputed every Refresh like the token row's is.
-        float abilityRowY = CircleSize + RowGap;
-
-        for (int i = 0; i < AbilitySlotCount; i++)
-        {
-            Panel circle = CreateCircle(new Vector2(i * (CircleSize + Spacing), abilityRowY));
-            circle.AddThemeStyleboxOverride("panel", BuildCircularStyle(_emptyColor));
-
-            _abilityBadges[i] = CreateBadge(circle, i + 1);
+            _tokenBadges[i] = HudCircle.CreateBadge(circle, i + 1);
         }
 
         EventBus.Instance.TokensChanged += Refresh;
@@ -99,69 +75,12 @@ public partial class TokenBar : Control
             Color fill = token != null ? DamageTypeColors.GetForSpell(token.Spell) : _emptyColor;
             Color? border = token != null && _pickModeActive ? _pickModeBorder : (Color?)null;
 
-            _tokenCircles[i].AddThemeStyleboxOverride("panel", BuildCircularStyle(fill, border));
+            _tokenCircles[i].AddThemeStyleboxOverride("panel", HudCircle.BuildCircularStyle(fill, border));
             _tokenNameLabels[i].Text = token != null
                 ? (string.IsNullOrEmpty(token.Name) ? token.Spell?.Name ?? "" : token.Name)
                 : "";
 
             _tokenBadges[i].Visible = _pickModeActive;
         }
-
-        for (int i = 0; i < AbilitySlotCount; i++)
-        {
-            _abilityBadges[i].Visible = !_pickModeActive;
-        }
-    }
-
-    private Panel CreateCircle(Vector2 position)
-    {
-        Panel circle = new Panel { MouseFilter = MouseFilterEnum.Ignore };
-        circle.Position = position;
-        circle.Size = new Vector2(CircleSize, CircleSize);
-        AddChild(circle);
-        return circle;
-    }
-
-    private Panel CreateBadge(Panel circle, int number)
-    {
-        Panel badge = new Panel { MouseFilter = MouseFilterEnum.Ignore };
-        badge.Size = new Vector2(BadgeSize, BadgeSize);
-        badge.Position = new Vector2(CircleSize / 2f - BadgeSize / 2f, CircleSize - BadgeSize / 2f);
-        badge.AddThemeStyleboxOverride("panel", BuildCircularStyle(_badgeColor));
-        circle.AddChild(badge);
-
-        Label numberLabel = new Label
-        {
-            Text = number.ToString(),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            MouseFilter = MouseFilterEnum.Ignore
-        };
-        numberLabel.AddThemeFontSizeOverride("font_size", 13);
-        numberLabel.AddThemeColorOverride("font_color", Colors.White);
-        numberLabel.SetAnchorsPreset(LayoutPreset.FullRect);
-        badge.AddChild(numberLabel);
-
-        return badge;
-    }
-
-    private static StyleBoxFlat BuildCircularStyle(Color fillColor, Color? borderColor = null)
-    {
-        StyleBoxFlat style = new StyleBoxFlat
-        {
-            BgColor = fillColor,
-            CornerRadiusTopLeft = 999,
-            CornerRadiusTopRight = 999,
-            CornerRadiusBottomLeft = 999,
-            CornerRadiusBottomRight = 999
-        };
-
-        if (borderColor.HasValue)
-        {
-            style.BorderColor = borderColor.Value;
-            style.SetBorderWidthAll(3);
-        }
-
-        return style;
     }
 }

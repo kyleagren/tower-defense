@@ -23,6 +23,10 @@ public partial class ItemDragController : CanvasLayer
     }
 
     private const float DragThreshold = 8f;
+    // Stays a res:// path rather than an [Export] PackedScene: this class is registered directly
+    // as a bare-script autoload (project.godot), with no .tscn wrapper and so no Inspector slot to
+    // wire one into. WorldItem.tscn also has no uid assigned yet (never resaved by the editor), so
+    // there's no move-proof alternative available for it either.
     private const string WorldItemScenePath = "res://world_items/WorldItem.tscn";
     private const float DropDistance = 1f;
     private const float DropDistanceVariance = 0.2f;
