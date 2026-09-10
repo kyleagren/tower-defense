@@ -15,6 +15,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     [Export] public float AimPointHeight = 1.2f;
     [Export] public RitualPlacer RitualTokenPlacer { get; private set; }
     [Export] public TokenDeployer TokenDeployer { get; private set; }
+    [Export] public Godot.Collections.Array<Ability> AbilitySlots { get; private set; } = new();
 
     public abstract CharacterId Id { get; }
 
@@ -46,6 +47,13 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     }
 
     protected override bool ExtraCombatInputGate => !RitualTokenPlacer.IsPlacing;
+
+    // 1/2/3 double as token pick mode's slot keys (README section 17), so abilities yield to it
+    // entirely - slot 4 included, since firing an ability while choosing a token to place
+    // shouldn't happen either. Separate from CanUseCombatInput so attack/alt_action are unchanged.
+    protected bool CanUseAbilityInput => CanUseCombatInput && !TokenDeployer.IsPickModeActive;
+
+    private static readonly string[] _abilityActions = { "ability_1", "ability_2", "ability_3", "ability_4" };
 
     private float _currentHealth;
     private float _currentShield;
@@ -101,6 +109,20 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             else if (!RitualTokenPlacer.IsPlacing)
             {
                 ToggleMouseCapture();
+            }
+        }
+
+        if (!CanUseAbilityInput)
+        {
+            return;
+        }
+
+        for (int slot = 0; slot < _abilityActions.Length && slot < AbilitySlots.Count; slot++)
+        {
+            if (@event.IsActionPressed(_abilityActions[slot]))
+            {
+                AbilitySlots[slot]?.TryActivate();
+                return;
             }
         }
     }

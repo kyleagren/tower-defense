@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://cw46e8ouy58md" path="res://characters/soldier/Soldier.cs" id="2_soldier"]
 [ext_resource type="PackedScene" path="res://visual_effects/ImpactFlash.tscn" id="3_impact"]
 [ext_resource type="PackedScene" path="res://visual_effects/BulletTracer.tscn" id="4_tracer"]
+[ext_resource type="Script" uid="uid://gs7mfjclhw6" path="res://characters/soldier/abilities/WeakPointVisorAbility.cs" id="5_enuph"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soldier"]
 albedo_color = Color(0.1, 0.15, 0.5, 1)
@@ -32,17 +33,16 @@ size = Vector3(0.06, 0.12, 0.2)
 material = SubResource("StandardMaterial3D_rifle")
 size = Vector3(0.05, 0.2, 0.06)
 
-[node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "SpringArm", "Camera", "BodyMesh", "RitualTokenPlacer", "TokenDeployer") instance=ExtResource("1_base")]
+[node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "AbilitySlots", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
 script = ExtResource("2_soldier")
 ImpactScene = ExtResource("3_impact")
 MuzzlePoint = NodePath("Weapon/MuzzlePoint")
 TracerScene = ExtResource("4_tracer")
 Weapon = NodePath("Weapon")
+AbilitySlots = [NodePath("WeakPointVisor"), null, null, null]
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
-RitualTokenPlacer = NodePath("RitualTokenPlacer")
-TokenDeployer = NodePath("TokenDeployer")
 
 [node name="MeshInstance3D" parent="." index="1"]
 mesh = SubResource("CapsuleMesh_soldier")
@@ -67,3 +67,6 @@ mesh = SubResource("BoxMesh_rifle_magazine")
 
 [node name="MuzzlePoint" type="Marker3D" parent="Weapon" index="4" unique_id=1846459408]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.525)
+
+[node name="WeakPointVisor" type="Node" parent="." index="9" unique_id=1886353616]
+script = ExtResource("5_enuph")

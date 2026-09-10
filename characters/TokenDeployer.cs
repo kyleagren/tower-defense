@@ -87,6 +87,9 @@ public partial class TokenDeployer : Node
         {
             if (@event.IsActionPressed(_slotActions[i]))
             {
+                // 1/2/3 are also the Sentinel's ability keys - marking this handled is what stops
+                // the same press from firing an ability once pick mode exits below.
+                GetViewport().SetInputAsHandled();
                 TryDeployToken(i);
                 return;
             }
