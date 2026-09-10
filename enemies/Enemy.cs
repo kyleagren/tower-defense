@@ -70,9 +70,24 @@ public partial class Enemy : CharacterBody3D, IDamageable
     public Vector3 AimPoint => CenterMass;
 
     // Optional - an enemy with no HeadCollision wired (e.g. TrainingDummy) just never registers a
-    // headshot. Shape index comes straight from a raycast result's "shape" key.
-    public bool IsHeadshot(int shapeIndex) =>
-        HeadCollision != null && ShapeOwnerGetOwner(ShapeFindOwner(shapeIndex)) == HeadCollision;
+    // headshot. Checked as its own ray-vs-box test against the head hitbox's actual volume, rather
+    // than relying on which shape a raycast's closest-hit result reports - the head box sits mostly
+    // inside/behind the body capsule's own silhouette, so it's rarely ever the *closest* shape a
+    // raycast finds even when a shot's line genuinely passes through it.
+    public bool IsHeadshot(Vector3 rayOrigin, Vector3 rayEnd)
+    {
+        if (HeadCollision == null || HeadCollision.Shape is not BoxShape3D boxShape)
+        {
+            return false;
+        }
+
+        Transform3D toLocal = HeadCollision.GlobalTransform.AffineInverse();
+        Vector3 localOrigin = toLocal * rayOrigin;
+        Vector3 localEnd = toLocal * rayEnd;
+
+        Aabb headBounds = new Aabb(-boxShape.Size / 2f, boxShape.Size);
+        return headBounds.IntersectsSegment(localOrigin, localEnd);
+    }
 
     public Vector3 GetJitteredCenterMass(float jitterAmount)
     {
