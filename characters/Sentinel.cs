@@ -13,8 +13,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     [Export] public Node3D Weapon { get; private set; }
     [Export] public float BaseMaxHealth = 100f;
     [Export] public float AimPointHeight = 1.2f;
-    [Export] public RitualPlacer RitualTokenPlacer { get; private set; }
-    [Export] public TokenDeployer TokenDeployer { get; private set; }
+    // Not exported: these point at nodes in the inherited SentinelBody.tscn base, and a typed
+    // export of a custom C# class against a base-scene node fails its cast during scene-build,
+    // then gets written out as null on the next save. Same reason RitualPlacer/TokenDeployer
+    // resolve their own Character via GetParent() instead of an export.
+    public RitualPlacer RitualTokenPlacer { get; private set; }
+    public TokenDeployer TokenDeployer { get; private set; }
     [Export] public Godot.Collections.Array<Ability> AbilitySlots { get; private set; } = new();
 
     public abstract CharacterId Id { get; }
@@ -46,6 +50,25 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
     }
 
+    public float AttackDamage
+    {
+        get
+        {
+            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+            float baseDamage = weapon?.BaseAttackDamage ?? GameRules.UnarmedAttackDamage;
+            return baseDamage * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.WeaponAttackDamage));
+        }
+    }
+
+    public float AttackSpeed
+    {
+        get
+        {
+            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+            return weapon?.ResolvedBaseAttackSpeed ?? GameRules.UnarmedAttackSpeed;
+        }
+    }
+
     protected override bool ExtraCombatInputGate => !RitualTokenPlacer.IsPlacing;
 
     // 1/2/3 double as token pick mode's slot keys (README section 17), so abilities yield to it
@@ -68,6 +91,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public override void _Ready()
     {
         base._Ready();
+        RitualTokenPlacer = GetNode<RitualPlacer>("RitualTokenPlacer");
+        TokenDeployer = GetNode<TokenDeployer>("TokenDeployer");
         _currentHealth = MaxHealth;
         _currentShield = MaxShield;
         ByOwner[OwnerId] = this;

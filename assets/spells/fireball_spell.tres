@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="FireballSpell" format=3 uid="uid://dv6iw2uxlrvt6"]
 
-[ext_resource type="Script" uid="uid://bamn5fqu62j5i" path="res://scripts/data/spells/FireballSpell.cs" id="1_ae04e"]
+[ext_resource type="Script" uid="uid://bamn5fqu62j5i" path="res://spells/FireballSpell.cs" id="1_ae04e"]
 [ext_resource type="PackedScene" uid="uid://o210wvy66vdy" path="res://projectiles/FireballProjectile.tscn" id="2_projectile"]
-[ext_resource type="Script" uid="uid://d3k371t00tn0y" path="res://scripts/data/effects/ExplodeOnHitEffect.cs" id="3_explodescript"]
+[ext_resource type="Script" uid="uid://d3k371t00tn0y" path="res://spells/effects/ExplodeOnHitEffect.cs" id="3_explodescript"]
 [ext_resource type="PackedScene" path="res://visual_effects/ExplosionVisual.tscn" id="4_visual"]
 
 [sub_resource type="Resource" id="Resource_fireball_explode"]

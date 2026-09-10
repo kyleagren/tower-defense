@@ -15,25 +15,6 @@ public partial class Soldier : Sentinel
 
     public override CharacterId Id => CharacterId.Soldier;
 
-    public float AttackDamage
-    {
-        get
-        {
-            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
-            float baseDamage = weapon?.BaseAttackDamage ?? GameRules.UnarmedAttackDamage;
-            return baseDamage * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.WeaponAttackDamage));
-        }
-    }
-
-    public float FireRate
-    {
-        get
-        {
-            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
-            return weapon?.ResolvedBaseAttackSpeed ?? GameRules.UnarmedAttackSpeed;
-        }
-    }
-
     private float _fireCooldown;
 
     public override void _PhysicsProcess(double delta)
@@ -55,7 +36,7 @@ public partial class Soldier : Sentinel
 
         if (CanUseCombatInput && Input.IsActionPressed("attack") && _fireCooldown <= 0f)
         {
-            _fireCooldown = 1f / FireRate;
+            _fireCooldown = 1f / AttackSpeed;
             FireShot();
         }
     }

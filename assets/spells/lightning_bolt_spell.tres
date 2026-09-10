@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="LightningBoltSpell" format=3 uid="uid://fv3hj4gxlpy"]
 
-[ext_resource type="Script" uid="uid://cfgeac6xk7lpq" path="res://scripts/data/spells/LightningBoltSpell.cs" id="1_lightning"]
-[ext_resource type="Script" path="res://scripts/data/effects/FrontLoadedChainDamageModifier.cs" id="2_frontloaded"]
+[ext_resource type="Script" uid="uid://cfgeac6xk7lpq" path="res://spells/LightningBoltSpell.cs" id="1_lightning"]
+[ext_resource type="Script" path="res://spells/effects/FrontLoadedChainDamageModifier.cs" id="2_frontloaded"]
 
 [sub_resource type="Resource" id="Resource_lightning_chainmod"]
 script = ExtResource("2_frontloaded")

@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ForkRune" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/runes/ForkRune.cs" id="1_fork"]
+[ext_resource type="Script" path="res://spells/runes/ForkRune.cs" id="1_fork"]
 
 [resource]
 script = ExtResource("1_fork")

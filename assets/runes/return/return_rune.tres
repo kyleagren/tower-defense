@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ReturnRune" format=3]
 
-[ext_resource type="Script" uid="uid://biqr4qsa8lkgv" path="res://scripts/data/runes/ReturnRune.cs" id="1_return"]
+[ext_resource type="Script" uid="uid://biqr4qsa8lkgv" path="res://spells/runes/ReturnRune.cs" id="1_return"]
 
 [resource]
 script = ExtResource("1_return")

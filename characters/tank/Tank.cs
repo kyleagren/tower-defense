@@ -31,25 +31,6 @@ public partial class Tank : Sentinel
     public override CharacterId Id => CharacterId.Tank;
     public override float Speed => base.Speed * (_blockState == BlockState.Armed ? BlockedMoveSpeedMultiplier : 1f);
 
-    public float AttackDamage
-    {
-        get
-        {
-            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
-            float baseDamage = weapon?.BaseAttackDamage ?? GameRules.UnarmedAttackDamage;
-            return baseDamage * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.WeaponAttackDamage));
-        }
-    }
-
-    public float AttackSpeed
-    {
-        get
-        {
-            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
-            return weapon?.ResolvedBaseAttackSpeed ?? GameRules.UnarmedAttackSpeed;
-        }
-    }
-
     private StandardMaterial3D _shieldMaterial;
     private float _attackCooldown;
     private float _returnTimer;
