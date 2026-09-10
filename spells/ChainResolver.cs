@@ -53,8 +53,8 @@ public static class ChainResolver
     }
 
     // context is any node already in the tree - the caster's spawn point, or the enemy being struck.
-    // Taking one beats casting Engine.GetMainLoop(), which reached around the scene tree to get at
-    // something every caller already had in hand.
+    // Taking one avoids Engine.GetMainLoop(), which would reach around the scene tree for something
+    // every caller already has in hand.
     public static void SpawnArcVisual(Node context, PackedScene arcVisualScene, Vector3 from, Vector3 to)
     {
         if (arcVisualScene == null)

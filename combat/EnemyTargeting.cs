@@ -46,7 +46,7 @@ public static class EnemyTargeting
     //
     // exclude is an ISet rather than an IEnumerable so the membership test is a hash lookup per
     // candidate. Passing a lazy sequence (a Concat or an OfType) would silently degrade this to a
-    // full re-scan for every enemy considered, which is what it used to do.
+    // full re-scan for every enemy considered.
     private static Enemy FindBest(Func<Enemy, float> rangeSquaredTo, float range, Func<Enemy, float> score, ISet<Enemy> exclude, Func<Enemy, bool> predicate, ISet<Enemy> alsoExclude = null)
     {
         IReadOnlyList<Enemy> candidates = EnemyRegistry.Active;

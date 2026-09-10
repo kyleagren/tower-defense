@@ -13,8 +13,8 @@ public partial class CraftingPanel : Control
 
     // One entry in the scrollable action list: its label, whether it can currently be performed on
     // the item in the slot, and what performing it does. A plain data list rather than one button
-    // per hardcoded field, since "there will be more someday" (per design discussion) should mean
-    // adding an entry here, not wiring up another button by hand.
+    // per hardcoded field, so adding an action later means adding an entry here rather than wiring up
+    // another button by hand.
     private readonly struct CraftingAction
     {
         public readonly string Label;
@@ -228,8 +228,8 @@ public partial class CraftingPanel : Control
 
         for (int i = 0; i < bars.Length; i++)
         {
-            // Free() immediately, not QueueFree() - see ItemTooltip.BuildAdvancedBody's identical
-            // fix for why a deferred free here risks old and new rows briefly coexisting.
+            // Free() immediately, not QueueFree() - a deferred free would let old and new rows briefly
+            // coexist. Same reasoning as ItemTooltip.BuildAdvancedBody.
             foreach (Node child in bars[i].GetChildren())
             {
                 child.Free();

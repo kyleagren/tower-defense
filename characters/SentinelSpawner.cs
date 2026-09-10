@@ -18,9 +18,9 @@ public partial class SentinelSpawner : Node
 
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
 
-    // The hub has no Architect to hand off from (initially) and no Combat-phase transition to wait
-    // for, so its spawner activates the character directly at SpawnPoint instead of the usual
-    // Architect-handoff flow a real level uses.
+    // The hub has no Architect at spawn time and no Combat-phase transition to wait for, so its
+    // spawner activates the character directly at SpawnPoint rather than using the
+    // Architect-handoff flow a real level does.
     [Export] public bool ActivateImmediately { get; private set; } = false;
     [Export] public Node3D SpawnPoint { get; private set; }
 

@@ -1,11 +1,12 @@
 using Godot;
 
-// Field HUD readout: a permanent 3-slot token row (README section 17) stacked above a 4-slot
-// ability row (all empty placeholders for now - no ability-kit system exists yet, README section
-// 10). Tokens are always shown, filled/empty and colored by spell, so their status reads at a
-// glance without needing to enter pick mode. The two rows share the 1/2/3 keys, so only one shows
-// number badges at a time - abilities normally, tokens for as long as pick mode (Q) is active -
-// rather than implying a key does two different things simultaneously.
+// Field HUD readout: a permanent 3-slot token row above a 4-slot ability row. Tokens always show
+// their filled/empty state and spell color, so they read at a glance without entering pick mode.
+// The ability row renders as empty circles - Sentinel.AbilitySlots holds real Ability nodes, but
+// nothing here reads their DisplayName/CooldownFraction yet.
+//
+// Both rows share the 1/2/3 keys, so only one shows number badges at a time - abilities normally,
+// tokens while pick mode (Q) is active - rather than implying one key does two things at once.
 public partial class TokenBar : Control
 {
     private const int AbilitySlotCount = 4;
@@ -54,7 +55,7 @@ public partial class TokenBar : Control
             _tokenBadges[i] = CreateBadge(circle, i + 1);
         }
 
-        // Abilities have no dynamic state yet (no ability-kit system exists), so their fill is set
+        // Nothing here reads ability state yet, so their fill is set
         // once here rather than recomputed every Refresh like the token row's is.
         float abilityRowY = CircleSize + RowGap;
 

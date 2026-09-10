@@ -1,6 +1,6 @@
 using Godot;
 
-// README section 4's Weak-Point Visor. Runs for a duration, and a second press ends it early -
+// README's Weak-Point Visor (Characters). Runs for a duration, and a second press ends it early -
 // the cooldown starts from whichever of those actually ended it.
 // The weak-point exposure itself isn't built yet (Enemy has no such concept); Activate/End are
 // the timing shell only.

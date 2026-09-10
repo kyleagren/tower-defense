@@ -19,7 +19,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // considers, since Wind is consumer-only and never becomes one.
     private static readonly Tag[] _statusElements = { Tag.Fire, Tag.Water, Tag.Cold, Tag.Lightning };
 
-    // TODO placeholder: remove once there's a real way to display an enemy's element/ailments (Section 15 iconography).
+    // TODO placeholder: remove once there's a real way to display an enemy's element/ailments.
     // Colors come from DamageTypeColors rather than a second hardcoded palette here, so the tint an
     // enemy shows and the color its damage numbers use can't drift apart.
     private static readonly Dictionary<Tag, StandardMaterial3D> _statusMaterials = BuildStatusMaterials();
@@ -236,7 +236,8 @@ public partial class Enemy : CharacterBody3D, IDamageable
         }
     }
 
-    // TODO placeholder block: remove this method and CollectMeshInstances once there's a real way to display an enemy's element/ailments.
+    // TODO placeholder: remove this and CollectMeshInstances once there is a real way to display
+    // an enemy's element and ailments.
     private void UpdateElementalVisual(float delta)
     {
         bool isBurning = _ailments.Exists(ailment => ailment is BurnAilment);
@@ -266,9 +267,9 @@ public partial class Enemy : CharacterBody3D, IDamageable
             overlay = statusMaterial;
         }
 
-        // Only write on an actual transition. This runs every physics frame for every living enemy,
-        // and the overlay is unchanged (usually null) on the overwhelming majority of those ticks -
-        // reassigning it anyway meant a property write per mesh per enemy per frame for nothing.
+        // Only write on an actual transition. This runs every physics frame for every living enemy
+        // and the overlay is usually unchanged, so reassigning unconditionally would cost a property
+        // write per mesh per enemy per frame for nothing.
         if (overlay == _appliedOverlay)
         {
             return;
@@ -284,11 +285,10 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     private void CollectMeshInstances()
     {
-        // owned: false matches the hand-rolled recursion this replaced - it walks into instanced
-        // sub-scenes rather than stopping at their roots, but that also means HealthBar's own Fill/
-        // Empty quads without excluding them - they'd get the elemental status overlay meant for the
-        // body, rendered with a material that doesn't share their careful no_depth_test/cull_mode
-        // setup, which is what looked like a stray second bar.
+        // owned: false is required to walk into instanced sub-scenes rather than stopping at their
+        // roots. That also reaches HealthBar's own Fill/Empty quads, which must be excluded: they
+        // would otherwise take the body's elemental status overlay, whose material doesn't share
+        // their no_depth_test/cull_mode setup, and render as a stray second bar.
         foreach (Node node in FindChildren("*", nameof(MeshInstance3D), recursive: true, owned: false))
         {
             if (node is MeshInstance3D meshInstance && !HealthBar.IsAncestorOf(meshInstance))

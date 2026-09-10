@@ -2,16 +2,12 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-// Shared "currently being dragged/held by the mouse" item state, plus the single cursor-icon
-// overlay that follows it - extracted from InventoryPanel so a second panel (the crafting table)
-// can pick an item up in one and drop it in the other. A CanvasLayer (like Crosshair) so the
-// cursor icon always draws above whichever panel is topmost, regardless of tree order - the same
-// layering quirk that made the crosshair show through menus before that got its own fix.
+// Shared held-item state plus the cursor icon that follows it. Any panel registers its slots here
+// to participate, so an item can be picked up in one panel and dropped in another. A CanvasLayer so
+// the icon draws above every panel regardless of tree order.
 public partial class ItemDragController : CanvasLayer
 {
-    // A stand-in for "a place an Item can sit" - shared across every panel that wants to
-    // participate in dragging (InventoryPanel's 40 grid + 11 equipment slots, the crafting
-    // table's single slot, and any future one).
+    // "A place an Item can sit," implemented per slot by each panel that registers one.
     public readonly struct SlotHandle
     {
         public readonly Func<Item> GetItem;
@@ -83,11 +79,9 @@ public partial class ItemDragController : CanvasLayer
         _cursorIcon.GlobalPosition = GetViewport().GetMousePosition() - _cursorIcon.Size / 2f;
     }
 
-    // Registers a button for its whole lifetime - the same "buttons live forever, only contents
-    // change" pattern InventoryPanel already used before this was extracted. Sweeps out any dead
-    // keys first: this controller is an autoload and outlives every panel, so without this,
-    // leaving and re-entering the hub would pile a fresh registration on top of the previous
-    // visit's stale one on every visit instead of replacing it.
+    // Registers a button for its whole lifetime; only its contents change. Dead keys are swept
+    // first because this controller is an autoload that outlives every panel - a panel freed on
+    // leaving the hub would otherwise leave a disposed registration behind on every visit.
     public void RegisterSlot(Control button, SlotHandle slot)
     {
         PruneDeadSlots();
@@ -181,10 +175,9 @@ public partial class ItemDragController : CanvasLayer
         Changed?.Invoke();
     }
 
-    // Detects a press-drag-release gesture layered on top of the existing click-click flow. A
-    // plain click that never drifts past DragThreshold touches none of this - it falls straight
-    // through to Pressed exactly as before, which is why gamepad confirm (which never emits these
-    // event types) can't be affected by any of it.
+    // Press-drag-release, layered over the click-to-pick/click-to-place flow. A click that never
+    // drifts past DragThreshold touches none of this and falls through to Pressed, which is what
+    // keeps gamepad confirm working - it never emits these event types at all.
     public void OnSlotGuiInput(SlotHandle slot, Control button, InputEvent @event)
     {
         if (@event is InputEventMouseButton mouseButton && mouseButton.ButtonIndex == MouseButton.Left)

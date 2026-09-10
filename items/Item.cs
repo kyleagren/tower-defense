@@ -22,9 +22,9 @@ public abstract partial class Item : Resource
     // until pricing needs to account for rarity, tier, or anything else.
     public virtual int SaleValue => Affixes.Count;
 
-    // The mechanical descriptor (e.g. "Rare Boots") - what Name used to be before FlavorName below
-    // took over as the item's actual display name. The slot itself comes from the concrete type,
-    // not a separate tag that would have to be kept in sync with it.
+    // The mechanical descriptor (e.g. "Rare Boots"), as opposed to FlavorName below, which is the
+    // actual display name. The slot comes from the concrete type rather than a separate tag that
+    // would have to be kept in sync with it.
     public virtual string TypeLabel => SpacedTypeName();
 
     // The item's real display name - a generated flavor title for common drops (NameGenerator), or

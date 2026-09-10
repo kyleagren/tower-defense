@@ -156,8 +156,8 @@ public class TooltipPanelView
 
     private void BuildAdvancedBody(Item item)
     {
-        // Free() immediately, not QueueFree() - see ItemTooltip's own notes on why a deferred
-        // free here risks old and new rows briefly coexisting.
+        // Free() immediately, not QueueFree() - a deferred free would let old and new rows briefly
+        // coexist.
         foreach (Node child in _advancedBody.GetChildren())
         {
             child.Free();

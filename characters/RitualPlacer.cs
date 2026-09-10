@@ -3,13 +3,10 @@ using System;
 
 public partial class RitualPlacer : Node
 {
-    // Not exported - resolved from the parent instead of a wired NodePath, since this is always a
-    // direct child of the character it belongs to and every PlayerCharacter subclass qualifies.
-    // Wiring it as an export meant Godot had to type-check the assignment while building the scene
-    // tree, which broke for the Sentinel's instance (living in the shared SentinelBody.tscn base
-    // scene, inherited by Soldier/Tank): the base scene's root has no script yet at that point, so
-    // the parent is still a bare CharacterBody3D and the cast fails. Same fix LookInteractor already
-    // uses for the same reason.
+    // Not exported: a typed [Export] against a node from an inherited base scene fails its cast at
+    // scene-build time, since the base scene's root has no script yet and the parent is still a bare
+    // CharacterBody3D. Resolved from the parent instead, which is safe because this is always a
+    // direct child of the character that owns it.
     public PlayerCharacter Character { get; private set; }
 
     [Export] public PackedScene RitualScene { get; private set; }
@@ -18,7 +15,7 @@ public partial class RitualPlacer : Node
 
     // Which phase transition should cancel an in-progress placement for this placer's owner - the
     // Architect's own instance cancels on entering Combat (placement only happens during Build);
-    // the Sentinel's instance (README section 17's mid-wave deployment) needs the opposite: cancel
+    // the Sentinel's instance (README's mid-wave token deployment) needs the opposite: cancel
     // on entering Build, since that's when the Sentinel itself goes inactive.
     [Export] public GamePhase CancelOnPhase = GamePhase.Combat;
 
@@ -202,10 +199,9 @@ public partial class RitualPlacer : Node
     // along the line instead of a single point - a wall can overlap something in the middle
     // without overlapping at either end, so a single pass/fail cutoff (like affordability) isn't
     // enough here.
-    // The shape and query params are built once and reused across segments and frames: this runs
-    // every physics frame for the whole length of a wall placement, and allocating a BoxShape3D
-    // plus a query per segment per frame churned dozens of engine objects a second while the
-    // cursor sat still.
+    // Shape and query params are built once and reused across segments and frames. This runs every
+    // physics frame for the whole length of a wall placement, so allocating a BoxShape3D and a
+    // query per segment per frame would churn dozens of engine objects a second at rest.
     private bool[] ComputeSegmentValidity(Vector3 start, Vector3 end, WallCastData wallData, int affordableSegments)
     {
         int segmentCount = IceWall.ComputeSegmentCount(start.DistanceTo(end), wallData.SegmentWidth);

@@ -62,7 +62,8 @@ public partial class Projectile : Area3D
 
         // A fresh shape per projectile: the one in the projectile scene is shared across every
         // instance. Sizing the shape is preferred over scaling the CollisionShape3D node, which
-        // Godot advises against. A future non-round projectile changes this line (README 206).
+        // Godot advises against. Scaling is uniform on all axes, so a future non-round projectile (an
+        // elongated Ice Spear) needs its own formula here.
         BodyCollision.Shape = new SphereShape3D { Radius = Radius };
     }
 
@@ -195,7 +196,7 @@ public partial class Projectile : Area3D
     private bool TryRedirectToChainTarget(Enemy hitEnemy)
     {
         // Both exclusion sets are passed through as-is rather than merged into a new one: this runs
-        // on every chain jump, and the merge was two HashSet allocations per hit just to answer a
+        // on every chain jump, and merging would cost two HashSet allocations per hit to answer a
         // membership question the targeting loop can ask of each set directly.
         Enemy next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, _ownEnemyHits, ChainHitTracker);
 

@@ -8,8 +8,7 @@ public static class LootGenerator
 
     // Ring drops are slot-agnostic - CreateItemForSlot maps both LeftRing and RightRing to the
     // same Ring class, so only one appears here to avoid double-weighting rings against every
-    // other item type. Moved here from ItemDropManager so vendor stock draws from the identical
-    // pool instead of a second hand-kept copy.
+    // other item type.
     // Weighted rather than flat - Weapon is worth double any other single slot since only one
     // Sentinel (or fewer, character-restricted) can actually use a given dropped weapon, versus
     // armor/accessories which fit any Sentinel. Currency sits in this same pool at one slot's own

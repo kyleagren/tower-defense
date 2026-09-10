@@ -32,11 +32,10 @@ public static class DamageTypeColors
     }
 
     // A spell's own dominant damage element misses anything that deals no direct damage at all -
-    // Ice Wall carries Tag.Cold for identity/build-crafting purposes (README section 5) but has no
-    // FireDamage/ColdDamage/etc. of its own to be dominant, so Get(spell.BaseDamage.DominantElement)
-    // always fell through to the neutral white/grey for it. Falling back to the spell's own Tags
-    // list catches that case (and any future damage-less elemental spell) without special-casing
-    // Ice Wall specifically.
+    // Ice Wall carries Tag.Cold for identity and build-crafting but has no FireDamage/ColdDamage of
+    // its own to be dominant, so Get(spell.BaseDamage.DominantElement) resolves it to the neutral
+    // white/grey. Falling back to the spell's own Tags list catches that (and any future
+    // damage-less elemental spell) without special-casing Ice Wall.
     public static Color GetForSpell(Spell spell)
     {
         Tag? dominant = spell.BaseDamage.DominantElement;

@@ -71,9 +71,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     protected override bool ExtraCombatInputGate => !RitualTokenPlacer.IsPlacing;
 
-    // 1/2/3 double as token pick mode's slot keys (README section 17), so abilities yield to it
-    // entirely - slot 4 included, since firing an ability while choosing a token to place
-    // shouldn't happen either. Separate from CanUseCombatInput so attack/alt_action are unchanged.
+    // 1/2/3 double as token pick mode's slot keys, so abilities yield to it entirely - slot 4
+    // included, since firing an ability while choosing a token to place shouldn't happen either.
+    // Separate from CanUseCombatInput so attack/alt_action behavior is unchanged.
     protected bool CanUseAbilityInput => CanUseCombatInput && !TokenDeployer.IsPickModeActive;
 
     private static readonly string[] _abilityActions = { "ability_1", "ability_2", "ability_3", "ability_4" };
@@ -280,7 +280,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
     }
 
-    // Full reset is a placeholder — a real healing mechanic (README §15) will replace this.
+    // Full reset is a placeholder — a real healing mechanic will replace this.
     protected void HealToFull()
     {
         _currentHealth = MaxHealth;

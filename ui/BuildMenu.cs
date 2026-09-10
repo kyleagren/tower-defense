@@ -65,12 +65,12 @@ public partial class BuildMenu : Control
     private static readonly StringName _clearAllVariation = "ClearAllButton";
     private static readonly StringName _emptySocketVariation = "EmptySocketButton";
 
-    // Same golden color the old CurrentSocketButton theme variation used - kept as a border now
-    // instead of a full fill, so it can sit on top of a rune's rarity color instead of hiding it.
+    // Drawn as a border rather than a fill so it layers over a rune's rarity color instead of
+    // hiding it.
     private static readonly Color _currentTierBorderColor = new Color(0.75f, 0.6f, 0.15f);
 
-    // One tile per rune type, not per owned rarity tier - collapses to the highest tier owned until
-    // the tier picker (README Section 17) lets a socket deliberately hold a weaker one instead.
+    // One tile per rune type, not per owned rarity tier - collapses to the highest tier owned. The
+    // tier picker is what lets a socket deliberately hold a weaker one instead.
     private IEnumerable<Rune> AllRunes => SaveManager.Instance.Data.KnownRunes
         .Select(entry => entry.Rune)
         .GroupBy(rune => rune.GetType())
@@ -527,9 +527,9 @@ public partial class BuildMenu : Control
         }
     }
 
-    // Empty socket: straight to the picker, same as always. Filled socket: the tier popup instead,
-    // since there's now a choice between "browse a different rune" and "pick a different owned
-    // tier of this same one."
+    // Empty socket goes straight to the rune picker. A filled one opens the tier popup instead,
+    // since there are two things it could mean: browse a different rune, or pick a different owned
+    // tier of this one.
     private void OnSocketButtonPressed(int socketIndex)
     {
         if (_socketedRunes[socketIndex] != null)
@@ -699,9 +699,8 @@ public partial class BuildMenu : Control
         button.AddThemeStyleboxOverride("hover", style);
     }
 
-    // Transparent so the single shared background panel behind the whole tier popup shows through
-    // instead of each row drawing its own opaque square (which was clipping the focus ring on
-    // whichever edge touched a later-drawn neighbor).
+    // Transparent so the tier popup's single shared background shows through. Per-row opaque
+    // squares would abut with zero gap and clip each other's focus ring.
     private static void SetTransparentBackground(Button button)
     {
         StyleBoxFlat style = new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0) };
@@ -756,11 +755,10 @@ public partial class BuildMenu : Control
         int currentIndex = tiers.IndexOf(currentRune);
         int RowSlotFor(int listIndex) => listIndex - currentIndex;
 
-        // One shared background behind the tier column only - later-added rows draw on top of
-        // earlier ones with zero gap between them, which was clipping the focus ring on whichever
-        // edge touched a later-drawn neighbor. Sized to the actual topmost-to-bottommost tier
-        // span, which varies with how many tiers are owned. X gets its own separate black square
-        // below rather than sharing this column, since it isn't part of the vertical stack.
+        // One shared background behind the tier column, sized to the actual topmost-to-bottommost
+        // span (which varies with how many tiers are owned). Rows abut with zero gap, so giving
+        // each its own background would clip its neighbor's focus ring. X sits outside the
+        // vertical stack and gets its own square below.
         int topSlot = RowSlotFor(0);
         int bottomSlot = RowSlotFor(tiers.Count - 1);
 
@@ -814,11 +812,8 @@ public partial class BuildMenu : Control
 
             SetTransparentBackground(tierButton);
 
-            // Same size as the button itself - the outer square stays square-cornered, and a
-            // circle at full size still can't cover a square's corners, so the black frame shows
-            // through there without needing an artificial margin. Moved behind the label
-            // AddCenteredLabel already added, so the text stays readable on top of it rather than
-            // the circle covering it.
+            // Full button size: a circle can't reach a square's corners, so the black frame shows
+            // through there without needing a margin. Sits behind the label so text stays readable.
             Panel innerCircle = new Panel { MouseFilter = MouseFilterEnum.Ignore };
             innerCircle.SetAnchorsPreset(LayoutPreset.FullRect);
             innerCircle.AddThemeStyleboxOverride("panel", BuildCircularStyle(RarityColors.Get(tier.Rarity)));
@@ -1006,12 +1001,11 @@ public partial class BuildMenu : Control
         DescriptionBodyLabel.Text = body ?? "";
     }
 
-    // X no longer sits in the vertical stack, so worst case is 4 rows (not 5) in a single
-    // direction from current - at TierRowHeight px that's ~450px needed above and below any
-    // socket alike (fixed ordering still means both directions matter for every socket). X
-    // spread to match, not the same fraction as Y - the 2560x1440 viewport is wider than tall,
-    // so equal fractions would give a visibly wide rectangle; these keep the actual on-screen
-    // distance from center roughly equal in both directions (~216px X, ~216px Y).
+    // Headroom for the tier popup: X sits outside the vertical stack, so the worst case is 4 rows
+    // in one direction from current, needing ~450px above and below every socket (fixed tier
+    // ordering means both directions matter for all of them). The X fraction differs from Y
+    // deliberately - the viewport is wider than tall, so equal fractions would read as a wide
+    // rectangle; these keep on-screen distance from center roughly equal (~216px each way).
     private static readonly Vector2[] _socketAnchors =
     {
         new Vector2(0.42f, 0.35f),

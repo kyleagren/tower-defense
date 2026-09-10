@@ -3,7 +3,6 @@ using System.Linq;
 
 public class SpellInstance
 {
-    // a definition is which Spell this instance is using.
     private readonly Spell _definition;
     private readonly List<Rune> _attachedRunes = new List<Rune>();
     private SpellCastContext _cachedContext;

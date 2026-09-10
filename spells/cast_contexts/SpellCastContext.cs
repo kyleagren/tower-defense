@@ -14,7 +14,7 @@ public class SpellCastContext
     public ScaledStat CapacityCost = 0f;
 
     // Damage can't itself be a ScaledStat — it's a packet of per-element floats — so the scale
-    // sits beside it and Damage exposes the resolved packet. Readers use Damage as before.
+    // sits beside it and Damage exposes the resolved packet.
     public DamagePacket UnscaledDamage;
     public ScaledStat DamageScale = 1f;
 
@@ -64,8 +64,8 @@ public class SpellCastContext
     public CastTrigger CastTrigger;
 
     // Folds an owner's equipment bonuses into this context, once, during resolve. Simple stats go
-    // into the same ScaledStat.Increased fields Runes already use (equipment and Runes have always
-    // legitimately shared those); the elemental bonus goes into the private-setter field above
+    // into the same ScaledStat.Increased fields Runes use, which equipment and Runes legitimately
+    // share; the elemental bonus goes into the private-setter field above
     // instead, and cooldown recovery rate feeds CooldownRecoveryRate rather than Cooldown itself.
     public void ApplyEquipmentBonuses(CharacterSheet sheet)
     {

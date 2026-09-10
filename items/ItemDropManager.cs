@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-// Rolls a chance to drop items wherever an enemy dies, same as before - but instead of spawning
-// each drop into the world immediately, accumulates them for the whole level and sprays them all
-// out of LootObjective's position at once during PostGame, ordered common-to-legendary. LootObjective
-// itself is removed the moment the spray starts - the shield you spent the level defending becomes
-// the reward. A failed level never fires GameEnded(true), so undelivered loot in the queue just
-// never spawns - the existing "nothing to loot after a loss" rule, now covering everything.
+// Rolls drop chances as enemies die, but holds every result until the level is won. The whole
+// pile then sprays out of LootObjective's position during PostGame, ordered common-to-legendary,
+// and LootObjective itself is freed as the spray starts - the shield defended all level becomes
+// the reward. A loss never fires GameEnded(true), so queued loot simply never spawns, which is
+// the "nothing to loot after a loss" rule applied to everything.
 public partial class ItemDropManager : Node
 {
     [Export] public PackedScene WorldItemScene { get; private set; }

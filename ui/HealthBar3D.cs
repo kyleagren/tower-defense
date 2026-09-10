@@ -1,8 +1,8 @@
 using Godot;
 
 // A two-quad world-space health bar. Billboarding is done by the material (BillboardMode), not by
-// re-aiming the node every frame - with 50-70 enemies alive, a per-bar _Process doing
-// GetViewport().GetCamera3D() + LookAt was one of the more expensive things in the frame, and the
+// re-aiming the node every frame: at 50-70 enemies alive, a per-bar _Process calling
+// GetViewport().GetCamera3D() plus LookAt is one of the more expensive things in the frame, and the
 // GPU does the same job for free.
 //
 // The fill/empty split is expressed through each QuadMesh's own Size/CenterOffset rather than by

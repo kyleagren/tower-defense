@@ -2,9 +2,10 @@ using Godot;
 using System;
 
 // The vendor. Two tabs - items currently for sale, and a buyback list of whatever's been sold
-// this hub visit - both regenerated fresh every time the hub loads (nothing here persists across
-// a hub departure/return, on purpose - see the crafting slot's own README notes on why that's
-// NOT true for crash-sensitive state, and why it's fine here). Buying and buying back both spend
+// this hub visit - both regenerated fresh every time the hub loads. Nothing here persists across a
+// hub departure/return, deliberately: the hub scene fully reloads each visit, so regenerating falls
+// out for free. The crafting slot is the opposite case and does persist, since losing an item
+// parked there to a crash would be real loss. Buying and buying back both spend
 // gold for an item at its SaleValue; selling (drag onto this panel, or Ctrl+click while it's open)
 // pays that same value and moves the item into Buyback - no markup either direction.
 public partial class VendorPanel : Control

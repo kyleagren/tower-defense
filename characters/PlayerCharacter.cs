@@ -3,7 +3,7 @@ using Godot;
 public abstract partial class PlayerCharacter : CharacterBody3D
 {
     // Whichever PlayerCharacter subclass is currently active is the valid enemy-attack target.
-    // Architect and Soldier are never simultaneously active (each phase transition deactivates
+    // Architect and Sentinel are never simultaneously active (each phase transition deactivates
     // one and activates the other), and no enemies exist during Build phase to read this while
     // it points at Architect — so no subclass needs to opt in or out individually.
     public static PlayerCharacter ActiveCombatant { get; private set; }

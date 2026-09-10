@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 // Aggregated equipment (and later talent) bonuses for one CharacterId, keyed by StatId. Holds
-// bonuses only - base values stay on whatever field they've always lived on (PlayerCharacter.Speed,
+// bonuses only - base values stay on whatever field owns them (PlayerCharacter.Speed,
 // a spell's own BaseX, etc.) - so each consumer combines its own base with GetBonus(...) itself,
 // deciding whether that stat is additive or multiplicative for its case.
 public class CharacterSheet

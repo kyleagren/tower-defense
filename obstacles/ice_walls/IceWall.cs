@@ -106,8 +106,8 @@ public partial class IceWall : Node3D
     // Everything that has to agree on where a wall's segments sit goes through these: the real
     // wall (above), the placement ghosts and overlap checks (RitualPlacer), the reserved-footprint
     // collision (WallFootprintMarker), and the placement preview meshes (WallPlacementPreview).
-    // They used to each re-derive the same lerp, box size and vertical offset, which meant changing
-    // segment spacing needed five matching edits.
+    // None of them re-derive the lerp, box size or vertical offset themselves, so changing segment
+    // spacing is one edit rather than five that have to agree.
 
     // Adds a new segment as soon as the total empty space along the wall would reach one
     // segment's width, rather than capping the gap between any single pair of segments.

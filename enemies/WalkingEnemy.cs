@@ -230,7 +230,7 @@ public partial class WalkingEnemy : Enemy
         }
     }
 
-    // Give-up-and-rejoin across lanes (README §15): one real pathfind to whichever waypoint is
+    // Give-up-and-rejoin across lanes (README: Enemies): one real pathfind to whichever waypoint is
     // nearest across every lane's spawner, not just the one this enemy started on.
     private void BeginRejoin()
     {

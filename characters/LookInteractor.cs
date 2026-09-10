@@ -5,8 +5,7 @@ using Godot;
 // bookkeeping to clear both when the character goes inactive or nothing is in view.
 //
 // Subclasses supply which physics layer to search, how to turn a raycast hit into their own target
-// type, and what the prompt should say. RitualInteractor and ItemInteractor were the same forty
-// lines twice before this existed.
+// type, and what the prompt should say. Everything else is shared.
 //
 // Deliberately not generic: Godot's C# source generators skip generic classes, so [Export]s
 // declared on a generic base wouldn't register and the scenes' Character/PromptScene wiring would

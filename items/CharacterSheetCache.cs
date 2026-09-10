@@ -3,8 +3,7 @@ using System.Collections.Generic;
 // Resolves and caches a CharacterSheet per CharacterId from that character's equipped loadout.
 // Invalidation is driven by EventBus.InventoryChanged, wired once in SaveManager._Ready - every
 // path that changes a loadout already fires that signal, so nothing has to remember to invalidate
-// by hand. (It used to hang off InventoryPanel.Refresh, which meant a world pickup that
-// auto-equipped while the panel was closed left every consumer reading stale bonuses.)
+// by hand, and a pickup that auto-equips with no panel open still drops the cache.
 public static class CharacterSheetCache
 {
     private static readonly Dictionary<CharacterId, CharacterSheet> _cache = new();

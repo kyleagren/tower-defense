@@ -13,7 +13,9 @@
 
 ## Project context
 
-Godot 4 (C#) 3D tower-defense project. `README.md` is the design reference — current-state design plus enough reasoning to avoid re-litigating settled decisions. See it before proposing design changes.
+Godot 4 (C#) 3D tower-defense project. `README.md` is the design reference — **current-state design; reasoning only where a decision is still live or genuinely surprising.** See it before proposing design changes.
+
+Keep it that way. Do not add implementation logs ("extracted X into Y so that..."), bug post-mortems, changelog entries, or rationale for decisions nobody is going to reopen — git history and the code itself already hold those, and the doc becomes unreadable when they accumulate in it. When a feature is finished, the README should describe what the game *does*, not how it got built.
 
 ## Code style notes
 
@@ -22,6 +24,7 @@ Godot 4 (C#) 3D tower-defense project. `README.md` is the design reference — c
 - **A tower is a `Ritual`.** "Tower" was the working word early on and has been swept out of the code — use `Ritual` in class names, identifiers, input actions, physics layer names, and player-facing copy. (README still uses "tower" in design prose in places; that's prose, not a naming rule.)
 - If GDScript is optimal for something, that's fine too, but we've been keeping things in C# to try to optimize.
 - 1 unit in Godot should correspond to 1 meter, but this is standard in Godot anyway.
+- **Comments describe the present, never the past.** Default to no comment — well-named identifiers already cover the *what*. Write one only when the *why* is non-obvious: a hidden constraint, a subtle invariant, an ordering requirement, or behavior that would genuinely surprise a reader. Never narrate how the code got here: no "extracted from X so that...", no "used to be Y", no "same as the old Z", no references to a fixed bug or a class that no longer exists. If a comment only makes sense to someone who saw the previous version of the file, delete it.
 
 ## Resources: where values live
 

@@ -15,10 +15,9 @@ using System.Linq;
 //
 // Position is anchored to the hovered item's own rect (left side, top-aligned), not the mouse -
 // recomputed every frame while a source is hovered (harmless, since the source's rect isn't
-// moving) and then simply left alone once the mouse leaves it. Holding Alt is what keeps the
-// panel open after that: releasing the source no longer hides it while Alt (or Ctrl) is held, so
-// the mouse can cross the gap and hover a tier badge for its nested mod-details popup without the
-// panel trying to flee from an approaching cursor.
+// moving) and then simply left alone once the mouse leaves it. Holding Alt or Ctrl keeps the panel
+// open past that point, so the mouse can cross the gap and hover a tier badge for its nested
+// mod-details popup instead of the panel fleeing an approaching cursor.
 //
 // Ctrl (compare_item) adds up to two more panels comparing the hovered item against whatever's
 // equipped in the same slot for the active Sentinel (both rings, for a Ring); Ctrl+Alt shows all

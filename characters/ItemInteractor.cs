@@ -2,8 +2,8 @@ using Godot;
 
 // Look at a WorldItem within range and pick it up with interact - the same look-and-press
 // pattern RitualInteractor uses, both built on LookInteractor. The actual visual (name, and the
-// full tooltip once directly targeted) is ItemNameplateController's job now, not the inherited
-// Label3D world prompt - this returns an empty prompt rather than duplicating that display.
+// full tooltip once directly targeted) belongs to ItemNameplateController rather than the
+// inherited Label3D world prompt, so this returns an empty prompt instead of duplicating it.
 public partial class ItemInteractor : LookInteractor
 {
     [Export] public float InteractionRange { get; private set; } = GameRules.ItemPickupReach;

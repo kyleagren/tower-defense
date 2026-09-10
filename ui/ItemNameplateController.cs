@@ -7,8 +7,8 @@ using System.Linq;
 // frame, smoothed rather than snapped so they don't jitter as the player moves. Whichever item the
 // crosshair is currently resting on expands into the same rich TooltipPanelView ItemTooltip uses
 // for inventory hover - pinned to a fixed screen corner (not the item's own screen position) and
-// scaled up, since a tooltip that moves with your aim while you're trying to read it is exactly the
-// thing that made this hard to use. Moves to the opposite corner while Inventory is open so the two
+// scaled up, since a tooltip that drifts with your aim is unreadable while you are trying to hold
+// the crosshair steady on the item. Moves to the opposite corner while Inventory is open so the two
 // don't overlap.
 public partial class ItemNameplateController : CanvasLayer
 {

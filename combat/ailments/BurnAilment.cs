@@ -20,8 +20,8 @@ public class BurnAilment : Ailment
         _timeSinceLastTick = previous._timeSinceLastTick;
     }
 
-    // Ticks in fixed TickInterval chunks rather than every physics frame - the alternative was a
-    // real chunk of damage, once every second, vs. dozens of ~1-damage TakeDamage calls a second.
+    // Ticks in fixed TickInterval chunks rather than every physics frame: one meaningful chunk of
+    // damage per interval, instead of dozens of ~1-damage TakeDamage calls a second.
     public override bool Tick(Enemy enemy, float delta)
     {
         _remainingDuration -= delta;

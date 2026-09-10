@@ -1,10 +1,10 @@
 using Godot;
 
-// One of a Sentinel's four active ability slots (README section 22). A Node rather than a Resource
-// so each ability owns its own state, tweens and scene content directly, with no separate instance
-// object to hold the mutable half - the same shape RitualPlacer/TokenDeployer/LookInteractor
-// already use for a Sentinel's other behaviors. This base carries only what the shared input
-// handler and the HUD need; what an ability actually does is entirely bespoke to its subclass.
+// One of a Sentinel's four active ability slots. A Node rather than a Resource so each ability owns
+// its own state, tweens and scene content directly, with no separate instance object holding the
+// mutable half - the same shape RitualPlacer/TokenDeployer/LookInteractor already use for a
+// Sentinel's other behaviors. This base carries only what the shared input handler and the HUD
+// need; what an ability actually does is entirely bespoke to its subclass.
 public abstract partial class Ability : Node
 {
     public abstract string DisplayName { get; }

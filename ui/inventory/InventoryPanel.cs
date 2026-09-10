@@ -15,9 +15,8 @@ public partial class InventoryPanel : Control
     private const int AcceptBorderWidth = 3;
 
     // One equipment slot's button, its empty-state placeholder name, and how to read/write the
-    // EquippedLoadout field behind it. Built once in _Ready and reused by both the click handlers
-    // and the visual refresh - those used to be two separate hand-maintained lists of the same
-    // eleven slots, which had to stay in lockstep by hand.
+    // EquippedLoadout field behind it. Built once in _Ready so the click handlers and the visual
+    // refresh share one description of the eleven slots rather than two lists kept in lockstep.
     private readonly struct EquipmentSlotView
     {
         public readonly Button Button;
@@ -277,7 +276,7 @@ public partial class InventoryPanel : Control
     }
 
     // Updates the existing buttons in place. This runs on every click in the panel, so rebuilding
-    // all 40 nodes here (which it used to do) meant a full teardown/instantiate cycle per click.
+    // all 40 nodes here would mean a full teardown/instantiate cycle per click.
     private void RefreshGrid()
     {
         Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
@@ -432,9 +431,8 @@ public partial class InventoryPanel : Control
             canAccept: candidateItem => true);
     }
 
-    // A SlotHandle for an equipment field. Every equipment slot (weapon included, now that
-    // two-handed weapons are gone) uses this same uniform get/place/accept shape: accepting
-    // requires the right item subtype and character compatibility.
+    // A SlotHandle for an equipment field. Every equipment slot, weapon included, uses this same
+    // get/place/accept shape: accepting requires the right item subtype and character compatibility.
     private SlotHandle SimpleSlot<T>(Func<T> getEquipped, Action<Item> assignEquipped) where T : Item
     {
         return new SlotHandle(
