@@ -5,6 +5,12 @@ public partial class Enemy : CharacterBody3D, IDamageable
 {
     [Export] public CollisionShape3D BodyCollision { get; private set; }
     [Export] public CollisionShape3D HeadCollision { get; private set; }
+    [Export] public MeshInstance3D HeadWeakPoint { get; private set; }
+    [Export] public MeshInstance3D BodyWeakPoint { get; private set; }
+    [Export] public MeshInstance3D ArmLWeakPoint { get; private set; }
+    [Export] public MeshInstance3D ArmRWeakPoint { get; private set; }
+    [Export] public MeshInstance3D LegLWeakPoint { get; private set; }
+    [Export] public MeshInstance3D LegRWeakPoint { get; private set; }
     [Export] public float RagdollCleanupDelay = 2f;
     [Export] public float MaxHealth = 100f;
     [Export] public float CenterMassHeight = 1f;
@@ -89,6 +95,97 @@ public partial class Enemy : CharacterBody3D, IDamageable
         return headBounds.IntersectsSegment(localOrigin, localEnd);
     }
 
+    private const float WeakPointHitRadius = 0.18f;
+
+    // Level-wide rather than per-instance: Weak-Point Visor marks every enemy regardless of who
+    // cast it, so an enemy spawning mid-duration (WaveController, EnemySpawner) needs a static flag
+    // to check in _Ready rather than relying on the ability re-scanning EnemyRegistry, which only
+    // ever sees enemies that already existed at activation time.
+    public static bool IsWeakPointVisorActive { get; private set; }
+    private static int _activeWeakPointVisorCount;
+
+    public static void ActivateWeakPointVisor(int count)
+    {
+        IsWeakPointVisorActive = true;
+        _activeWeakPointVisorCount = count;
+
+        foreach (Enemy enemy in EnemyRegistry.Active)
+        {
+            enemy.ExposeWeakPoints(count);
+        }
+    }
+
+    public static void DeactivateWeakPointVisor()
+    {
+        IsWeakPointVisorActive = false;
+
+        foreach (Enemy enemy in EnemyRegistry.Active)
+        {
+            enemy.ClearWeakPoints();
+        }
+    }
+
+    private readonly List<MeshInstance3D> _activeWeakPoints = new List<MeshInstance3D>();
+
+    // Head is always included when wired, so there's always a guaranteed high-value target; the
+    // rest are drawn at random, at most one per remaining body part, from whichever markers this
+    // enemy actually has - optional per enemy, same as HeadCollision.
+    public void ExposeWeakPoints(int count)
+    {
+        ClearWeakPoints();
+
+        if (HeadWeakPoint != null)
+        {
+            ActivateWeakPoint(HeadWeakPoint);
+            count--;
+        }
+
+        List<MeshInstance3D> candidates = new List<MeshInstance3D> { BodyWeakPoint, ArmLWeakPoint, ArmRWeakPoint, LegLWeakPoint, LegRWeakPoint };
+        candidates.RemoveAll(spot => spot == null);
+
+        for (int i = 0; i < count && candidates.Count > 0; i++)
+        {
+            int index = GD.RandRange(0, candidates.Count - 1);
+            ActivateWeakPoint(candidates[index]);
+            candidates.RemoveAt(index);
+        }
+    }
+
+    public void ClearWeakPoints()
+    {
+        foreach (MeshInstance3D spot in _activeWeakPoints)
+        {
+            spot.Visible = false;
+        }
+
+        _activeWeakPoints.Clear();
+    }
+
+    // Same geometric-proximity approach as IsHeadshot - checks how close the shot's line passes to
+    // the marker rather than requiring a real physics hit.
+    public bool IsWeakPointHit(Vector3 rayOrigin, Vector3 rayEnd)
+    {
+        foreach (MeshInstance3D spot in _activeWeakPoints)
+        {
+            if (GeometryUtils.DistanceSquaredToSegment(spot.GlobalPosition, rayOrigin, rayEnd) <= WeakPointHitRadius * WeakPointHitRadius)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void ActivateWeakPoint(MeshInstance3D spot)
+    {
+        spot.Visible = true;
+        _activeWeakPoints.Add(spot);
+    }
+
+    private bool IsWeakPointMarker(MeshInstance3D meshInstance) =>
+        meshInstance == HeadWeakPoint || meshInstance == BodyWeakPoint || meshInstance == ArmLWeakPoint ||
+        meshInstance == ArmRWeakPoint || meshInstance == LegLWeakPoint || meshInstance == LegRWeakPoint;
+
     public Vector3 GetJitteredCenterMass(float jitterAmount)
     {
         Vector3 jitter = new Vector3(
@@ -113,6 +210,11 @@ public partial class Enemy : CharacterBody3D, IDamageable
         HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
 
         CollectMeshInstances();
+
+        if (IsWeakPointVisorActive)
+        {
+            ExposeWeakPoints(_activeWeakPointVisorCount);
+        }
     }
 
     // Safety net for enemies freed without dying — scene reload, in particular. Unregistering
@@ -291,7 +393,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         // their no_depth_test/cull_mode setup, and render as a stray second bar.
         foreach (Node node in FindChildren("*", nameof(MeshInstance3D), recursive: true, owned: false))
         {
-            if (node is MeshInstance3D meshInstance && !HealthBar.IsAncestorOf(meshInstance))
+            if (node is MeshInstance3D meshInstance && !HealthBar.IsAncestorOf(meshInstance) && !IsWeakPointMarker(meshInstance))
             {
                 _meshInstances.Add(meshInstance);
             }

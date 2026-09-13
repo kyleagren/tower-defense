@@ -19,6 +19,11 @@ public abstract partial class Ability : Node
     // than raw seconds so a radial sweep needs no per-ability knowledge.
     public float CooldownFraction => _cooldownDuration <= 0f ? 0f : _cooldownRemaining / _cooldownDuration;
 
+    // 1 the instant an active duration begins, falling to 0 as it runs out - lets the HUD drive a
+    // depleting radial while IsActive the same way CooldownFraction drives a filling one once it
+    // ends. An ability with no meaningful duration (an instant effect) just stays at 1 while active.
+    public virtual float ActiveFraction => 1f;
+
     // HUD affordance only. The shared handler calls TryActivate either way; an ability that ends
     // early on a second press implements that itself.
     public virtual bool CanToggleOff => false;

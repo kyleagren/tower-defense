@@ -12,6 +12,7 @@ public partial class Soldier : Sentinel
     [Export] public float AdsSpringLength = 0.5f;
     [Export] public float AdsTransitionSpeed = 10f;
     [Export] public float AdsSensitivityMultiplier = 0.5f;
+    [Export] public float WeakPointDamageMultiplier { get; private set; } = 1.3f;
 
     public override CharacterId Id => CharacterId.Soldier;
 
@@ -74,7 +75,15 @@ public partial class Soldier : Sentinel
             if (result["collider"].As<Node3D>() is Enemy enemy)
             {
                 bool isHeadshot = enemy.IsHeadshot(origin, end);
-                enemy.TakeDamage(RollAttackDamage(AttackDamage, isHeadshot));
+                bool isWeakPointHit = enemy.IsWeakPointHit(origin, end);
+
+                DamagePacket damage = RollAttackDamage(AttackDamage, isHeadshot);
+                if (isWeakPointHit)
+                {
+                    damage *= WeakPointDamageMultiplier;
+                }
+
+                enemy.TakeDamage(damage);
             }
 
             if (ImpactScene != null)

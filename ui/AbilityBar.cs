@@ -99,7 +99,7 @@ public partial class AbilityBar : Control
             }
 
             _cooldownOverlays[i].FillColor = ability.IsActive ? _activeColor : _readyColor;
-            _cooldownOverlays[i].Progress = ability.IsActive ? 1f : 1f - ability.CooldownFraction;
+            _cooldownOverlays[i].Progress = ability.IsActive ? ability.ActiveFraction : 1f - ability.CooldownFraction;
             _nameLabels[i].Text = ability.DisplayName;
         }
     }
