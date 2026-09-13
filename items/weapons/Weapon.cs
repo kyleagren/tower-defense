@@ -26,4 +26,7 @@ public abstract partial class Weapon : Item
 
     public float ResolvedBaseAttackSpeed =>
         BaseAttackSpeed * (1f + Affixes.Where(roll => roll.Stat == StatId.SentinelIncreasedAttackSpeed).Sum(roll => roll.Value));
+
+    public float ResolvedBaseAttackDamage =>
+        BaseAttackDamage * (1f + Affixes.Where(roll => roll.Stat == StatId.WeaponAttackDamage).Sum(roll => roll.Value));
 }

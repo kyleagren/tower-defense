@@ -13,6 +13,7 @@ offset_top = -95.0
 offset_right = 592.0
 offset_bottom = -20.0
 grow_vertical = 0
+mouse_filter = 2
 
 [node name="TokenBar" type="Control" parent="."]
 script = ExtResource("1_tokenbar")

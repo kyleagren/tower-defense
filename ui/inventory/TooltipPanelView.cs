@@ -148,7 +148,7 @@ public class TooltipPanelView
     {
         return string.Join("\n", new[]
         {
-            $"Base Attack Damage: {Mathf.RoundToInt(weapon.BaseAttackDamage)}",
+            $"Base Attack Damage: {Mathf.RoundToInt(weapon.ResolvedBaseAttackDamage)}",
             $"Base Attack Speed: {weapon.ResolvedBaseAttackSpeed:0.##}",
             $"Base Crit Chance: {Mathf.RoundToInt(weapon.ResolvedBaseCritChance * 100f)}%"
         });

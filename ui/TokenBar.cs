@@ -18,6 +18,7 @@ public partial class TokenBar : Control
 
     public override void _Ready()
     {
+        MouseFilter = MouseFilterEnum.Ignore;
         CustomMinimumSize = new Vector2(HudCircle.RowWidth(GameRules.MaxTokens), HudCircle.RowHeight);
 
         for (int i = 0; i < GameRules.MaxTokens; i++)

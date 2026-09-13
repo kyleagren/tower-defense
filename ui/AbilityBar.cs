@@ -25,6 +25,7 @@ public partial class AbilityBar : Control
 
     public override void _Ready()
     {
+        MouseFilter = MouseFilterEnum.Ignore;
         CustomMinimumSize = new Vector2(HudCircle.RowWidth(SlotCount), HudCircle.RowHeight);
 
         for (int i = 0; i < SlotCount; i++)
