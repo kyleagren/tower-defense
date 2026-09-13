@@ -21,6 +21,14 @@ public static class HudCircle
         return circle;
     }
 
+    public static CooldownOverlay CreateCooldownOverlay(Panel circle)
+    {
+        CooldownOverlay overlay = new CooldownOverlay { MouseFilter = Control.MouseFilterEnum.Ignore };
+        overlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        circle.AddChild(overlay);
+        return overlay;
+    }
+
     public static Panel CreateBadge(Panel circle, int number)
     {
         Panel badge = new Panel { MouseFilter = Control.MouseFilterEnum.Ignore };

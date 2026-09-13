@@ -11,15 +11,15 @@ public partial class AbilityBar : Control
     private const int SlotCount = 4;
 
     // Placeholder palette, not yet rarity/element-coded - abilities have no equivalent of a
-    // spell's element to color by. Ready fades in from _emptyColor as CooldownFraction recovers;
-    // Active reuses the same gold TokenBar's pick-mode border already means "attention: this slot".
+    // spell's element to color by. The base circle always stays _emptyColor; CooldownOverlay draws
+    // the growing radial wipe on top of it in _readyColor (or _activeColor while active).
     private static readonly Color _emptyColor = new Color(0.15f, 0.15f, 0.15f, 0.6f);
     private static readonly Color _readyColor = new Color(0.25f, 0.4f, 0.55f, 0.9f);
     private static readonly Color _activeColor = new Color(0.85f, 0.75f, 0.15f);
 
-    private readonly Panel[] _circles = new Panel[SlotCount];
     private readonly Label[] _nameLabels = new Label[SlotCount];
     private readonly Panel[] _badges = new Panel[SlotCount];
+    private readonly CooldownOverlay[] _cooldownOverlays = new CooldownOverlay[SlotCount];
 
     private bool _pickModeActive;
 
@@ -31,7 +31,9 @@ public partial class AbilityBar : Control
         for (int i = 0; i < SlotCount; i++)
         {
             Panel circle = HudCircle.CreateCircle(this, new Vector2(i * (HudCircle.CircleSize + HudCircle.Spacing), 0f));
-            _circles[i] = circle;
+            circle.AddThemeStyleboxOverride("panel", HudCircle.BuildCircularStyle(_emptyColor));
+
+            _cooldownOverlays[i] = HudCircle.CreateCooldownOverlay(circle);
 
             Label nameLabel = new Label
             {
@@ -91,16 +93,13 @@ public partial class AbilityBar : Control
 
             if (ability == null || !IsInstanceValid(ability))
             {
-                _circles[i].AddThemeStyleboxOverride("panel", HudCircle.BuildCircularStyle(_emptyColor));
+                _cooldownOverlays[i].Progress = 0f;
                 _nameLabels[i].Text = "";
                 continue;
             }
 
-            Color fill = ability.IsActive
-                ? _activeColor
-                : _emptyColor.Lerp(_readyColor, 1f - ability.CooldownFraction);
-
-            _circles[i].AddThemeStyleboxOverride("panel", HudCircle.BuildCircularStyle(fill));
+            _cooldownOverlays[i].FillColor = ability.IsActive ? _activeColor : _readyColor;
+            _cooldownOverlays[i].Progress = ability.IsActive ? 1f : 1f - ability.CooldownFraction;
             _nameLabels[i].Text = ability.DisplayName;
         }
     }
