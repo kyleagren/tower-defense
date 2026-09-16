@@ -9,6 +9,9 @@ using System.Collections.Generic;
 public static class DamageTypeColors
 {
     private static readonly Color Physical = new Color(0.9f, 0.9f, 0.9f);
+    private static readonly Color TrueDamage = Colors.Black;
+    private static readonly Color DefaultOutline = Colors.Black;
+    private static readonly Color TrueDamageOutline = Colors.White;
 
     private static readonly Dictionary<Tag, Color> _elementColors = new()
     {
@@ -29,6 +32,16 @@ public static class DamageTypeColors
     public static Color Get(Tag? element)
     {
         return element.HasValue && _elementColors.TryGetValue(element.Value, out Color color) ? color : Physical;
+    }
+
+    // Fill and outline resolve together because true damage inverts the pair: every other number is
+    // color-on-black, so black-on-white is the one combination that can't be mistaken for an
+    // element. Picking either half alone would render it invisible against the other.
+    public static (Color Fill, Color Outline) GetForDamage(DamagePacket damage)
+    {
+        return damage.IsTrueDamage
+            ? (TrueDamage, TrueDamageOutline)
+            : (Get(damage.DominantElement), DefaultOutline);
     }
 
     // A spell's own dominant damage element misses anything that deals no direct damage at all -

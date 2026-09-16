@@ -28,6 +28,15 @@ public abstract partial class Ability : Node
     // early on a second press implements that itself.
     public virtual bool CanToggleOff => false;
 
+    // True while the ability is consuming the attack binding for its own targeting. The character
+    // suppresses its weapon rather than firing both off one click - see Sentinel.CanUseWeaponInput.
+    public virtual bool CapturesAttackInput => false;
+
+    // Backing out with ui_cancel while capturing. What that costs is the ability's own call.
+    public virtual void CancelCapture()
+    {
+    }
+
     // Node.Owner is Godot's own scene-ownership reference, so the wielding Sentinel can't reuse
     // that name - Character matches what RitualPlacer/TokenDeployer already call the same thing.
     protected Sentinel Character { get; private set; }

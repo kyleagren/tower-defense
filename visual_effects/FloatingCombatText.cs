@@ -34,7 +34,7 @@ public partial class FloatingCombatText : Node3D
         FloatingCombatTextRegistry.Unregister(this);
     }
 
-    public void Show(Vector3 worldPosition, float amount, Color color, bool isCrit = false)
+    public void Show(Vector3 worldPosition, float amount, Color color, Color outlineColor, bool isCrit = false)
     {
         GlobalPosition = worldPosition + new Vector3(
             (float)GD.RandRange(-RandomHorizontalSpread, RandomHorizontalSpread),
@@ -43,6 +43,7 @@ public partial class FloatingCombatText : Node3D
 
         Label.Text = isCrit ? $"{Mathf.RoundToInt(amount)}!" : Mathf.RoundToInt(amount).ToString();
         Label.Modulate = color;
+        Label.OutlineModulate = outlineColor;
 
         Vector3 targetPosition = GlobalPosition + Vector3.Up * RiseDistance;
 
@@ -50,6 +51,9 @@ public partial class FloatingCombatText : Node3D
         tween.SetParallel(true);
         tween.TweenProperty(this, "global_position", targetPosition, Duration).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
         tween.TweenProperty(Label, "modulate:a", 0f, Duration).SetDelay(Duration * 0.4f);
+        // The outline is a separate color with its own alpha - fading only modulate leaves the
+        // outline behind as a solid silhouette of the number.
+        tween.TweenProperty(Label, "outline_modulate:a", 0f, Duration).SetDelay(Duration * 0.4f);
         tween.Chain().TweenCallback(Callable.From(QueueFree));
     }
 }

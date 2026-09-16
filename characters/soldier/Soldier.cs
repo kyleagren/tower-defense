@@ -35,7 +35,7 @@ public partial class Soldier : Sentinel
 
         _fireCooldown -= (float)delta;
 
-        if (CanUseCombatInput && Input.IsActionPressed("attack") && _fireCooldown <= 0f)
+        if (CanUseWeaponInput && Input.IsActionPressed("attack") && _fireCooldown <= 0f)
         {
             _fireCooldown = 1f / AttackSpeed;
             FireShot();

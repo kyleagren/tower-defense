@@ -5,6 +5,9 @@
 [ext_resource type="PackedScene" path="res://visual_effects/ImpactFlash.tscn" id="3_impact"]
 [ext_resource type="PackedScene" path="res://visual_effects/BulletTracer.tscn" id="4_tracer"]
 [ext_resource type="Script" uid="uid://gs7mfjclhw6" path="res://characters/soldier/abilities/WeakPointVisorAbility.cs" id="5_enuph"]
+[ext_resource type="Script" path="res://characters/soldier/abilities/HealthLinkAbility.cs" id="6_healthlink"]
+[ext_resource type="PackedScene" path="res://visual_effects/HealthLinkSpike.tscn" id="7_spike"]
+[ext_resource type="PackedScene" path="res://visual_effects/HealthLinkTether.tscn" id="8_tether"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soldier"]
 albedo_color = Color(0.1, 0.15, 0.5, 1)
@@ -39,7 +42,7 @@ ImpactScene = ExtResource("3_impact")
 MuzzlePoint = NodePath("Weapon/MuzzlePoint")
 TracerScene = ExtResource("4_tracer")
 Weapon = NodePath("Weapon")
-AbilitySlots = [NodePath("WeakPointVisor"), null, null, null]
+AbilitySlots = [NodePath("WeakPointVisor"), NodePath("HealthLink"), null, null]
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
@@ -70,3 +73,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.525)
 
 [node name="WeakPointVisor" type="Node" parent="." index="9" unique_id=1886353616]
 script = ExtResource("5_enuph")
+
+[node name="HealthLink" type="Node" parent="." index="10" node_paths=PackedStringArray("BeamOrigin")]
+script = ExtResource("6_healthlink")
+SpikeScene = ExtResource("7_spike")
+TetherScene = ExtResource("8_tether")
+BeamOrigin = NodePath("../Weapon/MuzzlePoint")

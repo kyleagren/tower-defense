@@ -64,6 +64,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     public bool IsDead => _isDead;
     public bool IsDestroyed => _isDead;
     public Tag? Status { get; private set; }
+    public IReadOnlyList<Ailment> Ailments => _ailments;
 
     // Remaining travel distance to the objective. Only meaningful for enemies that follow a lane
     // (WalkingEnemy updates it); anything else just leaves it at the default, which keeps it from
@@ -234,7 +235,8 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // satisfy the interface signature on its own.
     void IDamageable.TakeDamage(DamagePacket damage, Vector3 impulse) => TakeDamage(damage, impulse);
 
-    public void TakeDamage(DamagePacket amount, Vector3 ragdollImpulse = default, bool updateStatus = true, ReactionRune reaction = null)
+    public void TakeDamage(DamagePacket amount, Vector3 ragdollImpulse = default, bool updateStatus = true,
+        ReactionRune reaction = null, bool notifyAilments = true)
     {
         if (_isDead)
         {
@@ -263,9 +265,24 @@ public partial class Enemy : CharacterBody3D, IDamageable
             }
         }
 
+        if (notifyAilments)
+        {
+            NotifyAilmentsOfDamage(amount);
+        }
+
         if (CurrentHealth <= 0f)
         {
             Die(ragdollImpulse);
+        }
+    }
+
+    // Backwards, like TickAilments: a hook can reach back into this list, and this can itself run
+    // from inside TickAilments when a damage-over-time tick is the hit that landed.
+    private void NotifyAilmentsOfDamage(DamagePacket amount)
+    {
+        for (int i = _ailments.Count - 1; i >= 0; i--)
+        {
+            _ailments[i].OnHostDamaged(this, amount);
         }
     }
 
@@ -322,9 +339,11 @@ public partial class Enemy : CharacterBody3D, IDamageable
             return;
         }
 
+        (Color fill, Color outline) = DamageTypeColors.GetForDamage(amount);
+
         FloatingCombatText text = FloatingTextScene.Instantiate<FloatingCombatText>();
         GetTree().CurrentScene.AddChild(text);
-        text.Show(GetJitteredCenterMass(0.2f), amount.Total, DamageTypeColors.Get(amount.DominantElement), amount.IsCrit);
+        text.Show(GetJitteredCenterMass(0.2f), amount.Total, fill, outline, amount.IsCrit);
     }
 
     private void TickAilments(float delta)

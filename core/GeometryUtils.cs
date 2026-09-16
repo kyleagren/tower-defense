@@ -16,4 +16,11 @@ public static class GeometryUtils
         Vector3 closestPoint = segmentStart + segment * t;
         return point.DistanceSquaredTo(closestPoint);
     }
+
+    // LookAt throws when its up vector is parallel to the direction it's aiming - a shot taken
+    // straight down at an enemy underfoot, or a beam between two points stacked vertically.
+    public static Vector3 SafeUpFor(Vector3 direction)
+    {
+        return Mathf.Abs(direction.Normalized().Dot(Vector3.Up)) > 0.999f ? Vector3.Forward : Vector3.Up;
+    }
 }

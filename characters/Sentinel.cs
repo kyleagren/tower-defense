@@ -73,8 +73,29 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     // 1/2/3 double as token pick mode's slot keys, so abilities yield to it entirely - slot 4
     // included, since firing an ability while choosing a token to place shouldn't happen either.
-    // Separate from CanUseCombatInput so attack/alt_action behavior is unchanged.
-    protected bool CanUseAbilityInput => CanUseCombatInput && !TokenDeployer.IsPickModeActive;
+    // Separate from CanUseCombatInput so attack/alt_action behavior is unchanged. Public so an
+    // ability capturing the attack binding can gate its own clicks on the same rule.
+    public bool CanUseAbilityInput => CanUseCombatInput && !TokenDeployer.IsPickModeActive;
+
+    // Deliberately not folded into ExtraCombatInputGate: CanUseAbilityInput is built on top of that,
+    // so putting the capture term there would make a capturing ability gate away its own clicks.
+    protected bool CanUseWeaponInput => CanUseCombatInput && !IsAbilityCapturingAttack;
+
+    private bool IsAbilityCapturingAttack
+    {
+        get
+        {
+            foreach (Ability ability in AbilitySlots)
+            {
+                if (ability != null && ability.CapturesAttackInput)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
 
     private static readonly string[] _abilityActions = { "ability_1", "ability_2", "ability_3", "ability_4" };
 
@@ -131,6 +152,10 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             {
                 TokenDeployer.ExitPickMode();
             }
+            else if (TryCancelCapturingAbility())
+            {
+                return;
+            }
             else if (!RitualTokenPlacer.IsPlacing)
             {
                 ToggleMouseCapture();
@@ -150,6 +175,20 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
                 return;
             }
         }
+    }
+
+    private bool TryCancelCapturingAbility()
+    {
+        foreach (Ability ability in AbilitySlots)
+        {
+            if (ability != null && ability.CapturesAttackInput)
+            {
+                ability.CancelCapture();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void OnGamePhaseChanged(GamePhase phase)
