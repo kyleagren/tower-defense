@@ -236,14 +236,26 @@ public partial class Enemy : CharacterBody3D, IDamageable
     void IDamageable.TakeDamage(DamagePacket damage, Vector3 impulse) => TakeDamage(damage, impulse);
 
     public void TakeDamage(DamagePacket amount, Vector3 ragdollImpulse = default, bool updateStatus = true,
-        ReactionRune reaction = null, bool notifyAilments = true)
+        SpellHit spellHit = default, bool notifyAilments = true)
     {
         if (_isDead)
         {
             return;
         }
 
-        bool reactionTriggered = reaction?.OnHit(this, amount) ?? false;
+        bool statusConsumed = false;
+
+        if (spellHit.OnHitRunes != null)
+        {
+            OnHitContext hit = new OnHitContext { Target = this, Damage = amount, SpellTags = spellHit.SpellTags };
+
+            foreach (OnHitRune rune in spellHit.OnHitRunes)
+            {
+                // |= rather than ||= - every rune runs, since one that adds an effect of its own
+                // still has work to do after a reaction has already claimed the Status.
+                statusConsumed |= rune.OnHit(hit);
+            }
+        }
 
         CurrentHealth -= amount.Total;
         HealthBar.SetFraction(CurrentHealth / MaxHealth);
@@ -251,7 +263,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         if (updateStatus)
         {
-            if (reactionTriggered)
+            if (statusConsumed)
             {
                 Status = null;
             }
@@ -286,19 +298,46 @@ public partial class Enemy : CharacterBody3D, IDamageable
         }
     }
 
-    public void ApplyAilment(Ailment ailment)
+    // False when the incoming ailment lost to one already in its slot, so a caller can tell whether
+    // its effect actually landed. At most one occupant per slot, since every add resolves.
+    public bool ApplyAilment(Ailment ailment)
     {
-        if (ailment is BurnAilment newBurn)
+        for (int i = 0; i < _ailments.Count; i++)
         {
-            BurnAilment existingBurn = _ailments.Find(a => a is BurnAilment) as BurnAilment;
-            if (existingBurn != null)
+            if (!ailment.OccupiesSameSlotAs(_ailments[i]))
             {
-                newBurn.MergeFrom(existingBurn);
-                _ailments.Remove(existingBurn);
+                continue;
             }
+
+            if (ailment.ResolveAgainst(_ailments[i]) == AilmentApplication.Discard)
+            {
+                return false;
+            }
+
+            _ailments.RemoveAt(i);
+            _ailments.Add(ailment);
+            return true;
         }
 
         _ailments.Add(ailment);
+        return true;
+    }
+
+    // Every ailment's SpeedMultiplier folded together. Multiplicative, so two independent slows
+    // compound toward zero rather than summing past a full stop.
+    public float AilmentSpeedMultiplier
+    {
+        get
+        {
+            float multiplier = 1f;
+
+            foreach (Ailment ailment in _ailments)
+            {
+                multiplier *= ailment.SpeedMultiplier;
+            }
+
+            return multiplier;
+        }
     }
 
     // Universal death handling: unregister, hide the health bar, stop simulating, disable

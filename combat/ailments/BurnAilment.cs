@@ -12,7 +12,15 @@ public class BurnAilment : Ailment
         _damagePerSecond = duration > 0f ? totalDamage / duration : 0f;
     }
 
-    public void MergeFrom(BurnAilment previous)
+    // Merges rather than competing: two burns on one enemy combine their remaining damage into a
+    // single instance instead of the stronger erasing the weaker.
+    public override AilmentApplication ResolveAgainst(Ailment existing)
+    {
+        MergeFrom((BurnAilment)existing);
+        return AilmentApplication.Replace;
+    }
+
+    private void MergeFrom(BurnAilment previous)
     {
         float previousRemainingDamage = previous._damagePerSecond * previous._remainingDuration;
         float combinedDamage = (_damagePerSecond * _remainingDuration) + previousRemainingDamage;

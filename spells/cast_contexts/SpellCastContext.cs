@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 public class SpellCastContext
 {
@@ -59,9 +60,17 @@ public class SpellCastContext
     public ChainCastData Chain;
     public AreaCastData Area;
     public InstantHitCastData InstantHit;
-    public ReactionRune Reaction;
+    public List<OnHitRune> OnHitRunes = new();
     public WallCastData Wall;
     public CastTrigger CastTrigger;
+
+    // The casting spell's own tags, stamped during resolve so a rune reading them at hit time
+    // doesn't need a path back to the Spell resource.
+    public IReadOnlyList<Tag> SpellTags = System.Array.Empty<Tag>();
+
+    // Bundled so a damage site passes one value instead of threading the runes and the tags
+    // separately through Projectile, ChainResolver and every cast effect.
+    public SpellHit SpellHit => new SpellHit { OnHitRunes = OnHitRunes, SpellTags = SpellTags };
 
     // Folds an owner's equipment bonuses into this context, once, during resolve. Simple stats go
     // into the same ScaledStat.Increased fields Runes use, which equipment and Runes legitimately

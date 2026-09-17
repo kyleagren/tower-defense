@@ -6,7 +6,7 @@ using Godot;
 public class HealthLinkAilment : Ailment
 {
     public Enemy Partner { get; }
-    public float MirrorPercent { get; private set; }
+    public float MirrorPercent { get; }
 
     private float _remainingDuration;
 
@@ -17,9 +17,17 @@ public class HealthLinkAilment : Ailment
         MirrorPercent = mirrorPercent;
     }
 
+    // One link per partner rather than one per enemy - an enemy linked to two others carries two,
+    // and only a second link to the same partner is a conflict.
+    public override bool OccupiesSameSlotAs(Ailment other) =>
+        other is HealthLinkAilment link && link.Partner == Partner;
+
+    protected override float Magnitude => MirrorPercent;
+
     // False when this pair already carries a link the incoming one can't beat. An equal-strength
     // re-link refreshes the duration, but a weaker one is refused outright - otherwise two players
-    // could hold a strong link open indefinitely by taking turns re-casting a weak one.
+    // could hold a strong link open indefinitely by taking turns re-casting a weak one. That
+    // comparison is Ailment.ResolveAgainst's default, reached through Magnitude above.
     public static bool Link(Enemy a, Enemy b, float duration, float mirrorPercent)
     {
         if (a == null || b == null || a == b || a.IsDead || b.IsDead)
@@ -27,47 +35,15 @@ public class HealthLinkAilment : Ailment
             return false;
         }
 
-        HealthLinkAilment existing = FindLink(a, b);
-
-        if (existing == null)
-        {
-            a.ApplyAilment(new HealthLinkAilment(b, duration, mirrorPercent));
-            b.ApplyAilment(new HealthLinkAilment(a, duration, mirrorPercent));
-            return true;
-        }
-
-        if (mirrorPercent < existing.MirrorPercent)
+        // Symmetric, so the two halves stand or fall together: if the first is refused by a stronger
+        // link already on this pair, the second would be too.
+        if (!a.ApplyAilment(new HealthLinkAilment(b, duration, mirrorPercent)))
         {
             return false;
         }
 
-        Refresh(existing, duration, mirrorPercent);
-        Refresh(FindLink(b, a), duration, mirrorPercent);
+        b.ApplyAilment(new HealthLinkAilment(a, duration, mirrorPercent));
         return true;
-    }
-
-    public static HealthLinkAilment FindLink(Enemy host, Enemy partner)
-    {
-        foreach (Ailment ailment in host.Ailments)
-        {
-            if (ailment is HealthLinkAilment link && link.Partner == partner)
-            {
-                return link;
-            }
-        }
-
-        return null;
-    }
-
-    private static void Refresh(HealthLinkAilment link, float duration, float mirrorPercent)
-    {
-        if (link == null)
-        {
-            return;
-        }
-
-        link._remainingDuration = duration;
-        link.MirrorPercent = mirrorPercent;
     }
 
     public override bool Tick(Enemy enemy, float delta)

@@ -5,7 +5,7 @@ public static class ChainResolver
 {
     public const float DamageFalloffPerChain = 0.9f;
 
-    public static void ResolveChain(Enemy firstTarget, Vector3 firstTargetPoint, DamagePacket damage, float ragdollForce, int chainCount, float chainRange, ChainDamageModifier damageModifier = null, ReactionRune reaction = null, PackedScene arcVisualScene = null, HashSet<Enemy> sharedChainTracker = null)
+    public static void ResolveChain(Enemy firstTarget, Vector3 firstTargetPoint, DamagePacket damage, float ragdollForce, int chainCount, float chainRange, ChainDamageModifier damageModifier = null, SpellHit spellHit = default, PackedScene arcVisualScene = null, HashSet<Enemy> sharedChainTracker = null)
     {
         Enemy current = firstTarget;
         Vector3 currentPoint = firstTargetPoint;
@@ -41,7 +41,7 @@ public static class ChainResolver
 
             Vector3 nextPoint = next.GetJitteredCenterMass(0.25f);
             Vector3 ragdollImpulse = (nextPoint - currentPoint).Normalized() * ragdollForce;
-            next.TakeDamage(currentDamage, ragdollImpulse, reaction: reaction);
+            next.TakeDamage(currentDamage, ragdollImpulse, spellHit: spellHit);
             SpawnArcVisual(next, arcVisualScene, currentPoint, nextPoint);
 
             ownHits.Add(next);

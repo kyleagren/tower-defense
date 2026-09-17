@@ -14,6 +14,10 @@ public partial class HealthLinkAbility : Ability
     [Export] public float MirrorPercent { get; private set; } = 1f;
     [Export] public PackedScene SpikeScene { get; private set; }
     [Export] public PackedScene TetherScene { get; private set; }
+    // Placed off the enemy's own CenterMassHeight rather than a fixed world height, so it lands at
+    // roughly shoulder height on anything regardless of how tall that enemy is.
+    [Export] public float SpikeRise { get; private set; } = 0.25f;
+    [Export] public float SpikeShoulderOffset { get; private set; } = 0.2f;
     // Where the armed beam starts. A plain Node3D export, which is safe against the inherited-base
     // hazard that bites custom-typed ones - Soldier.MuzzlePoint is exported the same way.
     [Export] public Node3D BeamOrigin { get; private set; }
@@ -158,12 +162,10 @@ public partial class HealthLinkAbility : Ability
             return;
         }
 
-        Vector3 hitPosition = (Vector3)result["position"];
-
         if (_firstTarget == null)
         {
             _firstTarget = hit;
-            _firstSpike = SpawnSpike(hit, hitPosition, forward);
+            _firstSpike = SpawnSpike(hit);
 
             _tether = TetherScene.Instantiate<HealthLinkTether>();
             GetTree().CurrentScene.AddChild(_tether);
@@ -179,7 +181,7 @@ public partial class HealthLinkAbility : Ability
             return;
         }
 
-        Node3D secondSpike = SpawnSpike(hit, hitPosition, forward);
+        Node3D secondSpike = SpawnSpike(hit);
 
         if (!HealthLinkAilment.Link(_firstTarget, hit, Duration, MirrorPercent))
         {
@@ -195,12 +197,15 @@ public partial class HealthLinkAbility : Ability
         _tether.Link(_firstSpike, _secondSpike);
     }
 
-    private Node3D SpawnSpike(Enemy target, Vector3 hitPosition, Vector3 direction)
+    // Stands upright in a shoulder rather than following the shot that planted it: a spike aligned
+    // to the bullet points back at whoever fired it, which foreshortens to nothing from the one
+    // angle the shooter is guaranteed to be looking from. Parented to the enemy root with an
+    // identity rotation, which stays upright on its own because enemies only ever yaw.
+    private Node3D SpawnSpike(Enemy target)
     {
         Node3D spike = SpikeScene.Instantiate<Node3D>();
         target.AddChild(spike);
-        spike.GlobalPosition = hitPosition;
-        spike.LookAt(hitPosition + direction, GeometryUtils.SafeUpFor(direction));
+        spike.Position = new Vector3(SpikeShoulderOffset, target.CenterMassHeight + SpikeRise, 0f);
         return spike;
     }
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 // navmesh/leash/wall-engagement logic it has no use for.
 public partial class WalkingEnemy : Enemy
 {
-    [Export] public float Speed = 3.5f;
+    [Export] public float BaseSpeed = 3.5f;
     [Export] public float RotationSpeed = 10f;
     [Export] public float WaypointArrivalDistance = 0.5f;
     [Export] public float PlayerCheckInterval = 0.25f;
@@ -24,6 +24,10 @@ public partial class WalkingEnemy : Enemy
     [Export] public Skeleton3D Skeleton { get; private set; }
     [Export] public PhysicalBoneSimulator3D BoneSimulator { get; private set; }
     [Export] public PhysicalBone3D RootPhysicalBone { get; private set; }
+
+    // Ailments fold in here rather than at the Move() call site, so anything reading Speed sees the
+    // slowed value.
+    public float Speed => BaseSpeed * AilmentSpeedMultiplier;
 
     [Export] public float WalkCycleFrequency = 6.0f;
     [Export] public float LegSwingAmplitude = 0.5f;

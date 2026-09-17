@@ -17,7 +17,7 @@ public partial class Projectile : Area3D
     public HashSet<Enemy> ReturnHitTracker { get; private set; }
     public HashSet<Enemy> ChainHitTracker { get; private set; }
     public Vector3 LastRagdollImpulse { get; private set; }
-    public ReactionRune Reaction { get; private set; }
+    public SpellHit SpellHit { get; private set; }
 
     private int _pierceRemaining;
     private float _speed;
@@ -44,7 +44,7 @@ public partial class Projectile : Area3D
         RagdollForce = context.RagdollForce.Value;
         ChainCount = context.Chain?.ChainCount ?? 0;
         ChainRange = context.Chain?.ChainRange ?? 0f;
-        Reaction = context.Reaction;
+        SpellHit = context.SpellHit;
         HitEffect = context.Projectile.HitEffect;
 
         ReturnHitTracker = returnHitTracker;
@@ -177,7 +177,7 @@ public partial class Projectile : Area3D
         {
             Vector3 ragdollImpulse = -GlobalTransform.Basis.Z * RagdollForce;
             LastRagdollImpulse = ragdollImpulse;
-            enemy.TakeDamage(Damage, ragdollImpulse, reaction: Reaction);
+            enemy.TakeDamage(Damage, ragdollImpulse, spellHit: SpellHit);
         }
     }
 
