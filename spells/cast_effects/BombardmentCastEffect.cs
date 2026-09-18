@@ -18,13 +18,7 @@ public partial class BombardmentCastEffect : CastEffect
 
         Bombardment bombardment = data.Scene.Instantiate<Bombardment>();
         caster.GetTree().CurrentScene.AddChild(bombardment);
-
-        // One authored total spread over however many ticks land inside the window, so the scene's
-        // tick cadence stays a tuning knob rather than a damage multiplier.
-        int tickCount = Mathf.Max(1, Mathf.RoundToInt(data.Duration.Value / bombardment.TickInterval));
-
-        bombardment.Initialize(target, data.Radius * areaMultiplier, data.Duration.Value,
-            context.Damage * (1f / tickCount), context.SpellHit);
+        bombardment.Initialize(target, data.Radius * areaMultiplier, data.Duration.Value, context.Damage, context.SpellHit);
 
         SpawnGroundEffect(context, caster, target, areaMultiplier);
     }

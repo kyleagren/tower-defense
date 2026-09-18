@@ -25,4 +25,10 @@ public abstract partial class Rune : Resource
         bool hasRequiredAnyTag = RequiredAnyTags.Count == 0 || RequiredAnyTags.Any(tag => spellTags.Contains(tag));
         return hasRequiredTags && hasRequiredAnyTag;
     }
+
+    // Runes sharing a group can't share a Ritual. Each type is its own group by default, which is
+    // the one-per-type rule; a family that can only field one member overrides this with a shared key.
+    public virtual Type ExclusiveGroup => GetType();
+
+    public bool ConflictsWith(Rune other) => other.ExclusiveGroup == ExclusiveGroup;
 }

@@ -21,9 +21,15 @@ public abstract partial class EffectVolume : Area3D
     // standing in one already does.
     protected virtual bool AffectsOnEntry => false;
 
+    // Absorbs float error in duration / TickInterval, so a duration that is an exact multiple of the
+    // interval (0.6 / 0.2) doesn't floor to one tick short.
+    private const float TickCountEpsilon = 0.0001f;
+
     private readonly List<Enemy> _occupants = new List<Enemy>();
-    private float _durationRemaining;
-    private float _timeSinceTick;
+    private float _duration;
+    private float _elapsed;
+    private int _tickCount;
+    private int _ticksFired;
 
     public override void _Ready()
     {
@@ -36,7 +42,11 @@ public abstract partial class EffectVolume : Area3D
     public virtual void Initialize(Vector3 position, float radius, float duration)
     {
         GlobalPosition = position;
-        _durationRemaining = duration;
+        _duration = duration;
+
+        // One tick per TickInterval mark that falls inside the duration; a partial interval at the
+        // end doesn't earn a tick.
+        _tickCount = Mathf.FloorToInt(duration / TickInterval + TickCountEpsilon);
 
         // A fresh shape rather than the scene's own: a sub-resource authored in a .tscn is shared by
         // every instance of that scene, so sizing that copy would resize every other volume too.
@@ -49,23 +59,24 @@ public abstract partial class EffectVolume : Area3D
 
     public override void _PhysicsProcess(double delta)
     {
-        _durationRemaining -= (float)delta;
+        _elapsed += (float)delta;
 
-        if (_durationRemaining <= 0f)
+        if (_ticksFired < _tickCount && _elapsed >= (_ticksFired + 1) * TickInterval)
+        {
+            _ticksFired++;
+            TickOccupants();
+        }
+
+        // Waits on every tick having fired as well as on the clock, so a final tick due on the same
+        // frame the duration runs out still lands.
+        if (_ticksFired >= _tickCount && _elapsed >= _duration)
         {
             QueueFree();
-            return;
         }
+    }
 
-        _timeSinceTick += (float)delta;
-
-        if (_timeSinceTick < TickInterval)
-        {
-            return;
-        }
-
-        _timeSinceTick -= TickInterval;
-
+    private void TickOccupants()
+    {
         // Backwards, since dead occupants are dropped mid-loop. A dying enemy disables its collision
         // rather than leaving the tree, so an exit signal isn't guaranteed to arrive for it.
         for (int i = _occupants.Count - 1; i >= 0; i--)

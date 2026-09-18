@@ -30,6 +30,7 @@ outer_radius = 1.04
 script = ExtResource("1_bombardment")
 BodyCollision = NodePath("BodyCollision")
 Footprint = NodePath("Footprint")
+TickInterval = 0.2
 Height = 6.0
 
 [node name="BodyCollision" type="CollisionShape3D" parent="."]

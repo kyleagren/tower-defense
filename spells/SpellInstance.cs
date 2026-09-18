@@ -91,8 +91,7 @@ public class SpellInstance
         if (_attachedRunes.Count >= GameRules.MaxRuneSlots) return false;
         if (!rune.IsCompatibleWith(_definition.Tags)) return false;
 
-        bool alreadyHasThisType = _attachedRunes.Any(r => r.GetType() == rune.GetType());
-        if (alreadyHasThisType) return false;
+        if (_attachedRunes.Any(rune.ConflictsWith)) return false;
 
         _attachedRunes.Add(rune);
         _cachedContext = null;

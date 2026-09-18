@@ -11,7 +11,8 @@ public partial class IceStormSpell : Spell
     [Export] public float BaseGroundRadius { get; private set; } = 3f;
     [Export] public float BaseGroundDuration { get; private set; } = 6f;
 
-    [Export] public override float BaseColdDamage { get; protected set; } = 80f;
+    // Per second of storm, not per cast - Bombardment slices it into ticks.
+    [Export] public override float BaseColdDamage { get; protected set; } = 120f;
     [Export] public override float BaseCastTime { get; protected set; } = 1.5f;
     [Export] public override float BaseCooldown { get; protected set; } = 8f;
     [Export] public override int BaseManaCost { get; protected set; } = 20;
