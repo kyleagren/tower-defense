@@ -37,6 +37,9 @@ public partial class Ritual : Node3D, IDamageable
     public Vector3? WallStart { get; private set; }
     public Vector3? WallEnd { get; private set; }
 
+    // So a CastEffect can act on the target this Ritual already picked rather than searching again.
+    public Enemy CurrentTarget => _currentTarget;
+
     public override void _Ready()
     {
         _currentHealth = MaxHealth;

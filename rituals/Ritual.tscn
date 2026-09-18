@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://b76any0nq6lkw" path="res://spells/cast_effects/InstantHitCastEffect.cs" id="6_instanthit"]
 [ext_resource type="PackedScene" path="res://visual_effects/ArcVisual.tscn" id="7_arcvisual"]
 [ext_resource type="Script" uid="uid://cysbaidy1wie4" path="res://spells/cast_effects/WallCastEffect.cs" id="8_wallcasteffect"]
+[ext_resource type="Script" path="res://spells/cast_effects/BombardmentCastEffect.cs" id="10_bombardment"]
 [ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="9_healthbar"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_ritual"]
@@ -55,3 +56,6 @@ ArcVisualScene = ExtResource("7_arcvisual")
 
 [node name="WallCastEffect" type="Node" parent="."]
 script = ExtResource("8_wallcasteffect")
+
+[node name="BombardmentCastEffect" type="Node" parent="."]
+script = ExtResource("10_bombardment")

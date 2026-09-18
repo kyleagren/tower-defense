@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://spells/effect_volumes/Bombardment.cs" id="1_bombardment"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_storm"]
+radius = 1.0
+height = 6.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_storm_ring"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.55, 0.8, 1, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_storm_outline"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0, 0, 0, 0.9)
+
+[sub_resource type="TorusMesh" id="TorusMesh_storm_ring"]
+material = SubResource("StandardMaterial3D_storm_ring")
+inner_radius = 0.94
+outer_radius = 1.0
+
+[sub_resource type="TorusMesh" id="TorusMesh_storm_outline"]
+material = SubResource("StandardMaterial3D_storm_outline")
+inner_radius = 0.9
+outer_radius = 1.04
+
+[node name="IceStormBombardment" type="Area3D" node_paths=PackedStringArray("BodyCollision", "Footprint")]
+script = ExtResource("1_bombardment")
+BodyCollision = NodePath("BodyCollision")
+Footprint = NodePath("Footprint")
+Height = 6.0
+
+[node name="BodyCollision" type="CollisionShape3D" parent="."]
+shape = SubResource("CylinderShape3D_storm")
+
+[node name="Footprint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+
+[node name="Outline" type="MeshInstance3D" parent="Footprint"]
+mesh = SubResource("TorusMesh_storm_outline")
+cast_shadow = 0
+
+[node name="Ring" type="MeshInstance3D" parent="Footprint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+mesh = SubResource("TorusMesh_storm_ring")
+cast_shadow = 0

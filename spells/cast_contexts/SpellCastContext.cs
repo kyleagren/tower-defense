@@ -62,6 +62,8 @@ public class SpellCastContext
     public InstantHitCastData InstantHit;
     public List<OnHitRune> OnHitRunes = new();
     public WallCastData Wall;
+    public BombardmentCastData Bombardment;
+    public GroundEffectCastData GroundEffect;
     public CastTrigger CastTrigger;
 
     // The casting spell's own tags, stamped during resolve so a rune reading them at hit time

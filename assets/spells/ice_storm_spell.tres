@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="IceStormSpell" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://spells/IceStormSpell.cs" id="1_icestorm"]
+[ext_resource type="PackedScene" path="res://spells/effect_volumes/ice_storm_bombardment.tscn" id="2_bombardment"]
+[ext_resource type="PackedScene" path="res://spells/effect_volumes/chilled_ground.tscn" id="3_chilledground"]
+
+[resource]
+script = ExtResource("1_icestorm")
+BombardmentScene = ExtResource("2_bombardment")
+GroundEffectScene = ExtResource("3_chilledground")
