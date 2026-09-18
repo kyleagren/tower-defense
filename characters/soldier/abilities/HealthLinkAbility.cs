@@ -14,10 +14,9 @@ public partial class HealthLinkAbility : Ability
     [Export] public float MirrorPercent { get; private set; } = 1f;
     [Export] public PackedScene SpikeScene { get; private set; }
     [Export] public PackedScene TetherScene { get; private set; }
-    // Placed off the enemy's own CenterMassHeight rather than a fixed world height, so it lands at
-    // roughly shoulder height on anything regardless of how tall that enemy is.
-    [Export] public float SpikeRise { get; private set; } = 0.25f;
-    [Export] public float SpikeShoulderOffset { get; private set; } = 0.2f;
+    // How far the spike's base sits below its anchor, so it reads as driven into the shoulder rather
+    // than balanced on top of it.
+    [Export] public float SpikeDepth { get; private set; } = 0.05f;
     // Where the armed beam starts. A plain Node3D export, which is safe against the inherited-base
     // hazard that bites custom-typed ones - Soldier.MuzzlePoint is exported the same way.
     [Export] public Node3D BeamOrigin { get; private set; }
@@ -199,13 +198,21 @@ public partial class HealthLinkAbility : Ability
 
     // Stands upright in a shoulder rather than following the shot that planted it: a spike aligned
     // to the bullet points back at whoever fired it, which foreshortens to nothing from the one
-    // angle the shooter is guaranteed to be looking from. Parented to the enemy root with an
-    // identity rotation, which stays upright on its own because enemies only ever yaw.
+    // angle the shooter is guaranteed to be looking from.
+    //
+    // Parented to the shoulder attachment so it rides the walk cycle, and upright because enemies
+    // only ever yaw. An enemy with no skeleton (the dev-only TrainingDummy) gets it at centre mass
+    // instead, untuned - it only has to be visible there.
     private Node3D SpawnSpike(Enemy target)
     {
         Node3D spike = SpikeScene.Instantiate<Node3D>();
-        target.AddChild(spike);
-        spike.Position = new Vector3(SpikeShoulderOffset, target.CenterMassHeight + SpikeRise, 0f);
+        Node3D anchor = target.ShoulderAttachment ?? target;
+        anchor.AddChild(spike);
+
+        spike.Position = target.ShoulderAttachment != null
+            ? new Vector3(0f, -SpikeDepth, 0f)
+            : new Vector3(0f, target.CenterMassHeight, 0f);
+
         return spike;
     }
 

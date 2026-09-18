@@ -11,6 +11,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public MeshInstance3D ArmRWeakPoint { get; private set; }
     [Export] public MeshInstance3D LegLWeakPoint { get; private set; }
     [Export] public MeshInstance3D LegRWeakPoint { get; private set; }
+    [Export] public Node3D ShoulderAttachment { get; private set; }
     [Export] public float RagdollCleanupDelay = 2f;
     [Export] public float MaxHealth = 100f;
     [Export] public float CenterMassHeight = 1f;
