@@ -56,6 +56,10 @@ public class SpellCastContext
 
     public TargetPriority TargetPriority;
 
+    // Read by the Ritual itself rather than by the cast pipeline: the one flag here that changes how
+    // the Ritual is treated instead of what its spell does.
+    public bool Shrouded;
+
     public ProjectileCastData Projectile;
     public ChainCastData Chain;
     public AreaCastData Area;

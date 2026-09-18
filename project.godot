@@ -201,6 +201,7 @@ ability_4={
 3d_physics/layer_6="Rituals"
 3d_physics/layer_7="PlacementBlocked"
 3d_physics/layer_8="Items"
+3d_physics/layer_9="RitualHitbox"
 
 [physics]
 

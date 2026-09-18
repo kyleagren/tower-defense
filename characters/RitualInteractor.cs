@@ -12,7 +12,7 @@ public partial class RitualInteractor : LookInteractor
     private float _repairHoldTime;
     private float _destroyHoldTime;
 
-    protected override uint CollisionMask => PhysicsLayers.Rituals;
+    protected override uint CollisionMask => PhysicsLayers.RitualHitbox;
     protected override float Range => InteractionRange;
 
     public override void _Ready()

@@ -424,7 +424,7 @@ public partial class WalkingEnemy : Enemy
 
         foreach (Ritual ritual in RitualRegistry.Active)
         {
-            if (ritual.IsDestroyed)
+            if (ritual.IsDestroyed || ritual.IsShrouded)
             {
                 continue;
             }

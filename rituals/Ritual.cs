@@ -12,6 +12,7 @@ public partial class Ritual : Node3D, IDamageable
     [Export] public float MaxHealth = 100f;
     [Export] public HealthBar3D HealthBar { get; private set; }
     [Export] public MeshInstance3D CoreMesh { get; private set; }
+    [Export] public float ShroudedTransparency { get; private set; } = 0.6f;
 
     private static readonly StandardMaterial3D _disabledMaterial = new StandardMaterial3D
     {
@@ -20,6 +21,7 @@ public partial class Ritual : Node3D, IDamageable
     };
 
     private SpellInstance _spellInstance;
+    private StaticBody3D _body;
     private CharacterSheet _ownerSheet;
     private Enemy _currentTarget;
     private float _searchTimer;
@@ -40,9 +42,12 @@ public partial class Ritual : Node3D, IDamageable
     // So a CastEffect can act on the target this Ritual already picked rather than searching again.
     public Enemy CurrentTarget => _currentTarget;
 
+    public bool IsShrouded => _spellInstance != null && ResolveWithOwner().Shrouded;
+
     public override void _Ready()
     {
         _currentHealth = MaxHealth;
+        _body = GetNode<StaticBody3D>("StaticBody3D");
         _activeMaterial = CoreMesh.MaterialOverride;
         RitualRegistry.Register(this);
         HealthBar.SetFraction(1f);
@@ -185,6 +190,34 @@ public partial class Ritual : Node3D, IDamageable
         Color elementColor = DamageTypeColors.GetForSpell(spell);
         _activeMaterial = new StandardMaterial3D { AlbedoColor = elementColor };
         CoreMesh.MaterialOverride = _activeMaterial;
+
+        ApplyShroud();
+    }
+
+    // Resolved once here rather than per frame: a Ritual's rune loadout is fixed for its lifetime,
+    // since runes are only socketed during Build. Leaving PhysicsLayers.Rituals is what lets enemies
+    // and the player walk through; PhysicsLayers.RitualHitbox stays, so the tower can still be shot,
+    // repaired and built around.
+    private void ApplyShroud()
+    {
+        bool shrouded = IsShrouded;
+
+        _body.CollisionLayer = shrouded
+            ? _body.CollisionLayer & ~PhysicsLayers.Rituals
+            : _body.CollisionLayer | PhysicsLayers.Rituals;
+
+        float transparency = shrouded ? ShroudedTransparency : 0f;
+
+        // Per-instance rather than through the materials, which are sub-resources shared by every
+        // Ritual in the scene. owned: false to reach into instanced sub-scenes; the health bar is
+        // excluded because its no-depth-test setup reads wrong faded.
+        foreach (Node node in FindChildren("*", nameof(MeshInstance3D), recursive: true, owned: false))
+        {
+            if (node is MeshInstance3D meshInstance && !HealthBar.IsAncestorOf(meshInstance))
+            {
+                meshInstance.Transparency = transparency;
+            }
+        }
     }
 
     public override void _Process(double delta)

@@ -230,7 +230,7 @@ public partial class RitualPlacer : Node
             _segmentQuery = new PhysicsShapeQueryParameters3D
             {
                 Shape = _segmentQueryBox,
-                CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked,
+                CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked | PhysicsLayers.RitualHitbox,
                 CollideWithBodies = true,
                 CollideWithAreas = false
             };
@@ -276,7 +276,7 @@ public partial class RitualPlacer : Node
         {
             Shape = _ghostCollisionShape.Shape,
             Transform = _ghostCollisionShape.GlobalTransform,
-            CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked,
+            CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked | PhysicsLayers.RitualHitbox,
             CollideWithBodies = true,
             CollideWithAreas = false
         };

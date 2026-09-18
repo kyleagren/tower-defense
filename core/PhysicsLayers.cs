@@ -10,4 +10,9 @@ public static class PhysicsLayers
     public const uint Rituals = 1 << 5;            // layer 6
     public const uint PlacementBlocked = 1 << 6;   // layer 7
     public const uint Items = 1 << 7;              // layer 8
+
+    // A Ritual's presence for everything that isn't movement - being shot, repair and destroy
+    // raycasts, and blocking placement. Separate from Rituals because a shrouded Ritual leaves that
+    // layer to stop blocking movement, and must still be hittable and repairable.
+    public const uint RitualHitbox = 1 << 8;       // layer 9
 }
