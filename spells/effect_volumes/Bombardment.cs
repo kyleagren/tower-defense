@@ -8,10 +8,12 @@ public partial class Bombardment : EffectVolume
     private DamagePacket _damagePerTick;
     private SpellHit _spellHit;
 
-    public void Initialize(Vector3 position, float radius, float duration, DamagePacket damagePerTick, SpellHit spellHit)
+    // Damage is a rate, so a longer window deals more in total, and the scene's tick cadence changes
+    // only how that rate is sliced, never how much it adds up to per second.
+    public void Initialize(Vector3 position, float radius, float duration, DamagePacket damagePerSecond, SpellHit spellHit)
     {
         base.Initialize(position, radius, duration);
-        _damagePerTick = damagePerTick;
+        _damagePerTick = damagePerSecond * TickInterval;
         _spellHit = spellHit;
     }
 

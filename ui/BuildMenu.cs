@@ -895,7 +895,7 @@ public partial class BuildMenu : Control
             {
                 Rune rune = compatibleRunes[i];
                 bool isCurrentSocketRune = rune == currentSocketRune;
-                bool disabled = IsSocketedElsewhere(rune, socketIndex) || !RuneCatalog.IsAvailable(rune);
+                bool disabled = ConflictsWithOtherSocket(rune, socketIndex) || !RuneCatalog.IsAvailable(rune);
 
                 int costDelta = ComputeManaCost(WithSocket(socketIndex, rune)) - baseCost;
                 Button button = CreateTileButton($"{rune.Name}\n+{costDelta}", rune.Name, rune.Description);
@@ -939,7 +939,7 @@ public partial class BuildMenu : Control
     {
         return AllRunes
             .Where(rune => rune.IsCompatibleWith(_selectedSpell.Tags))
-            .OrderBy(rune => IsSocketedElsewhere(rune, socketIndex) || !RuneCatalog.IsAvailable(rune))
+            .OrderBy(rune => ConflictsWithOtherSocket(rune, socketIndex) || !RuneCatalog.IsAvailable(rune))
             .ThenBy(rune => rune.Name)
             .ToList();
     }
@@ -951,11 +951,11 @@ public partial class BuildMenu : Control
         return result;
     }
 
-    private bool IsSocketedElsewhere(Rune rune, int socketIndex)
+    private bool ConflictsWithOtherSocket(Rune rune, int socketIndex)
     {
         for (int i = 0; i < _socketedRunes.Length; i++)
         {
-            if (i != socketIndex && _socketedRunes[i] != null && _socketedRunes[i].GetType() == rune.GetType())
+            if (i != socketIndex && _socketedRunes[i] != null && _socketedRunes[i].ConflictsWith(rune))
             {
                 return true;
             }
