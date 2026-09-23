@@ -500,7 +500,7 @@ public partial class WalkingEnemy : Enemy
 
     private void ProcessChasingPlayer(double delta)
     {
-        if (_targetSentinel == null || !IsInstanceValid(_targetSentinel) || !_targetSentinel.IsActive)
+        if (_targetSentinel == null || !IsInstanceValid(_targetSentinel) || !_targetSentinel.IsActive || _targetSentinel.IsDead)
         {
             return;
         }

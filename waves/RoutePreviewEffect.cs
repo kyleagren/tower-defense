@@ -25,7 +25,7 @@ public partial class RoutePreviewEffect : Node3D
         AddChild(_pulseTimer);
 
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        OnGamePhaseChanged(GamePhase.Planning);
+        OnGamePhaseChanged(LevelContext.Current.Match.Phase);
     }
 
     public override void _ExitTree()

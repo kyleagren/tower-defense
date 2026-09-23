@@ -32,7 +32,7 @@ public partial class DefendableObjective : Area3D, IDamageable
         if (_currentHealth <= 0f)
         {
             _destroyed = true;
-            EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, false);
+            LevelContext.Current.Match.End(victory: false);
         }
     }
 }

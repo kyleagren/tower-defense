@@ -15,16 +15,9 @@ public partial class TokenDeployer : Node
 
     [Export] public RitualPlacer Placer { get; private set; }
 
-    // Set by SentinelSpawner for a spawner with no phase system to wait for (the hub) - mirrors
-    // that spawner's own ActivateImmediately flag, so token testing works the same "no real match"
-    // way the Architect's own DPS testing already does there.
-    public bool AllowOutsideCombat { get; set; }
-
     public bool IsPickModeActive { get; private set; }
 
     private static readonly string[] _slotActions = { "token_slot_1", "token_slot_2", "token_slot_3" };
-
-    private GamePhase _currentPhase;
 
     public override void _Ready()
     {
@@ -44,8 +37,6 @@ public partial class TokenDeployer : Node
 
     private void OnGamePhaseChanged(GamePhase phase)
     {
-        _currentPhase = phase;
-
         if (phase != GamePhase.Combat)
         {
             SetPickModeActive(false);
@@ -57,14 +48,18 @@ public partial class TokenDeployer : Node
         // While an actual placement is underway, RitualPlacer owns escape-to-cancel and
         // PlayerCharacter.ExtraCombatInputGate already suppresses attack/alt_action - nothing
         // here needs to react until that resolves.
-        if (!Character.IsActive || UiPanelStack.AnyOpen || Placer.IsPlacing)
+        if (!Character.CanAct || UiPanelStack.AnyOpen || Placer.IsPlacing)
         {
             return;
         }
 
         if (@event.IsActionPressed("toggle_token_mode"))
         {
-            if (IsPickModeActive || AllowOutsideCombat || _currentPhase == GamePhase.Combat)
+            // Outside a match (the hub) tokens work anytime, for testing; in a match, only in Combat.
+            MatchState match = LevelContext.Current.Match;
+            bool canDeploy = match == null || match.Phase == GamePhase.Combat;
+
+            if (IsPickModeActive || canDeploy)
             {
                 SetPickModeActive(!IsPickModeActive);
             }

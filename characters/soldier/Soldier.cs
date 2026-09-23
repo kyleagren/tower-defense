@@ -25,6 +25,11 @@ public partial class Soldier : Sentinel
             return;
         }
 
+        if (UpdateDeath((float)delta))
+        {
+            return;
+        }
+
         UpdateShieldRegen((float)delta);
         UpdateHealthRegen((float)delta);
 

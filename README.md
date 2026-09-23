@@ -25,10 +25,14 @@ Fixed-path maps, multiple lanes converging on one or more defendable objectives.
 
 **Four phases**, all implemented:
 
-- **Planning** — the level opens with the player controlling their Sentinel, free to walk around with no time pressure. Ends on the `start_wave` input. Exists so a future Prep-phase timer has a deliberate player action to start counting from instead of beginning the instant the level loads.
+- **Planning** — the level opens with the player controlling their Sentinel, free to walk around with no time pressure. Ends on a ready check (below). Exists so a future Prep-phase timer has a deliberate player action to start counting from instead of beginning the instant the level loads.
 - **Build (Prep)** — the player becomes the Architect and places towers within a fixed capacity budget, allocates runes, and pre-crafts up to 3 tokens.
 - **Combat (Wave)** — the player controls a Sentinel with their own health. Tokens deploy reactively; towers otherwise can't be built or repositioned. Enemies advance toward the nearest objective and attack it until it falls or the wave ends.
-- **PostGame** — after clearing every wave, control returns to the Sentinel so the player can walk over and collect what dropped. Returning to the hub is the same `start_wave` input. A loss skips PostGame entirely and returns to the hub after a short delay.
+- **PostGame** — after clearing every wave, control returns to the Sentinel so the player can walk over and collect what dropped. Returning to the hub is another ready check. A loss skips PostGame entirely and returns to the hub after a short delay.
+
+**Every "move on" is a ready check** — leaving Planning, starting a wave from Build, and leaving PostGame. `start_wave` (G) readies you up and pressing it again un-readies you. The check passes once every player in the match is ready, or when a 90-second countdown runs out; the countdown starts when the host readies and is cancelled if the host un-readies, so a player who crashed or left can't hold everyone else in place forever. In single-player you're the whole match, so one press moves on immediately.
+
+`MatchState` (`LevelContext.Match`, null in the hub) is the one owner of the phase, the ready check and whether the match is over. The match ends exactly once however many things try to end it, and anything spawned late reads the current phase rather than waiting on an event it missed. `WaveController` runs waves from `_PhysicsProcess`, so pausing the tree pauses them.
 
 **Objectives.** The primary one is the mage's own shell — enemies attack it directly and it falling ends the run. Harder maps add **Energy Harvesters**, which function identically minus having a mage inside; this is how one mage covers more than one objective.
 
@@ -50,7 +54,13 @@ Co-op shares capacity and currency during a match; leftover currency splits even
 
 ## 3. Characters
 
-The player deals direct damage and has their own health, but can't solo-carry the defense. Death is a temporary respawn on a cooldown — an ally can revive faster, or the player can spend mana to skip the wait.
+The player deals direct damage and has their own health, but can't solo-carry the defense. Death is a temporary respawn on a cooldown — an ally can revive faster, or the player can spend mana to skip the wait. Only the objective falling loses the match.
+
+- **The wait and the skip both grow with deaths this match**: 5s for the first death, +5s for each after; skipping (Interact) costs 10 mana, +5 per death after the first. Repeated deaths cost more than a single slip. The count resets each level.
+- **While dead** the body is hidden and off every collision layer — enemies walk through it and stop targeting it — and the player can look around but can't move, attack, use abilities, interact or pick tokens. Anything in progress (token pick mode, a placement, an armed Health Link) cancels. A countdown and the skip prompt show on screen, the skip line red when unaffordable.
+- **A wave ending while dead revives outright**, into Build or PostGame alike.
+- **Respawns on the spot, as a stand-in** — dying inside a pack puts you straight back into it, so a proper respawn location is still open.
+- **Ally revive is not built.** `Sentinel.Respawn()` is the hook it will call.
 
 Characters are **fixed-kit, not gem-built**, keeping the "too much freedom collapses into one optimal build" problem contained to towers. The fighting roster collectively goes by **Sentinel** (used in code too, e.g. `CharacterId`).
 
@@ -425,11 +435,18 @@ A reaction rune with a disruptive component (knockback, stun) needs its own per-
 | --- | --- | --- | --- | --- | --- |
 | **Fire** | — | **Blister** or **Scalding Zone**, undecided (possibly both) | TBD | **Ignition** | N/A |
 | **Water** | TBD | — | TBD | TBD | N/A |
-| **Cold** | TBD | TBD | — | TBD | N/A |
-| **Lightning** | **Ignition** — detonates latent Fire into a Burn DoT | TBD | TBD | — | N/A |
+| **Cold** | TBD | TBD | — | **Shatter** _(candidate)_ | N/A |
+| **Lightning** | **Ignition** — detonates latent Fire into a Burn DoT | TBD | **Shatter** _(candidate)_ — executes an enemy left below a health threshold | — | N/A |
 | **Wind** _(baked into the spell)_ | **Swirl** — bonus damage matching the tagged element, spreading that tag to nearby enemies | Swirl | Swirl | Swirl | — |
 
 Blister would be a single-use mark consumed by the next non-Fire/non-Water hit for bonus damage; Scalding Zone a lingering ground patch that slows.
+
+**Shatter (candidate, not built)** — Cold and Lightning meeting executes an enemy the hit leaves below a health threshold (~10%), and does nothing otherwise. A role rather than a damage boost: rarely meaningful against fodder, valuable against tanky enemies, where the last tenth of a big health pool is a lot of damage. It needs no per-enemy cooldown, since an execute isn't disruptive CC.
+- **Checked after the hit lands**, so the hit that takes an enemy under the threshold is the one that executes it. Reaction runes currently run *before* damage is subtracted, and executing from there would break the rule that hit-time runes can't change what the others see, so this needs a small post-damage rune hook rather than being pure data.
+- **Bidirectional for now**, like Ignition. Lightning hitting a Cold enemy is the flavorful direction and may end up the only one; the reverse stays unless nothing better claims that cell.
+- **Consumes the Status on every attempt**, execute or not — spending it is the cost of trying. Open to reversing if a wasted setup feels bad in play.
+- **Bosses are immune or get a reduced threshold.** Bigger, tankier ordinary enemies may get a *higher* one — they're the intended target.
+- Wants a readable payoff — a shatter burst or ice shards — so it doesn't look like an ordinary death. Placeholder VFX until the art pass.
 
 **`IgnitionRune` is built** and is the only bidirectional cell: it fires on Fire-hits-Lightning-Status *and* the reverse, one rune in two cells, because the two elements combusting reads the same whichever landed second and forcing a different rune per firing order would be busywork. Directionality is per-reaction, not a system rule. **Ignition doesn't spread** — propagation is Swirl's identity, and giving Ignition its own would blur that and hand one rune both a damage reaction and an AoE conversion.
 

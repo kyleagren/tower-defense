@@ -76,16 +76,8 @@ public partial class SentinelSpawner : Node
         PlayerCharacter character = scene.Instantiate<PlayerCharacter>();
         character.SetOwnerId(OwnerId);
 
-        // TokenDeployer resolves itself in Sentinel._Ready() (GetNode, not an export - see
-        // Sentinel.cs), which only runs once the node actually enters the tree. AddChild has to
-        // come first, or this reads null exactly like it did back when this was an export.
         GetParent().AddChild(character);
         _current = character;
-
-        if (character is Sentinel sentinel)
-        {
-            sentinel.TokenDeployer.AllowOutsideCombat = ActivateImmediately;
-        }
 
         if (ActivateImmediately)
         {

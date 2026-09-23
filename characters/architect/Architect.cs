@@ -14,6 +14,13 @@ public partial class Architect : PlayerCharacter
         BuildMenu.Closed += OnBuildMenuClosed;
         BuildMenu.Confirmed += OnBuildMenuConfirmed;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
+
+        // Spawned into a match already underway, the phase events so far were missed - catch up
+        // on the current phase. The hub has no match; its spawner activates the body directly.
+        if (Level.Match != null)
+        {
+            OnGamePhaseChanged(Level.Match.Phase);
+        }
     }
 
     public override void _ExitTree()

@@ -21,6 +21,9 @@ public partial class LevelContext : Node
     public Dictionary<PlayerId, Architect> Architects { get; } = new();
     public Dictionary<PlayerId, SentinelSpawner> SentinelSpawners { get; } = new();
 
+    // The level's match - its phase and whether it's over. Null in a scene with no match (the hub).
+    public MatchState Match { get; set; }
+
     // Each player's currently controlled body - their Sentinel or their Architect, never both.
     public Dictionary<PlayerId, PlayerCharacter> ActiveCharacters { get; } = new();
 

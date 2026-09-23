@@ -46,7 +46,6 @@ public partial class TokenBar : Control
 
         EventBus.Instance.TokensChanged += Refresh;
         EventBus.Instance.TokenPickModeChanged += OnPickModeChanged;
-        EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         Refresh();
     }
 
@@ -54,10 +53,7 @@ public partial class TokenBar : Control
     {
         EventBus.Instance.TokensChanged -= Refresh;
         EventBus.Instance.TokenPickModeChanged -= OnPickModeChanged;
-        EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
     }
-
-    private void OnGamePhaseChanged(GamePhase phase) => Refresh();
 
     private void OnPickModeChanged(bool active)
     {

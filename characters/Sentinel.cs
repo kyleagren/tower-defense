@@ -25,6 +25,18 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public float CurrentHealth => _currentHealth;
     public float CurrentShield => _currentShield;
 
+    public override bool CanAct => base.CanAct && !IsDead;
+
+    // Seconds until this Sentinel stands back up - zero while alive.
+    public float RespawnRemaining { get; private set; }
+
+    // Mana to stand back up right now - grows with each death this match, like the wait itself.
+    public int RespawnSkipCost =>
+        GameRules.RespawnSkipBaseManaCost + GameRules.RespawnSkipManaCostPerExtraDeath * (_deathsThisMatch - 1);
+
+    private int _deathsThisMatch;
+    private uint _aliveCollisionLayer;
+
     // This Sentinel's own owner's gear - never the local save's - so two players on the same
     // Sentinel resolve independently.
     public CharacterSheet Sheet => PlayerProfiles.Get(OwnerId).GetSheet(Id);
@@ -123,6 +135,13 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
+
+        // Spawned into a match already underway, the phase events so far were missed - catch up
+        // on the current phase. The hub has no match; its spawner activates the body directly.
+        if (Level.Match != null)
+        {
+            OnGamePhaseChanged(Level.Match.Phase);
+        }
     }
 
     public override void _ExitTree()
@@ -146,6 +165,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         if (@event is InputEventMouseMotion mouseMotion)
         {
             HandleLook(mouseMotion);
+        }
+
+        if (IsDead && @event.IsActionPressed("interact"))
+        {
+            TrySkipRespawn();
+            return;
         }
 
         if (@event.IsActionPressed("ui_cancel"))
@@ -197,6 +222,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         bool shouldBeActive = phase != GamePhase.Build;
 
+        // A wave ending while dead revives outright, whether it leads into Build or PostGame.
+        if (phase == GamePhase.Build || phase == GamePhase.PostGame)
+        {
+            Respawn();
+        }
+
         if (phase == GamePhase.Combat)
         {
             HandoffFrom(Level.Architects[OwnerId]);
@@ -239,8 +270,79 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
         if (IsDead)
         {
-            EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, false);
+            Die();
         }
+    }
+
+    // Death is a timed respawn on the spot, not a loss. Each death this match waits longer than the
+    // last, so dying repeatedly costs more than a single slip; mana can skip the wait.
+    private void Die()
+    {
+        _deathsThisMatch++;
+        RespawnRemaining = GameRules.RespawnBaseSeconds + GameRules.RespawnSecondsPerExtraDeath * (_deathsThisMatch - 1);
+
+        BodyMesh.Visible = false;
+        Weapon.Visible = false;
+
+        // Off every layer rather than just hidden, so enemies walk through the body and nothing
+        // collides with it until it stands back up.
+        _aliveCollisionLayer = CollisionLayer;
+        CollisionLayer = 0;
+
+        TokenDeployer.ExitPickMode();
+
+        if (RitualTokenPlacer.IsPlacing)
+        {
+            RitualTokenPlacer.CancelPlacement();
+        }
+
+        foreach (Ability ability in AbilitySlots)
+        {
+            ability?.CancelCapture();
+        }
+    }
+
+    // Stands back up on the spot at full health. Also the hook an ally's revive will call once
+    // co-op exists.
+    public void Respawn()
+    {
+        if (!IsDead)
+        {
+            return;
+        }
+
+        RespawnRemaining = 0f;
+        CollisionLayer = _aliveCollisionLayer;
+        BodyMesh.Visible = IsActive;
+        Weapon.Visible = IsActive;
+        HealToFull();
+    }
+
+    public void TrySkipRespawn()
+    {
+        if (IsDead && EconomyManager.Instance.TrySpendMana(RespawnSkipCost))
+        {
+            Respawn();
+        }
+    }
+
+    // Called first from a subclass's _PhysicsProcess. True while dead, in which case the subclass
+    // skips movement and attacks for this tick.
+    protected bool UpdateDeath(float delta)
+    {
+        if (!IsDead)
+        {
+            return false;
+        }
+
+        RespawnRemaining -= delta;
+
+        if (RespawnRemaining <= 0f)
+        {
+            Respawn();
+        }
+
+        return true;
     }
 
     // Armor mitigates melee only - Shield (above) is a separate pool, not a % reduction. S-curve

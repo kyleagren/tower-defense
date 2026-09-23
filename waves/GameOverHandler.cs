@@ -6,11 +6,10 @@ public partial class GameOverHandler : Node
     [Export] public int GoldPerVictory = 100;
     [Export] public PackedScene HubScene { get; private set; }
 
-    private bool _victoryPendingContinue;
-
     public override void _Ready()
     {
         EventBus.Instance.GameEnded += OnGameEnded;
+        LevelContext.Current.Match.ReadyCheckPassed += OnReadyCheckPassed;
     }
 
     public override void _ExitTree()
@@ -18,9 +17,11 @@ public partial class GameOverHandler : Node
         EventBus.Instance.GameEnded -= OnGameEnded;
     }
 
-    public override void _UnhandledInput(InputEvent @event)
+    // Leaving PostGame goes through the same ready check as every other "move on" - the level is
+    // already won the moment the last wave clears, but players still want time to loot first.
+    private void OnReadyCheckPassed(GamePhase phase)
     {
-        if (_victoryPendingContinue && @event.IsActionPressed("start_wave"))
+        if (phase == GamePhase.PostGame)
         {
             ReturnToHub();
         }
@@ -35,10 +36,6 @@ public partial class GameOverHandler : Node
             SaveManager.Instance.Data.Gold += GoldPerVictory + EconomyManager.Instance.GoldEarned;
             SaveManager.Instance.Save();
             GD.Print($"Gold: {SaveManager.Instance.Data.Gold}");
-
-            // Wait for the player's own start_wave press before leaving - the level is already won
-            // the moment the last wave clears, but they still want time to loot the drops first.
-            _victoryPendingContinue = true;
             return;
         }
 

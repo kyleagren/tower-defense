@@ -75,7 +75,7 @@ public abstract partial class LookInteractor : Node
             return;
         }
 
-        SetTarget(Character.IsActive ? FindTargetAhead() : null);
+        SetTarget(Character.CanAct ? FindTargetAhead() : null);
 
         if (Target == null)
         {

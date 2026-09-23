@@ -2,27 +2,45 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 
+// Runs a level's waves and owns its MatchState. Driven from _PhysicsProcess rather than async
+// timers, so pausing the tree pauses the waves with it, and nothing keeps running against a scene
+// that's been freed or reloaded.
 public partial class WaveController : Node
 {
     [Export] public string WaveFilePath = "res://assets/waves/level_01.json";
     [Export] public float SpawnInterval = 0.3f;
-    [Export] public float EnemyCheckInterval = 0.5f;
 
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public static WaveController Instance { get; private set; }
 
+    // One lane's share of the current spawn step - what's left to spawn, trickled out on SpawnInterval.
+    private class LaneQueue
+    {
+        public EnemySpawner Spawner;
+        public Queue<PackedScene> Pending;
+        public float Cooldown;
+    }
+
+    private MatchState _match;
     private List<Wave> _waves = new();
     private Dictionary<string, EnemySpawner> _spawnersById;
     private int _nextWaveIndex;
-    private GamePhase _currentPhase = GamePhase.Planning;
-    private bool _matchOver;
 
+    private Wave _activeWave;
+    private int _stepIndex;
+    private bool _isWaiting;
+    private float _waitRemaining;
+    private readonly List<LaneQueue> _laneQueues = new();
+
+    // _EnterTree rather than _Ready, so the match exists before any node's _Ready reads it.
     public override void _EnterTree()
     {
         Instance = this;
+        _match = new MatchState(LevelContext.Current);
+        LevelContext.Current.Match = _match;
+        _match.ReadyCheckPassed += OnReadyCheckPassed;
     }
 
     public override void _Ready()
@@ -38,15 +56,6 @@ public partial class WaveController : Node
                 _spawnersById[spawner.Id] = spawner;
             }
         }
-
-        EventBus.Instance.GameEnded += OnGameEnded;
-
-        EmitInitialPhase();
-    }
-
-    public override void _ExitTree()
-    {
-        EventBus.Instance.GameEnded -= OnGameEnded;
     }
 
     private void LoadWaves()
@@ -63,151 +72,195 @@ public partial class WaveController : Node
         _waves = waveFile.Waves;
     }
 
-    // A single CallDeferred only guarantees running after this node's own _Ready - it doesn't
-    // guarantee running after OTHER nodes' deferred work, like SentinelSpawner's own deferred spawn
-    // of the Sentinel that needs to hear this. Waiting a full process frame does.
-    private async void EmitInitialPhase()
-    {
-        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-        EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)_currentPhase);
-    }
-
-    // RunWave is a detached Task, so losing the match doesn't unwind it - without this it keeps
-    // spawning into a lost level for the whole of GameOverHandler's reload delay.
-    private void OnGameEnded(bool victory)
-    {
-        _matchOver = true;
-    }
-
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!@event.IsActionPressed("start_wave"))
+        if (@event.IsActionPressed("start_wave"))
         {
-            return;
+            _match.ToggleReady(PlayerProfiles.LocalId);
         }
+    }
 
-        // The first press each level just ends Planning and hands control to the Architect - it
-        // doesn't spawn anything on its own. The next press (now in Build) is what starts a wave.
-        if (_currentPhase == GamePhase.Planning)
+    // PostGame's "move on" belongs to GameOverHandler, which listens for the same signal.
+    private void OnReadyCheckPassed(GamePhase phase)
+    {
+        if (phase == GamePhase.Planning)
         {
-            _currentPhase = GamePhase.Build;
-            EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Build);
-            return;
+            _match.SetPhase(GamePhase.Build);
         }
-
-        StartNextWave();
+        else if (phase == GamePhase.Build)
+        {
+            StartNextWave();
+        }
     }
 
     // Debug-only: swaps in a different wave file and immediately starts its first wave, skipping
-    // the normal Build-phase "press start_wave" step - for quickly testing a specific enemy/spawn
-    // setup without waiting through the level's real wave sequence.
+    // the normal Build-phase ready check - for quickly testing a specific enemy/spawn setup without
+    // waiting through the level's real wave sequence.
     public void DebugLoadAndStartWaveFile(string path)
     {
         WaveFilePath = path;
         LoadWaves();
         _nextWaveIndex = 0;
-        _currentPhase = GamePhase.Build;
-        StartNextWave();
+
+        if (_waves.Count > 0)
+        {
+            BeginWave(_waves[_nextWaveIndex++]);
+        }
     }
 
     public void StartNextWave()
     {
-        if (_currentPhase != GamePhase.Build || _nextWaveIndex >= _waves.Count)
+        if (_match.Phase != GamePhase.Build || _nextWaveIndex >= _waves.Count)
         {
             return;
         }
 
-        Wave wave = _waves[_nextWaveIndex];
-        _nextWaveIndex++;
-
-        _ = RunWave(wave);
+        BeginWave(_waves[_nextWaveIndex++]);
     }
 
-    private async Task RunWave(Wave wave)
+    private void BeginWave(Wave wave)
     {
-        _currentPhase = GamePhase.Combat;
-        EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)GamePhase.Combat);
-
-        foreach (WaveStep step in wave.Steps)
+        if (_match.IsOver)
         {
-            if (_matchOver)
+            return;
+        }
+
+        _activeWave = wave;
+        _stepIndex = -1;
+        _isWaiting = false;
+        _laneQueues.Clear();
+
+        _match.SetPhase(GamePhase.Combat);
+        AdvanceStep();
+    }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        _match.Tick((float)delta);
+
+        if (_activeWave == null || _match.IsOver)
+        {
+            return;
+        }
+
+        if (_laneQueues.Count > 0)
+        {
+            TickLaneQueues((float)delta);
+
+            if (_laneQueues.Count == 0)
             {
-                return;
+                AdvanceStep();
             }
+
+            return;
+        }
+
+        if (_isWaiting)
+        {
+            _waitRemaining -= (float)delta;
+
+            if (_waitRemaining <= 0f)
+            {
+                _isWaiting = false;
+                AdvanceStep();
+            }
+
+            return;
+        }
+
+        // Every step has run - the wave ends once the last enemy it spawned is gone.
+        if (LevelContext.Current.Enemies.Active.Count == 0)
+        {
+            EndWave();
+        }
+    }
+
+    // Moves to the next step: a spawn burst fills the lane queues, a wait starts the timer. A burst
+    // with nothing to spawn (every lane id unknown) falls straight through to the step after it.
+    private void AdvanceStep()
+    {
+        while (++_stepIndex < _activeWave.Steps.Count)
+        {
+            WaveStep step = _activeWave.Steps[_stepIndex];
 
             if (step.Wait.HasValue)
             {
-                await ToSignal(GetTree().CreateTimer(step.Wait.Value), "timeout");
-                continue;
-            }
-
-            await RunSpawnStep(step.Spawn);
-        }
-
-        while (!_matchOver && LevelContext.Current.Enemies.Active.Count > 0)
-        {
-            await ToSignal(GetTree().CreateTimer(EnemyCheckInterval), "timeout");
-        }
-
-        if (_matchOver)
-        {
-            return;
-        }
-
-        bool isFinalWave = _nextWaveIndex >= _waves.Count;
-        _currentPhase = isFinalWave ? GamePhase.PostGame : GamePhase.Build;
-        EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)_currentPhase);
-
-        if (isFinalWave)
-        {
-            EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, true);
-        }
-    }
-
-    // Each lane's groups within a step still trickle out on SpawnInterval (so a burst doesn't spawn
-    // as one stacked pile) and different lanes still run in parallel - but the whole step is awaited
-    // before the next one (e.g. a wait) begins, so a "wait 10" after a burst means 10 seconds after
-    // everyone in that burst has actually finished spawning.
-    private async Task RunSpawnStep(List<WaveSpawnGroup> groups)
-    {
-        List<Task> spawnerTasks = new List<Task>();
-
-        foreach (IGrouping<string, WaveSpawnGroup> laneGroups in groups.GroupBy(group => group.Lane))
-        {
-            spawnerTasks.Add(RunSpawnerQueue(laneGroups.Key, laneGroups.ToList()));
-        }
-
-        await Task.WhenAll(spawnerTasks);
-    }
-
-    private async Task RunSpawnerQueue(string spawnerId, List<WaveSpawnGroup> groups)
-    {
-        if (!_spawnersById.TryGetValue(spawnerId, out EnemySpawner spawner))
-        {
-            GD.PushWarning($"WaveController: no spawner found with id \"{spawnerId}\".");
-            return;
-        }
-
-        List<PackedScene> spawnQueue = new List<PackedScene>();
-
-        foreach (WaveSpawnGroup group in groups)
-        {
-            PackedScene scene = EnemyCatalog.Get(group.Enemy);
-            for (int i = 0; i < group.Count; i++)
-            {
-                spawnQueue.Add(scene);
-            }
-        }
-
-        foreach (PackedScene enemyScene in spawnQueue)
-        {
-            if (_matchOver)
-            {
+                _waitRemaining = step.Wait.Value;
+                _isWaiting = true;
                 return;
             }
 
-            spawner.Spawn(enemyScene);
-            await ToSignal(GetTree().CreateTimer(SpawnInterval), "timeout");
+            QueueSpawnStep(step.Spawn);
+
+            if (_laneQueues.Count > 0)
+            {
+                return;
+            }
+        }
+    }
+
+    private void QueueSpawnStep(List<WaveSpawnGroup> groups)
+    {
+        foreach (IGrouping<string, WaveSpawnGroup> laneGroups in groups.GroupBy(group => group.Lane))
+        {
+            if (!_spawnersById.TryGetValue(laneGroups.Key, out EnemySpawner spawner))
+            {
+                GD.PushWarning($"WaveController: no spawner found with id \"{laneGroups.Key}\".");
+                continue;
+            }
+
+            Queue<PackedScene> pending = new Queue<PackedScene>();
+
+            foreach (WaveSpawnGroup group in laneGroups)
+            {
+                PackedScene scene = EnemyCatalog.Get(group.Enemy);
+
+                for (int i = 0; i < group.Count; i++)
+                {
+                    pending.Enqueue(scene);
+                }
+            }
+
+            _laneQueues.Add(new LaneQueue { Spawner = spawner, Pending = pending });
+        }
+    }
+
+    // Each lane trickles its burst out on SpawnInterval so it doesn't spawn as one stacked pile,
+    // lanes in parallel. A lane counts as done one interval after its last spawn, so a "wait 10"
+    // after a burst means 10 seconds after that burst actually finished spawning.
+    private void TickLaneQueues(float delta)
+    {
+        for (int i = _laneQueues.Count - 1; i >= 0; i--)
+        {
+            LaneQueue lane = _laneQueues[i];
+            lane.Cooldown -= delta;
+
+            if (lane.Cooldown > 0f)
+            {
+                continue;
+            }
+
+            if (lane.Pending.Count == 0)
+            {
+                _laneQueues.RemoveAt(i);
+                continue;
+            }
+
+            lane.Spawner.Spawn(lane.Pending.Dequeue());
+            lane.Cooldown = SpawnInterval;
+        }
+    }
+
+    private void EndWave()
+    {
+        _activeWave = null;
+
+        bool isFinalWave = _nextWaveIndex >= _waves.Count;
+        _match.SetPhase(isFinalWave ? GamePhase.PostGame : GamePhase.Build);
+
+        if (isFinalWave)
+        {
+            _match.End(victory: true);
         }
     }
 }

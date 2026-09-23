@@ -7,6 +7,10 @@ public static class PlayerProfiles
 {
     public static PlayerId LocalId { get; } = PlayerId.P1;
 
+    // The seat hosting the session - its ready starts the ready-check countdown. P1 until real
+    // networking decides who hosts.
+    public static PlayerId HostId { get; } = PlayerId.P1;
+
     private static readonly Dictionary<PlayerId, PlayerProfile> _profiles = new();
 
     public static PlayerProfile Local => Get(LocalId);

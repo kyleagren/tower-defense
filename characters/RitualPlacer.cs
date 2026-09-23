@@ -215,7 +215,7 @@ public partial class RitualPlacer : Node
         onConfirmed?.Invoke();
     }
 
-    private void CancelPlacement()
+    public void CancelPlacement()
     {
         EndPlacement();
     }

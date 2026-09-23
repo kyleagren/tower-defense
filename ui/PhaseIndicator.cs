@@ -5,8 +5,6 @@ public partial class PhaseIndicator : Control
     [Export] public Label PhaseLabel { get; private set; }
     [Export] public Label GoldLabel { get; private set; }
 
-    private GamePhase _currentPhase = GamePhase.Planning;
-
     public override void _Ready()
     {
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
@@ -20,21 +18,18 @@ public partial class PhaseIndicator : Control
         EconomyManager.Instance.EconomyChanged -= Refresh;
     }
 
-    private void OnGamePhaseChanged(GamePhase phase)
-    {
-        _currentPhase = phase;
-        Refresh();
-    }
+    private void OnGamePhaseChanged(GamePhase phase) => Refresh();
 
     private void Refresh()
     {
-        string phaseText = _currentPhase switch
+        GamePhase phase = LevelContext.Current.Match.Phase;
+        string phaseText = phase switch
         {
             GamePhase.Planning => "Planning Phase",
             GamePhase.Build => "Build Phase",
             GamePhase.Combat => "Combat Phase",
             GamePhase.PostGame => "Post-Game",
-            _ => _currentPhase.ToString()
+            _ => phase.ToString()
         };
 
         PhaseLabel.Text = $"{phaseText} — Mana: {EconomyManager.Instance.Mana} | Build Capacity: {EconomyManager.Instance.CapacityUsed}/{EconomyManager.Instance.MaxCapacity}";

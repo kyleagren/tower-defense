@@ -16,4 +16,9 @@ public static class GameRules
     public const float UnarmedCritDamageBonus = 0.5f;
     public const float UnarmedAttackDamage = 5f;
     public const float UnarmedAttackSpeed = 1f;
+    public const float ReadyCountdownSeconds = 90f;
+    public const float RespawnBaseSeconds = 5f;
+    public const float RespawnSecondsPerExtraDeath = 5f;
+    public const int RespawnSkipBaseManaCost = 10;
+    public const int RespawnSkipManaCostPerExtraDeath = 5;
 }
