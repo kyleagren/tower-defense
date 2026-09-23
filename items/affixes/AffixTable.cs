@@ -125,6 +125,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Fire Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualFireDamage,
+            Group = AffixGroup.ElementalRitualDamage,
             AllowedSlots = AccessorySlots,
             Tags = [AffixTag.Damage, AffixTag.Fire],
             TierTable =
@@ -142,6 +143,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Water Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualWaterDamage,
+            Group = AffixGroup.ElementalRitualDamage,
             AllowedSlots = AccessorySlots,
             Tags = [AffixTag.Damage, AffixTag.Water],
             TierTable =
@@ -159,6 +161,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Cold Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualColdDamage,
+            Group = AffixGroup.ElementalRitualDamage,
             AllowedSlots = AccessorySlots,
             Tags = [AffixTag.Damage, AffixTag.Cold],
             TierTable =
@@ -176,6 +179,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Lightning Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualLightningDamage,
+            Group = AffixGroup.ElementalRitualDamage,
             AllowedSlots = AccessorySlots,
             Tags = [AffixTag.Damage, AffixTag.Lightning],
             TierTable =
@@ -193,6 +197,7 @@ public static class AffixTable
             DescriptionTemplate = "+{0}% Wind Ritual Damage",
             AffixType = AffixType.Prefix,
             Stat = StatId.RitualWindDamage,
+            Group = AffixGroup.ElementalRitualDamage,
             AllowedSlots = AccessorySlots,
             Tags = [AffixTag.Damage, AffixTag.Wind],
             TierTable =

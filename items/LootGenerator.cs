@@ -217,15 +217,19 @@ public static class LootGenerator
 
     // One weighted draw per mod from the flat (affix, tier) pool, same shape PoE itself uses -
     // once an affix is drawn, every tier of that same affix is removed so it can't roll twice.
+    // Anything conflicting with a mod already on the item (from an earlier pass) leaves the pool
+    // first, so an affix group spanning prefixes and suffixes still holds.
     private static void RollAffixes(List<AffixTierEntry> pool, int count, Godot.Collections.Array<RolledAffix> results)
     {
+        pool.RemoveAll(e => results.Any(roll => roll.Affix.ConflictsWith(e.Affix)));
+
         for (int i = 0; i < count && pool.Count > 0; i++)
         {
             AffixTierEntry entry = WeightedPick(pool, e => e.Tier.Weight);
 
             results.Add(new RolledAffix { Stat = entry.Affix.Stat, Tier = entry.Tier.Tier, Value = entry.Tier.RollValue(_random) });
 
-            pool.RemoveAll(e => e.Affix.Stat == entry.Affix.Stat);
+            pool.RemoveAll(e => e.Affix.ConflictsWith(entry.Affix));
         }
     }
 

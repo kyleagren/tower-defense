@@ -11,6 +11,9 @@ public class Affix
     public AffixTierRange[] TierTable = System.Array.Empty<AffixTierRange>();
     public AffixTag[] Tags = System.Array.Empty<AffixTag>();
     public bool IsFlatValue;
+    public AffixGroup Group = AffixGroup.None;
+
+    public bool ConflictsWith(Affix other) => other.Stat == Stat || (Group != AffixGroup.None && other.Group == Group);
 
     // The character half of "can this mod roll here", parallel to AllowedSlots' slot half. An
     // unrestricted mod rolls on anything; a restricted one only on an item already bound to that

@@ -31,7 +31,10 @@ public partial class Ritual : Node3D, IDamageable
     private bool _disabled;
     private Material _activeMaterial;
 
-    public bool IsDestroyed => _disabled;
+    public bool IsDisabled => _disabled;
+
+    // IDamageable only asks whether this can still take damage, which a disabled Ritual can't.
+    bool IDamageable.IsDestroyed => IsDisabled;
     public Vector3 AimPoint => CoreMesh.GlobalPosition;
 
     // So a CastEffect can act on the target this Ritual already picked rather than searching again.

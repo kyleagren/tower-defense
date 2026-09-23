@@ -30,16 +30,6 @@ public partial class ItemNameplateController : CanvasLayer
         ContentMarginBottom = 2
     };
 
-    private static readonly Dictionary<Rarity, Color> _nameplateColors = new()
-    {
-        [Rarity.Common] = new Color(0.85f, 0.85f, 0.85f),
-        [Rarity.Uncommon] = new Color(0.35f, 0.95f, 0.30f),
-        [Rarity.Rare] = new Color(0.35f, 0.75f, 1f),
-        [Rarity.Epic] = new Color(0.85f, 0.40f, 1f),
-        [Rarity.Legendary] = new Color(1f, 0.85f, 0.25f),
-        [Rarity.Unique] = new Color(1f, 0.45f, 0.15f)
-    };
-
     private readonly Dictionary<WorldItem, PanelContainer> _labels = new();
     private readonly Dictionary<WorldItem, Rect2> _currentRects = new();
 
@@ -226,7 +216,7 @@ public partial class ItemNameplateController : CanvasLayer
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
         label.AddThemeFontSizeOverride("font_size", 20);
-        label.AddThemeColorOverride("font_color", _nameplateColors.GetValueOrDefault(item.Item.Rarity, _nameplateColors[Rarity.Common]));
+        label.AddThemeColorOverride("font_color", RarityColors.GetText(item.Item.Rarity));
         label.AddThemeConstantOverride("outline_size", 0);
 
         PanelContainer panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };

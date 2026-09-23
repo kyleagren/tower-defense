@@ -26,6 +26,11 @@ public partial class Projectile : Area3D
     private bool _hasReturned;
     private const float ReturnArrivalDistance = 0.75f;
     private const float MaxReturnDistance = 10f;
+
+    // A safety net, not a range: a level's boundary walls should end any miss long before this.
+    private const float MaxLifetime = 3f;
+
+    private float _lifetime;
     private readonly HashSet<Node3D> _alreadyHit = new HashSet<Node3D>();
 
     // The enemy-only half of _alreadyHit, maintained alongside it. _alreadyHit also holds walls and
@@ -69,6 +74,16 @@ public partial class Projectile : Area3D
 
     public override void _PhysicsProcess(double delta)
     {
+        _lifetime += (float)delta;
+
+        // Freed quietly rather than through Expire, so a timed-out Fireball doesn't explode in mid-air.
+        if (_lifetime >= MaxLifetime)
+        {
+            _hasExpired = true;
+            QueueFree();
+            return;
+        }
+
         Position -= Transform.Basis.Z * _speed * (float)delta;
 
         if (_isReturn && !_hasReturned && _alreadyHit.Count == 0

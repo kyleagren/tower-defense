@@ -52,9 +52,8 @@ public static class CraftingActions
     private static IEnumerable<AffixTierEntry> EligiblePool(Item item, AffixType type)
     {
         int bestTier = LootGenerator.BestTierFor(item.Rarity);
-        HashSet<StatId> existing = item.Affixes.Select(roll => roll.Stat).ToHashSet();
 
         return AffixTable.GetTierEntries(item, type, bestTier)
-            .Where(entry => !existing.Contains(entry.Affix.Stat));
+            .Where(entry => !item.Affixes.Any(roll => roll.Affix.ConflictsWith(entry.Affix)));
     }
 }

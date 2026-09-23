@@ -10,7 +10,7 @@ public partial class WalkingEnemy : Enemy
     [Export] public float BaseSpeed = 3.5f;
     [Export] public float RotationSpeed = 10f;
     [Export] public float WaypointArrivalDistance = 0.5f;
-    [Export] public float PlayerCheckInterval = 0.25f;
+    [Export] public float EngagementCheckInterval = 0.25f;
     [Export] public float WallDetectionRange = 4f;
     [Export] public bool CanAttackRituals = false;
     [Export] public float RitualDetectionRange = 4f;
@@ -41,7 +41,7 @@ public partial class WalkingEnemy : Enemy
     private DefendableObjective _objective;
     private int _waypointIndex;
     private MovementMode _movementMode = MovementMode.FollowingLane;
-    private float _playerCheckTimer;
+    private float _engagementCheckTimer;
     private IceWall _targetWall;
     private Ritual _targetRitual;
     private Sentinel _targetSentinel;
@@ -82,9 +82,18 @@ public partial class WalkingEnemy : Enemy
         base._PhysicsProcess(delta);
 
         UpdateDistanceToGoal();
-        UpdateRitualEngagement();
-        UpdatePlayerLeash((float)delta);
-        UpdateWallEngagement();
+
+        // Engagement is decided on an interval (mirrors Ritual.TargetSearchInterval) rather than every
+        // frame: towers, then players, then walls, in that priority order.
+        _engagementCheckTimer -= (float)delta;
+
+        if (_engagementCheckTimer <= 0f)
+        {
+            _engagementCheckTimer = EngagementCheckInterval;
+            UpdateRitualEngagement();
+            UpdatePlayerLeash();
+            UpdateWallEngagement();
+        }
 
         switch (_movementMode)
         {
@@ -196,9 +205,8 @@ public partial class WalkingEnemy : Enemy
         }
     }
 
-    // Leash/chase state is decided on an interval (mirrors Ritual.TargetSearchInterval) rather
-    // than every frame — a cheap distance check, not a live per-enemy nav query.
-    private void UpdatePlayerLeash(float delta)
+    // A cheap distance check, not a live per-enemy nav query.
+    private void UpdatePlayerLeash()
     {
         // A ritual attack only blocks the leash for enemies where rituals outrank the player
         // (Sapper). For everything else, the player can interrupt an opportunistic tower attack
@@ -207,14 +215,6 @@ public partial class WalkingEnemy : Enemy
         {
             return;
         }
-
-        _playerCheckTimer -= delta;
-        if (_playerCheckTimer > 0f)
-        {
-            return;
-        }
-
-        _playerCheckTimer = PlayerCheckInterval;
 
         Sentinel nearest = FindNearestTargetableSentinel(LeashRange);
 
@@ -446,7 +446,7 @@ public partial class WalkingEnemy : Enemy
 
         foreach (Ritual ritual in Level.Rituals.Active)
         {
-            if (ritual.IsDestroyed || ritual.IsShrouded)
+            if (ritual.IsDisabled || ritual.IsShrouded)
             {
                 continue;
             }
@@ -464,7 +464,7 @@ public partial class WalkingEnemy : Enemy
 
     private void ProcessAttackingRitual(double delta)
     {
-        if (_targetRitual == null || !IsInstanceValid(_targetRitual) || _targetRitual.IsDestroyed)
+        if (_targetRitual == null || !IsInstanceValid(_targetRitual) || _targetRitual.IsDisabled)
         {
             _targetRitual = null;
             _movementMode = MovementMode.FollowingLane;
