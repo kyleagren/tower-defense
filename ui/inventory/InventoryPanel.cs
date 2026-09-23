@@ -52,14 +52,13 @@ public partial class InventoryPanel : Control
         BuildEquipmentSlots();
         BuildGrid();
 
-        // Sit just below PhaseIndicator's actual height rather than a hardcoded number that could
-        // silently drift out of sync with it - CallDeferred because a Control's Size isn't settled
-        // until after the first layout pass, and Resized keeps it correct if that height ever changes.
-        // PhaseIndicator is optional - a scene with no phase/economy HUD (the hub) just anchors to
-        // the top of the screen instead.
+        // Sit just below PhaseIndicator when it's showing, rather than a hardcoded number that could
+        // drift out of sync with it - CallDeferred because a Control's Size isn't settled until after
+        // the first layout pass. Outside a match it hides itself, and this anchors to the top instead.
         if (PhaseIndicator != null)
         {
             PhaseIndicator.Resized += UpdateTopOffset;
+            PhaseIndicator.VisibilityChanged += UpdateTopOffset;
             CallDeferred(nameof(UpdateTopOffset));
         }
 
@@ -157,7 +156,7 @@ public partial class InventoryPanel : Control
 
     private void UpdateTopOffset()
     {
-        OffsetTop = PhaseIndicator.Size.Y + 4f;
+        OffsetTop = PhaseIndicator.Visible ? PhaseIndicator.Size.Y + 4f : 0f;
     }
 
     public override void _UnhandledInput(InputEvent @event)

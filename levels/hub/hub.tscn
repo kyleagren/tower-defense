@@ -4,27 +4,21 @@
 [ext_resource type="Script" uid="uid://beylbkijyxcr5" path="res://core/EconomyManager.cs" id="2_economymanager"]
 [ext_resource type="Script" uid="uid://bnmhdebgbiqya" path="res://levels/hub/ArchitectSelectStation.cs" id="3_archstation"]
 [ext_resource type="Script" uid="uid://dsa3b2omiinqc" path="res://levels/hub/ArchitectTestZone.cs" id="4_archzone"]
-[ext_resource type="PackedScene" path="res://ui/Crosshair.tscn" id="5_crosshair"]
 [ext_resource type="Script" uid="uid://c7mkc6ifdkhp8" path="res://levels/hub/CharacterSelectStation.cs" id="6_charselectstation"]
 [ext_resource type="PackedScene" path="res://ui/hub/CharacterSelectPanel.tscn" id="7_charselectpanel"]
 [ext_resource type="Script" uid="uid://cs7e675hoiaql" path="res://levels/hub/LevelSelectStation.cs" id="8_levelselectstation"]
 [ext_resource type="PackedScene" path="res://ui/hub/LevelSelectPanel.tscn" id="9_levelselectpanel"]
 [ext_resource type="PackedScene" path="res://enemies/TrainingDummy.tscn" id="10_dummy"]
 [ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://debug/DebugToggle.cs" id="11_debugtoggle"]
-[ext_resource type="PackedScene" path="res://ui/inventory/InventoryPanel.tscn" id="12_inventorypanel"]
 [ext_resource type="Script" uid="uid://bwtg32js1gadv" path="res://levels/hub/CraftingStation.cs" id="13_craftingstation"]
 [ext_resource type="PackedScene" path="res://ui/hub/CraftingPanel.tscn" id="14_craftingpanel"]
 [ext_resource type="Script" uid="uid://cacefgtxix4nr" path="res://levels/hub/VendorStation.cs" id="15_vendorstation"]
 [ext_resource type="PackedScene" path="res://ui/hub/VendorPanel.tscn" id="16_vendorpanel"]
-[ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="17_charactersheetpanel"]
-[ext_resource type="Script" uid="uid://dr8emxep4ujsn" path="res://ui/ItemNameplateController.cs" id="18_itemnameplate"]
-[ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="19_playerhealthorb"]
-[ext_resource type="PackedScene" path="res://ui/PlayerShieldBar.tscn" id="20_playershieldbar"]
-[ext_resource type="PackedScene" path="res://ui/AbilityHud.tscn" id="21_abilityhud"]
 [ext_resource type="PackedScene" uid="uid://dsutqhp5i2738" path="res://characters/soldier/Soldier.tscn" id="22_soldierscene"]
 [ext_resource type="PackedScene" uid="uid://de5pbikw458xe" path="res://characters/tank/Tank.tscn" id="23_tankscene"]
 [ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://characters/architect/Architect.tscn" id="24_architectscene"]
 [ext_resource type="Script" path="res://core/LevelContext.cs" id="25_levelcontext"]
+[ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="26_playerhud"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -377,10 +371,6 @@ ArchitectScene = ExtResource("24_architectscene")
 script = ExtResource("2_economymanager")
 Unlimited = true
 
-[node name="ItemNameplateController" type="CanvasLayer" parent="." unique_id=1123372990]
-layer = -1
-script = ExtResource("18_itemnameplate")
-
 [node name="ArchitectSelectStation" type="StaticBody3D" parent="." unique_id=708825174]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4684536, 0.9999987, 35.53236)
 collision_layer = 17
@@ -400,15 +390,6 @@ script = ExtResource("4_archzone")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="ArchitectTestZone" unique_id=1573708972]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6601563)
 shape = SubResource("BoxShape3D_archzone")
-
-[node name="Crosshair" parent="." unique_id=910279266 instance=ExtResource("5_crosshair")]
-
-[node name="PlayerHealthOrb" parent="." unique_id=363077634 instance=ExtResource("19_playerhealthorb")]
-
-[node name="PlayerShieldBar" parent="." unique_id=1470659503 instance=ExtResource("20_playershieldbar")]
-
-[node name="AbilityHud" parent="." unique_id=500076295 instance=ExtResource("21_abilityhud")]
-layout_mode = 3
 
 [node name="CharacterSelectStation" type="StaticBody3D" parent="." unique_id=1484671035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, -10)
@@ -484,11 +465,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.7, 0, 45.1)
 [node name="DebugToggle" type="Node" parent="." unique_id=168619648]
 script = ExtResource("11_debugtoggle")
 
-[node name="InventoryPanel" parent="." unique_id=37592620 instance=ExtResource("12_inventorypanel")]
-anchors_preset = -1
-
-[node name="CharacterSheetPanel" parent="." unique_id=599246340 instance=ExtResource("17_charactersheetpanel")]
-anchors_preset = -1
+[node name="PlayerHud" parent="." instance=ExtResource("26_playerhud")]
 
 [node name="CraftingPanel" parent="." unique_id=1481707128 instance=ExtResource("14_craftingpanel")]
 

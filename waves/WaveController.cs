@@ -8,7 +8,7 @@ using System.Text.Json;
 // that's been freed or reloaded.
 public partial class WaveController : Node
 {
-    [Export] public string WaveFilePath = "res://assets/waves/level_01.json";
+    [Export] public string WaveFilePath = "res://assets/waves/test_level.json";
     [Export] public float SpawnInterval = 0.3f;
 
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };

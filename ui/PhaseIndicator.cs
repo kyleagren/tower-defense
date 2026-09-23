@@ -5,8 +5,19 @@ public partial class PhaseIndicator : Control
     [Export] public Label PhaseLabel { get; private set; }
     [Export] public Label GoldLabel { get; private set; }
 
+    // Whether this scene has a match to show at all - the hub has none.
+    private bool _inMatch;
+
     public override void _Ready()
     {
+        _inMatch = LevelContext.Current.Match != null;
+
+        if (!_inMatch)
+        {
+            Visible = false;
+            return;
+        }
+
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         EconomyManager.Instance.EconomyChanged += Refresh;
         Refresh();
@@ -14,6 +25,11 @@ public partial class PhaseIndicator : Control
 
     public override void _ExitTree()
     {
+        if (!_inMatch)
+        {
+            return;
+        }
+
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
         EconomyManager.Instance.EconomyChanged -= Refresh;
     }

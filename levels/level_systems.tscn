@@ -1,0 +1,38 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://beylbkijyxcr5" path="res://core/EconomyManager.cs" id="1_economymanager"]
+[ext_resource type="Script" uid="uid://briq33cnkh3pc" path="res://items/ItemDropManager.cs" id="2_itemdropmanager"]
+[ext_resource type="PackedScene" path="res://world_items/WorldItem.tscn" id="3_worlditem"]
+[ext_resource type="Script" uid="uid://5acoq4fcp07r" path="res://debug/DebugToggle.cs" id="4_debugtoggle"]
+[ext_resource type="Script" uid="uid://ci5j2r32p0w77" path="res://waves/GameOverHandler.cs" id="5_gameoverhandler"]
+[ext_resource type="PackedScene" uid="uid://ct3j8oj7yvja4" path="res://levels/hub/hub.tscn" id="6_hubscene"]
+[ext_resource type="Script" uid="uid://nsgeakgljfd8" path="res://waves/RoutePreviewEffect.cs" id="7_routepreview"]
+[ext_resource type="Script" uid="uid://b2lh56ru63dye" path="res://characters/SentinelSpawner.cs" id="8_sentinelspawner"]
+[ext_resource type="PackedScene" uid="uid://dsutqhp5i2738" path="res://characters/soldier/Soldier.tscn" id="9_soldierscene"]
+[ext_resource type="PackedScene" uid="uid://de5pbikw458xe" path="res://characters/tank/Tank.tscn" id="10_tankscene"]
+[ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://characters/architect/Architect.tscn" id="11_architectscene"]
+
+[node name="LevelSystems" type="Node"]
+
+[node name="EconomyManager" type="Node" parent="."]
+script = ExtResource("1_economymanager")
+
+[node name="ItemDropManager" type="Node" parent="."]
+script = ExtResource("2_itemdropmanager")
+WorldItemScene = ExtResource("3_worlditem")
+
+[node name="DebugToggle" type="Node" parent="."]
+script = ExtResource("4_debugtoggle")
+
+[node name="GameOverHandler" type="Node" parent="."]
+script = ExtResource("5_gameoverhandler")
+HubScene = ExtResource("6_hubscene")
+
+[node name="RoutePreview" type="Node3D" parent="."]
+script = ExtResource("7_routepreview")
+
+[node name="SentinelSpawner" type="Node" parent="."]
+script = ExtResource("8_sentinelspawner")
+SoldierScene = ExtResource("9_soldierscene")
+TankScene = ExtResource("10_tankscene")
+ArchitectScene = ExtResource("11_architectscene")

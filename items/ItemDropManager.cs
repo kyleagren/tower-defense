@@ -4,14 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 
 // Rolls drop chances as enemies die, but holds every result until the level is won. The whole
-// pile then sprays out of LootObjective's position during PostGame, ordered common-to-legendary,
-// and LootObjective itself is freed as the spray starts - the shield defended all level becomes
-// the reward. A loss never fires GameEnded(true), so queued loot simply never spawns, which is
+// pile then sprays out of the level's primary objective during PostGame, ordered
+// common-to-legendary, and the objective itself is freed as the spray starts - the shield defended
+// all level becomes the reward. A loss never fires GameEnded(true), so queued loot simply never spawns, which is
 // the "nothing to loot after a loss" rule applied to everything.
 public partial class ItemDropManager : Node
 {
     [Export] public PackedScene WorldItemScene { get; private set; }
-    [Export] public DefendableObjective LootObjective { get; private set; }
     [Export] public float ChestSprayRadius = 5f;
     [Export] public float GroundHeight = 0f;
     [Export] public float SprayArcHeight = 3f;
@@ -63,8 +62,9 @@ public partial class ItemDropManager : Node
         List<Item> sorted = _pendingLoot.OrderBy(item => (int)item.Rarity).ToList();
         _pendingLoot.Clear();
 
-        Vector3 chestPosition = LootObjective?.GlobalPosition ?? Vector3.Zero;
-        LootObjective?.QueueFree();
+        DefendableObjective objective = LevelContext.Current.PrimaryObjective;
+        Vector3 chestPosition = objective?.GlobalPosition ?? Vector3.Zero;
+        objective?.QueueFree();
 
         for (int i = 0; i < sorted.Count; i++)
         {

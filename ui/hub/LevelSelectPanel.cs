@@ -10,7 +10,7 @@ public partial class LevelSelectPanel : Control
     // Grows alongside the level roster - one entry per playable level.
     private static readonly (string Name, string ScenePath)[] _levels =
     {
-        ("Level 01", "uid://vqr88ehteuiw")
+        ("Test Level", "uid://vqr88ehteuiw")
     };
 
     [Export] public Control ListContainer { get; private set; }

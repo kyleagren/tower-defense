@@ -24,6 +24,9 @@ public partial class LevelContext : Node
     // The level's match - its phase and whether it's over. Null in a scene with no match (the hub).
     public MatchState Match { get; set; }
 
+    // The objective PostGame loot sprays from. Null in a scene with no match.
+    public DefendableObjective PrimaryObjective { get; set; }
+
     // Each player's currently controlled body - their Sentinel or their Architect, never both.
     public Dictionary<PlayerId, PlayerCharacter> ActiveCharacters { get; } = new();
 

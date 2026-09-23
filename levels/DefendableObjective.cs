@@ -7,6 +7,10 @@ public partial class DefendableObjective : Area3D, IDamageable
     [Export] public float AimPointHeight = 1f;
     [Export] public HealthBar3D HealthBar { get; private set; }
 
+    // The mage's own shell - where PostGame loot sprays from. Energy Harvesters, which work
+    // identically minus the mage inside, leave this off.
+    [Export] public bool IsPrimary { get; private set; } = true;
+
     private float _currentHealth;
     private bool _destroyed;
 
@@ -17,6 +21,11 @@ public partial class DefendableObjective : Area3D, IDamageable
     {
         _currentHealth = MaxHealth;
         HealthBar.SetFraction(1f);
+
+        if (IsPrimary)
+        {
+            LevelContext.Current.PrimaryObjective = this;
+        }
     }
 
     public void TakeDamage(DamagePacket damage, Vector3 impulse = default)

@@ -1,0 +1,36 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://dr8emxep4ujsn" path="res://ui/ItemNameplateController.cs" id="1_itemnameplate"]
+[ext_resource type="PackedScene" path="res://ui/PhaseIndicator.tscn" id="2_phaseindicator"]
+[ext_resource type="PackedScene" path="res://ui/PlayerHealthOrb.tscn" id="3_playerhealthorb"]
+[ext_resource type="PackedScene" path="res://ui/PlayerShieldBar.tscn" id="4_playershieldbar"]
+[ext_resource type="PackedScene" path="res://ui/AbilityHud.tscn" id="5_abilityhud"]
+[ext_resource type="PackedScene" path="res://ui/RespawnOverlay.tscn" id="6_respawnoverlay"]
+[ext_resource type="PackedScene" path="res://ui/Crosshair.tscn" id="7_crosshair"]
+[ext_resource type="PackedScene" path="res://ui/inventory/InventoryPanel.tscn" id="8_inventorypanel"]
+[ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="9_charactersheetpanel"]
+
+[node name="PlayerHud" type="Node"]
+
+[node name="ItemNameplateController" type="CanvasLayer" parent="."]
+layer = -1
+script = ExtResource("1_itemnameplate")
+
+[node name="PhaseIndicator" parent="." instance=ExtResource("2_phaseindicator")]
+
+[node name="PlayerHealthOrb" parent="." instance=ExtResource("3_playerhealthorb")]
+
+[node name="PlayerShieldBar" parent="." instance=ExtResource("4_playershieldbar")]
+
+[node name="AbilityHud" parent="." instance=ExtResource("5_abilityhud")]
+
+[node name="RespawnOverlay" parent="." instance=ExtResource("6_respawnoverlay")]
+
+[node name="Crosshair" parent="." instance=ExtResource("7_crosshair")]
+
+[node name="InventoryPanel" parent="." node_paths=PackedStringArray("PhaseIndicator") instance=ExtResource("8_inventorypanel")]
+anchors_preset = -1
+PhaseIndicator = NodePath("../PhaseIndicator")
+
+[node name="CharacterSheetPanel" parent="." instance=ExtResource("9_charactersheetpanel")]
+anchors_preset = -1
