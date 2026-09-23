@@ -32,6 +32,7 @@ public partial class IceStormSpell : Spell
             ManaCost = BaseManaCost,
             CapacityCost = BaseCapacityCost,
             TargetPriority = BaseTargetPriority,
+            CastEffect = new BombardmentCastEffect(),
             Area = new AreaCastData(),
             Bombardment = new BombardmentCastData
             {

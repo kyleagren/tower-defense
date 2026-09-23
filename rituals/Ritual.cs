@@ -1,6 +1,5 @@
 using Godot;
 using System.Collections.Generic;
-using System.Linq;
 
 public partial class Ritual : Node3D, IDamageable
 {
@@ -28,8 +27,6 @@ public partial class Ritual : Node3D, IDamageable
     private float _searchTimer;
     private int _manaCost;
     private int _capacityCost;
-    private List<CastEffect> _castEffects;
-    private bool _hasWarnedAboutCastEffects;
     private float _currentHealth;
     private bool _disabled;
     private Material _activeMaterial;
@@ -63,13 +60,6 @@ public partial class Ritual : Node3D, IDamageable
 
         _level = LevelContext.Current;
         _level.Rituals.Register(this);
-
-        _castEffects = GetChildren().OfType<CastEffect>().ToList();
-
-        foreach (CastEffect effect in _castEffects)
-        {
-            effect.Concluded += OnCastEffectConcluded;
-        }
 
         EventBus.Instance.InventoryChanged += OnInventoryChanged;
 
@@ -117,7 +107,8 @@ public partial class Ritual : Node3D, IDamageable
         return _spellInstance.Resolve(_ownerSheet);
     }
 
-    private void OnCastEffectConcluded()
+    // Called by an ongoing CastEffect when whatever it left behind is gone - the cooldown starts now.
+    public void ConcludeOngoingEffect()
     {
         _spellInstance.EndOngoingEffect(ResolveWithOwner().ResolvedCooldown);
     }
@@ -294,10 +285,11 @@ public partial class Ritual : Node3D, IDamageable
 
     private void CastAtTarget(SpellCastContext context)
     {
-        CastEffect effect = SelectCastEffect(context);
+        CastEffect effect = context.CastEffect;
 
         if (effect == null)
         {
+            GD.PushError($"Spell '{Spell.Name}' sets no CastEffect in CreateBaseContext and can never fire.");
             return;
         }
 
@@ -319,52 +311,5 @@ public partial class Ritual : Node3D, IDamageable
         {
             _spellInstance.StartCast(context.ResolvedCastTime, context.ResolvedCooldown);
         }
-    }
-
-    // Picks the one CastEffect child that handles this context. Which effect wins is otherwise
-    // decided silently by child order in the scene, so both "none matched" (a ritual that burns
-    // its cooldown firing nothing) and "several matched" (an ambiguous scene) get reported once.
-    private CastEffect SelectCastEffect(SpellCastContext context)
-    {
-        CastEffect match = null;
-
-        foreach (CastEffect candidate in _castEffects)
-        {
-            if (!candidate.CanHandle(context))
-            {
-                continue;
-            }
-
-            if (match == null)
-            {
-                match = candidate;
-                continue;
-            }
-
-            WarnAboutCastEffectsOnce(
-                $"Ritual '{Spell?.Name}' has more than one CastEffect that can handle its context " +
-                $"({match.Name} and {candidate.Name}); using {match.Name} because it comes first in the scene.");
-            break;
-        }
-
-        if (match == null)
-        {
-            WarnAboutCastEffectsOnce(
-                $"Ritual '{Spell?.Name}' has no CastEffect that can handle its context and will never fire. " +
-                "Add the matching CastEffect node to the ritual scene.");
-        }
-
-        return match;
-    }
-
-    private void WarnAboutCastEffectsOnce(string message)
-    {
-        if (_hasWarnedAboutCastEffects)
-        {
-            return;
-        }
-
-        _hasWarnedAboutCastEffects = true;
-        GD.PushWarning(message);
     }
 }

@@ -9,6 +9,7 @@ public partial class LightningBoltSpell : ChainableSpell
     [Export] public override int BaseChainCount { get; protected set; } = 2;
     [Export] public override int BaseManaCost { get; protected set; } = 10;
     [Export] public override ChainDamageModifier DamageModifier { get; protected set; }
+    [Export] public PackedScene ArcVisualScene { get; private set; }
 
     public override string Name => "Lightning Bolt";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Chaining, Tag.Lightning };
@@ -26,7 +27,8 @@ public partial class LightningBoltSpell : ChainableSpell
             ManaCost = BaseManaCost,
             CapacityCost = BaseCapacityCost,
             TargetPriority = BaseTargetPriority,
-            InstantHit = new InstantHitCastData(),
+            CastEffect = new InstantHitCastEffect(),
+            InstantHit = new InstantHitCastData { ArcVisualScene = ArcVisualScene },
             Chain = new ChainCastData
             {
                 ChainCount = BaseChainCount,

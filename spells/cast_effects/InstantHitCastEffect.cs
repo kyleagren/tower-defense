@@ -1,13 +1,8 @@
 using Godot;
 using System.Collections.Generic;
 
-public partial class InstantHitCastEffect : CastEffect
+public class InstantHitCastEffect : CastEffect
 {
-    [Export] public PackedScene ArcVisualScene { get; private set; }
-    [Export] public float ForkPointRatio { get; private set; } = 0.3f;
-
-    public override bool CanHandle(SpellCastContext context) => context.InstantHit != null;
-
     public override void Cast(SpellCastContext context, Node3D spawnPoint, Ritual caster)
     {
         ChainCastData chain = context.Chain ?? new ChainCastData();
@@ -22,8 +17,8 @@ public partial class InstantHitCastEffect : CastEffect
 
         if (targets.Count > 1)
         {
-            Vector3 forkPoint = spawnPoint.GlobalPosition.Lerp(targets[0].GlobalPosition, ForkPointRatio);
-            ChainResolver.SpawnArcVisual(spawnPoint, ArcVisualScene, spawnPoint.GlobalPosition, forkPoint);
+            Vector3 forkPoint = spawnPoint.GlobalPosition.Lerp(targets[0].GlobalPosition, context.InstantHit.ForkPointRatio);
+            ChainResolver.SpawnArcVisual(spawnPoint, context.InstantHit.ArcVisualScene, spawnPoint.GlobalPosition, forkPoint);
             visualOrigin = forkPoint;
         }
 
@@ -81,9 +76,9 @@ public partial class InstantHitCastEffect : CastEffect
         DamagePacket firstHitDamage = context.Damage * firstHitMultiplier;
         target.TakeDamage(firstHitDamage, ragdollImpulse, spellHit: context.SpellHit);
 
-        ChainResolver.SpawnArcVisual(spawnPoint, ArcVisualScene, visualOrigin, targetPoint);
+        ChainResolver.SpawnArcVisual(spawnPoint, context.InstantHit.ArcVisualScene, visualOrigin, targetPoint);
 
-        ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce.Value, chain.ChainCount, chain.ChainRange, chain.DamageModifier, context.SpellHit, ArcVisualScene, chainTracker);
+        ChainResolver.ResolveChain(target, targetPoint, context.Damage, context.RagdollForce.Value, chain.ChainCount, chain.ChainRange, chain.DamageModifier, context.SpellHit, context.InstantHit.ArcVisualScene, chainTracker);
     }
 
     private static float SideOf(Vector3 origin, Vector3 referenceDir, Vector3 point)

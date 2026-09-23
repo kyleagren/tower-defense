@@ -8,6 +8,7 @@ public class ProjectileCastData
     public bool IsNova;
     public bool IsReturn;
     public ScaledStat Speed = 0f;
+    public float SpreadAngleDegrees = 15f;
     public PackedScene ProjectileScene;
     public ProjectileHitEffect HitEffect;
 }

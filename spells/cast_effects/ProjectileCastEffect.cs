@@ -1,19 +1,10 @@
 using Godot;
 using System.Collections.Generic;
 
-public partial class ProjectileCastEffect : CastEffect
+public class ProjectileCastEffect : CastEffect
 {
-    [Export] public float SpreadAngleDegrees { get; private set; } = 15f;
-
-    public override bool CanHandle(SpellCastContext context) => context.Projectile != null;
-
     public override void Cast(SpellCastContext context, Node3D spawnPoint, Ritual caster)
     {
-        if (context.Projectile == null)
-        {
-            return;
-        }
-
         ProjectileCastData projectileData = context.Projectile;
         int count = projectileData.ProjectileCount;
         HashSet<Enemy> returnHitTracker = new HashSet<Enemy>();
@@ -23,7 +14,7 @@ public partial class ProjectileCastEffect : CastEffect
         {
             float angleOffset = projectileData.IsNova
                 ? 360f / count * i
-                : ComputeConeAngle(i, count);
+                : ComputeConeAngle(i, count, projectileData.SpreadAngleDegrees);
 
             Projectile projectile = projectileData.ProjectileScene.Instantiate<Projectile>();
             projectile.Initialize(context, returnHitTracker, chainHitTracker);
@@ -35,10 +26,10 @@ public partial class ProjectileCastEffect : CastEffect
         }
     }
 
-    private float ComputeConeAngle(int index, int count)
+    private static float ComputeConeAngle(int index, int count, float spreadAngleDegrees)
     {
-        float totalSpread = SpreadAngleDegrees * (count - 1);
+        float totalSpread = spreadAngleDegrees * (count - 1);
         float startAngle = -totalSpread / 2f;
-        return startAngle + (SpreadAngleDegrees * index);
+        return startAngle + (spreadAngleDegrees * index);
     }
 }

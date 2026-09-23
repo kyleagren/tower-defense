@@ -1,9 +1,7 @@
 using Godot;
 
-public partial class BombardmentCastEffect : CastEffect
+public class BombardmentCastEffect : CastEffect
 {
-    public override bool CanHandle(SpellCastContext context) => context.Bombardment != null;
-
     public override void Cast(SpellCastContext context, Node3D spawnPoint, Ritual caster)
     {
         BombardmentCastData data = context.Bombardment;

@@ -75,6 +75,7 @@ public class SpellCastContext
     public BombardmentCastData Bombardment;
     public GroundEffectCastData GroundEffect;
     public CastTrigger CastTrigger;
+    public CastEffect CastEffect;
 
     // The casting spell's own tags, stamped during resolve so a rune reading them at hit time
     // doesn't need a path back to the Spell resource.

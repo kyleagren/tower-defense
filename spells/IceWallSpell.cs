@@ -31,6 +31,7 @@ public partial class IceWallSpell : Spell
             Cooldown = BaseCooldown,
             ManaCost = BaseManaCost,
             CapacityCost = BaseCapacityCost,
+            CastEffect = new WallCastEffect(),
             Wall = new WallCastData
             {
                 SegmentScene = SegmentScene,

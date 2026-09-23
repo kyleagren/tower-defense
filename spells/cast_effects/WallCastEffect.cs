@@ -1,22 +1,18 @@
 using Godot;
 
-public partial class WallCastEffect : CastEffect
+public class WallCastEffect : CastEffect
 {
-    public override bool CanHandle(SpellCastContext context) => context.Wall != null;
     public override bool IsOngoing => true;
 
     public override void Cast(SpellCastContext context, Node3D spawnPoint, Ritual caster)
     {
-        if (context.Wall == null)
-        {
-            return;
-        }
-
         IceWall wall = new IceWall();
         spawnPoint.AddChild(wall);
         wall.Initialize(context.Wall.Start, context.Wall.End, context.Wall);
 
-        wall.Expired += () => EmitSignal(SignalName.Concluded);
-        wall.Destroyed += () => EmitSignal(SignalName.Concluded);
+        // The wall lives under the caster's spawn point, so it can't outlive the caster to call
+        // back into a freed Ritual.
+        wall.Expired += caster.ConcludeOngoingEffect;
+        wall.Destroyed += caster.ConcludeOngoingEffect;
     }
 }

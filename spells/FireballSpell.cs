@@ -31,6 +31,7 @@ public partial class FireballSpell : Spell
             ManaCost = BaseManaCost,
             CapacityCost = BaseCapacityCost,
             TargetPriority = BaseTargetPriority,
+            CastEffect = new ProjectileCastEffect(),
             Projectile = new ProjectileCastData
             {
                 ProjectileCount = BaseProjectileCount,
