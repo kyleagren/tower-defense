@@ -91,14 +91,15 @@ public partial class Ritual : Node3D, IDamageable
     {
         OwnerId = owner;
         _ownerSheet = null;
+        _spellInstance?.InvalidateCache();
     }
 
     // The owner's sheet is held rather than re-fetched per frame: _Process calls this every tick,
-    // and the lookup behind it walks PlayerSentinels -> SaveManager -> a dictionary read. Both this
-    // and SpellInstance's own cache are dropped together by OnInventoryChanged.
+    // and the lookup behind it walks PlayerProfiles -> a dictionary read. Both this and
+    // SpellInstance's own cache are dropped together by OnInventoryChanged.
     private SpellCastContext ResolveWithOwner()
     {
-        _ownerSheet ??= CharacterSheetCache.GetSheet(PlayerSentinels.Get(OwnerId));
+        _ownerSheet ??= PlayerProfiles.Get(OwnerId).SelectedSheet;
         return _spellInstance.Resolve(_ownerSheet);
     }
 

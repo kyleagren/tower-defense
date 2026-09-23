@@ -317,7 +317,7 @@ public partial class ItemTooltip : CanvasLayer
     // e.g. hovering something you already have equipped).
     private static List<Item> GetComparisonItems(Item item)
     {
-        CharacterId activeCharacter = PlayerSentinels.Get(PlayerSentinels.Local);
+        CharacterId activeCharacter = PlayerProfiles.Local.SelectedCharacter;
         EquippedLoadout loadout = SaveManager.Instance.Data.GetOrCreateLoadout(activeCharacter);
 
         return loadout.GetEquipped(item.Slot).Where(equipped => equipped != item).ToList();

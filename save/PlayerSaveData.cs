@@ -18,7 +18,7 @@ public partial class PlayerSaveData : Resource
     [Export] public Item CraftingSlotItem { get; set; }
 
     // Which Sentinel this player played most recently - also the sensible starting pick for a
-    // brand-new save. Read/written through PlayerSentinels, not directly.
+    // brand-new save. Read/written through PlayerProfile, not directly.
     [Export] public CharacterId LastPlayedCharacter { get; set; } = CharacterId.Soldier;
 
     public EquippedLoadout GetOrCreateLoadout(CharacterId character)

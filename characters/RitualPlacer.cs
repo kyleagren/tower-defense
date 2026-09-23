@@ -85,7 +85,7 @@ public partial class RitualPlacer : Node
 
         _pendingSpell = spell;
         _pendingRunes = runes;
-        _pendingContext = SpellInstance.ResolvePreview(spell, runes);
+        _pendingContext = SpellInstance.ResolvePreview(spell, runes, PlayerProfiles.Get(Character.OwnerId).SelectedSheet);
         _onConfirmed = onConfirmed;
         _wallCostApplied = false;
 
@@ -397,8 +397,8 @@ public partial class RitualPlacer : Node
         Ritual placed = RitualScene.Instantiate<Ritual>();
         GetTree().CurrentScene.AddChild(placed);
         placed.GlobalTransform = _ghost.GlobalTransform;
+        placed.SetOwnerId(Character.OwnerId);
         placed.Configure(_pendingSpell, _pendingRunes);
-        placed.SetOwnerId(PlayerSentinels.Local);
 
         if (_pendingContext.Wall != null)
         {

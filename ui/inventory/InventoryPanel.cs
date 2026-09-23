@@ -219,7 +219,7 @@ public partial class InventoryPanel : Control
         UiPanelStack.Pop(this);
     }
 
-    private CharacterId ActiveCharacter => PlayerSentinels.Get(PlayerSentinels.Local);
+    private CharacterId ActiveCharacter => PlayerProfiles.Local.SelectedCharacter;
 
     private void Refresh()
     {

@@ -29,7 +29,7 @@ public partial class ArchitectTestZone : Area3D
 
             if (spawner.Current == architect)
             {
-                spawner.SelectSentinel(PlayerSentinels.Get(architect.OwnerId));
+                spawner.SelectSentinel(PlayerProfiles.Get(architect.OwnerId).SelectedCharacter);
             }
         }
     }

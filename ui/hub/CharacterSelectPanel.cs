@@ -37,7 +37,7 @@ public partial class CharacterSelectPanel : Control
             child.QueueFree();
         }
 
-        CharacterId current = PlayerSentinels.Get(_owner);
+        CharacterId current = PlayerProfiles.Get(_owner).SelectedCharacter;
 
         foreach (CharacterId character in _selectableCharacters)
         {

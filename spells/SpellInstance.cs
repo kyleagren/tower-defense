@@ -109,7 +109,7 @@ public class SpellInstance
         return removed;
     }
 
-    public static SpellCastContext ResolvePreview(Spell spell, IEnumerable<Rune> runes)
+    public static SpellCastContext ResolvePreview(Spell spell, IEnumerable<Rune> runes, CharacterSheet ownerSheet = null)
     {
         SpellInstance instance = new SpellInstance(spell);
         foreach (Rune rune in runes)
@@ -120,6 +120,6 @@ public class SpellInstance
             }
         }
 
-        return instance.Resolve();
+        return instance.Resolve(ownerSheet);
     }
 }

@@ -108,7 +108,7 @@ public partial class CharacterSheetPanel : Control
             return;
         }
 
-        CharacterSheet sheet = CharacterSheetCache.GetSheet(sentinel.Id);
+        CharacterSheet sheet = sentinel.Sheet;
 
         if (sentinel.BaseHealthRegenPerSecond > 0f)
         {

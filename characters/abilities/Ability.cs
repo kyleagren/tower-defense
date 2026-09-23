@@ -77,7 +77,7 @@ public abstract partial class Ability : Node
     // rate divides in, matching SpellCastContext.ResolvedCooldown's shape.
     protected void StartCooldown()
     {
-        float recoveryRate = 1f + CharacterSheetCache.GetSheet(Character.Id).GetBonus(StatId.SentinelCooldownRecoveryRate);
+        float recoveryRate = 1f + Character.Sheet.GetBonus(StatId.SentinelCooldownRecoveryRate);
         _cooldownDuration = BaseCooldown / recoveryRate;
         _cooldownRemaining = _cooldownDuration;
     }

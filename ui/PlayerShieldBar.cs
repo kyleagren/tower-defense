@@ -30,7 +30,7 @@ public partial class PlayerShieldBar : TextureProgressBar
         // as a fallback, same as PlayerHealthOrb does for health.
         if (Sentinel.Local != null)
         {
-            OnPlayerShieldChanged(Sentinel.Local.CurrentShield, Sentinel.Local.MaxShield);
+            ShowShield(Sentinel.Local.CurrentShield, Sentinel.Local.MaxShield);
         }
     }
 
@@ -39,7 +39,16 @@ public partial class PlayerShieldBar : TextureProgressBar
         EventBus.Instance.PlayerShieldChanged -= OnPlayerShieldChanged;
     }
 
-    private void OnPlayerShieldChanged(float currentShield, float maxShield)
+    // Every Sentinel reports through the same signal; this bar is the local player's.
+    private void OnPlayerShieldChanged(PlayerId player, float currentShield, float maxShield)
+    {
+        if (player == PlayerProfiles.LocalId)
+        {
+            ShowShield(currentShield, maxShield);
+        }
+    }
+
+    private void ShowShield(float currentShield, float maxShield)
     {
         Value = maxShield > 0f ? Mathf.Clamp(currentShield / maxShield, 0f, 1f) : 0f;
         ShieldLabel.Text = $"{Mathf.CeilToInt(currentShield)}/{Mathf.CeilToInt(maxShield)}";

@@ -25,7 +25,7 @@ public partial class LevelContext : Node
     public Dictionary<PlayerId, PlayerCharacter> ActiveCharacters { get; } = new();
 
     // View-side convenience for this machine's camera and HUD. Gameplay code takes a PlayerId instead.
-    public PlayerCharacter LocalActiveCharacter => ActiveCharacters.GetValueOrDefault(PlayerSentinels.Local);
+    public PlayerCharacter LocalActiveCharacter => ActiveCharacters.GetValueOrDefault(PlayerProfiles.LocalId);
 
     // Counted rather than a flag, so two Soldiers running the visor at once don't have the first to
     // end strip the markers the other is still using. Scene-wide rather than per-enemy: an enemy

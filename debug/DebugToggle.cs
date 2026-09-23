@@ -24,11 +24,11 @@ public partial class DebugToggle : Node
         }
         else if (keyEvent.PhysicalKeycode == Key.F3)
         {
-            CharacterId next = PlayerSentinels.Get(PlayerSentinels.Local) == CharacterId.Soldier
+            CharacterId next = PlayerProfiles.Local.SelectedCharacter == CharacterId.Soldier
                 ? CharacterId.Tank
                 : CharacterId.Soldier;
 
-            PlayerSentinels.Set(PlayerSentinels.Local, next);
+            PlayerProfiles.Local.SelectCharacter(next);
             GetTree().ReloadCurrentScene();
         }
         else if (keyEvent.PhysicalKeycode == Key.F4)

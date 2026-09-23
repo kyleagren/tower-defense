@@ -119,7 +119,7 @@ public static class LootGenerator
     // usable loot lands more often than a flat 1-in-4 chance would give, without ever guaranteeing it.
     private static CharacterId RollWeaponCharacter()
     {
-        CharacterId current = PlayerSentinels.Get(PlayerSentinels.Local);
+        CharacterId current = PlayerProfiles.Local.SelectedCharacter;
 
         if (_random.NextDouble() < 0.5)
         {

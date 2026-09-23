@@ -286,7 +286,7 @@ public partial class BuildMenu : Control
             _tokenSpellLabels[i].Text = token.Spell?.Name ?? "";
             _tokenRuneLabels[i].Text = string.Join("\n", token.Runes.Select(r => r?.Name ?? "[Empty Socket]"));
 
-            SpellCastContext context = SpellInstance.ResolvePreview(token.Spell, token.Runes.Where(r => r != null));
+            SpellCastContext context = SpellInstance.ResolvePreview(token.Spell, token.Runes.Where(r => r != null), PlayerProfiles.Local.SelectedSheet);
             _tokenCostLabels[i].Text = $"Mana: {context.ResolvedManaCost}\nCapacity: {context.ResolvedCapacityCost}";
         }
 
@@ -549,7 +549,7 @@ public partial class BuildMenu : Control
             return 0;
         }
 
-        return SpellInstance.ResolvePreview(_selectedSpell, runes).ResolvedManaCost;
+        return SpellInstance.ResolvePreview(_selectedSpell, runes, PlayerProfiles.Local.SelectedSheet).ResolvedManaCost;
     }
 
     private void ShowSocketDescription(int socketIndex)

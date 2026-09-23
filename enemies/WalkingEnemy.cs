@@ -44,6 +44,7 @@ public partial class WalkingEnemy : Enemy
     private float _playerCheckTimer;
     private IceWall _targetWall;
     private Ritual _targetRitual;
+    private Sentinel _targetSentinel;
     private float _attackCooldown;
     private bool _hasFacedInitialDirection;
 
@@ -208,30 +209,51 @@ public partial class WalkingEnemy : Enemy
         }
 
         _playerCheckTimer -= delta;
-        if (_playerCheckTimer > 0f || Sentinel.Local == null || !Sentinel.Local.IsActive)
+        if (_playerCheckTimer > 0f)
         {
             return;
         }
 
         _playerCheckTimer = PlayerCheckInterval;
 
-        float distanceToPlayer = GlobalPosition.DistanceTo(Sentinel.Local.GlobalPosition);
-        bool withinLeash = distanceToPlayer <= LeashRange;
+        Sentinel nearest = FindNearestTargetableSentinel(LeashRange);
 
-        if (withinLeash && _movementMode != MovementMode.ChasingPlayer)
+        if (nearest != null)
         {
+            _targetSentinel = nearest;
             _movementMode = MovementMode.ChasingPlayer;
+            NavAgent.TargetPosition = nearest.GlobalPosition;
         }
-        else if (!withinLeash && _movementMode == MovementMode.ChasingPlayer)
+        else if (_movementMode == MovementMode.ChasingPlayer)
         {
+            _targetSentinel = null;
             BeginRejoin();
-            return;
+        }
+    }
+
+    // Every player's Sentinel counts, not just this machine's - the nearest live, active one in
+    // range wins, so in co-op an enemy engages whoever actually walks up to it.
+    private Sentinel FindNearestTargetableSentinel(float maxDistance)
+    {
+        Sentinel nearest = null;
+        float bestDistance = maxDistance;
+
+        foreach (Sentinel sentinel in Level.Sentinels.Values)
+        {
+            if (!sentinel.IsActive || sentinel.IsDead)
+            {
+                continue;
+            }
+
+            float distance = GlobalPosition.DistanceTo(sentinel.GlobalPosition);
+            if (distance <= bestDistance)
+            {
+                bestDistance = distance;
+                nearest = sentinel;
+            }
         }
 
-        if (_movementMode == MovementMode.ChasingPlayer)
-        {
-            NavAgent.TargetPosition = Sentinel.Local.GlobalPosition;
-        }
+        return nearest;
     }
 
     // Give-up-and-rejoin across lanes (README: Enemies): one real pathfind to whichever waypoint is
@@ -478,23 +500,23 @@ public partial class WalkingEnemy : Enemy
 
     private void ProcessChasingPlayer(double delta)
     {
-        if (Sentinel.Local == null || !Sentinel.Local.IsActive)
+        if (_targetSentinel == null || !IsInstanceValid(_targetSentinel) || !_targetSentinel.IsActive)
         {
             return;
         }
 
-        float distanceToPlayer = GlobalPosition.DistanceTo(Sentinel.Local.GlobalPosition);
+        float distanceToPlayer = GlobalPosition.DistanceTo(_targetSentinel.GlobalPosition);
         _attackCooldown -= (float)delta;
 
         if (distanceToPlayer <= AttackRange)
         {
             Stop(delta);
-            RotateTowardsMovement((Sentinel.Local.GlobalPosition - GlobalPosition).Normalized(), delta);
+            RotateTowardsMovement((_targetSentinel.GlobalPosition - GlobalPosition).Normalized(), delta);
 
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                DealDamage(Sentinel.Local);
+                DealDamage(_targetSentinel);
             }
 
             return;

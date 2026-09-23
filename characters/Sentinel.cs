@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public abstract partial class Sentinel : PlayerCharacter, IDamageable
 {
     // The local player's own Sentinel in the current scene, whether or not it's the active body.
-    public static Sentinel Local => LevelContext.Current?.Sentinels.GetValueOrDefault(PlayerSentinels.Local);
+    public static Sentinel Local => LevelContext.Current?.Sentinels.GetValueOrDefault(PlayerProfiles.LocalId);
 
     [Export] public Node3D Weapon { get; private set; }
     [Export] public float BaseMaxHealth = 100f;
@@ -25,14 +25,19 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public float CurrentHealth => _currentHealth;
     public float CurrentShield => _currentShield;
 
-    public float MaxHealth => BaseMaxHealth * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMaxHealth));
-    public override float Speed => BaseSpeed * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelMoveSpeed));
+    // This Sentinel's own owner's gear - never the local save's - so two players on the same
+    // Sentinel resolve independently.
+    public CharacterSheet Sheet => PlayerProfiles.Get(OwnerId).GetSheet(Id);
+    private Weapon EquippedWeapon => PlayerProfiles.Get(OwnerId).GetLoadout(Id).Weapon;
+
+    public float MaxHealth => BaseMaxHealth * (1f + Sheet.GetBonus(StatId.SentinelMaxHealth));
+    public override float Speed => BaseSpeed * (1f + Sheet.GetBonus(StatId.SentinelMoveSpeed));
 
     public float MaxShield
     {
         get
         {
-            CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
+            CharacterSheet sheet = Sheet;
             return sheet.GetLocalTotal(StatId.SentinelShield) * (1f + sheet.GetBonus(StatId.SentinelTotalShield));
         }
     }
@@ -41,7 +46,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         get
         {
-            CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
+            CharacterSheet sheet = Sheet;
             return sheet.GetLocalTotal(StatId.SentinelArmor) * (1f + sheet.GetBonus(StatId.SentinelTotalArmor));
         }
     }
@@ -50,9 +55,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         get
         {
-            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+            Weapon weapon = EquippedWeapon;
             float baseDamage = weapon?.BaseAttackDamage ?? GameRules.UnarmedAttackDamage;
-            return baseDamage * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.WeaponAttackDamage));
+            return baseDamage * (1f + Sheet.GetBonus(StatId.WeaponAttackDamage));
         }
     }
 
@@ -60,7 +65,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         get
         {
-            Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+            Weapon weapon = EquippedWeapon;
             return weapon?.ResolvedBaseAttackSpeed ?? GameRules.UnarmedAttackSpeed;
         }
     }
@@ -116,8 +121,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         SetActive(false);
         Weapon.Visible = false;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
-        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, _currentShield, MaxShield);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
     }
 
     public override void _ExitTree()
@@ -222,7 +227,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             _currentShield -= absorbed;
             remainingDamage -= absorbed;
 
-            EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, _currentShield, MaxShield);
+            EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
         }
         else
         {
@@ -230,7 +235,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
 
         _currentHealth = Mathf.Max(0f, _currentHealth - remainingDamage);
-        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
 
         if (IsDead)
         {
@@ -254,10 +259,10 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     // Public so the Character Sheet UI can show the same numbers UpdateHealthRegen actually uses,
     // rather than a second copy of this formula.
-    public float BaseHealthRegenPerSecond => CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelBaseHealthRegen);
+    public float BaseHealthRegenPerSecond => Sheet.GetBonus(StatId.SentinelBaseHealthRegen);
 
     public float TotalHealthRegenPerSecond =>
-        BaseHealthRegenPerSecond * (1f + CharacterSheetCache.GetSheet(Id).GetBonus(StatId.SentinelHealthRegen));
+        BaseHealthRegenPerSecond * (1f + Sheet.GetBonus(StatId.SentinelHealthRegen));
 
     // Called by whichever Sentinel is active, from its own _PhysicsProcess - passively recharges
     // Shield once it's been GameRules.ShieldRegenDelay seconds since the last projectile hit.
@@ -276,7 +281,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
 
         _currentShield = Mathf.Min(MaxShield, _currentShield + MaxShield * GameRules.ShieldRegenRatePercent * delta);
-        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, _currentShield, MaxShield);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
     }
 
     // Rolls whether this hit crits and returns the final damage packet - shared by Soldier and Tank
@@ -286,8 +291,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // crit damage only).
     public DamagePacket RollAttackDamage(float baseDamage, bool guaranteedCrit = false)
     {
-        CharacterSheet sheet = CharacterSheetCache.GetSheet(Id);
-        Weapon weapon = SaveManager.Instance.Data.GetOrCreateLoadout(Id).Weapon;
+        CharacterSheet sheet = Sheet;
+        Weapon weapon = EquippedWeapon;
 
         float baseCritChance = weapon?.ResolvedBaseCritChance ?? GameRules.UnarmedCritChance;
         float baseCritDamageBonus = weapon?.BaseCritDamageBonus ?? GameRules.UnarmedCritDamageBonus;
@@ -313,7 +318,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
 
         _currentHealth = Mathf.Min(MaxHealth, _currentHealth + TotalHealthRegenPerSecond * delta);
-        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
     }
 
     // Full reset is a placeholder — a real healing mechanic will replace this.
@@ -321,7 +326,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         _currentHealth = MaxHealth;
         _currentShield = MaxShield;
-        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, _currentHealth, MaxHealth);
-        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, _currentShield, MaxShield);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
     }
 }

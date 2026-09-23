@@ -1,7 +1,7 @@
 using Godot;
 
 // Instantiates only the PlayerCharacter matching this owner's current selection - a Sentinel via
-// PlayerSentinels, or the Architect for hub DPS-testing - rather than hardcoding every roster
+// the owner's PlayerProfile, or the Architect for hub DPS-testing - rather than hardcoding every roster
 // member as an always-present scene child. There's never more than one body alive per player, so
 // LevelContext's per-player lookups never have to guess which of several simultaneous instances is
 // the real one.
@@ -44,14 +44,14 @@ public partial class SentinelSpawner : Node
 
     private void SelectPersistedSentinel()
     {
-        SelectSentinel(PlayerSentinels.Get(OwnerId));
+        SelectSentinel(PlayerProfiles.Get(OwnerId).SelectedCharacter);
     }
 
     // Persists the pick (this is "who to fight with" outside the hub too) and swaps the live body
     // to match.
     public void SelectSentinel(CharacterId character)
     {
-        PlayerSentinels.Set(OwnerId, character);
+        PlayerProfiles.Get(OwnerId).SelectCharacter(character);
         Respawn(SceneFor(character));
     }
 

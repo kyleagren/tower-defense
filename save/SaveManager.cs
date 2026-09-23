@@ -19,11 +19,11 @@ public partial class SaveManager : Node
         Instance = this;
         Load();
 
-        // CharacterSheetCache is derived entirely from Data.Loadouts, so the node that owns that
-        // data is the one that hooks up its invalidation. Autoloads are readied in declaration
-        // order (EventBus first), so Instance is available here, and neither node ever leaves the
-        // tree - so there's no matching unsubscribe.
-        EventBus.Instance.InventoryChanged += CharacterSheetCache.InvalidateAll;
+        // PlayerProfile's stat sheets are derived entirely from Data.Loadouts, so the node that owns
+        // that data is the one that hooks up their invalidation. Autoloads are readied in
+        // declaration order (EventBus first), so Instance is available here, and neither node ever
+        // leaves the tree - so there's no matching unsubscribe.
+        EventBus.Instance.InventoryChanged += PlayerProfiles.InvalidateAllSheets;
     }
 
     public void Load()

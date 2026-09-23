@@ -98,7 +98,7 @@ public partial class TokenDeployer : Node
 
     private void TryDeployToken(int tokenIndex)
     {
-        RuneLoadout token = SaveManager.Instance.Data.Tokens[tokenIndex];
+        RuneLoadout token = PlayerProfiles.Get(Character.OwnerId).Data.Tokens[tokenIndex];
 
         if (token == null)
         {
@@ -113,8 +113,9 @@ public partial class TokenDeployer : Node
 
     private void ConsumeToken(int tokenIndex)
     {
-        SaveManager.Instance.Data.Tokens[tokenIndex] = null;
-        SaveManager.Instance.Save();
+        PlayerProfile profile = PlayerProfiles.Get(Character.OwnerId);
+        profile.Data.Tokens[tokenIndex] = null;
+        profile.Save();
         EventBus.Instance.EmitSignal(EventBus.SignalName.TokensChanged);
     }
 

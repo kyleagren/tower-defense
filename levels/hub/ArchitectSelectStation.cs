@@ -13,7 +13,7 @@ public partial class ArchitectSelectStation : StaticBody3D, IInteractable
 
         if (character is Architect)
         {
-            spawner.SelectSentinel(PlayerSentinels.Get(character.OwnerId));
+            spawner.SelectSentinel(PlayerProfiles.Get(character.OwnerId).SelectedCharacter);
         }
         else
         {

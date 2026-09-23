@@ -28,7 +28,7 @@ public partial class PlayerHealthOrb : TextureProgressBar
         // as a fallback so a well-timed emit isn't the only way this ever shows real numbers.
         if (Sentinel.Local != null)
         {
-            OnPlayerHealthChanged(Sentinel.Local.CurrentHealth, Sentinel.Local.MaxHealth);
+            ShowHealth(Sentinel.Local.CurrentHealth, Sentinel.Local.MaxHealth);
         }
     }
 
@@ -37,7 +37,16 @@ public partial class PlayerHealthOrb : TextureProgressBar
         EventBus.Instance.PlayerHealthChanged -= OnPlayerHealthChanged;
     }
 
-    private void OnPlayerHealthChanged(float currentHealth, float maxHealth)
+    // Every Sentinel reports through the same signal; this orb is the local player's.
+    private void OnPlayerHealthChanged(PlayerId player, float currentHealth, float maxHealth)
+    {
+        if (player == PlayerProfiles.LocalId)
+        {
+            ShowHealth(currentHealth, maxHealth);
+        }
+    }
+
+    private void ShowHealth(float currentHealth, float maxHealth)
     {
         Value = maxHealth > 0f ? Mathf.Clamp(currentHealth / maxHealth, 0f, 1f) : 0f;
         HealthLabel.Text = $"{Mathf.CeilToInt(currentHealth)}/{Mathf.CeilToInt(maxHealth)}";
