@@ -164,7 +164,7 @@ public static class LootGenerator
         return tome;
     }
 
-    private static bool IsRuneKnown(Rune rune) => SaveManager.Instance.Data.KnownRunes.Any(entry => entry.Rune == rune);
+    private static bool IsRuneKnown(Rune rune) => PlayerProfiles.Local.KnowsRune(rune);
 
     private static Rarity RollRarity()
     {

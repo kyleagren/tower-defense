@@ -85,17 +85,16 @@ public partial class VendorPanel : Control
     // from stock and buying back from the sold list - same transaction, different source list.
     private void Purchase(Item item, Godot.Collections.Array<Item> source)
     {
-        if (SaveManager.Instance.Data.Gold < item.SaleValue)
+        PlayerProfile profile = PlayerProfiles.Local;
+
+        if (!profile.TrySpendGold(item.SaleValue))
         {
             return;
         }
 
-        SaveManager.Instance.Data.Gold -= item.SaleValue;
         source.Remove(item);
         InventoryPanel.Instance.ReturnToInventory(item);
-
-        SaveManager.Instance.Save();
-        EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
+        profile.CommitChange(saveNow: true);
         Refresh();
     }
 
@@ -103,10 +102,8 @@ public partial class VendorPanel : Control
     // for now" call as the crafting table's own gold costs.
     private void Sell(Item item)
     {
-        SaveManager.Instance.Data.Gold += item.SaleValue;
+        PlayerProfiles.Local.AddGold(item.SaleValue);
         _buyback.Add(item);
-
-        SaveManager.Instance.Save();
         Refresh();
     }
 

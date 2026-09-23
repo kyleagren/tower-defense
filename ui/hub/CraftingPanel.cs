@@ -67,11 +67,7 @@ public partial class CraftingPanel : Control
     {
         _slot = new ItemDragController.SlotHandle(
             getItem: () => SaveManager.Instance.Data.CraftingSlotItem,
-            placeItem: item =>
-            {
-                SaveManager.Instance.Data.CraftingSlotItem = item;
-                SaveManager.Instance.Save();
-            },
+            placeItem: item => PlayerProfiles.Local.SetCraftingSlotItem(item),
             canAccept: item => true);
 
         ItemDragController.Instance.RegisterSlot(ItemSlotButton, _slot);
@@ -181,16 +177,16 @@ public partial class CraftingPanel : Control
 
     private void OnActionPressed(CraftingAction action)
     {
-        Item item = SaveManager.Instance.Data.CraftingSlotItem;
+        PlayerProfile profile = PlayerProfiles.Local;
+        Item item = profile.Data.CraftingSlotItem;
 
-        if (item == null || SaveManager.Instance.Data.Gold < GameRules.CraftingActionGoldCost || !action.CanPerform(item))
+        if (item == null || !action.CanPerform(item) || !profile.TrySpendGold(GameRules.CraftingActionGoldCost))
         {
             return;
         }
 
-        SaveManager.Instance.Data.Gold -= GameRules.CraftingActionGoldCost;
         action.Perform(item);
-        SaveManager.Instance.Save();
+        profile.CommitChange(saveNow: true);
         Refresh();
     }
 

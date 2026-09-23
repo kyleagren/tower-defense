@@ -1,7 +1,5 @@
 using Godot;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using SlotHandle = ItemDragController.SlotHandle;
 
 public partial class InventoryPanel : Control
@@ -211,8 +209,6 @@ public partial class InventoryPanel : Control
         if (held != null)
         {
             ReturnToInventory(held);
-            SaveManager.Instance.RequestSave();
-            EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
         }
 
         Visible = false;
@@ -327,38 +323,7 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        if (SaveManager.Instance.Data.Inventory[gridIndex] is RuneTome tome)
-        {
-            LearnRuneTome(gridIndex, tome);
-        }
-    }
-
-    private void LearnRuneTome(int gridIndex, RuneTome tome)
-    {
-        if (tome.TaughtRune == null || SaveManager.Instance.Data.KnownRunes.Any(entry => entry.Rune == tome.TaughtRune))
-        {
-            return;
-        }
-
-        LearnRune(tome.TaughtRune);
-
-        foreach (Rune sibling in RuneCatalog.GetRunesOfType(tome.TaughtRune).Where(r => r.Rarity < tome.TaughtRune.Rarity))
-        {
-            LearnRune(sibling);
-        }
-
-        SaveManager.Instance.Data.Inventory[gridIndex] = null;
-        CommitChange();
-    }
-
-    private static void LearnRune(Rune rune)
-    {
-        if (SaveManager.Instance.Data.KnownRunes.Any(entry => entry.Rune == rune))
-        {
-            return;
-        }
-
-        SaveManager.Instance.Data.KnownRunes.Add(new RuneInventoryEntry { Rune = rune, Unlimited = true });
+        PlayerProfiles.Local.LearnRuneTome(gridIndex);
     }
 
     // Shift-click a grid item to equip it directly, skipping the click-to-pick-up-then-place flow.
@@ -412,13 +377,10 @@ public partial class InventoryPanel : Control
         CommitChange();
     }
 
-    // Every mutating path ends the same way: persist, tell the rest of the game a loadout changed
-    // (which is what drops the CharacterSheet and every Ritual's cached context), then redraw.
-    private void CommitChange()
+    // The redraw comes from InventoryChanged, which this panel already listens to while open.
+    private static void CommitChange()
     {
-        SaveManager.Instance.RequestSave();
-        EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
-        Refresh();
+        PlayerProfiles.Local.CommitChange();
     }
 
     // A SlotHandle for one index of the 40-slot Inventory array. Any item is accepted - the grid
@@ -452,16 +414,10 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
-        int emptySlotIndex = inventory.IndexOf(null);
-
-        if (emptySlotIndex >= 0)
+        if (!PlayerProfiles.Local.TryAddToInventory(item))
         {
-            inventory[emptySlotIndex] = item;
-            return;
+            DropInWorld(item);
         }
-
-        DropInWorld(item);
     }
 
     private void DropInWorld(Item item)

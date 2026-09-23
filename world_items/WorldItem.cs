@@ -48,33 +48,13 @@ public partial class WorldItem : StaticBody3D
         };
     }
 
-    // Adds the item to the shared Inventory's first empty slot and removes itself from the world.
-    // If Inventory is completely full, nothing happens - the item stays in the world until there's
-    // room, which beats InventoryPanel's own "displaced item is lost" fallback for the same case.
+    // Removes itself from the world only once the item actually lands somewhere. If Inventory is
+    // completely full, nothing happens - the item stays in the world until there's room.
     public void PickUp()
     {
-        CharacterId character = PlayerProfiles.Local.SelectedCharacter;
-        EquippedLoadout loadout = SaveManager.Instance.Data.GetOrCreateLoadout(character);
-
-        if (Item.IsCompatibleWith(character) && loadout.TryEquip(Item))
+        if (PlayerProfiles.Local.PickUp(Item))
         {
-            SaveManager.Instance.RequestSave();
-            EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
             QueueFree();
-            return;
         }
-
-        Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
-        int emptySlotIndex = inventory.IndexOf(null);
-
-        if (emptySlotIndex < 0)
-        {
-            return;
-        }
-
-        inventory[emptySlotIndex] = Item;
-        SaveManager.Instance.RequestSave();
-        EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
-        QueueFree();
     }
 }

@@ -409,7 +409,7 @@ public partial class ItemDragController : CanvasLayer
     {
         Item item = Held;
         SetHeld(null);
-        SaveManager.Instance.RequestSave();
+        PlayerProfiles.Local.CommitChange();
         Changed?.Invoke();
 
         if (item == null)
@@ -428,13 +428,11 @@ public partial class ItemDragController : CanvasLayer
         worldItem.GlobalPosition = player.GlobalPosition + direction * distance;
     }
 
-    // Every mutating placement ends the same way: persist, tell the rest of the game a loadout
-    // might have changed (which is what drops the CharacterSheet cache and every Ritual's cached
-    // context), then let every open panel redraw.
+    // Every mutating placement ends the same way: the profile persists it and tells the rest of the
+    // game, then every open panel redraws.
     private void CommitChange()
     {
-        SaveManager.Instance.RequestSave();
-        EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
+        PlayerProfiles.Local.CommitChange();
         Changed?.Invoke();
     }
 

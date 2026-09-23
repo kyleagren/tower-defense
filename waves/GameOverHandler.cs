@@ -33,9 +33,8 @@ public partial class GameOverHandler : Node
 
         if (victory)
         {
-            SaveManager.Instance.Data.Gold += GoldPerVictory + EconomyManager.Instance.GoldEarned;
-            SaveManager.Instance.Save();
-            GD.Print($"Gold: {SaveManager.Instance.Data.Gold}");
+            PlayerProfiles.Local.AddGold(GoldPerVictory + EconomyManager.Instance.GoldEarned);
+            GD.Print($"Gold: {PlayerProfiles.Local.Data.Gold}");
             return;
         }
 

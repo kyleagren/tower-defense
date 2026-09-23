@@ -363,14 +363,12 @@ public partial class BuildMenu : Control
 
     private void SaveToken(int tokenIndex, Spell spell, IEnumerable<Rune> runes, string name = "")
     {
-        SaveManager.Instance.Data.Tokens[tokenIndex] = new RuneLoadout
+        PlayerProfiles.Local.SetToken(tokenIndex, new RuneLoadout
         {
             Spell = spell,
             Runes = new Godot.Collections.Array<Rune>(runes),
             Name = name
-        };
-        SaveManager.Instance.Save();
-        EventBus.Instance.EmitSignal(EventBus.SignalName.TokensChanged);
+        });
 
         EndTokenAuthoring();
         ShowSpellGrid();
@@ -458,36 +456,7 @@ public partial class BuildMenu : Control
             return;
         }
 
-        FavoriteLoadout favorite = new FavoriteLoadout
-        {
-            Name = DedupeFavoriteName(name),
-            Spell = _selectedSpell,
-            Runes = new Godot.Collections.Array<Rune>(_socketedRunes)
-        };
-
-        SaveManager.Instance.Data.Favorites.Add(favorite);
-        SaveManager.Instance.Save();
-    }
-
-    private static string DedupeFavoriteName(string name)
-    {
-        Godot.Collections.Array<FavoriteLoadout> favorites = SaveManager.Instance.Data.Favorites;
-
-        if (favorites.All(f => f.Name != name))
-        {
-            return name;
-        }
-
-        int suffix = 1;
-        string candidate;
-
-        do
-        {
-            candidate = $"{name}({suffix})";
-            suffix++;
-        } while (favorites.Any(f => f.Name == candidate));
-
-        return candidate;
+        PlayerProfiles.Local.AddFavorite(name, _selectedSpell, _socketedRunes);
     }
 
     private void ShowSocketScreen()

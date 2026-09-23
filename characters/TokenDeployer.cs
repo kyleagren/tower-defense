@@ -108,10 +108,7 @@ public partial class TokenDeployer : Node
 
     private void ConsumeToken(int tokenIndex)
     {
-        PlayerProfile profile = PlayerProfiles.Get(Character.OwnerId);
-        profile.Data.Tokens[tokenIndex] = null;
-        profile.Save();
-        EventBus.Instance.EmitSignal(EventBus.SignalName.TokensChanged);
+        PlayerProfiles.Get(Character.OwnerId).SetToken(tokenIndex, null);
     }
 
     private void SetPickModeActive(bool active)
