@@ -143,21 +143,27 @@ public partial class Ritual : Node3D, IDamageable
 
     private float MissingHealthFraction => 1f - (_currentHealth / MaxHealth);
 
+    // Half the Ritual's own cost, scaled by missing health. Zero at full health. The spell's own
+    // cost only - placement extras like an Ice Wall's segments are left out, since the Ritual's own
+    // health doesn't scale with them.
+    public int RepairCost
+    {
+        get
+        {
+            float missingFraction = MissingHealthFraction;
+
+            if (missingFraction <= 0f)
+            {
+                return 0;
+            }
+
+            return Mathf.CeilToInt(ResolveWithOwner().ManaCost.Value * GameRules.RepairCostFraction * missingFraction);
+        }
+    }
+
     public void Repair()
     {
-        float missingFraction = MissingHealthFraction;
-
-        if (missingFraction <= 0f)
-        {
-            return;
-        }
-
-        // The spell's own cost only - placement extras like an Ice Wall's segments are left out,
-        // since the Ritual's own health doesn't scale with them.
-        float ownCost = ResolveWithOwner().ManaCost.Value;
-        int repairCost = Mathf.CeilToInt(ownCost * GameRules.RepairCostFraction * missingFraction);
-
-        if (!EconomyManager.Instance.TrySpendMana(repairCost))
+        if (MissingHealthFraction <= 0f || !EconomyManager.Instance.TrySpendMana(RepairCost))
         {
             return;
         }

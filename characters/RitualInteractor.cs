@@ -70,6 +70,22 @@ public partial class RitualInteractor : LookInteractor
         _repairHoldTime = 0f;
     }
 
+    private static readonly Color _unaffordableColor = new Color(1f, 0.3f, 0.3f);
+
+    // Only while there's something to repair - an undamaged Ritual shows no cost at all.
+    protected override (string Text, Color Color) BuildPromptDetail(Node3D target)
+    {
+        int cost = ((Ritual)target).RepairCost;
+
+        if (cost <= 0)
+        {
+            return (null, Colors.White);
+        }
+
+        Color color = EconomyManager.Instance.CanAffordMana(cost) ? Colors.White : _unaffordableColor;
+        return ($"Repair: {cost} Mana", color);
+    }
+
     protected override string BuildPromptText(Node3D target)
     {
         if (_destroyHoldTime > 0f)

@@ -2,13 +2,27 @@
 
 [ext_resource type="Script" path="res://ui/InteractionPrompt.cs" id="1_prompt"]
 
-[node name="InteractionPrompt" type="Node3D" node_paths=PackedStringArray("Label")]
+[node name="InteractionPrompt" type="Node3D" node_paths=PackedStringArray("Label", "DetailLabel")]
 visible = false
 script = ExtResource("1_prompt")
 Label = NodePath("Label3D")
+DetailLabel = NodePath("DetailLabel")
 
 [node name="Label3D" type="Label3D" parent="."]
 billboard = 1
+render_priority = 11
+outline_render_priority = 10
 font_size = 48
 outline_size = 8
 no_depth_test = true
+
+[node name="DetailLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.35, 0)
+visible = false
+billboard = 1
+render_priority = 11
+outline_render_priority = 10
+font_size = 36
+outline_size = 8
+no_depth_test = true
+vertical_alignment = 0

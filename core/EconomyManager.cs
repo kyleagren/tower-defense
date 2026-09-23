@@ -90,6 +90,8 @@ public partial class EconomyManager : Node
         EmitSignal(SignalName.EconomyChanged);
     }
 
+    public bool CanAffordMana(int amount) => Unlimited || Mana >= amount;
+
     public bool TrySpendMana(int amount)
     {
         if (Unlimited)

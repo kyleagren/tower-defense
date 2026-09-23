@@ -37,6 +37,9 @@ public abstract partial class LookInteractor : Node
 
     protected abstract string BuildPromptText(Node3D target);
 
+    // An optional line under the prompt in its own color. Null text shows nothing.
+    protected virtual (string Text, Color Color) BuildPromptDetail(Node3D target) => (null, Colors.White);
+
     // Fires whenever the target changes, null included - the hook for resetting per-target state
     // (a destroy hold timer, a cached tooltip) exactly once instead of every tick.
     protected virtual void OnTargetChanged(Node3D target)
@@ -88,7 +91,8 @@ public abstract partial class LookInteractor : Node
             return;
         }
 
-        _prompt.ShowPrompt(Target.GlobalPosition + Vector3.Up * PromptHeightOffset, BuildPromptText(Target));
+        (string detail, Color detailColor) = BuildPromptDetail(Target);
+        _prompt.ShowPrompt(Target.GlobalPosition + Vector3.Up * PromptHeightOffset, BuildPromptText(Target), detail, detailColor);
     }
 
     protected void ClearTarget()
