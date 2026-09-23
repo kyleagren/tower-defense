@@ -4,6 +4,7 @@ using System.Linq;
 public class SpellInstance
 {
     private readonly Spell _definition;
+    private readonly PlacementData _placement;
     private readonly List<Rune> _attachedRunes = new List<Rune>();
     private SpellCastContext _cachedContext;
 
@@ -17,9 +18,10 @@ public class SpellInstance
     public bool IsOnCooldown => _cooldownRemaining > 0f;
     public bool CanCast => !IsCasting && !IsOnCooldown && !_isEffectOngoing;
 
-    public SpellInstance(Spell definition)
+    public SpellInstance(Spell definition, PlacementData placement = null)
     {
         _definition = definition;
+        _placement = placement;
     }
 
     public void Tick(float delta, float recoveryRate = 1f)
@@ -42,6 +44,7 @@ public class SpellInstance
             // Stamped here rather than in every CreateBaseContext override, so a new spell can't
             // forget to carry its own tags to the runes that read them.
             _cachedContext.SpellTags = _definition.Tags;
+            _placement?.ApplyTo(_cachedContext);
 
             foreach (Rune rune in _attachedRunes)
             {
@@ -109,9 +112,9 @@ public class SpellInstance
         return removed;
     }
 
-    public static SpellCastContext ResolvePreview(Spell spell, IEnumerable<Rune> runes, CharacterSheet ownerSheet = null)
+    public static SpellCastContext ResolvePreview(Spell spell, IEnumerable<Rune> runes, CharacterSheet ownerSheet = null, PlacementData placement = null)
     {
-        SpellInstance instance = new SpellInstance(spell);
+        SpellInstance instance = new SpellInstance(spell, placement);
         foreach (Rune rune in runes)
         {
             if (rune != null)

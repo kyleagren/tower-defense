@@ -117,6 +117,10 @@ public partial class IceWall : Node3D
         return Mathf.Max(2, count);
     }
 
+    // The base cost covers the shortest possible wall - two segments, since it can't be any
+    // shorter - and each segment past that adds its own cost.
+    public static int ChargedSegmentCount(int segmentCount) => Mathf.Max(0, segmentCount - 2);
+
     // The ground point for segment `index`, with the first and last landing exactly on the wall's
     // two endpoints.
     public static Vector3 SegmentPosition(Vector3 start, Vector3 end, int index, int segmentCount)

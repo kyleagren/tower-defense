@@ -14,6 +14,12 @@ public class SpellCastContext
     public ScaledStat ManaCost = 0f;
     public ScaledStat CapacityCost = 0f;
 
+    // Cost added by what was picked at placement (an Ice Wall's extra segments), kept apart from
+    // ManaCost/CapacityCost so the Ritual's own cost - what repair is priced from - stays just the
+    // spell's. Scaled by the same multipliers when the total resolves.
+    public float PlacementManaCost;
+    public float PlacementCapacityCost;
+
     // Damage can't itself be a ScaledStat — it's a packet of per-element floats — so the scale
     // sits beside it and Damage exposes the resolved packet.
     public DamagePacket UnscaledDamage;
@@ -51,8 +57,8 @@ public class SpellCastContext
 
     // Mana/capacity cost reduction is ordinary linear "Increased" (unlike cooldown), so it needs
     // an explicit floor instead - PoE's own rule that nothing can ever cost less than 1.
-    public int ResolvedManaCost => Mathf.Max(1, Mathf.CeilToInt(ManaCost.Value));
-    public int ResolvedCapacityCost => Mathf.Max(1, Mathf.CeilToInt(CapacityCost.Value));
+    public int ResolvedManaCost => Mathf.Max(1, Mathf.CeilToInt((ManaCost.Base + PlacementManaCost) * ManaCost.Multiplier));
+    public int ResolvedCapacityCost => Mathf.Max(1, Mathf.CeilToInt((CapacityCost.Base + PlacementCapacityCost) * CapacityCost.Multiplier));
 
     public TargetPriority TargetPriority;
 

@@ -21,15 +21,14 @@ public partial class RitualPlacer : Node
 
     public bool IsPlacing { get; private set; }
 
-    private enum Stage { Ritual, WallStart, WallEnd }
-    private Stage _stage;
-
     private Ritual _ghost;
     private MeshInstance3D _ghostMesh;
     private CollisionShape3D _ghostCollisionShape;
     private Spell _pendingSpell;
     private Godot.Collections.Array<Rune> _pendingRunes;
+    private CharacterSheet _ownerSheet;
     private SpellCastContext _pendingContext;
+    private PlacementFlow _flow;
     private bool _isValidPlacement;
 
     // Invoked once placement is actually confirmed (not on cancel) - lets a caller like
@@ -37,14 +36,6 @@ public partial class RitualPlacer : Node
     private Action _onConfirmed;
 
     private Vector3 _cursorPosition;
-    private Vector3 _wallStartPosition;
-    private Vector3 _wallEndPosition;
-    private bool _wallCostApplied;
-    private WallPlacementPreview _wallPreview;
-
-    private BoxShape3D _segmentQueryBox;
-    private PhysicsShapeQueryParameters3D _segmentQuery;
-
     private EconomyManager _economy;
 
     public override void _Ready()
@@ -59,9 +50,8 @@ public partial class RitualPlacer : Node
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
 
         // If the owning character is being torn down mid-placement (e.g. swapping bodies via a hub
-        // station while a ghost is out), the ghost/wall preview would otherwise leak - they're
-        // parented to the scene root, not to this node, so they have no other relationship to this
-        // character being freed.
+        // station while a ghost is out), the ghost and any flow preview would otherwise leak - they're
+        // parented to the scene root, not to this node.
         if (IsPlacing)
         {
             CancelPlacement();
@@ -85,22 +75,16 @@ public partial class RitualPlacer : Node
 
         _pendingSpell = spell;
         _pendingRunes = runes;
-        _pendingContext = SpellInstance.ResolvePreview(spell, runes, PlayerProfiles.Get(Character.OwnerId).SelectedSheet);
+        _ownerSheet = PlayerProfiles.Get(Character.OwnerId).SelectedSheet;
+        _pendingContext = SpellInstance.ResolvePreview(spell, runes, _ownerSheet);
+        _flow = spell.CreatePlacementFlow(this, _pendingContext);
         _onConfirmed = onConfirmed;
-        _wallCostApplied = false;
 
         IsPlacing = true;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, true);
 
-        if (_pendingContext.Wall != null)
+        if (!_flow.IsPickingPoints)
         {
-            _wallPreview = new WallPlacementPreview();
-            GetTree().CurrentScene.AddChild(_wallPreview);
-            _stage = Stage.WallStart;
-        }
-        else
-        {
-            _stage = Stage.Ritual;
             BeginRitualGhost();
         }
     }
@@ -114,23 +98,34 @@ public partial class RitualPlacer : Node
 
         UpdateCursorPosition();
 
-        switch (_stage)
+        if (_ghost == null)
         {
-            case Stage.WallStart:
-                ProcessWallStartStage();
-                break;
-            case Stage.WallEnd:
-                ProcessWallEndStage();
-                break;
-            case Stage.Ritual:
-                ProcessRitualStage();
-                break;
+            ProcessFlowPoints();
+        }
+        else
+        {
+            ProcessRitualStage();
         }
 
         if (Input.IsActionJustPressed("ui_cancel") || Input.IsActionJustPressed("alt_action"))
         {
             CancelPlacement();
         }
+    }
+
+    // Input goes to the flow until it has every point it needs. The ghost appears on the tick it
+    // finishes, resolved against what was picked so its cost and range already include it.
+    private void ProcessFlowPoints()
+    {
+        _flow.UpdatePoints(_cursorPosition, Input.IsActionJustPressed("confirm_placement"));
+
+        if (_flow.IsPickingPoints)
+        {
+            return;
+        }
+
+        _pendingContext = SpellInstance.ResolvePreview(_pendingSpell, _pendingRunes, _ownerSheet, _flow.Data);
+        BeginRitualGhost();
     }
 
     private void UpdateCursorPosition()
@@ -154,95 +149,9 @@ public partial class RitualPlacer : Node
         }
     }
 
-    private void ProcessWallStartStage()
-    {
-        WallCastData wallData = _pendingContext.Wall;
-        bool[] segmentValid = ComputeSegmentValidity(_cursorPosition, _cursorPosition, wallData, ComputeAffordableSegmentCount(wallData));
-        _wallPreview.UpdateWall(_cursorPosition, _cursorPosition, wallData, segmentValid);
-
-        if (Input.IsActionJustPressed("confirm_placement"))
-        {
-            _wallStartPosition = _cursorPosition;
-            _stage = Stage.WallEnd;
-        }
-    }
-
-    private void ProcessWallEndStage()
-    {
-        WallCastData wallData = _pendingContext.Wall;
-        int segmentCount = IceWall.ComputeSegmentCount(_wallStartPosition.DistanceTo(_cursorPosition), wallData.SegmentWidth);
-        int affordableSegments = ComputeAffordableSegmentCount(wallData);
-
-        bool[] segmentValid = ComputeSegmentValidity(_wallStartPosition, _cursorPosition, wallData, affordableSegments);
-        _wallPreview.UpdateWall(_wallStartPosition, _cursorPosition, wallData, segmentValid);
-
-        bool affordable = segmentCount <= affordableSegments;
-        bool noOverlap = System.Array.TrueForAll(segmentValid, v => v);
-        bool placementValid = affordable && noOverlap;
-
-        ShowProjectedCost(_wallStartPosition, _cursorPosition, segmentCount, placementValid);
-
-        if (placementValid && Input.IsActionJustPressed("confirm_placement"))
-        {
-            _wallEndPosition = _cursorPosition;
-            ApplyWallCostScaling();
-
-            ShowProjectedCost(_wallStartPosition, _wallEndPosition, segmentCount, affordable: true);
-            _wallPreview.Freeze(_wallStartPosition, _wallEndPosition, _pendingContext.Range.Value);
-
-            _stage = Stage.Ritual;
-            BeginRitualGhost();
-        }
-    }
-
-    // Mirrors UpdateGhostValidity's shape-overlap pattern, but per prospective segment position
-    // along the line instead of a single point - a wall can overlap something in the middle
-    // without overlapping at either end, so a single pass/fail cutoff (like affordability) isn't
-    // enough here.
-    // Shape and query params are built once and reused across segments and frames. This runs every
-    // physics frame for the whole length of a wall placement, so allocating a BoxShape3D and a
-    // query per segment per frame would churn dozens of engine objects a second at rest.
-    private bool[] ComputeSegmentValidity(Vector3 start, Vector3 end, WallCastData wallData, int affordableSegments)
-    {
-        int segmentCount = IceWall.ComputeSegmentCount(start.DistanceTo(end), wallData.SegmentWidth);
-        bool[] valid = new bool[segmentCount];
-
-        PhysicsShapeQueryParameters3D query = GetSegmentQuery(wallData.SegmentWidth);
-        PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
-
-        for (int i = 0; i < segmentCount; i++)
-        {
-            Vector3 ground = IceWall.SegmentPosition(start, end, i, segmentCount);
-            query.Transform = new Transform3D(Basis.Identity, IceWall.SegmentBoxCenter(ground, wallData.SegmentWidth));
-
-            bool overlaps = spaceState.IntersectShape(query).Count > 0;
-            valid[i] = i < affordableSegments && !overlaps;
-        }
-
-        return valid;
-    }
-
-    private PhysicsShapeQueryParameters3D GetSegmentQuery(float segmentWidth)
-    {
-        if (_segmentQuery == null)
-        {
-            _segmentQueryBox = new BoxShape3D();
-            _segmentQuery = new PhysicsShapeQueryParameters3D
-            {
-                Shape = _segmentQueryBox,
-                CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked | PhysicsLayers.RitualHitbox,
-                CollideWithBodies = true,
-                CollideWithAreas = false
-            };
-        }
-
-        _segmentQueryBox.Size = IceWall.SegmentBoxSize(segmentWidth);
-        return _segmentQuery;
-    }
-
     private void ProcessRitualStage()
     {
-        _ghost.GlobalPosition = _pendingContext.Wall != null ? ClampToWallRange(_cursorPosition) : _cursorPosition;
+        _ghost.GlobalPosition = _flow.ConstrainRitualPosition(_cursorPosition);
         UpdateGhostValidity();
 
         if (Input.IsActionJustPressed("confirm_placement") && _isValidPlacement)
@@ -261,7 +170,7 @@ public partial class RitualPlacer : Node
         _ghostCollisionShape = _ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
         _ghostCollisionShape.Disabled = true;
 
-        if (_pendingContext.Wall == null)
+        if (_flow.ShowsRangeIndicator)
         {
             _ghost.AddChild(BuildRangeIndicator(_pendingContext.Range.Value));
         }
@@ -281,114 +190,12 @@ public partial class RitualPlacer : Node
         };
 
         Godot.Collections.Array<Godot.Collections.Dictionary> overlaps = spaceState.IntersectShape(query);
-        bool overlapsOwnWall = _pendingContext.Wall != null && OverlapsOwnWallLine();
 
-        _isValidPlacement = overlaps.Count == 0 && !overlapsOwnWall && _economy.CanAfford(_pendingContext);
+        _isValidPlacement = overlaps.Count == 0
+            && _flow.IsRitualPositionAllowed(_ghost.GlobalPosition)
+            && _economy.CanAfford(_pendingContext);
 
         _ghostMesh.MaterialOverride = _isValidPlacement ? PreviewMaterials.Valid : PreviewMaterials.Invalid;
-    }
-
-    // The wall this tower belongs to has no physics presence yet at this point in placement - the
-    // real IceWall only casts once an enemy triggers it, and WallFootprintMarker isn't built until
-    // the whole placement is confirmed - so this checks the ghost's position against the wall's own
-    // line directly, using the same discrete segment positions IceWall/WallFootprintMarker use.
-    private bool OverlapsOwnWallLine()
-    {
-        WallCastData wallData = _pendingContext.Wall;
-        int segmentCount = IceWall.ComputeSegmentCount(_wallStartPosition.DistanceTo(_wallEndPosition), wallData.SegmentWidth);
-
-        for (int i = 0; i < segmentCount; i++)
-        {
-            Vector3 segmentPosition = IceWall.SegmentPosition(_wallStartPosition, _wallEndPosition, i, segmentCount);
-
-            if (_ghost.GlobalPosition.DistanceTo(segmentPosition) < wallData.SegmentWidth)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    // Clamps an arbitrary world point to the nearest point inside the wall's flat-capped
-    // rectangular placement zone (WallPlacementPreview draws the same shape).
-    private Vector3 ClampToWallRange(Vector3 point)
-    {
-        Vector3 diff = _wallEndPosition - _wallStartPosition;
-        float length = diff.Length();
-        float range = _pendingContext.Range.Value;
-
-        if (length < 0.0001f)
-        {
-            Vector3 toPoint = point - _wallStartPosition;
-            return toPoint.Length() <= range ? point : _wallStartPosition + toPoint.Normalized() * range;
-        }
-
-        Vector3 direction = diff / length;
-        Vector3 perpendicular = new Vector3(-direction.Z, 0f, direction.X);
-
-        Vector3 offset = point - _wallStartPosition;
-        float along = Mathf.Clamp(offset.Dot(direction), 0f, length);
-        float across = Mathf.Clamp(offset.Dot(perpendicular), -range, range);
-
-        return _wallStartPosition + direction * along + perpendicular * across;
-    }
-
-    // The highest segment count still affordable given currently-held Mana and remaining
-    // Capacity — since each extra segment adds a fixed cost, this is a clean cutoff rather than
-    // something that needs checking per-segment independently.
-    private int ComputeAffordableSegmentCount(WallCastData wallData)
-    {
-        if (_economy.Unlimited)
-        {
-            return int.MaxValue;
-        }
-
-        float manaPerSegment = wallData.ManaCostPerSegment * _pendingContext.ManaCost.Multiplier;
-        float capacityPerSegment = wallData.CapacityCostPerSegment * _pendingContext.CapacityCost.Multiplier;
-        int capacityRemaining = _economy.MaxCapacity - _economy.CapacityUsed;
-
-        int manaMax = manaPerSegment > 0f
-            ? Mathf.FloorToInt((_economy.Mana - _pendingContext.ManaCost.Value) / manaPerSegment)
-            : int.MaxValue;
-
-        int capacityMax = capacityPerSegment > 0f
-            ? Mathf.FloorToInt((capacityRemaining - _pendingContext.CapacityCost.Value) / capacityPerSegment)
-            : int.MaxValue;
-
-        return Mathf.Max(0, Mathf.Min(manaMax, capacityMax));
-    }
-
-    // While the wall's size is still being adjusted this projects the total (base plus the
-    // not-yet-committed segment cost) without touching _pendingContext. Once ApplyWallCostScaling
-    // has folded that cost into the base, the resolved values already include it.
-    private void ShowProjectedCost(Vector3 start, Vector3 end, int segmentCount, bool affordable)
-    {
-        WallCastData wallData = _pendingContext.Wall;
-
-        float mana = _pendingContext.ManaCost.Value;
-        float capacity = _pendingContext.CapacityCost.Value;
-
-        if (!_wallCostApplied)
-        {
-            mana += segmentCount * wallData.ManaCostPerSegment * _pendingContext.ManaCost.Multiplier;
-            capacity += segmentCount * wallData.CapacityCostPerSegment * _pendingContext.CapacityCost.Multiplier;
-        }
-
-        string text = $"Segments: {segmentCount}\nMana: {Mathf.CeilToInt(mana)}   Capacity: {Mathf.CeilToInt(capacity)}";
-        _wallPreview.ShowCost(start, end, text, affordable);
-    }
-
-    // Folds the wall's per-segment cost into the base, so the rune-derived multipliers already
-    // sitting on ManaCost/CapacityCost scale the whole total rather than just the flat base.
-    private void ApplyWallCostScaling()
-    {
-        WallCastData wallData = _pendingContext.Wall;
-        int segmentCount = IceWall.ComputeSegmentCount(_wallStartPosition.DistanceTo(_wallEndPosition), wallData.SegmentWidth);
-
-        _pendingContext.ManaCost.Base += segmentCount * wallData.ManaCostPerSegment;
-        _pendingContext.CapacityCost.Base += segmentCount * wallData.CapacityCostPerSegment;
-        _wallCostApplied = true;
     }
 
     private void ConfirmPlacement()
@@ -397,16 +204,8 @@ public partial class RitualPlacer : Node
         GetTree().CurrentScene.AddChild(placed);
         placed.GlobalTransform = _ghost.GlobalTransform;
         placed.SetOwnerId(Character.OwnerId);
-        placed.Configure(_pendingSpell, _pendingRunes);
-
-        if (_pendingContext.Wall != null)
-        {
-            placed.SetWallEndpoints(_wallStartPosition, _wallEndPosition);
-
-            WallFootprintMarker marker = new WallFootprintMarker();
-            placed.AddChild(marker);
-            marker.Initialize(_wallStartPosition, _wallEndPosition, _pendingContext.Wall.SegmentWidth);
-        }
+        placed.Configure(_pendingSpell, _pendingRunes, _flow.Data);
+        _flow.OnPlaced(placed);
 
         (int manaCost, int capacityCost) = _economy.SpendOnRitual(_pendingContext);
         placed.SetCost(manaCost, capacityCost);
@@ -423,12 +222,8 @@ public partial class RitualPlacer : Node
 
     private void EndPlacement()
     {
-        if (_wallPreview != null)
-        {
-            _wallPreview.Clear();
-            _wallPreview.QueueFree();
-            _wallPreview = null;
-        }
+        _flow?.End();
+        _flow = null;
 
         if (_ghost != null)
         {

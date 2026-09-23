@@ -4,7 +4,7 @@ public partial class WallFootprintMarker : StaticBody3D
 {
     // A thin ice-colored outline on the ground tracing the wall's own footprint, plus a row of
     // collision boxes standing in for the segments that won't physically exist until the wall
-    // actually casts (ProximityCastTrigger needs an enemy nearby - see WallCastEffect). These sit
+    // actually casts (WallProximityCastTrigger needs an enemy nearby - see WallCastEffect). These sit
     // on PlacementBlocked rather than Obstacles specifically so enemies don't collide with a wall
     // that hasn't triggered yet, while ritual placement checks still treat the space as reserved.
     public void Initialize(Vector3 start, Vector3 end, float segmentWidth)

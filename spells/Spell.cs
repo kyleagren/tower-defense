@@ -33,4 +33,8 @@ public abstract partial class Spell : Resource
     };
 
     public abstract SpellCastContext CreateBaseContext();
+
+    // The plain flow by default: nothing to pick, the Ritual goes wherever it fits. A spell with
+    // placement-time choices of its own (Ice Wall's endpoints) returns its own flow instead.
+    public virtual PlacementFlow CreatePlacementFlow(RitualPlacer placer, SpellCastContext context) => new PlacementFlow();
 }

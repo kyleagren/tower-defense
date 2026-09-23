@@ -40,7 +40,9 @@ public partial class IceWallSpell : Spell
                 ManaCostPerSegment = BaseManaCostPerSegment,
                 CapacityCostPerSegment = BaseCapacityCostPerSegment
             },
-            CastTrigger = new ProximityCastTrigger { Range = BaseDetectionRange }
+            CastTrigger = new WallProximityCastTrigger { Range = BaseDetectionRange }
         };
     }
+
+    public override PlacementFlow CreatePlacementFlow(RitualPlacer placer, SpellCastContext context) => new WallPlacementFlow(placer, context);
 }

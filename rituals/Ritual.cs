@@ -37,9 +37,6 @@ public partial class Ritual : Node3D, IDamageable
     public bool IsDestroyed => _disabled;
     public Vector3 AimPoint => CoreMesh.GlobalPosition;
 
-    public Vector3? WallStart { get; private set; }
-    public Vector3? WallEnd { get; private set; }
-
     // So a CastEffect can act on the target this Ritual already picked rather than searching again.
     public Enemy CurrentTarget => _currentTarget;
 
@@ -144,16 +141,21 @@ public partial class Ritual : Node3D, IDamageable
         }
     }
 
+    private float MissingHealthFraction => 1f - (_currentHealth / MaxHealth);
+
     public void Repair()
     {
-        float missingFraction = 1f - (_currentHealth / MaxHealth);
+        float missingFraction = MissingHealthFraction;
 
         if (missingFraction <= 0f)
         {
             return;
         }
 
-        int repairCost = Mathf.CeilToInt(_manaCost * GameRules.RepairCostFraction * missingFraction);
+        // The spell's own cost only - placement extras like an Ice Wall's segments are left out,
+        // since the Ritual's own health doesn't scale with them.
+        float ownCost = ResolveWithOwner().ManaCost.Value;
+        int repairCost = Mathf.CeilToInt(ownCost * GameRules.RepairCostFraction * missingFraction);
 
         if (!EconomyManager.Instance.TrySpendMana(repairCost))
         {
@@ -173,22 +175,21 @@ public partial class Ritual : Node3D, IDamageable
         _capacityCost = capacityCost;
     }
 
-    public void SetWallEndpoints(Vector3 start, Vector3 end)
-    {
-        WallStart = start;
-        WallEnd = end;
-    }
-
+    // Mana back shrinks with damage by the same fraction repair charges, so a healthy Ritual
+    // refunds everything and a broken one only part - tearing a broken Ritual down and rebuilding
+    // it is never a way around repairing it. Capacity always returns in full: it's a ceiling on
+    // what can be built, not a currency, so shorting it would lose it for the rest of the match.
     public void Destroy()
     {
-        EconomyManager.Instance.RefundRitual(_manaCost, _capacityCost);
+        int manaRefund = Mathf.FloorToInt(_manaCost * (1f - GameRules.RepairCostFraction * MissingHealthFraction));
+        EconomyManager.Instance.RefundRitual(manaRefund, _capacityCost);
         QueueFree();
     }
 
-    public void Configure(Spell spell, IReadOnlyList<Rune> runes)
+    public void Configure(Spell spell, IReadOnlyList<Rune> runes, PlacementData placement = null)
     {
         Spell = spell;
-        _spellInstance = new SpellInstance(spell);
+        _spellInstance = new SpellInstance(spell, placement);
 
         for (int i = 0; i < RuneSlots.Length; i++)
         {
