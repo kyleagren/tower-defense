@@ -1,10 +1,7 @@
 using Godot;
-using System.Collections.Generic;
 
 public partial class Architect : PlayerCharacter
 {
-    public static Dictionary<PlayerId, Architect> ByOwner { get; } = new();
-
     [Export] public BuildMenu BuildMenu { get; private set; }
     [Export] public RitualPlacer RitualPlacer { get; private set; }
 
@@ -13,7 +10,7 @@ public partial class Architect : PlayerCharacter
     public override void _Ready()
     {
         base._Ready();
-        ByOwner[OwnerId] = this;
+        Level.Architects[OwnerId] = this;
         BuildMenu.Closed += OnBuildMenuClosed;
         BuildMenu.Confirmed += OnBuildMenuConfirmed;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
@@ -21,11 +18,12 @@ public partial class Architect : PlayerCharacter
 
     public override void _ExitTree()
     {
+        base._ExitTree();
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
 
-        if (ByOwner.TryGetValue(OwnerId, out Architect current) && current == this)
+        if (Level.Architects.TryGetValue(OwnerId, out Architect current) && current == this)
         {
-            ByOwner.Remove(OwnerId);
+            Level.Architects.Remove(OwnerId);
         }
     }
 
@@ -75,7 +73,7 @@ public partial class Architect : PlayerCharacter
 
         if (shouldBeActive)
         {
-            HandoffFrom(Sentinel.ByOwner[OwnerId]);
+            HandoffFrom(Level.Sentinels[OwnerId]);
         }
 
         SetActive(shouldBeActive);

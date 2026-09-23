@@ -417,7 +417,7 @@ public partial class ItemDragController : CanvasLayer
             return;
         }
 
-        PlayerCharacter player = PlayerCharacter.ActiveCombatant;
+        PlayerCharacter player = LevelContext.Current?.LocalActiveCharacter;
         Vector3 forward = -player.GlobalTransform.Basis.Z;
         Vector3 direction = forward.Rotated(Vector3.Up, Mathf.DegToRad((float)GD.RandRange(-DropAngleSpread, DropAngleSpread)));
         float distance = DropDistance + (float)GD.RandRange(-DropDistanceVariance, DropDistanceVariance);

@@ -144,7 +144,7 @@ public partial class WaveController : Node
             await RunSpawnStep(step.Spawn);
         }
 
-        while (!_matchOver && EnemyRegistry.Active.Count > 0)
+        while (!_matchOver && LevelContext.Current.Enemies.Active.Count > 0)
         {
             await ToSignal(GetTree().CreateTimer(EnemyCheckInterval), "timeout");
         }

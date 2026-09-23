@@ -192,7 +192,7 @@ public partial class InventoryPanel : Control
 
     public void Open()
     {
-        if (PlayerCharacter.ActiveCombatant == null)
+        if (LevelContext.Current?.LocalActiveCharacter == null)
         {
             return;
         }
@@ -466,7 +466,7 @@ public partial class InventoryPanel : Control
 
     private void DropInWorld(Item item)
     {
-        PlayerCharacter player = PlayerCharacter.ActiveCombatant;
+        PlayerCharacter player = LevelContext.Current?.LocalActiveCharacter;
         Vector3 forward = -player.GlobalTransform.Basis.Z;
         Vector3 direction = forward.Rotated(Vector3.Up, Mathf.DegToRad((float)GD.RandRange(-DropAngleSpread, DropAngleSpread)));
         float distance = DropDistance + (float)GD.RandRange(-DropDistanceVariance, DropDistanceVariance);

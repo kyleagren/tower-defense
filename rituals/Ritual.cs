@@ -20,6 +20,7 @@ public partial class Ritual : Node3D, IDamageable
         ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
     };
 
+    private LevelContext _level;
     private SpellInstance _spellInstance;
     private StaticBody3D _body;
     private CharacterSheet _ownerSheet;
@@ -49,7 +50,8 @@ public partial class Ritual : Node3D, IDamageable
         _currentHealth = MaxHealth;
         _body = GetNode<StaticBody3D>("StaticBody3D");
         _activeMaterial = CoreMesh.MaterialOverride;
-        RitualRegistry.Register(this);
+        _level = LevelContext.Current;
+        _level.Rituals.Register(this);
         HealthBar.SetFraction(1f);
         HealthBar.Visible = false;
 
@@ -73,7 +75,7 @@ public partial class Ritual : Node3D, IDamageable
     public override void _ExitTree()
     {
         EventBus.Instance.InventoryChanged -= OnInventoryChanged;
-        RitualRegistry.Unregister(this);
+        _level.Rituals.Unregister(this);
     }
 
     // Equipment changing anywhere drops both cached layers - the resolved context and the owner

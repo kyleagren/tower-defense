@@ -10,6 +10,7 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
         AlbedoColor = DamageTypeColors.Get(Tag.Cold)
     };
 
+    private LevelContext _level;
     private IceWall _wall;
     private bool _isBroken;
 
@@ -19,14 +20,15 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
 
     public override void _Ready()
     {
-        IceWallSegmentRegistry.Register(this);
+        _level = LevelContext.Current;
+        _level.IceWallSegments.Register(this);
     }
 
-    // Safety net for segments freed without breaking (e.g. scene reload). Unregistering twice is
-    // a no-op, so the Break() path unregistering first is unaffected.
+    // Safety net for segments freed without breaking. Unregistering twice is a no-op, so the
+    // Break() path unregistering first is unaffected.
     public override void _ExitTree()
     {
-        IceWallSegmentRegistry.Unregister(this);
+        _level.IceWallSegments.Unregister(this);
     }
 
     public void Initialize(IceWall wall, float width)
@@ -69,7 +71,7 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
         }
 
         _isBroken = true;
-        IceWallSegmentRegistry.Unregister(this);
+        _level.IceWallSegments.Unregister(this);
         QueueFree();
     }
 }

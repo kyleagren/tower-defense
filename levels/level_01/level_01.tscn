@@ -23,6 +23,7 @@
 [ext_resource type="PackedScene" uid="uid://dsutqhp5i2738" path="res://characters/soldier/Soldier.tscn" id="24_soldierscene"]
 [ext_resource type="PackedScene" uid="uid://de5pbikw458xe" path="res://characters/tank/Tank.tscn" id="25_tankscene"]
 [ext_resource type="PackedScene" uid="uid://ct3j8oj7yvja4" path="res://levels/hub/hub.tscn" id="26_hubscene"]
+[ext_resource type="Script" path="res://core/LevelContext.cs" id="27_levelcontext"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
@@ -82,6 +83,9 @@ radius = 1.1
 [sub_resource type="Environment" id="Environment_default"]
 
 [node name="LevelOne" type="Node3D" unique_id=493134053]
+
+[node name="LevelContext" type="Node" parent="."]
+script = ExtResource("27_levelcontext")
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1818073141]
 navigation_mesh = SubResource("NavigationMesh_level01")

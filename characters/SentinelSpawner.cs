@@ -1,17 +1,12 @@
 using Godot;
-using System.Collections.Generic;
 
 // Instantiates only the PlayerCharacter matching this owner's current selection - a Sentinel via
 // PlayerSentinels, or the Architect for hub DPS-testing - rather than hardcoding every roster
 // member as an always-present scene child. There's never more than one body alive per player, so
-// Sentinel.Local/Architect.ByOwner never have to guess which of several simultaneous instances is
+// LevelContext's per-player lookups never have to guess which of several simultaneous instances is
 // the real one.
 public partial class SentinelSpawner : Node
 {
-    // Lets a station/trigger attached to a dynamically-spawned character (which has no scene-time
-    // link back to the spawner that made it) find "my own spawner" by shared OwnerId.
-    public static Dictionary<PlayerId, SentinelSpawner> ByOwner { get; } = new();
-
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
 
     // The hub has no Architect at spawn time and no Combat-phase transition to wait for, so its
@@ -24,6 +19,7 @@ public partial class SentinelSpawner : Node
     [Export] public PackedScene TankScene { get; private set; }
     [Export] public PackedScene ArchitectScene { get; private set; }
 
+    private LevelContext _level;
     private PlayerCharacter _current;
 
     // Lets a trigger built for one specific transition (e.g. ArchitectTestZone's auto-revert) confirm
@@ -39,7 +35,10 @@ public partial class SentinelSpawner : Node
             return;
         }
 
-        ByOwner[OwnerId] = this;
+        // Registered so a station/trigger attached to a dynamically-spawned character (which has no
+        // scene-time link back to the spawner that made it) can find "my own spawner" by OwnerId.
+        _level = LevelContext.Current;
+        _level.SentinelSpawners[OwnerId] = this;
         CallDeferred(nameof(SelectPersistedSentinel));
     }
 
@@ -104,7 +103,7 @@ public partial class SentinelSpawner : Node
         }
         else
         {
-            character.HandoffFrom(Architect.ByOwner[OwnerId]);
+            character.HandoffFrom(_level.Architects[OwnerId]);
         }
 
         if (previous != null && IsInstanceValid(previous))

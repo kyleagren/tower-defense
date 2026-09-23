@@ -72,7 +72,7 @@ public partial class ItemNameplateController : CanvasLayer
 
     public override void _Process(double delta)
     {
-        PlayerCharacter player = PlayerCharacter.ActiveCombatant;
+        PlayerCharacter player = LevelContext.Current?.LocalActiveCharacter;
 
         if (player == null || !IsInstanceValid(player))
         {
@@ -91,7 +91,7 @@ public partial class ItemNameplateController : CanvasLayer
         bool expandedShownThisFrame = false;
         PanelContainer targetedNameplate = null;
 
-        foreach (WorldItem item in WorldItemRegistry.Active)
+        foreach (WorldItem item in LevelContext.Current.WorldItems.Active)
         {
             float distance = item.GlobalPosition.DistanceTo(player.GlobalPosition);
             if (distance > NameplateRange)

@@ -25,7 +25,7 @@ public partial class ArchitectTestZone : Area3D
     {
         if (body is Architect architect && IsInstanceValid(architect))
         {
-            SentinelSpawner spawner = SentinelSpawner.ByOwner[architect.OwnerId];
+            SentinelSpawner spawner = LevelContext.Current.SentinelSpawners[architect.OwnerId];
 
             if (spawner.Current == architect)
             {

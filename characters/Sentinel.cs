@@ -3,12 +3,8 @@ using System.Collections.Generic;
 
 public abstract partial class Sentinel : PlayerCharacter, IDamageable
 {
-    // Every spawned Sentinel, keyed by which player controls it - SentinelSpawner sets OwnerId
-    // before adding it to the tree, so this is always correct by the time _Ready registers it.
-    // Local is a convenience for "the local player's own Sentinel," built on top of this rather
-    // than tracked separately, so there's one source of truth instead of two that could disagree.
-    public static Dictionary<PlayerId, Sentinel> ByOwner { get; } = new();
-    public static Sentinel Local => ByOwner.GetValueOrDefault(PlayerSentinels.Local);
+    // The local player's own Sentinel in the current scene, whether or not it's the active body.
+    public static Sentinel Local => LevelContext.Current?.Sentinels.GetValueOrDefault(PlayerSentinels.Local);
 
     [Export] public Node3D Weapon { get; private set; }
     [Export] public float BaseMaxHealth = 100f;
@@ -116,7 +112,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         TokenDeployer = GetNode<TokenDeployer>("TokenDeployer");
         _currentHealth = MaxHealth;
         _currentShield = MaxShield;
-        ByOwner[OwnerId] = this;
+        Level.Sentinels[OwnerId] = this;
         SetActive(false);
         Weapon.Visible = false;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
@@ -126,11 +122,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     public override void _ExitTree()
     {
+        base._ExitTree();
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
 
-        if (ByOwner.TryGetValue(OwnerId, out Sentinel current) && current == this)
+        if (Level.Sentinels.TryGetValue(OwnerId, out Sentinel current) && current == this)
         {
-            ByOwner.Remove(OwnerId);
+            Level.Sentinels.Remove(OwnerId);
         }
     }
 
@@ -197,7 +194,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
         if (phase == GamePhase.Combat)
         {
-            HandoffFrom(Architect.ByOwner[OwnerId]);
+            HandoffFrom(Level.Architects[OwnerId]);
         }
         else if (phase == GamePhase.Build)
         {

@@ -13,7 +13,7 @@ public partial class DebugToggle : Node
         {
             DebugSettings.ShowEnemyHealthBars = !DebugSettings.ShowEnemyHealthBars;
 
-            foreach (Enemy enemy in EnemyRegistry.Active)
+            foreach (Enemy enemy in LevelContext.Current.Enemies.Active)
             {
                 enemy.HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
             }
@@ -29,7 +29,6 @@ public partial class DebugToggle : Node
                 : CharacterId.Soldier;
 
             PlayerSentinels.Set(PlayerSentinels.Local, next);
-            UiPanelStack.Reset();
             GetTree().ReloadCurrentScene();
         }
         else if (keyEvent.PhysicalKeycode == Key.F4)

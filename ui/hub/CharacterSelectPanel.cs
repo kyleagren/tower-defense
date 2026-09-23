@@ -62,7 +62,7 @@ public partial class CharacterSelectPanel : Control
     {
         PlayerId owner = _owner;
         Close();
-        SentinelSpawner.ByOwner[owner].SelectSentinel(character);
+        LevelContext.Current.SentinelSpawners[owner].SelectSentinel(character);
     }
 
     public override void _UnhandledInput(InputEvent @event)

@@ -11,14 +11,17 @@ public partial class WorldItem : StaticBody3D
 
     private static readonly Color _currencyGoldColor = new Color(0.83f, 0.69f, 0.22f);
 
+    private LevelContext _level;
+
     public override void _Ready()
     {
-        WorldItemRegistry.Register(this);
+        _level = LevelContext.Current;
+        _level.WorldItems.Register(this);
     }
 
     public override void _ExitTree()
     {
-        WorldItemRegistry.Unregister(this);
+        _level.WorldItems.Unregister(this);
     }
 
     // Assigns a fresh material rather than editing VisualMesh's shared scene material - every

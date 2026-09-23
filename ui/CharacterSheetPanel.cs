@@ -63,7 +63,7 @@ public partial class CharacterSheetPanel : Control
 
     private void Open()
     {
-        if (PlayerCharacter.ActiveCombatant == null)
+        if (LevelContext.Current?.LocalActiveCharacter == null)
         {
             return;
         }

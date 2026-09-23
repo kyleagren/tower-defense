@@ -47,20 +47,6 @@ public partial class GameOverHandler : Node
 
     private void ReturnToHub()
     {
-        // Everything static that outlives the scene gets reset together here, so nothing from the
-        // finished match can leak into the hub. Architect/Sentinel/SentinelSpawner's ByOwner
-        // dictionaries are cleared here too - ChangeSceneToFile queues the old tree for deletion
-        // rather than freeing it immediately, so a freed node's own _ExitTree unregistration can
-        // land after the hub's fresh nodes have already registered the same PlayerId, leaving a
-        // real window where a lookup like Architect.ByOwner[OwnerId] finds nothing.
-        UiPanelStack.Reset();
-        EnemyRegistry.Clear();
-        IceWallSegmentRegistry.Clear();
-        WorldItemRegistry.Clear();
-        Architect.ByOwner.Clear();
-        Sentinel.ByOwner.Clear();
-        SentinelSpawner.ByOwner.Clear();
-
         GetTree().ChangeSceneToPacked(HubScene);
     }
 }

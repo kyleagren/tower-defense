@@ -36,7 +36,7 @@ public static class RuneCatalog
             return true;
         }
 
-        int inUse = RitualRegistry.Active.SelectMany(ritual => ritual.RuneSlots).Count(socketed => socketed == rune);
+        int inUse = LevelContext.Current.Rituals.Active.SelectMany(ritual => ritual.RuneSlots).Count(socketed => socketed == rune);
         return inUse < entry.Quantity;
     }
 
@@ -53,18 +53,24 @@ public static class RuneCatalog
 
     // Recurses into subfolders - each rune type gets its own folder (e.g. assets/runes/chain/)
     // to hold its five rarity-tier .tres files without the whole directory becoming one flat pile.
+    // ResourceLoader.ListDirectory rather than DirAccess: an export converts and renames resource
+    // files, and DirAccess sees the renamed ones, so a .tres filter would find nothing.
     private static void ScanDirectory(string path)
     {
-        DirAccess dir = DirAccess.Open(path);
-
-        if (dir == null)
+        foreach (string entry in ResourceLoader.ListDirectory(path))
         {
-            return;
-        }
+            if (entry.EndsWith("/"))
+            {
+                ScanDirectory(path + entry);
+                continue;
+            }
 
-        foreach (string fileName in dir.GetFiles().Where(f => f.EndsWith(".tres")))
-        {
-            Rune rune = GD.Load<Rune>(path + fileName);
+            if (!entry.EndsWith(".tres"))
+            {
+                continue;
+            }
+
+            Rune rune = GD.Load<Rune>(path + entry);
 
             if (rune == null)
             {
@@ -78,11 +84,6 @@ public static class RuneCatalog
             }
 
             list.Add(rune);
-        }
-
-        foreach (string subDirectory in dir.GetDirectories())
-        {
-            ScanDirectory($"{path}{subDirectory}/");
         }
     }
 }

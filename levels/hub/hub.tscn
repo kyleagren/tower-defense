@@ -24,6 +24,7 @@
 [ext_resource type="PackedScene" uid="uid://dsutqhp5i2738" path="res://characters/soldier/Soldier.tscn" id="22_soldierscene"]
 [ext_resource type="PackedScene" uid="uid://de5pbikw458xe" path="res://characters/tank/Tank.tscn" id="23_tankscene"]
 [ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://characters/architect/Architect.tscn" id="24_architectscene"]
+[ext_resource type="Script" path="res://core/LevelContext.cs" id="25_levelcontext"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -164,6 +165,9 @@ material = SubResource("StandardMaterial3D_vendor")
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_vendor"]
 
 [node name="Hub" type="Node3D" unique_id=1931328644]
+
+[node name="LevelContext" type="Node" parent="."]
+script = ExtResource("25_levelcontext")
 
 [node name="GroundRoomA" type="StaticBody3D" parent="." unique_id=525299963]
 

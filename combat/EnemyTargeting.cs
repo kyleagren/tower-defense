@@ -49,7 +49,7 @@ public static class EnemyTargeting
     // full re-scan for every enemy considered.
     private static Enemy FindBest(Func<Enemy, float> rangeSquaredTo, float range, Func<Enemy, float> score, ISet<Enemy> exclude, Func<Enemy, bool> predicate, ISet<Enemy> alsoExclude = null)
     {
-        IReadOnlyList<Enemy> candidates = EnemyRegistry.Active;
+        IReadOnlyList<Enemy> candidates = LevelContext.Current.Enemies.Active;
         float rangeSquared = range * range;
 
         Enemy best = null;

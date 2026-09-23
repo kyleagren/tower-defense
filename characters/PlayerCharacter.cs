@@ -2,12 +2,6 @@ using Godot;
 
 public abstract partial class PlayerCharacter : CharacterBody3D
 {
-    // Whichever PlayerCharacter subclass is currently active is the valid enemy-attack target.
-    // Architect and Sentinel are never simultaneously active (each phase transition deactivates
-    // one and activates the other), and no enemies exist during Build phase to read this while
-    // it points at Architect — so no subclass needs to opt in or out individually.
-    public static PlayerCharacter ActiveCombatant { get; private set; }
-
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
     [Export] public float BaseSpeed = 5.0f;
     [Export] public float JumpVelocity = 4.5f;
@@ -36,13 +30,21 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     // LookSensitivity; nothing outside this class needs the backing fields.
     protected float LookSensitivity { get; set; } = 1f;
 
+    protected LevelContext Level { get; private set; }
+
     private float _cameraPitch;
     private float _gravity;
     private bool _active;
 
     public override void _Ready()
     {
+        Level = LevelContext.Current;
         _gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
+    }
+
+    public override void _ExitTree()
+    {
+        ReleaseActiveSlot();
     }
 
     public Vector3 GetCameraAimPoint(float distance)
@@ -77,9 +79,23 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
         if (_active)
         {
-            ActiveCombatant = this;
+            Level.ActiveCharacters[OwnerId] = this;
             Input.MouseMode = Input.MouseModeEnum.Captured;
             MakeCameraCurrent();
+        }
+        else
+        {
+            ReleaseActiveSlot();
+        }
+    }
+
+    // Only ever removes this character's own entry: the Sentinel and Architect both react to the
+    // same phase change in no guaranteed order, so the one activating may already have claimed it.
+    private void ReleaseActiveSlot()
+    {
+        if (Level.ActiveCharacters.TryGetValue(OwnerId, out PlayerCharacter current) && current == this)
+        {
+            Level.ActiveCharacters.Remove(OwnerId);
         }
     }
 

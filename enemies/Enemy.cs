@@ -99,33 +99,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     private const float WeakPointHitRadius = 0.18f;
 
-    // Level-wide rather than per-instance: Weak-Point Visor marks every enemy regardless of who
-    // cast it, so an enemy spawning mid-duration (WaveController, EnemySpawner) needs a static flag
-    // to check in _Ready rather than relying on the ability re-scanning EnemyRegistry, which only
-    // ever sees enemies that already existed at activation time.
-    public static bool IsWeakPointVisorActive { get; private set; }
-    private static int _activeWeakPointVisorCount;
-
-    public static void ActivateWeakPointVisor(int count)
-    {
-        IsWeakPointVisorActive = true;
-        _activeWeakPointVisorCount = count;
-
-        foreach (Enemy enemy in EnemyRegistry.Active)
-        {
-            enemy.ExposeWeakPoints(count);
-        }
-    }
-
-    public static void DeactivateWeakPointVisor()
-    {
-        IsWeakPointVisorActive = false;
-
-        foreach (Enemy enemy in EnemyRegistry.Active)
-        {
-            enemy.ClearWeakPoints();
-        }
-    }
+    protected LevelContext Level { get; private set; }
 
     private readonly List<MeshInstance3D> _activeWeakPoints = new List<MeshInstance3D>();
 
@@ -202,28 +176,29 @@ public partial class Enemy : CharacterBody3D, IDamageable
     public override void _Ready()
     {
         CurrentHealth = MaxHealth;
+        Level = LevelContext.Current;
 
         // Group membership is for editor / remote-debugger inspection only — code paths that need
-        // living enemies go through EnemyRegistry, which excludes ragdolls.
+        // living enemies go through LevelContext.Enemies, which excludes ragdolls.
         AddToGroup(Groups.Enemies);
-        EnemyRegistry.Register(this);
+        Level.Enemies.Register(this);
 
         HealthBar.SetFraction(1f);
         HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
 
         CollectMeshInstances();
 
-        if (IsWeakPointVisorActive)
+        if (Level.IsWeakPointVisorActive)
         {
-            ExposeWeakPoints(_activeWeakPointVisorCount);
+            ExposeWeakPoints(Level.WeakPointVisorCount);
         }
     }
 
-    // Safety net for enemies freed without dying — scene reload, in particular. Unregistering
-    // twice is a no-op, so the Die() path unregistering first is unaffected.
+    // Safety net for enemies freed without dying. Unregistering twice is a no-op, so the Die() path
+    // unregistering first is unaffected.
     public override void _ExitTree()
     {
-        EnemyRegistry.Unregister(this);
+        Level.Enemies.Unregister(this);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -353,7 +328,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         }
 
         _isDead = true;
-        EnemyRegistry.Unregister(this);
+        Level.Enemies.Unregister(this);
         HealthBar.Visible = false;
         EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward, GlobalPosition, DropChance, LootRolls);
 

@@ -9,7 +9,7 @@ public partial class ArchitectSelectStation : StaticBody3D, IInteractable
 
     public void Interact(PlayerCharacter character)
     {
-        SentinelSpawner spawner = SentinelSpawner.ByOwner[character.OwnerId];
+        SentinelSpawner spawner = LevelContext.Current.SentinelSpawners[character.OwnerId];
 
         if (character is Architect)
         {

@@ -328,7 +328,7 @@ public partial class WalkingEnemy : Enemy
         IceWallSegment nearest = null;
         float bestDistance = maxDistance;
 
-        foreach (IceWallSegment segment in IceWallSegmentRegistry.Active)
+        foreach (IceWallSegment segment in Level.IceWallSegments.Active)
         {
             if (wall != null && segment.Wall != wall)
             {
@@ -422,7 +422,7 @@ public partial class WalkingEnemy : Enemy
         Ritual nearest = null;
         float bestDistance = maxDistance;
 
-        foreach (Ritual ritual in RitualRegistry.Active)
+        foreach (Ritual ritual in Level.Rituals.Active)
         {
             if (ritual.IsDestroyed || ritual.IsShrouded)
             {

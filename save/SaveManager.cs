@@ -1,5 +1,4 @@
 using Godot;
-using System;
 using System.Linq;
 
 public partial class SaveManager : Node
@@ -95,18 +94,12 @@ public partial class SaveManager : Node
         return changed;
     }
 
+    // ResourceLoader.ListDirectory rather than DirAccess - see RuneCatalog.ScanDirectory.
     private static string[] ListResourceFiles(string directoryPath)
     {
-        DirAccess dir = DirAccess.Open(directoryPath);
-
-        if (dir == null)
-        {
-            return Array.Empty<string>();
-        }
-
-        return dir.GetFiles()
-            .Where(fileName => fileName.EndsWith(".tres"))
-            .Select(fileName => directoryPath + fileName)
+        return ResourceLoader.ListDirectory(directoryPath)
+            .Where(entry => entry.EndsWith(".tres"))
+            .Select(entry => directoryPath + entry)
             .ToArray();
     }
 

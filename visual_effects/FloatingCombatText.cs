@@ -15,23 +15,26 @@ public partial class FloatingCombatText : Node3D
     [Export] public float Duration = 1f;
     [Export] public float RandomHorizontalSpread = 0.3f;
 
+    private LevelContext _level;
+
     public override void _EnterTree()
     {
-        FloatingCombatTextRegistry.Register(this);
+        _level = LevelContext.Current;
+        _level.FloatingCombatTexts.Register(this);
 
         // Free(), not QueueFree() - eviction needs to shrink the list immediately so this loop
         // actually converges within a single burst. QueueFree()'d nodes stay registered until
         // their deferred removal lands later, so a burst of many hits in one frame would just
         // queue the same still-registered "oldest" node repeatedly instead of evicting several.
-        while (FloatingCombatTextRegistry.Active.Count > MaxActive)
+        while (_level.FloatingCombatTexts.Active.Count > MaxActive)
         {
-            FloatingCombatTextRegistry.Active[0].Free();
+            _level.FloatingCombatTexts.Active[0].Free();
         }
     }
 
     public override void _ExitTree()
     {
-        FloatingCombatTextRegistry.Unregister(this);
+        _level.FloatingCombatTexts.Unregister(this);
     }
 
     public void Show(Vector3 worldPosition, float amount, Color color, Color outlineColor, bool isCrit = false)

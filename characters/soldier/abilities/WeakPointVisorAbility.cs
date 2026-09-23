@@ -4,10 +4,10 @@ using Godot;
 // weak-point markers (built into the enemy scenes) for Duration - Head is always included, the
 // rest random. A shot through one stacks a flat more-damage multiplier
 // (Soldier.WeakPointDamageMultiplier) on top of whatever the crit roll already gave it. Delegates
-// the actual marking to Enemy's static Activate/DeactivateWeakPointVisor rather than looping
-// EnemyRegistry itself, since that flag is also what lets an enemy spawning mid-duration expose
-// its own markers on _Ready. Runs for a duration, and a second press ends it early - the cooldown
-// starts from whichever of those actually ended it.
+// the actual marking to LevelContext rather than looping its enemies itself, since that state is
+// also what lets an enemy spawning mid-duration expose its own markers on _Ready. Runs for a
+// duration, and a second press ends it early - the cooldown starts from whichever of those
+// actually ended it.
 public partial class WeakPointVisorAbility : Ability
 {
     [Export] public override float BaseCooldown { get; protected set; } = 20f;
@@ -21,6 +21,7 @@ public partial class WeakPointVisorAbility : Ability
     public override float ActiveFraction => Duration <= 0f ? 0f : _durationRemaining / Duration;
 
     private float _durationRemaining;
+    private LevelContext _level;
 
     public override bool TryActivate()
     {
@@ -37,7 +38,17 @@ public partial class WeakPointVisorAbility : Ability
     {
         IsActive = true;
         _durationRemaining = Duration;
-        Enemy.ActivateWeakPointVisor(WeakPointCount);
+        _level = LevelContext.Current;
+        _level.ActivateWeakPointVisor(WeakPointCount);
+    }
+
+    // Freed mid-duration (a hub character swap) would otherwise leave every enemy's markers lit.
+    public override void _ExitTree()
+    {
+        if (IsActive)
+        {
+            End();
+        }
     }
 
     public override void _PhysicsProcess(double delta)
@@ -61,6 +72,6 @@ public partial class WeakPointVisorAbility : Ability
     {
         IsActive = false;
         StartCooldown();
-        Enemy.DeactivateWeakPointVisor();
+        _level.DeactivateWeakPointVisor();
     }
 }
