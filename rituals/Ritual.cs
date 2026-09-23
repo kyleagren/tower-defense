@@ -45,15 +45,27 @@ public partial class Ritual : Node3D, IDamageable
 
     public bool IsShrouded => _spellInstance != null && ResolveWithOwner().Shrouded;
 
+    // A placement preview: shows the model and gives RitualPlacer a real collision shape to test,
+    // but isn't a Ritual to anything else - it never registers, so enemies can't target it, and it
+    // never casts. Set before the node enters the tree.
+    public bool IsPreview { get; set; }
+
     public override void _Ready()
     {
         _currentHealth = MaxHealth;
         _body = GetNode<StaticBody3D>("StaticBody3D");
         _activeMaterial = CoreMesh.MaterialOverride;
-        _level = LevelContext.Current;
-        _level.Rituals.Register(this);
         HealthBar.SetFraction(1f);
         HealthBar.Visible = false;
+
+        if (IsPreview)
+        {
+            SetProcess(false);
+            return;
+        }
+
+        _level = LevelContext.Current;
+        _level.Rituals.Register(this);
 
         _castEffects = GetChildren().OfType<CastEffect>().ToList();
 
@@ -74,6 +86,11 @@ public partial class Ritual : Node3D, IDamageable
 
     public override void _ExitTree()
     {
+        if (IsPreview)
+        {
+            return;
+        }
+
         EventBus.Instance.InventoryChanged -= OnInventoryChanged;
         _level.Rituals.Unregister(this);
     }

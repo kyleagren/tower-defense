@@ -254,9 +254,8 @@ public partial class RitualPlacer : Node
     private void BeginRitualGhost()
     {
         _ghost = RitualScene.Instantiate<Ritual>();
+        _ghost.IsPreview = true;
         GetTree().CurrentScene.AddChild(_ghost);
-        _ghost.SetProcess(false);
-        _ghost.SetPhysicsProcess(false);
 
         _ghostMesh = _ghost.GetNode<MeshInstance3D>("MeshInstance3D");
         _ghostCollisionShape = _ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
