@@ -19,28 +19,17 @@ public partial class FireballSpell : Spell
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Projectile, Tag.Fire, Tag.AoE };
     public override string Description => "Hurls a fiery projectile that explodes on impact.";
 
-    public override SpellCastContext CreateBaseContext()
+    protected override void AddComponents(SpellCastContext context)
     {
-        return new SpellCastContext
+        context.CastEffect = new ProjectileCastEffect();
+        context.Projectile = new ProjectileCastData
         {
-            Range = BaseRange,
-            CastTime = BaseCastTime,
-            Cooldown = BaseCooldown,
-            UnscaledDamage = BaseDamage,
-            RagdollForce = BaseRagdollForce,
-            ManaCost = BaseManaCost,
-            CapacityCost = BaseCapacityCost,
-            TargetPriority = BaseTargetPriority,
-            CastEffect = new ProjectileCastEffect(),
-            Projectile = new ProjectileCastData
-            {
-                ProjectileCount = BaseProjectileCount,
-                Radius = BaseRadius,
-                Speed = BaseSpeed,
-                ProjectileScene = ProjectileScene,
-                HitEffect = HitEffect
-            },
-            Area = new AreaCastData()
+            ProjectileCount = BaseProjectileCount,
+            Radius = BaseRadius,
+            Speed = BaseSpeed,
+            ProjectileScene = ProjectileScene,
+            HitEffect = HitEffect
         };
+        context.Area = new AreaCastData();
     }
 }

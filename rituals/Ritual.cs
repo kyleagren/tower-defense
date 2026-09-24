@@ -292,7 +292,7 @@ public partial class Ritual : Node3D, IDamageable
 
         if (effect == null)
         {
-            GD.PushError($"Spell '{Spell.Name}' sets no CastEffect in CreateBaseContext and can never fire.");
+            GD.PushError($"Spell '{Spell.Name}' sets no CastEffect in AddComponents and can never fire.");
             return;
         }
 

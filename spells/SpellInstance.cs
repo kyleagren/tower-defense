@@ -41,9 +41,6 @@ public class SpellInstance
         if (_cachedContext == null)
         {
             _cachedContext = _definition.CreateBaseContext();
-            // Stamped here rather than in every CreateBaseContext override, so a new spell can't
-            // forget to carry its own tags to the runes that read them.
-            _cachedContext.SpellTags = _definition.Tags;
             _placement?.ApplyTo(_cachedContext);
 
             foreach (Rune rune in _attachedRunes)

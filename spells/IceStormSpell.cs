@@ -10,6 +10,7 @@ public partial class IceStormSpell : Spell
     [Export] public float BaseStormDuration { get; private set; } = 0.75f;
     [Export] public float BaseGroundRadius { get; private set; } = 3f;
     [Export] public float BaseGroundDuration { get; private set; } = 6f;
+    [Export] public float BaseGroundSlowPercent { get; private set; } = 0.25f;
 
     // Per second of storm, not per cast - Bombardment slices it into ticks.
     [Export] public override float BaseColdDamage { get; protected set; } = 120f;
@@ -21,31 +22,22 @@ public partial class IceStormSpell : Spell
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Cold, Tag.AoE, Tag.Duration };
     public override string Description => "Calls down a hail of ice, leaving frozen ground that slows anything crossing it.";
 
-    public override SpellCastContext CreateBaseContext()
+    protected override void AddComponents(SpellCastContext context)
     {
-        return new SpellCastContext
+        context.CastEffect = new BombardmentCastEffect();
+        context.Area = new AreaCastData();
+        context.Bombardment = new BombardmentCastData
         {
-            Range = BaseRange,
-            CastTime = BaseCastTime,
-            Cooldown = BaseCooldown,
-            UnscaledDamage = BaseDamage,
-            ManaCost = BaseManaCost,
-            CapacityCost = BaseCapacityCost,
-            TargetPriority = BaseTargetPriority,
-            CastEffect = new BombardmentCastEffect(),
-            Area = new AreaCastData(),
-            Bombardment = new BombardmentCastData
-            {
-                Scene = BombardmentScene,
-                Radius = BaseStormRadius,
-                Duration = BaseStormDuration
-            },
-            GroundEffect = new GroundEffectCastData
-            {
-                Scene = GroundEffectScene,
-                Radius = BaseGroundRadius,
-                Duration = BaseGroundDuration
-            }
+            Scene = BombardmentScene,
+            Radius = BaseStormRadius,
+            Duration = BaseStormDuration
+        };
+        context.GroundEffect = new GroundEffectCastData
+        {
+            Scene = GroundEffectScene,
+            Radius = BaseGroundRadius,
+            Duration = BaseGroundDuration,
+            Magnitude = BaseGroundSlowPercent
         };
     }
 }

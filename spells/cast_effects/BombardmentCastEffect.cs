@@ -34,6 +34,6 @@ public class BombardmentCastEffect : CastEffect
 
         GroundEffect ground = data.Scene.Instantiate<GroundEffect>();
         caster.GetTree().CurrentScene.AddChild(ground);
-        ground.Initialize(target, data.Radius * areaMultiplier, data.Duration.Value);
+        ground.Initialize(target, data.Radius * areaMultiplier, data.Duration.Value, data.Magnitude);
     }
 }

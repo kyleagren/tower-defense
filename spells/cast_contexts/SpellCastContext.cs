@@ -77,7 +77,7 @@ public class SpellCastContext
     public CastTrigger CastTrigger;
     public CastEffect CastEffect;
 
-    // The casting spell's own tags, stamped during resolve so a rune reading them at hit time
+    // The casting spell's own tags, stamped when the spell creates the context so a rune reading them at hit time
     // doesn't need a path back to the Spell resource.
     public IReadOnlyList<Tag> SpellTags = System.Array.Empty<Tag>();
 

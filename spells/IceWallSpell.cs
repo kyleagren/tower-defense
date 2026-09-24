@@ -22,27 +22,19 @@ public partial class IceWallSpell : Spell
     public override string Description => "Summons a destructible ice blockade near enemies, forcing them to stop and break through.";
     public override bool RequiresTarget => false;
 
-    public override SpellCastContext CreateBaseContext()
+    protected override void AddComponents(SpellCastContext context)
     {
-        return new SpellCastContext
+        context.CastEffect = new WallCastEffect();
+        context.Wall = new WallCastData
         {
-            Range = BaseRange,
-            CastTime = BaseCastTime,
-            Cooldown = BaseCooldown,
-            ManaCost = BaseManaCost,
-            CapacityCost = BaseCapacityCost,
-            CastEffect = new WallCastEffect(),
-            Wall = new WallCastData
-            {
-                SegmentScene = SegmentScene,
-                SegmentWidth = BaseSegmentWidth,
-                SegmentHealth = BaseSegmentHealth,
-                WallDuration = BaseWallDuration,
-                ManaCostPerSegment = BaseManaCostPerSegment,
-                CapacityCostPerSegment = BaseCapacityCostPerSegment
-            },
-            CastTrigger = new WallProximityCastTrigger { Range = BaseDetectionRange }
+            SegmentScene = SegmentScene,
+            SegmentWidth = BaseSegmentWidth,
+            SegmentHealth = BaseSegmentHealth,
+            WallDuration = BaseWallDuration,
+            ManaCostPerSegment = BaseManaCostPerSegment,
+            CapacityCostPerSegment = BaseCapacityCostPerSegment
         };
+        context.CastTrigger = new WallProximityCastTrigger { Range = BaseDetectionRange };
     }
 
     public override PlacementFlow CreatePlacementFlow(RitualPlacer placer, SpellCastContext context) => new WallPlacementFlow(placer, context);

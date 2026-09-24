@@ -133,6 +133,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         SetActive(false);
         Weapon.Visible = false;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
+        EventBus.Instance.InventoryChanged += OnGearChanged;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
 
@@ -148,11 +149,28 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         base._ExitTree();
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
+        EventBus.Instance.InventoryChanged -= OnGearChanged;
 
         if (Level.Sentinels.TryGetValue(OwnerId, out Sentinel current) && current == this)
         {
             Level.Sentinels.Remove(OwnerId);
         }
+    }
+
+    // Gear can change max health or shield at any time. Current values are only ever clamped down,
+    // never topped up - equipping shouldn't double as a heal, and regen closes a raised gap. The HUD
+    // is told either way, so it shows the new maximum straight away.
+    private void OnGearChanged()
+    {
+        // Invalidated here too rather than trusting the global handler to have run first - the
+        // maximums below must come from the new gear.
+        PlayerProfiles.Get(OwnerId).InvalidateSheets();
+
+        _currentHealth = Mathf.Min(_currentHealth, MaxHealth);
+        _currentShield = Mathf.Min(_currentShield, MaxShield);
+
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -370,14 +388,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // Shield once it's been GameRules.ShieldRegenDelay seconds since the last projectile hit.
     public void UpdateShieldRegen(float delta)
     {
-        if (_currentShield >= MaxShield)
-        {
-            return;
-        }
-
         _timeSinceProjectileHit += delta;
 
-        if (_timeSinceProjectileHit < GameRules.ShieldRegenDelay)
+        if (_currentShield >= MaxShield || _timeSinceProjectileHit < GameRules.ShieldRegenDelay)
         {
             return;
         }

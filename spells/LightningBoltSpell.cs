@@ -15,26 +15,15 @@ public partial class LightningBoltSpell : ChainableSpell
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Chaining, Tag.Lightning };
     public override string Description => "Instantly strikes the nearest enemy, arcing to nearby foes.";
 
-    public override SpellCastContext CreateBaseContext()
+    protected override void AddComponents(SpellCastContext context)
     {
-        return new SpellCastContext
+        context.CastEffect = new InstantHitCastEffect();
+        context.InstantHit = new InstantHitCastData { ArcVisualScene = ArcVisualScene };
+        context.Chain = new ChainCastData
         {
-            Range = BaseRange,
-            CastTime = BaseCastTime,
-            Cooldown = BaseCooldown,
-            UnscaledDamage = BaseDamage,
-            RagdollForce = BaseRagdollForce,
-            ManaCost = BaseManaCost,
-            CapacityCost = BaseCapacityCost,
-            TargetPriority = BaseTargetPriority,
-            CastEffect = new InstantHitCastEffect(),
-            InstantHit = new InstantHitCastData { ArcVisualScene = ArcVisualScene },
-            Chain = new ChainCastData
-            {
-                ChainCount = BaseChainCount,
-                ChainRange = BaseChainRange,
-                DamageModifier = DamageModifier
-            }
+            ChainCount = BaseChainCount,
+            ChainRange = BaseChainRange,
+            DamageModifier = DamageModifier
         };
     }
 }

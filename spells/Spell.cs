@@ -32,7 +32,30 @@ public abstract partial class Spell : Resource
         WindDamage = BaseWindDamage
     };
 
-    public abstract SpellCastContext CreateBaseContext();
+    // The universal fields every spell shares are filled in here, once, so no spell can forget one;
+    // a spell adds only its own delivery and capability components.
+    public SpellCastContext CreateBaseContext()
+    {
+        SpellCastContext context = new SpellCastContext
+        {
+            Range = BaseRange,
+            CastTime = BaseCastTime,
+            Cooldown = BaseCooldown,
+            UnscaledDamage = BaseDamage,
+            RagdollForce = BaseRagdollForce,
+            ManaCost = BaseManaCost,
+            CapacityCost = BaseCapacityCost,
+            TargetPriority = BaseTargetPriority,
+            SpellTags = Tags
+        };
+
+        AddComponents(context);
+        return context;
+    }
+
+    // The spell's CastEffect, plus whichever optional components it starts with (Projectile, Chain,
+    // Area, Wall, ...).
+    protected abstract void AddComponents(SpellCastContext context);
 
     // The plain flow by default: nothing to pick, the Ritual goes wherever it fits. A spell with
     // placement-time choices of its own (Ice Wall's endpoints) returns its own flow instead.
