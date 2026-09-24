@@ -107,7 +107,11 @@ public partial class Ritual : Node3D, IDamageable
     private SpellCastContext ResolveWithOwner()
     {
         _ownerSheet ??= PlayerProfiles.Get(OwnerId).SelectedSheet;
-        return _spellInstance.Resolve(_ownerSheet);
+        SpellCastContext context = _spellInstance.Resolve(_ownerSheet);
+
+        // Stamped here rather than passed into SpellInstance, which stays ignorant of who owns it.
+        context.Attribution = new Attribution { Player = OwnerId, Source = this };
+        return context;
     }
 
     // Called by an ongoing CastEffect when whatever it left behind is gone - the cooldown starts now.
@@ -116,14 +120,14 @@ public partial class Ritual : Node3D, IDamageable
         _spellInstance.EndOngoingEffect(ResolveWithOwner().ResolvedCooldown);
     }
 
-    public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
+    public void TakeDamage(Hit hit)
     {
         if (_disabled)
         {
             return;
         }
 
-        _currentHealth -= damage.Total;
+        _currentHealth -= hit.Damage.Total;
         HealthBar.SetFraction(Mathf.Max(0f, _currentHealth) / MaxHealth);
         HealthBar.Visible = true;
 

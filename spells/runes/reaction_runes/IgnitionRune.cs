@@ -25,7 +25,7 @@ public partial class IgnitionRune : ReactionRune
 
         if (isFireLightningPair)
         {
-            hit.Target.ApplyAilment(new BurnAilment(hit.Damage.Total * BurnDamagePercent, BurnDuration));
+            hit.Target.ApplyAilment(new BurnAilment(hit.Damage.Total * BurnDamagePercent, BurnDuration, hit.Attribution));
         }
 
         return isFireLightningPair;

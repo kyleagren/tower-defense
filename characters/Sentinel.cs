@@ -42,6 +42,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public CharacterSheet Sheet => PlayerProfiles.Get(OwnerId).GetSheet(Id);
     private Weapon EquippedWeapon => PlayerProfiles.Get(OwnerId).GetLoadout(Id).Weapon;
 
+    // Carried on every hit this Sentinel's weapon deals.
+    protected Attribution HitAttribution => new Attribution { Player = OwnerId, Source = this };
+
     public float MaxHealth => BaseMaxHealth * (1f + Sheet.GetBonus(StatId.SentinelMaxHealth));
     public override float Speed => BaseSpeed * (1f + Sheet.GetBonus(StatId.SentinelMoveSpeed));
 
@@ -259,16 +262,16 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         Weapon.Visible = shouldBeActive;
     }
 
-    public virtual void TakeDamage(DamagePacket damage, Vector3 impulse = default)
+    public virtual void TakeDamage(Hit hit)
     {
         if (IsDead)
         {
             return;
         }
 
-        float remainingDamage = damage.Total;
+        float remainingDamage = hit.Damage.Total;
 
-        if (damage.Origin == DamageOrigin.Projectile)
+        if (hit.Damage.Origin == DamageOrigin.Projectile)
         {
             _timeSinceProjectileHit = 0f;
 

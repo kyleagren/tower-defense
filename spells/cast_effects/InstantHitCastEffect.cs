@@ -74,7 +74,7 @@ public class InstantHitCastEffect : CastEffect
         Vector3 ragdollImpulse = (targetPoint - spawnPoint.GlobalPosition).Normalized() * context.RagdollForce.Value;
         float firstHitMultiplier = chain.DamageModifier?.GetMultiplier(chain.ChainCount) ?? 1f;
         DamagePacket firstHitDamage = context.Damage * firstHitMultiplier;
-        target.TakeDamage(firstHitDamage, ragdollImpulse, spellHit: context.SpellHit);
+        target.TakeDamage(context.SpellHit.CreateHit(firstHitDamage, ragdollImpulse));
 
         ChainResolver.SpawnArcVisual(spawnPoint, context.InstantHit.ArcVisualScene, visualOrigin, targetPoint);
 

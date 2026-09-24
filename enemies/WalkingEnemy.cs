@@ -541,11 +541,15 @@ public partial class WalkingEnemy : Enemy
             EnemyProjectile projectile = ProjectileScene.Instantiate<EnemyProjectile>();
             GetTree().CurrentScene.AddChild(projectile);
             projectile.GlobalPosition = CenterMass;
-            projectile.Initialize(target.AimPoint, AttackDamage);
+            projectile.Initialize(target.AimPoint, AttackDamage, this);
             return;
         }
 
-        target.TakeDamage(new DamagePacket { PhysicalDamage = AttackDamage });
+        target.TakeDamage(new Hit
+        {
+            Damage = new DamagePacket { PhysicalDamage = AttackDamage },
+            Attribution = new Attribution { Source = this }
+        });
     }
 
     private void Stop(double delta)

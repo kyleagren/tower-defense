@@ -57,20 +57,21 @@ public class HealthLinkAilment : Ailment
         return _remainingDuration > 0f;
     }
 
-    public override void OnHostDamaged(Enemy host, DamagePacket damage)
+    public override void OnHostDamaged(Enemy host, Hit hit)
     {
         if (!GodotObject.IsInstanceValid(Partner) || Partner.IsDead)
         {
             return;
         }
 
-        DamagePacket mirrored = damage * MirrorPercent;
+        DamagePacket mirrored = hit.Damage * MirrorPercent;
         mirrored.IsCrit = false;
         mirrored.IsTrueDamage = true;
 
-        // notifyAilments stops this bouncing back through the partner's own half, and is also why
-        // links never chain - a third enemy linked to the partner is not reached. updateStatus stops
-        // the partner inheriting an element from a hit that landed somewhere else.
-        Partner.TakeDamage(mirrored, updateStatus: false, notifyAilments: false);
+        // A Mirrored hit never reaches ailments, which stops it bouncing back through the partner's
+        // own half and is also why links never chain - a third enemy linked to the partner is not
+        // reached. It sets no Status either, so the partner doesn't inherit an element from a hit
+        // that landed somewhere else. The credit stays with whoever dealt the original hit.
+        Partner.TakeDamage(new Hit { Damage = mirrored, Attribution = hit.Attribution, Type = HitType.Mirrored });
     }
 }

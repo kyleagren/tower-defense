@@ -192,7 +192,7 @@ public partial class Projectile : Area3D
         {
             Vector3 ragdollImpulse = -GlobalTransform.Basis.Z * RagdollForce;
             LastRagdollImpulse = ragdollImpulse;
-            enemy.TakeDamage(Damage, ragdollImpulse, spellHit: SpellHit);
+            enemy.TakeDamage(SpellHit.CreateHit(Damage, ragdollImpulse));
         }
     }
 

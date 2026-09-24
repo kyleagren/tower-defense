@@ -207,29 +207,31 @@ public partial class Enemy : CharacterBody3D, IDamageable
         UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
     }
 
-    // Explicit implementation: the overload below carries extra optional parameters, so it can't
-    // satisfy the interface signature on its own.
-    void IDamageable.TakeDamage(DamagePacket damage, Vector3 impulse) => TakeDamage(damage, impulse);
-
-    public void TakeDamage(DamagePacket amount, Vector3 ragdollImpulse = default, bool updateStatus = true,
-        SpellHit spellHit = default, bool notifyAilments = true)
+    public void TakeDamage(Hit hit)
     {
         if (_isDead)
         {
             return;
         }
 
+        DamagePacket amount = hit.Damage;
         bool statusConsumed = false;
 
-        if (spellHit.OnHitRunes != null)
+        if (hit.Spell.OnHitRunes != null)
         {
-            OnHitContext hit = new OnHitContext { Target = this, Damage = amount, SpellTags = spellHit.SpellTags };
+            OnHitContext onHit = new OnHitContext
+            {
+                Target = this,
+                Damage = amount,
+                SpellTags = hit.Spell.SpellTags,
+                Attribution = hit.Attribution
+            };
 
-            foreach (OnHitRune rune in spellHit.OnHitRunes)
+            foreach (OnHitRune rune in hit.Spell.OnHitRunes)
             {
                 // |= rather than ||= - every rune runs, since one that adds an effect of its own
                 // still has work to do after a reaction has already claimed the Status.
-                statusConsumed |= rune.OnHit(hit);
+                statusConsumed |= rune.OnHit(onHit);
             }
         }
 
@@ -237,7 +239,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         HealthBar.SetFraction(CurrentHealth / MaxHealth);
         OnDamageTaken(amount);
 
-        if (updateStatus)
+        if (hit.SetsStatus)
         {
             if (statusConsumed)
             {
@@ -253,24 +255,24 @@ public partial class Enemy : CharacterBody3D, IDamageable
             }
         }
 
-        if (notifyAilments)
+        if (hit.NotifiesAilments)
         {
-            NotifyAilmentsOfDamage(amount);
+            NotifyAilmentsOfDamage(hit);
         }
 
         if (CurrentHealth <= 0f)
         {
-            Die(ragdollImpulse);
+            Die(hit.RagdollImpulse);
         }
     }
 
     // Backwards, like TickAilments: a hook can reach back into this list, and this can itself run
     // from inside TickAilments when a damage-over-time tick is the hit that landed.
-    private void NotifyAilmentsOfDamage(DamagePacket amount)
+    private void NotifyAilmentsOfDamage(Hit hit)
     {
         for (int i = _ailments.Count - 1; i >= 0; i--)
         {
-            _ailments[i].OnHostDamaged(this, amount);
+            _ailments[i].OnHostDamaged(this, hit);
         }
     }
 

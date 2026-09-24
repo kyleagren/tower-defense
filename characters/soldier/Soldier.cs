@@ -88,7 +88,7 @@ public partial class Soldier : Sentinel
                     damage *= WeakPointDamageMultiplier;
                 }
 
-                enemy.TakeDamage(damage);
+                enemy.TakeDamage(new Hit { Damage = damage, Attribution = HitAttribution });
             }
 
             if (ImpactScene != null)

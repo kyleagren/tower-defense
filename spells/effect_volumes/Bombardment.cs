@@ -19,6 +19,6 @@ public partial class Bombardment : EffectVolume
 
     protected override void OnTick(Enemy enemy)
     {
-        enemy.TakeDamage(_damagePerTick, spellHit: _spellHit);
+        enemy.TakeDamage(_spellHit.CreateHit(_damagePerTick, Vector3.Zero));
     }
 }

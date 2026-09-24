@@ -81,9 +81,12 @@ public class SpellCastContext
     // doesn't need a path back to the Spell resource.
     public IReadOnlyList<Tag> SpellTags = System.Array.Empty<Tag>();
 
-    // Bundled so a damage site passes one value instead of threading the runes and the tags
-    // separately through Projectile, ChainResolver and every cast effect.
-    public SpellHit SpellHit => new SpellHit { OnHitRunes = OnHitRunes, SpellTags = SpellTags };
+    // Whose cast this is - stamped by the Ritual that resolved it, and carried on every hit it deals.
+    public Attribution Attribution;
+
+    // Bundled so a damage site passes one value instead of threading the runes, the tags and the
+    // attribution separately through Projectile, ChainResolver and every cast effect.
+    public SpellHit SpellHit => new SpellHit { OnHitRunes = OnHitRunes, SpellTags = SpellTags, Attribution = Attribution };
 
     // Folds an owner's equipment bonuses into this context, once, during resolve. Simple stats go
     // into the same ScaledStat.Increased fields Runes use, which equipment and Runes legitimately

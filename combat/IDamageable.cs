@@ -7,5 +7,5 @@ public interface IDamageable
     bool IsDestroyed { get; }
     Vector3 AimPoint { get; }
 
-    void TakeDamage(DamagePacket damage, Vector3 impulse = default);
+    void TakeDamage(Hit hit);
 }

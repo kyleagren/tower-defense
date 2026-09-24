@@ -41,7 +41,7 @@ public static class ChainResolver
 
             Vector3 nextPoint = next.GetJitteredCenterMass(0.25f);
             Vector3 ragdollImpulse = (nextPoint - currentPoint).Normalized() * ragdollForce;
-            next.TakeDamage(currentDamage, ragdollImpulse, spellHit: spellHit);
+            next.TakeDamage(spellHit.CreateHit(currentDamage, ragdollImpulse));
             SpawnArcVisual(next, arcVisualScene, currentPoint, nextPoint);
 
             ownHits.Add(next);

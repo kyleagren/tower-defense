@@ -12,12 +12,15 @@ public partial class EnemyProjectile : Area3D
 
     private float _damage;
     private DamageOrigin _origin;
+    private Node _source;
     private float _lifetime;
     private bool _hasHit;
 
-    public void Initialize(Vector3 targetPosition, float damage, DamageOrigin origin = DamageOrigin.Projectile)
+    // source is whoever fired it, carried on the hit it lands.
+    public void Initialize(Vector3 targetPosition, float damage, Node source, DamageOrigin origin = DamageOrigin.Projectile)
     {
         _damage = damage;
+        _source = source;
         _origin = origin;
         LookAt(targetPosition, Vector3.Up);
     }
@@ -50,7 +53,11 @@ public partial class EnemyProjectile : Area3D
         IDamageable hitTarget = ResolveTarget(body);
         if (hitTarget != null && !hitTarget.IsDestroyed)
         {
-            hitTarget.TakeDamage(new DamagePacket { Origin = _origin, PhysicalDamage = _damage });
+            hitTarget.TakeDamage(new Hit
+            {
+                Damage = new DamagePacket { Origin = _origin, PhysicalDamage = _damage },
+                Attribution = new Attribution { Source = _source }
+            });
         }
 
         QueueFree();

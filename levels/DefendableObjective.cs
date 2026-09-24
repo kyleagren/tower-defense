@@ -28,14 +28,14 @@ public partial class DefendableObjective : Area3D, IDamageable
         }
     }
 
-    public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
+    public void TakeDamage(Hit hit)
     {
         if (_destroyed)
         {
             return;
         }
 
-        _currentHealth -= damage.Total;
+        _currentHealth -= hit.Damage.Total;
         HealthBar.SetFraction(_currentHealth / MaxHealth);
 
         if (_currentHealth <= 0f)

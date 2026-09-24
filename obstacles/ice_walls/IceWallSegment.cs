@@ -51,7 +51,7 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
         BodyCollision.Position = IceWall.SegmentBoxCenter(Vector3.Zero, width);
     }
 
-    public void TakeDamage(DamagePacket damage, Vector3 impulse = default)
+    public void TakeDamage(Hit hit)
     {
         if (_isBroken)
         {
@@ -60,7 +60,7 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
 
         // Hitting any one segment damages the whole wall's shared pool - segments break
         // together, not individually, once that pool is spent.
-        _wall.TakeDamage(damage);
+        _wall.TakeDamage(hit.Damage);
     }
 
     public void Break()

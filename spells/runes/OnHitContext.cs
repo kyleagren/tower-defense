@@ -9,4 +9,8 @@ public readonly struct OnHitContext
     public Enemy Target { get; init; }
     public DamagePacket Damage { get; init; }
     public IReadOnlyList<Tag> SpellTags { get; init; }
+
+    // Who dealt the hit - passed on to anything the rune starts, like a Burn, so its damage is
+    // credited to the same player.
+    public Attribution Attribution { get; init; }
 }

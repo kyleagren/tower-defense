@@ -208,11 +208,11 @@ public partial class Tank : Sentinel
     {
         if (body is Enemy enemy && _hitThisSwing.Add(enemy))
         {
-            enemy.TakeDamage(RollAttackDamage(AttackDamage));
+            enemy.TakeDamage(new Hit { Damage = RollAttackDamage(AttackDamage), Attribution = HitAttribution });
         }
     }
 
-    public override void TakeDamage(DamagePacket damage, Vector3 impulse = default)
+    public override void TakeDamage(Hit hit)
     {
         if (_blockState == BlockState.Armed)
         {
@@ -228,6 +228,6 @@ public partial class Tank : Sentinel
             return;
         }
 
-        base.TakeDamage(damage, impulse);
+        base.TakeDamage(hit);
     }
 }
