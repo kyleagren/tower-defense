@@ -9,8 +9,13 @@ public static class GameRules
     public const int CraftingActionGoldCost = 1;
     public const float SentinelArmorCurveConstant = 1650f;
     public const float SentinelArmorCurveExponent = 1.3f;
-    public const float ShieldRegenDelay = 7f;
+    public const float ShieldRegenDelay = 3.5f;
+    public const float ShieldValuePerArmorPoint = 0.25f;
+    public const float ShieldProjectileEffectiveness = 2f;
+    public const float ArmorProjectileEffectiveness = 0.5f;
     public const float ShieldRegenRatePercent = 0.10f;
+    public const float OvershieldCeilingMultiplier = 2f;
+    public const float AbilityHoldThreshold = 0.3f;
     public const float RepairCostFraction = 0.5f;
     public const float UnarmedCritChance = 0.05f;
     public const float UnarmedCritDamageBonus = 0.5f;

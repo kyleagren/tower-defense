@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://characters/soldier/abilities/HealthLinkAbility.cs" id="6_healthlink"]
 [ext_resource type="PackedScene" path="res://visual_effects/HealthLinkSpike.tscn" id="7_spike"]
 [ext_resource type="PackedScene" path="res://visual_effects/HealthLinkTether.tscn" id="8_tether"]
+[ext_resource type="Script" path="res://characters/soldier/abilities/StatusStripAbility.cs" id="9_statusstrip"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soldier"]
 albedo_color = Color(0.1, 0.15, 0.5, 1)
@@ -42,7 +43,7 @@ ImpactScene = ExtResource("3_impact")
 MuzzlePoint = NodePath("Weapon/MuzzlePoint")
 TracerScene = ExtResource("4_tracer")
 Weapon = NodePath("Weapon")
-AbilitySlots = [NodePath("WeakPointVisor"), NodePath("HealthLink"), null, null]
+AbilitySlots = [NodePath("WeakPointVisor"), NodePath("HealthLink"), NodePath("StatusStrip"), null]
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
@@ -79,3 +80,6 @@ script = ExtResource("6_healthlink")
 SpikeScene = ExtResource("7_spike")
 TetherScene = ExtResource("8_tether")
 BeamOrigin = NodePath("../Weapon/MuzzlePoint")
+
+[node name="StatusStrip" type="Node" parent="." index="11"]
+script = ExtResource("9_statusstrip")

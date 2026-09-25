@@ -79,31 +79,50 @@ public partial class Soldier : Sentinel
 
             if (result["collider"].As<Node3D>() is Enemy enemy)
             {
-                bool isHeadshot = enemy.IsHeadshot(origin, end);
-                bool isWeakPointHit = enemy.IsWeakPointHit(origin, end);
-
-                DamagePacket damage = RollAttackDamage(AttackDamage, isHeadshot);
-                if (isWeakPointHit)
-                {
-                    damage *= WeakPointDamageMultiplier;
-                }
-
-                enemy.TakeDamage(new Hit { Damage = damage, Attribution = HitAttribution });
+                enemy.TakeDamage(new Hit { Damage = RollShotDamage(enemy, origin, end, AttackDamage), Attribution = HitAttribution });
             }
 
-            if (ImpactScene != null)
-            {
-                ImpactFlash impact = ImpactScene.Instantiate<ImpactFlash>();
-                GetTree().CurrentScene.AddChild(impact);
-                impact.Show(tracerEnd);
-            }
+            ShowImpact(tracerEnd);
         }
 
-        if (TracerScene != null)
+        ShowTracer(tracerEnd);
+    }
+
+    // Headshot, crit roll and weak point for one enemy along a shot's line. Overdrive's piercing
+    // shots call this once per enemy they pass through.
+    public DamagePacket RollShotDamage(Enemy enemy, Vector3 rayOrigin, Vector3 rayEnd, float baseDamage)
+    {
+        DamagePacket damage = RollAttackDamage(baseDamage, enemy.IsHeadshot(rayOrigin, rayEnd));
+
+        if (enemy.IsWeakPointHit(rayOrigin, rayEnd))
         {
-            ArcVisual tracer = TracerScene.Instantiate<ArcVisual>();
-            GetTree().CurrentScene.AddChild(tracer);
-            tracer.Show(MuzzlePoint.GlobalPosition, tracerEnd);
+            damage *= WeakPointDamageMultiplier;
         }
+
+        return damage;
+    }
+
+    public void ShowImpact(Vector3 position)
+    {
+        if (ImpactScene == null)
+        {
+            return;
+        }
+
+        ImpactFlash impact = ImpactScene.Instantiate<ImpactFlash>();
+        GetTree().CurrentScene.AddChild(impact);
+        impact.Show(position);
+    }
+
+    public void ShowTracer(Vector3 end)
+    {
+        if (TracerScene == null)
+        {
+            return;
+        }
+
+        ArcVisual tracer = TracerScene.Instantiate<ArcVisual>();
+        GetTree().CurrentScene.AddChild(tracer);
+        tracer.Show(MuzzlePoint.GlobalPosition, end);
     }
 }

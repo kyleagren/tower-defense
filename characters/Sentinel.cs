@@ -43,7 +43,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     private Weapon EquippedWeapon => PlayerProfiles.Get(OwnerId).GetLoadout(Id).Weapon;
 
     // Carried on every hit this Sentinel's weapon deals.
-    protected Attribution HitAttribution => new Attribution { Player = OwnerId, Source = this };
+    public Attribution HitAttribution => new Attribution { Player = OwnerId, Source = this };
 
     public float MaxHealth => BaseMaxHealth * (1f + Sheet.GetBonus(StatId.SentinelMaxHealth));
     public override float Speed => BaseSpeed * (1f + Sheet.GetBonus(StatId.SentinelMoveSpeed));
@@ -56,6 +56,10 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             return sheet.GetLocalTotal(StatId.SentinelShield) * (1f + sheet.GetBonus(StatId.SentinelTotalShield));
         }
     }
+
+    // Shield past MaxShield is overshield. It lives in the same pool, so a hit drains it first, and
+    // regen never reaches it since regen stops at MaxShield.
+    public float ShieldCeiling => MaxShield * GameRules.OvershieldCeilingMultiplier;
 
     public float TotalArmor
     {
@@ -93,9 +97,15 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // ability capturing the attack binding can gate its own clicks on the same rule.
     public bool CanUseAbilityInput => CanUseCombatInput && !TokenDeployer.IsPickModeActive;
 
+    // Whether the attack press currently held down reached this Sentinel rather than being taken by
+    // an ability's own targeting. The weapon polls Input instead of reading events, so without this
+    // a click that closed a capture - Health Link's second spike - would carry straight on into
+    // weapon fire the moment the capture ended, while the button was still down.
+    private bool _weaponOwnsAttackPress;
+
     // Deliberately not folded into ExtraCombatInputGate: CanUseAbilityInput is built on top of that,
     // so putting the capture term there would make a capturing ability gate away its own clicks.
-    protected bool CanUseWeaponInput => CanUseCombatInput && !IsAbilityCapturingAttack;
+    protected bool CanUseWeaponInput => CanUseCombatInput && !IsAbilityCapturingAttack && _weaponOwnsAttackPress;
 
     private bool IsAbilityCapturingAttack
     {
@@ -113,11 +123,25 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
     }
 
+    // Lets a long-running capture stand aside for a short one layered on top of it.
+    public bool IsAnotherAbilityCapturing(Ability self)
+    {
+        foreach (Ability ability in AbilitySlots)
+        {
+            if (ability != null && ability != self && ability.CapturesAttackInput)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static readonly string[] _abilityActions = { "ability_1", "ability_2", "ability_3", "ability_4" };
 
     private float _currentHealth;
     private float _currentShield;
-    private float _timeSinceProjectileHit;
+    private float _timeSinceLastHit;
 
     public override void ActivateStandalone()
     {
@@ -170,7 +194,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         PlayerProfiles.Get(OwnerId).InvalidateSheets();
 
         _currentHealth = Mathf.Min(_currentHealth, MaxHealth);
-        _currentShield = Mathf.Min(_currentShield, MaxShield);
+        _currentShield = Mathf.Min(_currentShield, ShieldCeiling);
 
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
@@ -178,6 +202,15 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (@event.IsActionPressed("attack"))
+        {
+            _weaponOwnsAttackPress = true;
+        }
+        else if (@event.IsActionReleased("attack"))
+        {
+            _weaponOwnsAttackPress = false;
+        }
+
         if (!IsActive)
         {
             return;
@@ -219,7 +252,13 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         {
             if (@event.IsActionPressed(_abilityActions[slot]))
             {
-                AbilitySlots[slot]?.TryActivate();
+                AbilitySlots[slot]?.Press();
+                return;
+            }
+
+            if (@event.IsActionReleased(_abilityActions[slot]))
+            {
+                AbilitySlots[slot]?.Release();
                 return;
             }
         }
@@ -229,7 +268,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         foreach (Ability ability in AbilitySlots)
         {
-            if (ability != null && ability.CapturesAttackInput)
+            if (ability != null && ability.CapturesAttackInput && ability.CanCancelCapture)
             {
                 ability.CancelCapture();
                 return true;
@@ -269,22 +308,11 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             return;
         }
 
-        float remainingDamage = hit.Damage.Total;
+        _timeSinceLastHit = 0f;
 
-        if (hit.Damage.Origin == DamageOrigin.Projectile)
-        {
-            _timeSinceProjectileHit = 0f;
-
-            float absorbed = Mathf.Min(_currentShield, remainingDamage);
-            _currentShield -= absorbed;
-            remainingDamage -= absorbed;
-
-            EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
-        }
-        else
-        {
-            remainingDamage *= (1f - MeleeDamageReductionPercent);
-        }
+        bool isProjectile = hit.Damage.Origin == DamageOrigin.Projectile;
+        float remainingDamage = hit.Damage.Total * (1f - DamageReductionPercent(isProjectile));
+        remainingDamage = AbsorbWithShield(remainingDamage, isProjectile ? GameRules.ShieldProjectileEffectiveness : 1f);
 
         _currentHealth = Mathf.Max(0f, _currentHealth - remainingDamage);
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
@@ -293,6 +321,26 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         {
             Die();
         }
+    }
+
+    // Armor goes first, so it also slows how fast a hit drains Shield.
+    private float DamageReductionPercent(bool isProjectile) =>
+        isProjectile ? MeleeDamageReductionPercent * GameRules.ArmorProjectileEffectiveness : MeleeDamageReductionPercent;
+
+    // Shield takes every kind of damage, but at `effectiveness` damage stopped per point spent - so
+    // against projectiles a point of Shield stops two. Returns what's left over for Health.
+    private float AbsorbWithShield(float damage, float effectiveness)
+    {
+        if (_currentShield <= 0f || damage <= 0f)
+        {
+            return damage;
+        }
+
+        float absorbed = Mathf.Min(_currentShield * effectiveness, damage);
+        _currentShield -= absorbed / effectiveness;
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
+
+        return damage - absorbed;
     }
 
     // Death is a timed respawn on the spot, not a loss. Each death this match waits longer than the
@@ -320,6 +368,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         foreach (Ability ability in AbilitySlots)
         {
             ability?.CancelCapture();
+            ability?.OnCharacterDied();
         }
     }
 
@@ -366,10 +415,10 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         return true;
     }
 
-    // Armor mitigates melee only - Shield (above) is a separate pool, not a % reduction. S-curve
-    // (exponent > 1): trivial gear barely registers, endgame gear feels strong, climbs faster in
-    // the middle than at either end. Public so the Character Sheet UI can show the same number
-    // TakeDamage actually uses, rather than a second copy of this formula.
+    // Armor's reduction against melee; projectiles get GameRules.ArmorProjectileEffectiveness of it.
+    // S-curve (exponent > 1): trivial gear barely registers, endgame gear feels strong, climbs
+    // faster in the middle than at either end. Public so the Character Sheet UI can show the same
+    // number TakeDamage actually uses, rather than a second copy of this formula.
     public float MeleeDamageReductionPercent
     {
         get
@@ -388,12 +437,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         BaseHealthRegenPerSecond * (1f + Sheet.GetBonus(StatId.SentinelHealthRegen));
 
     // Called by whichever Sentinel is active, from its own _PhysicsProcess - passively recharges
-    // Shield once it's been GameRules.ShieldRegenDelay seconds since the last projectile hit.
+    // Shield once it's been GameRules.ShieldRegenDelay seconds since the last hit of any kind.
     public void UpdateShieldRegen(float delta)
     {
-        _timeSinceProjectileHit += delta;
+        _timeSinceLastHit += delta;
 
-        if (_currentShield >= MaxShield || _timeSinceProjectileHit < GameRules.ShieldRegenDelay)
+        if (_currentShield >= MaxShield || _timeSinceLastHit < GameRules.ShieldRegenDelay)
         {
             return;
         }
@@ -437,6 +486,17 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
         _currentHealth = Mathf.Min(MaxHealth, _currentHealth + TotalHealthRegenPerSecond * delta);
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
+    }
+
+    public void GrantShield(float amount)
+    {
+        if (amount <= 0f)
+        {
+            return;
+        }
+
+        _currentShield = Mathf.Min(ShieldCeiling, _currentShield + amount);
+        EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
     }
 
     // Full reset is a placeholder — a real healing mechanic will replace this.

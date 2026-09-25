@@ -29,11 +29,37 @@ public abstract partial class Ability : Node
     public virtual bool CanToggleOff => false;
 
     // True while the ability is consuming the attack binding for its own targeting. The character
-    // suppresses its weapon rather than firing both off one click - see Sentinel.CanUseWeaponInput.
+    // suppresses its weapon rather than firing both off one click, and a click the ability took
+    // never becomes weapon fire even once the capture ends - see Sentinel.CanUseWeaponInput.
     public virtual bool CapturesAttackInput => false;
 
     // Backing out with ui_cancel while capturing. What that costs is the ability's own call.
     public virtual void CancelCapture()
+    {
+    }
+
+    // False for a capture that Escape shouldn't back out of - Escape then falls through to its
+    // ordinary behavior instead of being swallowed.
+    public virtual bool CanCancelCapture => true;
+
+    // An ability with a hold variant defers its press: releasing before GameRules.AbilityHoldThreshold
+    // is a tap (TryActivate), and holding to the threshold fires TryActivateHold the moment it's
+    // reached. Without one, a press fires TryActivate straight away.
+    public virtual bool HasHoldVariant => false;
+
+    public virtual bool TryActivateHold()
+    {
+        return false;
+    }
+
+    // Null for an ability with no gauge. AbilityGauge shows the first slot that has one.
+    public virtual float? GaugeFraction => null;
+
+    // What the gauge's fill is tinted by - null for no element.
+    public virtual Tag? GaugeElement => null;
+
+    // Called when the wielding Sentinel dies, after any capture has been cancelled.
+    public virtual void OnCharacterDied()
     {
     }
 
@@ -43,6 +69,8 @@ public abstract partial class Ability : Node
 
     private float _cooldownRemaining;
     private float _cooldownDuration;
+    private bool _isHeld;
+    private float _heldTime;
 
     public override void _Ready()
     {
@@ -56,6 +84,53 @@ public abstract partial class Ability : Node
         if (_cooldownRemaining > 0f)
         {
             _cooldownRemaining = Mathf.Max(0f, _cooldownRemaining - (float)delta);
+        }
+
+        if (_isHeld)
+        {
+            UpdateHold((float)delta);
+        }
+    }
+
+    public void Press()
+    {
+        if (!HasHoldVariant)
+        {
+            TryActivate();
+            return;
+        }
+
+        _isHeld = true;
+        _heldTime = 0f;
+    }
+
+    public void Release()
+    {
+        if (!_isHeld)
+        {
+            return;
+        }
+
+        _isHeld = false;
+        TryActivate();
+    }
+
+    // Losing ability input mid-hold (death, token pick mode) drops the press rather than letting it
+    // fire later - and a release arriving while input is gated would never reach Release anyway.
+    private void UpdateHold(float delta)
+    {
+        if (!Character.CanUseAbilityInput)
+        {
+            _isHeld = false;
+            return;
+        }
+
+        _heldTime += delta;
+
+        if (_heldTime >= GameRules.AbilityHoldThreshold)
+        {
+            _isHeld = false;
+            TryActivateHold();
         }
     }
 

@@ -7,6 +7,10 @@ public enum HitType
     // An ordinary hit: sets Status and reaches the target's ailments.
     Direct,
 
+    // A direct hit that deliberately sets no Status but still reaches ailments - Overdrive's shots,
+    // which would otherwise paint fresh Status for the strip to take straight back.
+    Unmarked,
+
     // A damage-over-time tick (Burn): reaches ailments, but never sets Status - the element came from
     // whatever started the effect, not from the tick.
     DamageOverTime,

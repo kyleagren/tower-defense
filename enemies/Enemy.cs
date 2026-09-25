@@ -266,6 +266,14 @@ public partial class Enemy : CharacterBody3D, IDamageable
         }
     }
 
+    // Takes this enemy's Status outright, for something that spends it without landing a hit.
+    public Tag? RemoveStatus()
+    {
+        Tag? removed = Status;
+        Status = null;
+        return removed;
+    }
+
     // Backwards, like TickAilments: a hook can reach back into this list, and this can itself run
     // from inside TickAilments when a damage-over-time tick is the hit that landed.
     private void NotifyAilmentsOfDamage(Hit hit)

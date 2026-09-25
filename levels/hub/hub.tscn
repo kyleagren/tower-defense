@@ -17,7 +17,7 @@
 [ext_resource type="PackedScene" uid="uid://dsutqhp5i2738" path="res://characters/soldier/Soldier.tscn" id="22_soldierscene"]
 [ext_resource type="PackedScene" uid="uid://de5pbikw458xe" path="res://characters/tank/Tank.tscn" id="23_tankscene"]
 [ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://characters/architect/Architect.tscn" id="24_architectscene"]
-[ext_resource type="Script" path="res://core/LevelContext.cs" id="25_levelcontext"]
+[ext_resource type="Script" uid="uid://bwo3ge3uh27eg" path="res://core/LevelContext.cs" id="25_levelcontext"]
 [ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="26_playerhud"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
@@ -160,7 +160,7 @@ material = SubResource("StandardMaterial3D_vendor")
 
 [node name="Hub" type="Node3D" unique_id=1931328644]
 
-[node name="LevelContext" type="Node" parent="."]
+[node name="LevelContext" type="Node" parent="." unique_id=801687135]
 script = ExtResource("25_levelcontext")
 
 [node name="GroundRoomA" type="StaticBody3D" parent="." unique_id=525299963]
@@ -465,7 +465,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.7, 0, 45.1)
 [node name="DebugToggle" type="Node" parent="." unique_id=168619648]
 script = ExtResource("11_debugtoggle")
 
-[node name="PlayerHud" parent="." instance=ExtResource("26_playerhud")]
+[node name="PlayerHud" parent="." unique_id=828963953 instance=ExtResource("26_playerhud")]
 
 [node name="CraftingPanel" parent="." unique_id=1481707128 instance=ExtResource("14_craftingpanel")]
 

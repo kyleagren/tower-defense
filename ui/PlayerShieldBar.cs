@@ -9,7 +9,9 @@ public partial class PlayerShieldBar : TextureProgressBar
     [Export] public Color BorderColor = new Color(0.08f, 0.18f, 0.2f);
     [Export] public Color EmptyColor = new Color(0.12f, 0.22f, 0.26f);
     [Export] public Color FillColor = new Color(0.25f, 0.72f, 0.84f);
+    [Export] public Color OvershieldColor = new Color(0.62f, 0.3f, 0.85f);
     [Export] public Label ShieldLabel { get; private set; }
+    [Export] public TextureProgressBar OvershieldFill { get; private set; }
 
     public override void _Ready()
     {
@@ -20,8 +22,15 @@ public partial class PlayerShieldBar : TextureProgressBar
         Step = 0f;
         Value = 1f;
 
-        TextureUnder = BuildBarTexture(EmptyColor);
-        TextureProgress = BuildBarTexture(FillColor);
+        TextureUnder = HudBarTexture.Build(BarWidth, BarHeight, CornerRadius, BorderThickness, BorderColor, EmptyColor);
+        TextureProgress = HudBarTexture.Build(BarWidth, BarHeight, CornerRadius, BorderThickness, BorderColor, FillColor);
+
+        OvershieldFill.FillMode = (int)FillModeEnum.TopToBottom;
+        OvershieldFill.MinValue = 0f;
+        OvershieldFill.MaxValue = 1f;
+        OvershieldFill.Step = 0f;
+        OvershieldFill.Value = 0f;
+        OvershieldFill.TextureProgress = HudBarTexture.Build(BarWidth, BarHeight, CornerRadius, BorderThickness, BorderColor, OvershieldColor);
 
         EventBus.Instance.PlayerShieldChanged += OnPlayerShieldChanged;
 
@@ -48,46 +57,12 @@ public partial class PlayerShieldBar : TextureProgressBar
         }
     }
 
+    // Overshield fills purple from the top down over the full blue bar, as a fraction of MaxShield -
+    // so at the 2x ceiling the whole bar is purple.
     private void ShowShield(float currentShield, float maxShield)
     {
         Value = maxShield > 0f ? Mathf.Clamp(currentShield / maxShield, 0f, 1f) : 0f;
+        OvershieldFill.Value = maxShield > 0f ? Mathf.Clamp((currentShield - maxShield) / maxShield, 0f, 1f) : 0f;
         ShieldLabel.Text = $"{Mathf.CeilToInt(currentShield)}/{Mathf.CeilToInt(maxShield)}";
-    }
-
-    private ImageTexture BuildBarTexture(Color fill)
-    {
-        Image image = Image.CreateEmpty(BarWidth, BarHeight, false, Image.Format.Rgba8);
-
-        for (int y = 0; y < BarHeight; y++)
-        {
-            for (int x = 0; x < BarWidth; x++)
-            {
-                bool insideOuter = IsInsideRoundedRect(x + 0.5f, y + 0.5f, 0f);
-                bool insideFill = IsInsideRoundedRect(x + 0.5f, y + 0.5f, BorderThickness);
-                Color pixel = insideFill ? fill : insideOuter ? BorderColor : Colors.Transparent;
-                image.SetPixel(x, y, pixel);
-            }
-        }
-
-        return ImageTexture.CreateFromImage(image);
-    }
-
-    private bool IsInsideRoundedRect(float x, float y, float inset)
-    {
-        float left = inset;
-        float top = inset;
-        float right = BarWidth - inset;
-        float bottom = BarHeight - inset;
-        float radius = Mathf.Max(0f, CornerRadius - inset);
-
-        if (x < left || x > right || y < top || y > bottom)
-        {
-            return false;
-        }
-
-        float cx = Mathf.Clamp(x, left + radius, right - radius);
-        float cy = Mathf.Clamp(y, top + radius, bottom - radius);
-
-        return new Vector2(x, y).DistanceTo(new Vector2(cx, cy)) <= radius;
     }
 }

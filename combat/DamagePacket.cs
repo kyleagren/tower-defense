@@ -35,6 +35,31 @@ public struct DamagePacket
         }
     }
 
+    // Physical isn't a Tag, so only the elemental fields are reachable through this.
+    public void AddElement(Tag element, float amount)
+    {
+        switch (element)
+        {
+            case Tag.Fire:
+                FireDamage += amount;
+                break;
+            case Tag.Water:
+                WaterDamage += amount;
+                break;
+            case Tag.Cold:
+                ColdDamage += amount;
+                break;
+            case Tag.Lightning:
+                LightningDamage += amount;
+                break;
+            case Tag.Wind:
+                WindDamage += amount;
+                break;
+            default:
+                throw new System.ArgumentException($"{element} is not a damage element.", nameof(element));
+        }
+    }
+
     public static DamagePacket operator *(DamagePacket packet, float scalar)
     {
         return new DamagePacket
