@@ -9,7 +9,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     [Export] public Node3D Weapon { get; private set; }
     [Export] public float BaseMaxHealth = 100f;
     [Export] public float AimPointHeight = 1.2f;
-    [Export] public float DodgeDistance = 4f;
+    [Export] public float DodgeDistance = 5f;
     [Export] public float DodgeDuration = 0.35f;
     // Measured from the start of the roll, so its tail end can still be hit.
     [Export] public float DodgeImmunityDuration = 0.25f;

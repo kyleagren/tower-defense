@@ -9,8 +9,8 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     [Export] public float SprintFovBonus = 5f;
     [Export] public float FovTransitionSpeed = 10f;
     [Export] public float MouseSensitivity = 0.003f;
-    [Export] public float MinPitchDegrees = -60f;
-    [Export] public float MaxPitchDegrees = 10f;
+    [Export] public float MinPitchDegrees = -89f;
+    [Export] public float MaxPitchDegrees = 89f;
     [Export] public SpringArm3D SpringArm { get; private set; }
     [Export] public Camera3D Camera { get; private set; }
     [Export] public MeshInstance3D BodyMesh { get; private set; }
