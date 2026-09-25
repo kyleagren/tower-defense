@@ -9,6 +9,10 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     [Export] public Node3D Weapon { get; private set; }
     [Export] public float BaseMaxHealth = 100f;
     [Export] public float AimPointHeight = 1.2f;
+    [Export] public float DodgeDistance = 4f;
+    [Export] public float DodgeDuration = 0.35f;
+    // Measured from the start of the roll, so its tail end can still be hit.
+    [Export] public float DodgeImmunityDuration = 0.25f;
     // Not exported: these point at nodes in the inherited SentinelBody.tscn base, and a typed
     // export of a custom C# class against a base-scene node fails its cast during scene-build,
     // then gets written out as null on the next save. Same reason RitualPlacer/TokenDeployer
@@ -89,7 +93,21 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
     }
 
-    protected override bool ExtraCombatInputGate => !RitualTokenPlacer.IsPlacing;
+    protected override bool ExtraCombatInputGate => !RitualTokenPlacer.IsPlacing && !IsDodging;
+
+    public bool IsDodging => _dodgeRemaining > 0f;
+    protected bool IsDodgeImmune => _dodgeRemaining > DodgeDuration - DodgeImmunityDuration;
+
+    // True while the character is doing something sprinting shouldn't overlap - firing, aiming,
+    // swinging, blocking.
+    protected virtual bool IsInCombatAction => false;
+
+    protected override bool CanSprint => !IsDodging && !IsInCombatAction;
+
+    private float _dodgeRemaining;
+    private Vector3 _dodgeVelocity;
+    private Vector3 _dodgeSpinAxis;
+    private Basis _bodyMeshRestBasis;
 
     // 1/2/3 double as token pick mode's slot keys, so abilities yield to it entirely - slot 4
     // included, since firing an ability while choosing a token to place shouldn't happen either.
@@ -154,6 +172,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         base._Ready();
         RitualTokenPlacer = GetNode<RitualPlacer>("RitualTokenPlacer");
         TokenDeployer = GetNode<TokenDeployer>("TokenDeployer");
+        _bodyMeshRestBasis = BodyMesh.Basis;
         _currentHealth = MaxHealth;
         _currentShield = MaxShield;
         Level.Sentinels[OwnerId] = this;
@@ -243,6 +262,11 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             }
         }
 
+        if (@event.IsActionPressed("dodge") && TryStartDodge())
+        {
+            return;
+        }
+
         if (!CanUseAbilityInput)
         {
             return;
@@ -262,6 +286,52 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
                 return;
             }
         }
+    }
+
+    // Rolls along the movement input, or straight ahead with none. Grounded only.
+    private bool TryStartDodge()
+    {
+        if (!CanUseCombatInput || !IsOnFloor())
+        {
+            return false;
+        }
+
+        Vector2 inputDir = Input.GetVector("move_left", "move_right", "move_forward", "move_back");
+        Vector3 direction = inputDir == Vector2.Zero
+            ? -Transform.Basis.Z
+            : (Transform.Basis * new Vector3(inputDir.X, 0f, inputDir.Y)).Normalized();
+
+        _dodgeVelocity = direction * (DodgeDistance / DodgeDuration);
+        _dodgeSpinAxis = Vector3.Up.Cross(direction).Normalized();
+        _dodgeRemaining = DodgeDuration;
+        return true;
+    }
+
+    protected override Vector3? UpdateForcedMovement(float delta)
+    {
+        if (_dodgeRemaining <= 0f)
+        {
+            return null;
+        }
+
+        _dodgeRemaining -= delta;
+        UpdateDodgeSpin();
+        return _dodgeVelocity;
+    }
+
+    // One full tumble over the roll. The axis is held in world space and re-expressed each tick,
+    // since mouse look keeps turning the body mid-roll.
+    private void UpdateDodgeSpin()
+    {
+        if (_dodgeRemaining <= 0f)
+        {
+            BodyMesh.Basis = _bodyMeshRestBasis;
+            return;
+        }
+
+        float progress = 1f - _dodgeRemaining / DodgeDuration;
+        Vector3 localAxis = (Transform.Basis.Inverse() * _dodgeSpinAxis).Normalized();
+        BodyMesh.Basis = new Basis(localAxis, Mathf.Tau * progress) * _bodyMeshRestBasis;
     }
 
     private bool TryCancelCapturingAbility()
@@ -303,7 +373,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     public virtual void TakeDamage(Hit hit)
     {
-        if (IsDead)
+        if (IsDead || IsDodgeImmune)
         {
             return;
         }
@@ -348,6 +418,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     private void Die()
     {
         _deathsThisMatch++;
+        _dodgeRemaining = 0f;
+        BodyMesh.Basis = _bodyMeshRestBasis;
         RespawnRemaining = GameRules.RespawnBaseSeconds + GameRules.RespawnSecondsPerExtraDeath * (_deathsThisMatch - 1);
 
         BodyMesh.Visible = false;

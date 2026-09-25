@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 public partial class Soldier : Sentinel
 {
@@ -17,6 +18,38 @@ public partial class Soldier : Sentinel
     public override CharacterId Id => CharacterId.Soldier;
 
     private float _fireCooldown;
+    private readonly List<MeshInstance3D> _weaponMeshes = new List<MeshInstance3D>();
+    private StandardMaterial3D _weaponTintMaterial;
+
+    public override void _Ready()
+    {
+        base._Ready();
+
+        foreach (Node node in Weapon.FindChildren("*", nameof(MeshInstance3D)))
+        {
+            _weaponMeshes.Add((MeshInstance3D)node);
+        }
+    }
+
+    // Recolors the whole rifle, or restores its authored look with null. The material is this
+    // Soldier's own - the scene's rifle material is shared by every Soldier instance.
+    public void SetWeaponTint(Color? color)
+    {
+        if (color.HasValue)
+        {
+            _weaponTintMaterial ??= new StandardMaterial3D { EmissionEnabled = true, EmissionEnergyMultiplier = 0.6f };
+            _weaponTintMaterial.AlbedoColor = color.Value;
+            _weaponTintMaterial.Emission = color.Value;
+        }
+
+        foreach (MeshInstance3D mesh in _weaponMeshes)
+        {
+            mesh.MaterialOverride = color.HasValue ? _weaponTintMaterial : null;
+        }
+    }
+
+    protected override bool IsInCombatAction =>
+        CanUseCombatInput && (Input.IsActionPressed("attack") || Input.IsActionPressed("alt_action"));
 
     public override void _PhysicsProcess(double delta)
     {
@@ -47,15 +80,17 @@ public partial class Soldier : Sentinel
         }
     }
 
+    private bool IsAiming => CanUseCombatInput && Input.IsActionPressed("alt_action");
+
+    protected override float BaseFov => IsAiming ? AdsFov : NormalFov;
+
     private void UpdateAim(double delta)
     {
-        bool isAiming = CanUseCombatInput && Input.IsActionPressed("alt_action");
-        float targetFov = isAiming ? AdsFov : NormalFov;
+        bool isAiming = IsAiming;
         float targetSpringLength = isAiming ? AdsSpringLength : NormalSpringLength;
         float targetSensitivityMultiplier = isAiming ? AdsSensitivityMultiplier : 1f;
         float weight = Mathf.Min(1f, (float)delta * AdsTransitionSpeed);
 
-        Camera.Fov = Mathf.Lerp(Camera.Fov, targetFov, weight);
         SpringArm.SpringLength = Mathf.Lerp(SpringArm.SpringLength, targetSpringLength, weight);
         LookSensitivity = Mathf.Lerp(LookSensitivity, targetSensitivityMultiplier, weight);
     }

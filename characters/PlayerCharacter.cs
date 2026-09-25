@@ -5,6 +5,9 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
     [Export] public float BaseSpeed = 5.0f;
     [Export] public float JumpVelocity = 4.5f;
+    [Export] public float SprintSpeedMultiplier = 1.3f;
+    [Export] public float SprintFovBonus = 5f;
+    [Export] public float FovTransitionSpeed = 10f;
     [Export] public float MouseSensitivity = 0.003f;
     [Export] public float MinPitchDegrees = -60f;
     [Export] public float MaxPitchDegrees = 10f;
@@ -29,6 +32,22 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     public virtual float Speed => BaseSpeed;
 
+    public bool IsSprinting { get; private set; }
+
+    // Hook for a subclass to hold sprint off - a Sentinel mid-attack or mid-dodge. Holding the
+    // sprint key through it resumes sprinting the moment it clears.
+    protected virtual bool CanSprint => true;
+
+    // While non-null, replaces input-driven horizontal movement for this tick - a dodge. Called once
+    // per ApplyGroundMovement, so an override can advance its own timer here.
+    protected virtual Vector3? UpdateForcedMovement(float delta) => null;
+
+    // What the camera eases toward when not sprinting. Captured from the camera as authored, so a
+    // subclass with its own FOV rules (Soldier's ADS) overrides this rather than writing Camera.Fov.
+    protected virtual float BaseFov => _defaultFov;
+
+    private float _defaultFov;
+
     // Subclasses read activity through IsActive and adjust look sensitivity through
     // LookSensitivity; nothing outside this class needs the backing fields.
     protected float LookSensitivity { get; set; } = 1f;
@@ -43,6 +62,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     {
         Level = LevelContext.Current;
         _gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
+        _defaultFov = Camera.Fov;
     }
 
     public override void _ExitTree()
@@ -154,22 +174,30 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     protected void ApplyGroundMovement(double delta, Vector2 inputDir, bool allowJump = true)
     {
         Vector3 velocity = Velocity;
+        Vector3? forced = UpdateForcedMovement((float)delta);
 
         if (!IsOnFloor())
         {
             velocity.Y -= _gravity * (float)delta;
         }
-        else if (allowJump && Input.IsActionJustPressed("jump"))
+        else if (allowJump && forced == null && Input.IsActionJustPressed("jump"))
         {
             velocity.Y = JumpVelocity;
         }
 
         Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0f, inputDir.Y)).Normalized();
+        IsSprinting = forced == null && direction != Vector3.Zero && CanSprint && Input.IsActionPressed("sprint");
+        float speed = IsSprinting ? Speed * SprintSpeedMultiplier : Speed;
 
-        if (direction != Vector3.Zero)
+        if (forced.HasValue)
         {
-            velocity.X = direction.X * Speed;
-            velocity.Z = direction.Z * Speed;
+            velocity.X = forced.Value.X;
+            velocity.Z = forced.Value.Z;
+        }
+        else if (direction != Vector3.Zero)
+        {
+            velocity.X = direction.X * speed;
+            velocity.Z = direction.Z * speed;
         }
         else
         {
@@ -179,5 +207,12 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
         Velocity = velocity;
         MoveAndSlide();
+        UpdateFov((float)delta);
+    }
+
+    private void UpdateFov(float delta)
+    {
+        float target = BaseFov + (IsSprinting ? SprintFovBonus : 0f);
+        Camera.Fov = Mathf.Lerp(Camera.Fov, target, Mathf.Min(1f, delta * FovTransitionSpeed));
     }
 }

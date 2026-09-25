@@ -94,6 +94,7 @@ public partial class StatusStripAbility : Ability
         _shotsRemaining = OverdriveShots;
         _expiryRemaining = OverdriveExpiry;
         _shotCooldown = 0f;
+        Wielder.SetWeaponTint(DamageTypeColors.Get(_overdriveAilmentElement));
         return true;
     }
 
@@ -300,6 +301,7 @@ public partial class StatusStripAbility : Ability
 
     private void EndOverdrive()
     {
+        Wielder.SetWeaponTint(null);
         IsActive = false;
         _shotsRemaining = 0;
         _overdriveShares.Clear();

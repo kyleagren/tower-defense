@@ -31,6 +31,9 @@ public partial class Tank : Sentinel
     public override CharacterId Id => CharacterId.Tank;
     public override float Speed => base.Speed * (_blockState == BlockState.Armed ? BlockedMoveSpeedMultiplier : 1f);
 
+    protected override bool IsInCombatAction =>
+        _blockState == BlockState.Armed || (CanUseCombatInput && Input.IsActionPressed("attack"));
+
     private StandardMaterial3D _shieldMaterial;
     private float _attackCooldown;
     private float _returnTimer;
@@ -214,6 +217,11 @@ public partial class Tank : Sentinel
 
     public override void TakeDamage(Hit hit)
     {
+        if (IsDodgeImmune)
+        {
+            return;
+        }
+
         if (_blockState == BlockState.Armed)
         {
             _blockState = BlockState.Immune;
