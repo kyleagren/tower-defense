@@ -19,6 +19,7 @@
 [ext_resource type="PackedScene" uid="uid://ckffmp54fx7dx" path="res://characters/architect/Architect.tscn" id="24_architectscene"]
 [ext_resource type="Script" uid="uid://bwo3ge3uh27eg" path="res://core/LevelContext.cs" id="25_levelcontext"]
 [ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="26_playerhud"]
+[ext_resource type="Environment" uid="uid://cl3i6wom3itph" path="res://levels/default_environment.tres" id="27_environment"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -95,8 +96,6 @@ size = Vector3(16, 6, 2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_roomB_flank"]
 size = Vector3(16, 6, 2)
-
-[sub_resource type="Environment" id="Environment_default"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_archstation"]
 albedo_color = Color(0.6, 0.4, 0.1, 1)
@@ -315,10 +314,11 @@ mesh = SubResource("BoxMesh_wall_roomB_flank")
 shape = SubResource("BoxShape3D_wall_roomB_flank")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1865011256]
-transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46452135, 0, 16, 20)
+transform = Transform3D(0.8660254, -0.44278097, 0.23226067, 0, 0.46452135, 0.88556194, -0.5, -0.76691633, 0.40228823, 0, 16, 20)
+shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1158413761]
-environment = SubResource("Environment_default")
+environment = ExtResource("27_environment")
 
 [node name="SpawnPointP1" type="Marker3D" parent="." unique_id=1347966773]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -6)

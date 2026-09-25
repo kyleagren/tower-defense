@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://core/LevelContext.cs" id="27_levelcontext"]
 [ext_resource type="PackedScene" path="res://levels/level_systems.tscn" id="29_levelsystems"]
 [ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="30_playerhud"]
+[ext_resource type="Environment" path="res://levels/default_environment.tres" id="31_environment"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
@@ -63,8 +64,6 @@ radius = 2.0
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_objective_solid"]
 radius = 1.1
-
-[sub_resource type="Environment" id="Environment_default"]
 
 [node name="TestLevel" type="Node3D" unique_id=493134053]
 
@@ -199,10 +198,11 @@ script = ExtResource("2_wavecontroller")
 WaveFilePath = "res://assets/waves/test_level.json"
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=367131371]
-transform = Transform3D(1, 0, 0, 0, 0.46452135, 0.88556194, 0, -0.88556194, 0.46452135, -2.0641685, 7.890005, 0)
+transform = Transform3D(0.8660254, -0.44278097, 0.23226068, 0, 0.46452135, 0.88556194, -0.5, -0.76691633, 0.40228823, -2.0641685, 7.890005, 0)
+shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1525073669]
-environment = SubResource("Environment_default")
+environment = ExtResource("31_environment")
 
 [node name="Architect" parent="." unique_id=65489996 instance=ExtResource("7_t0ybu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 7.6874204)
