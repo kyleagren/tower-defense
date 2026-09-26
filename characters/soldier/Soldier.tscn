@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://characters/soldier/abilities/PurgeAbility.cs" id="12_purge"]
 [ext_resource type="PackedScene" path="res://characters/soldier/abilities/beckon_field.tscn" id="13_beckonfield"]
 [ext_resource type="PackedScene" path="res://characters/soldier/abilities/purge_field.tscn" id="14_purgefield"]
+[ext_resource type="PackedScene" path="res://characters/soldier/abilities/health_link_bolt.tscn" id="15_bolt"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soldier"]
 albedo_color = Color(0.1, 0.15, 0.5, 1)
@@ -85,6 +86,7 @@ script = ExtResource("5_enuph")
 script = ExtResource("6_healthlink")
 SpikeScene = ExtResource("7_spike")
 TetherScene = ExtResource("8_tether")
+BoltScene = ExtResource("15_bolt")
 BeamOrigin = NodePath("../Weapon/MuzzlePoint")
 
 [node name="Harvest" type="Node" parent="." index="11"]
