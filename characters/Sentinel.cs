@@ -98,9 +98,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         get
         {
             CharacterSheet sheet = Sheet;
-            return sheet.GetLocalTotal(StatId.SentinelArmor) * (1f + sheet.GetBonus(StatId.SentinelTotalArmor));
+            return sheet.GetLocalTotal(StatId.SentinelArmor) * (1f + sheet.GetBonus(StatId.SentinelTotalArmor)) * ArmorMultiplier;
         }
     }
+
+    // A Sentinel's own swing on its armor, on top of gear - the Tank's heat dial.
+    protected virtual float ArmorMultiplier => 1f;
 
     public float AttackDamage
     {
@@ -534,6 +537,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     private void Die()
     {
         _deathsThisMatch++;
+        OnDied();
         _dodgeRemaining = 0f;
         BodyMesh.Basis = _bodyMeshRestBasis;
         RespawnRemaining = GameRules.RespawnBaseSeconds + GameRules.RespawnSecondsPerExtraDeath * (_deathsThisMatch - 1);
@@ -558,6 +562,11 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             ability.CancelCapture();
             ability.OnCharacterDied();
         }
+    }
+
+    // For a subclass with its own state that death should clear.
+    protected virtual void OnDied()
+    {
     }
 
     // Stands back up on the spot at full health. Also the hook an ally's revive will call once
@@ -658,7 +667,19 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         float critDamageBonus = baseCritDamageBonus * (1f + sheet.GetBonus(StatId.SentinelCritDamage)) * moreMultiplier;
         float multiplier = isCrit ? 1f + critDamageBonus : 1f;
 
-        return new DamagePacket { PhysicalDamage = baseDamage * multiplier, Source = DamageSource.Weapon, IsCrit = isCrit };
+        DamagePacket damage = new DamagePacket { PhysicalDamage = baseDamage };
+        AddExtraElementalDamage(ref damage, baseDamage);
+
+        damage *= multiplier;
+        damage.Source = DamageSource.Weapon;
+        damage.IsCrit = isCrit;
+        return damage;
+    }
+
+    // Shares of a hit's base damage added on top as another element - the Tank's heat is the first
+    // source. Added before the crit multiplier, so a crit multiplies the added portion too.
+    protected virtual void AddExtraElementalDamage(ref DamagePacket damage, float baseDamage)
+    {
     }
 
     // Called by whichever Sentinel is active, from its own _PhysicsProcess, alongside

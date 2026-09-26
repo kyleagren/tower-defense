@@ -93,21 +93,6 @@ public partial class WaveController : Node
         }
     }
 
-    // Debug-only: swaps in a different wave file and immediately starts its first wave, skipping
-    // the normal Build-phase ready check - for quickly testing a specific enemy/spawn setup without
-    // waiting through the level's real wave sequence.
-    public void DebugLoadAndStartWaveFile(string path)
-    {
-        WaveFilePath = path;
-        LoadWaves();
-        _nextWaveIndex = 0;
-
-        if (_waves.Count > 0)
-        {
-            BeginWave(_waves[_nextWaveIndex++]);
-        }
-    }
-
     public void StartNextWave()
     {
         if (_match.Phase != GamePhase.Build || _nextWaveIndex >= _waves.Count)

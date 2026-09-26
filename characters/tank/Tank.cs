@@ -34,6 +34,38 @@ public partial class Tank : Sentinel
     protected override bool IsInCombatAction =>
         _blockState == BlockState.Armed || (CanUseCombatInput && Input.IsActionPressed("attack"));
 
+    // README's heat dial: a signed gauge with equilibrium at 0. Above it the sword adds Fire and
+    // armor falls; below it armor rises. It never drifts - only the kit and hits taken move it -
+    // and carries across waves, clearing only on death.
+    public const float HeatLimit = 100f;
+
+    [Export] public float MaxHeatFireFraction = 0.2f;
+    [Export] public float MaxHeatArmorShift = 0.2f;
+    [Export] public float HeatPerPercentHealthTaken = 1f;
+
+    public float Heat { get; private set; }
+
+    public void AddHeat(float amount)
+    {
+        Heat = Mathf.Clamp(Heat + amount, -HeatLimit, HeatLimit);
+    }
+
+    // One formula for both sides: positive heat lowers armor, negative heat raises it.
+    protected override float ArmorMultiplier => 1f - MaxHeatArmorShift * Heat / HeatLimit;
+
+    protected override void AddExtraElementalDamage(ref DamagePacket damage, float baseDamage)
+    {
+        if (Heat > 0f)
+        {
+            damage.AddElement(Tag.Fire, baseDamage * MaxHeatFireFraction * Heat / HeatLimit);
+        }
+    }
+
+    protected override void OnDied()
+    {
+        Heat = 0f;
+    }
+
     private StandardMaterial3D _shieldMaterial;
     private float _attackCooldown;
     private float _returnTimer;
@@ -234,6 +266,12 @@ public partial class Tank : Sentinel
         if (_blockState == BlockState.Immune)
         {
             return;
+        }
+
+        // Counted before mitigation, so armor never slows how fast getting hit heats the Tank up.
+        if (!IsDead)
+        {
+            AddHeat(hit.Damage.Total / MaxHealth * 100f * HeatPerPercentHealthTaken);
         }
 
         base.TakeDamage(hit);

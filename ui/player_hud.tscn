@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://ui/inventory/InventoryPanel.tscn" id="8_inventorypanel"]
 [ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="9_charactersheetpanel"]
 [ext_resource type="PackedScene" path="res://ui/ability_gauge.tscn" id="10_abilitygauge"]
+[ext_resource type="PackedScene" path="res://ui/heat_gauge.tscn" id="11_heatgauge"]
 
 [node name="PlayerHud" type="Node"]
 
@@ -24,6 +25,8 @@ script = ExtResource("1_itemnameplate")
 [node name="PlayerShieldBar" parent="." instance=ExtResource("4_playershieldbar")]
 
 [node name="AbilityGauge" parent="." instance=ExtResource("10_abilitygauge")]
+
+[node name="HeatGauge" parent="." instance=ExtResource("11_heatgauge")]
 
 [node name="AbilityHud" parent="." instance=ExtResource("5_abilityhud")]
 
