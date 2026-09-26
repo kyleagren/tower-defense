@@ -9,6 +9,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     [Export] public float SprintFovBonus = 5f;
     [Export] public float FovTransitionSpeed = 10f;
     [Export] public float MouseSensitivity = 0.003f;
+    [Export] public float StickLookSpeedDegrees = 180f;
     [Export] public float MinPitchDegrees = -89f;
     [Export] public float MaxPitchDegrees = 89f;
     [Export] public SpringArm3D SpringArm { get; private set; }
@@ -72,6 +73,25 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     public override void _ExitTree()
     {
         ReleaseActiveSlot();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (!IsActive || UiPanelStack.AnyOpen)
+        {
+            return;
+        }
+
+        Vector2 stick = Input.GetVector("look_left", "look_right", "look_up", "look_down");
+
+        if (stick == Vector2.Zero)
+        {
+            return;
+        }
+
+        // Squared deflection: small tilts stay precise for aiming, full tilt still turns at full speed.
+        float speed = Mathf.DegToRad(StickLookSpeedDegrees) * LookSensitivity * (float)delta;
+        ApplyLook(stick * stick.Length() * speed);
     }
 
     public Vector3 GetCameraAimPoint(float distance)
@@ -156,12 +176,15 @@ public abstract partial class PlayerCharacter : CharacterBody3D
             return;
         }
 
-        float sensitivity = MouseSensitivity * LookSensitivity;
+        ApplyLook(mouseMotion.Relative * MouseSensitivity * LookSensitivity);
+    }
 
-        RotateY(-mouseMotion.Relative.X * sensitivity);
+    private void ApplyLook(Vector2 radians)
+    {
+        RotateY(-radians.X);
 
         _cameraPitch = Mathf.Clamp(
-            _cameraPitch - mouseMotion.Relative.Y * sensitivity,
+            _cameraPitch - radians.Y,
             Mathf.DegToRad(MinPitchDegrees),
             Mathf.DegToRad(MaxPitchDegrees));
 

@@ -329,6 +329,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     public override void _Process(double delta)
     {
+        base._Process(delta);
+
         if (_heldSlot < 0)
         {
             return;
