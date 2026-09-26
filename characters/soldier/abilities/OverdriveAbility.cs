@@ -70,6 +70,14 @@ public partial class OverdriveAbility : Ability
         }
     }
 
+    public override void OnCharacterDeactivated()
+    {
+        if (IsActive)
+        {
+            EndOverdrive();
+        }
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
         // Health Link's spikes, or any other capture layered on top, take the click first.

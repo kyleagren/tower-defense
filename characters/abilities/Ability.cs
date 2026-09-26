@@ -74,6 +74,13 @@ public abstract partial class Ability : Node
     {
     }
 
+    // Called when the wielding Sentinel hands control back to the Architect at the end of a wave,
+    // after any capture has been cancelled. Something the ability left out in the world is its own
+    // call to keep or clear.
+    public virtual void OnCharacterDeactivated()
+    {
+    }
+
     // Node.Owner is Godot's own scene-ownership reference, so the wielding Sentinel can't reuse
     // that name - Character matches what RitualPlacer/TokenDeployer already call the same thing.
     protected Sentinel Character { get; private set; }

@@ -14,7 +14,7 @@ public partial class RetaliationAbility : Ability
     [Export] public float Radius { get; private set; } = 10f;
     [Export] public float Duration { get; private set; } = 5f;
     // Applied before armor, so the two compound without ever reaching full immunity.
-    [Export] public float DamageReduction { get; private set; } = 0.2f;
+    [Export] public float DamageReduction { get; private set; } = 0.4f;
     [Export] public float BlastFraction { get; private set; } = 0.7f;
     // Per enemy, as a multiple of the Tank's max health.
     [Export] public float BlastCapMaxHealthMultiple { get; private set; } = 1f;
@@ -110,6 +110,15 @@ public partial class RetaliationAbility : Ability
         }
     }
 
+    public override void OnCharacterDeactivated()
+    {
+        if (IsActive)
+        {
+            EndWindow();
+            StartCooldown();
+        }
+    }
+
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
@@ -150,11 +159,16 @@ public partial class RetaliationAbility : Ability
         }
     }
 
-    private void Release()
+    private void EndWindow()
     {
         IsActive = false;
         Wielder.ExitRetaliationStance();
         FreeChargeCircle();
+    }
+
+    private void Release()
+    {
+        EndWindow();
 
         float damage = Mathf.Min(ScaledDamage(_recordedDamage * BlastFraction), Character.MaxHealth * BlastCapMaxHealthMultiple);
 

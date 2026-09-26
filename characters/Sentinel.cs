@@ -506,6 +506,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         else if (phase == GamePhase.Build)
         {
             HealToFull();
+
+            foreach (Ability ability in AllAbilities)
+            {
+                ability.CancelCapture();
+                ability.OnCharacterDeactivated();
+            }
         }
 
         SetActive(shouldBeActive);

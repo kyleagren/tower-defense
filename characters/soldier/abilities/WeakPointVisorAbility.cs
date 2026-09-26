@@ -54,6 +54,14 @@ public partial class WeakPointVisorAbility : Ability
         _level.ActivateWeakPointVisor(WeakPointCount);
     }
 
+    public override void OnCharacterDeactivated()
+    {
+        if (IsActive)
+        {
+            End();
+        }
+    }
+
     // Freed mid-duration (a hub character swap) would otherwise leave every enemy's markers lit.
     public override void _ExitTree()
     {

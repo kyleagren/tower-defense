@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://characters/tank/abilities/shield_slam_wave.tscn" id="4_slamwave"]
 [ext_resource type="Script" path="res://characters/tank/abilities/RetaliationAbility.cs" id="5_retaliation"]
 [ext_resource type="PackedScene" path="res://characters/tank/abilities/retaliation_charge_circle.tscn" id="6_chargecircle"]
+[ext_resource type="Script" path="res://characters/tank/abilities/VentAbility.cs" id="7_vent"]
+[ext_resource type="PackedScene" path="res://characters/tank/abilities/vent_aura.tscn" id="8_ventaura"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_tank"]
 height = 1.9
@@ -48,7 +50,7 @@ Shield = NodePath("Weapon/ShieldOrbit/ShieldArm/Shield")
 Blade = NodePath("Weapon/SwordOrbit/SwordTilt/Blade")
 Weapon = NodePath("Weapon")
 BaseMaxHealth = 180.0
-AbilitySlots = [NodePath("ShieldSlam"), NodePath("Retaliation"), null, null]
+AbilitySlots = [NodePath("ShieldSlam"), NodePath("Retaliation"), NodePath("Vent"), null]
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
@@ -103,3 +105,7 @@ WaveScene = ExtResource("4_slamwave")
 script = ExtResource("5_retaliation")
 WaveScene = ExtResource("4_slamwave")
 ChargeScene = ExtResource("6_chargecircle")
+
+[node name="Vent" type="Node" parent="."]
+script = ExtResource("7_vent")
+AuraScene = ExtResource("8_ventaura")
