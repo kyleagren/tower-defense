@@ -1,10 +1,10 @@
 // Beckon's root: the host can't walk anywhere, though it can still turn and attack. Short-lived and
 // refreshed by the field every tick, so it ends on its own once the enemy is out of the field.
-public class BeckonedAilment : Ailment
+public class BeckonedDebuff : Debuff
 {
     private float _remainingDuration;
 
-    public BeckonedAilment(float duration)
+    public BeckonedDebuff(float duration)
     {
         _remainingDuration = duration;
     }

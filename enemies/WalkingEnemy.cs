@@ -29,9 +29,9 @@ public partial class WalkingEnemy : Enemy
     [Export] public PhysicalBoneSimulator3D BoneSimulator { get; private set; }
     [Export] public PhysicalBone3D RootPhysicalBone { get; private set; }
 
-    // Ailments fold in here rather than at the Move() call site, so anything reading Speed sees the
+    // Debuffs fold in here rather than at the Move() call site, so anything reading Speed sees the
     // slowed value.
-    public float Speed => BaseSpeed * AilmentSpeedMultiplier;
+    public float Speed => BaseSpeed * DebuffSpeedMultiplier;
 
     public bool IsKnockedBack => _knockbackVelocity != Vector3.Zero;
 

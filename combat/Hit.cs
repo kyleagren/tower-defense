@@ -1,22 +1,22 @@
 using Godot;
 
 // How a hit relates to the damage that caused it - which decides whether it sets the target's
-// Status and whether the target's ailments get to react to it.
+// Status and whether the target's debuffs get to react to it.
 public enum HitType
 {
-    // An ordinary hit: sets Status and reaches the target's ailments.
+    // An ordinary hit: sets Status and reaches the target's debuffs.
     Direct,
 
-    // A direct hit that deliberately sets no Status but still reaches ailments - Overdrive's shots,
-    // which would otherwise paint fresh Status for the strip to take straight back.
+    // A direct hit that deliberately sets no Status but still reaches debuffs - Overdrive's shots,
+    // which would otherwise paint fresh Status for Harvest to take straight back.
     Unmarked,
 
-    // A damage-over-time tick (Burn): reaches ailments, but never sets Status - the element came from
+    // A damage-over-time tick (Burn): reaches debuffs, but never sets Status - the element came from
     // whatever started the effect, not from the tick.
     DamageOverTime,
 
     // A copy of damage that already landed somewhere else (a Health Link mirror): sets no Status and
-    // never reaches ailments, which is what stops it bouncing back and forth.
+    // never reaches debuffs, which is what stops it bouncing back and forth.
     Mirrored
 }
 
@@ -34,5 +34,5 @@ public struct Hit
     public SpellHit Spell;
 
     public readonly bool SetsStatus => Type == HitType.Direct;
-    public readonly bool NotifiesAilments => Type != HitType.Mirrored;
+    public readonly bool NotifiesDebuffs => Type != HitType.Mirrored;
 }

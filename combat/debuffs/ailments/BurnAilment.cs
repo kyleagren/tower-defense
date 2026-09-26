@@ -1,6 +1,8 @@
-public class BurnAilment : Ailment
+public class BurnAilment : Debuff
 {
     private const float TickInterval = 1f;
+
+    private static readonly Tag[] _elements = { Tag.Fire };
 
     private readonly Attribution _attribution;
     private float _damagePerSecond;
@@ -15,13 +17,15 @@ public class BurnAilment : Ailment
         _attribution = attribution;
     }
 
+    public override Tag[] Elements => _elements;
+
     // Merges rather than competing: two burns on one enemy combine their remaining damage into a
     // single instance instead of the stronger erasing the weaker. The merged burn is this, the
     // incoming one, so its credit goes to whoever lit it most recently.
-    public override AilmentApplication ResolveAgainst(Ailment existing)
+    public override DebuffApplication ResolveAgainst(Debuff existing)
     {
         MergeFrom((BurnAilment)existing);
-        return AilmentApplication.Replace;
+        return DebuffApplication.Replace;
     }
 
     private void MergeFrom(BurnAilment previous)

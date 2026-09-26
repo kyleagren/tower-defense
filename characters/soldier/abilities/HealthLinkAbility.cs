@@ -235,7 +235,7 @@ public partial class HealthLinkAbility : Ability
         _linkDuration = ScaledDuration(Duration);
 
         bool linked = _firstTarget != null && _secondTarget != null && _secondTarget != _firstTarget
-            && HealthLinkAilment.Link(_firstTarget, _secondTarget, _linkDuration, MirrorPercent);
+            && HealthLinkDebuff.Link(_firstTarget, _secondTarget, _linkDuration, MirrorPercent);
 
         // After the link forms, so the second spike's own damage mirrors onto the first enemy.
         DealSpikeDamage(impact);

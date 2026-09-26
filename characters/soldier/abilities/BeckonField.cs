@@ -22,7 +22,7 @@ public partial class BeckonField : EffectVolume
 
     protected override void OnTick(Enemy enemy)
     {
-        enemy.ApplyAilment(new BeckonedAilment(TickInterval * RootTicks));
+        enemy.ApplyDebuff(new BeckonedDebuff(TickInterval * RootTicks));
 
         Vector3 offset = GlobalPosition - enemy.GlobalPosition;
         offset.Y = 0f;

@@ -185,10 +185,10 @@ public partial class OverdriveAbility : Ability
         switch (_ailmentElement)
         {
             case Tag.Fire:
-                enemy.ApplyAilment(new BurnAilment(damage.FireDamage * BurnDamageFraction, BurnDuration, Character.HitAttribution));
+                enemy.ApplyDebuff(new BurnAilment(damage.FireDamage * BurnDamageFraction, BurnDuration, Character.HitAttribution));
                 break;
             case Tag.Cold:
-                enemy.ApplyAilment(new ChillAilment(ChillPercent, ChillDuration));
+                enemy.ApplyDebuff(new ChillAilment(ChillPercent, ChillDuration));
                 break;
         }
     }

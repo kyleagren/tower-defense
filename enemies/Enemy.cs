@@ -58,7 +58,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     }
 
     private bool _isDead;
-    private readonly List<Ailment> _ailments = new List<Ailment>();
+    private readonly List<Debuff> _debuffs = new List<Debuff>();
     // TODO placeholder: remove alongside StatusMaterials/BurnFlashMaterial above.
     private readonly List<MeshInstance3D> _meshInstances = new List<MeshInstance3D>();
     private Material _appliedOverlay;
@@ -67,7 +67,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     public bool IsDead => _isDead;
     public bool IsDestroyed => _isDead;
     public Tag? Status { get; private set; }
-    public IReadOnlyList<Ailment> Ailments => _ailments;
+    public IReadOnlyList<Debuff> Debuffs => _debuffs;
 
     // Remaining travel distance to the objective. Only meaningful for enemies that follow a lane
     // (WalkingEnemy updates it); anything else just leaves it at the default, which keeps it from
@@ -205,7 +205,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     public override void _PhysicsProcess(double delta)
     {
-        TickAilments((float)delta);
+        TickDebuffs((float)delta);
         UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
     }
 
@@ -257,9 +257,9 @@ public partial class Enemy : CharacterBody3D, IDamageable
             }
         }
 
-        if (hit.NotifiesAilments)
+        if (hit.NotifiesDebuffs)
         {
-            NotifyAilmentsOfDamage(hit);
+            NotifyDebuffsOfDamage(hit);
         }
 
         if (CurrentHealth <= 0f)
@@ -276,52 +276,52 @@ public partial class Enemy : CharacterBody3D, IDamageable
         return removed;
     }
 
-    // Backwards, like TickAilments: a hook can reach back into this list, and this can itself run
-    // from inside TickAilments when a damage-over-time tick is the hit that landed.
-    private void NotifyAilmentsOfDamage(Hit hit)
+    // Backwards, like TickDebuffs: a hook can reach back into this list, and this can itself run
+    // from inside TickDebuffs when a damage-over-time tick is the hit that landed.
+    private void NotifyDebuffsOfDamage(Hit hit)
     {
-        for (int i = _ailments.Count - 1; i >= 0; i--)
+        for (int i = _debuffs.Count - 1; i >= 0; i--)
         {
-            _ailments[i].OnHostDamaged(this, hit);
+            _debuffs[i].OnHostDamaged(this, hit);
         }
     }
 
-    // False when the incoming ailment lost to one already in its slot, so a caller can tell whether
+    // False when the incoming debuff lost to one already in its slot, so a caller can tell whether
     // its effect actually landed. At most one occupant per slot, since every add resolves.
-    public bool ApplyAilment(Ailment ailment)
+    public bool ApplyDebuff(Debuff debuff)
     {
-        for (int i = 0; i < _ailments.Count; i++)
+        for (int i = 0; i < _debuffs.Count; i++)
         {
-            if (!ailment.OccupiesSameSlotAs(_ailments[i]))
+            if (!debuff.OccupiesSameSlotAs(_debuffs[i]))
             {
                 continue;
             }
 
-            if (ailment.ResolveAgainst(_ailments[i]) == AilmentApplication.Discard)
+            if (debuff.ResolveAgainst(_debuffs[i]) == DebuffApplication.Discard)
             {
                 return false;
             }
 
-            _ailments.RemoveAt(i);
-            _ailments.Add(ailment);
+            _debuffs.RemoveAt(i);
+            _debuffs.Add(debuff);
             return true;
         }
 
-        _ailments.Add(ailment);
+        _debuffs.Add(debuff);
         return true;
     }
 
-    // Every ailment's SpeedMultiplier folded together. Multiplicative, so two independent slows
+    // Every debuff's SpeedMultiplier folded together. Multiplicative, so two independent slows
     // compound toward zero rather than summing past a full stop.
-    public float AilmentSpeedMultiplier
+    public float DebuffSpeedMultiplier
     {
         get
         {
             float multiplier = 1f;
 
-            foreach (Ailment ailment in _ailments)
+            foreach (Debuff debuff in _debuffs)
             {
-                multiplier *= ailment.SpeedMultiplier;
+                multiplier *= debuff.SpeedMultiplier;
             }
 
             return multiplier;
@@ -379,13 +379,13 @@ public partial class Enemy : CharacterBody3D, IDamageable
         text.Show(GetJitteredCenterMass(0.2f), amount.Total, fill, outline, amount.IsCrit);
     }
 
-    private void TickAilments(float delta)
+    private void TickDebuffs(float delta)
     {
-        for (int i = _ailments.Count - 1; i >= 0; i--)
+        for (int i = _debuffs.Count - 1; i >= 0; i--)
         {
-            if (!_ailments[i].Tick(this, delta))
+            if (!_debuffs[i].Tick(this, delta))
             {
-                _ailments.RemoveAt(i);
+                _debuffs.RemoveAt(i);
             }
         }
     }
@@ -394,7 +394,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // an enemy's element and ailments.
     private void UpdateElementalVisual(float delta)
     {
-        bool isBurning = _ailments.Exists(ailment => ailment is BurnAilment);
+        bool isBurning = _debuffs.Exists(debuff => debuff is BurnAilment);
 
         if (isBurning)
         {

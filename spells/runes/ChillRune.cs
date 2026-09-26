@@ -18,7 +18,7 @@ public partial class ChillRune : OnHitRune
     {
         if (hit.Damage.ColdDamage > 0f)
         {
-            hit.Target.ApplyAilment(new ChillAilment(SlowPercent, Duration));
+            hit.Target.ApplyDebuff(new ChillAilment(SlowPercent, Duration));
         }
 
         return false;
