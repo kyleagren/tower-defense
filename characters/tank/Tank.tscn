@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" path="res://characters/SentinelBody.tscn" id="1_base"]
 [ext_resource type="Script" uid="uid://cssnvumysuo2j" path="res://characters/tank/Tank.cs" id="2_tank"]
+[ext_resource type="Script" path="res://characters/tank/abilities/ShieldSlamAbility.cs" id="3_shieldslam"]
+[ext_resource type="PackedScene" path="res://characters/tank/abilities/shield_slam_wave.tscn" id="4_slamwave"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_tank"]
 height = 1.9
@@ -34,15 +36,17 @@ albedo_color = Color(0.4, 0.32, 0.15, 1)
 material = SubResource("StandardMaterial3D_shield")
 size = Vector3(0.6, 0.85, 0.06)
 
-[node name="Tank" unique_id=543992732 node_paths=PackedStringArray("SwordOrbit", "SwordTilt", "SwordHitArea", "ShieldOrbit", "Shield", "Weapon", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
+[node name="Tank" unique_id=543992732 node_paths=PackedStringArray("SwordOrbit", "SwordTilt", "SwordHitArea", "ShieldOrbit", "Shield", "Blade", "Weapon", "AbilitySlots", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
 script = ExtResource("2_tank")
 SwordOrbit = NodePath("Weapon/SwordOrbit")
 SwordTilt = NodePath("Weapon/SwordOrbit/SwordTilt")
 SwordHitArea = NodePath("Weapon/SwordOrbit/SwordTilt/SwordHitArea")
 ShieldOrbit = NodePath("Weapon/ShieldOrbit")
 Shield = NodePath("Weapon/ShieldOrbit/ShieldArm/Shield")
+Blade = NodePath("Weapon/SwordOrbit/SwordTilt/Blade")
 Weapon = NodePath("Weapon")
 BaseMaxHealth = 180.0
+AbilitySlots = [NodePath("ShieldSlam"), null, null, null]
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
@@ -88,3 +92,7 @@ transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.65, 0, -0.1)
 
 [node name="Shield" type="MeshInstance3D" parent="Weapon/ShieldOrbit/ShieldArm" index="0" unique_id=1030687834]
 mesh = SubResource("BoxMesh_shield")
+
+[node name="ShieldSlam" type="Node" parent="."]
+script = ExtResource("3_shieldslam")
+WaveScene = ExtResource("4_slamwave")

@@ -10,6 +10,9 @@ public partial class Tank : Sentinel
     [Export] public Area3D SwordHitArea { get; private set; }
     [Export] public Node3D ShieldOrbit { get; private set; }
     [Export] public MeshInstance3D Shield { get; private set; }
+    // A plain MeshInstance3D export, safe against the inherited-base hazard - and the Blade node is
+    // local to Tank.tscn anyway.
+    [Export] public MeshInstance3D Blade { get; private set; }
     [Export] public float SwingLeftAngleDegrees = 200f;
     [Export] public float SwingRightOvershootDegrees = -30f;
     [Export] public float IdleAngleDegrees = 0f;
@@ -42,12 +45,40 @@ public partial class Tank : Sentinel
     [Export] public float MaxHeatFireFraction = 0.2f;
     [Export] public float MaxHeatArmorShift = 0.2f;
     [Export] public float HeatPerPercentHealthTaken = 1f;
+    [Export] public Color HeatGlowLowColor = new Color(0.85f, 0.1f, 0.05f);
+    [Export] public Color HeatGlowHighColor = new Color(1f, 0.55f, 0.1f);
+    [Export] public float MaxHeatGlowEnergy = 2f;
 
     public float Heat { get; private set; }
+
+    private StandardMaterial3D _bladeHeatMaterial;
+    private Color _bladeRestColor;
 
     public void AddHeat(float amount)
     {
         Heat = Mathf.Clamp(Heat + amount, -HeatLimit, HeatLimit);
+        UpdateSwordGlow();
+    }
+
+    // The blade reads the heat that's adding Fire to it: metal blending toward red, then orange, and
+    // glowing brighter as heat climbs. Its own material rather than the scene's - the sword's metal
+    // is shared by the grip and by every Tank.
+    private void UpdateSwordGlow()
+    {
+        if (Heat <= 0f)
+        {
+            Blade.MaterialOverride = null;
+            return;
+        }
+
+        float heatFraction = Heat / HeatLimit;
+        Color heatColor = HeatGlowLowColor.Lerp(HeatGlowHighColor, heatFraction);
+
+        _bladeHeatMaterial ??= new StandardMaterial3D { EmissionEnabled = true };
+        _bladeHeatMaterial.AlbedoColor = _bladeRestColor.Lerp(heatColor, heatFraction);
+        _bladeHeatMaterial.Emission = heatColor;
+        _bladeHeatMaterial.EmissionEnergyMultiplier = MaxHeatGlowEnergy * heatFraction;
+        Blade.MaterialOverride = _bladeHeatMaterial;
     }
 
     // One formula for both sides: positive heat lowers armor, negative heat raises it.
@@ -64,6 +95,7 @@ public partial class Tank : Sentinel
     protected override void OnDied()
     {
         Heat = 0f;
+        UpdateSwordGlow();
     }
 
     private StandardMaterial3D _shieldMaterial;
@@ -82,6 +114,7 @@ public partial class Tank : Sentinel
     {
         base._Ready();
         _idleTiltRotationZ = SwordTilt.Rotation.Z;
+        _bladeRestColor = ((StandardMaterial3D)Blade.GetActiveMaterial(0)).AlbedoColor;
         SwordHitArea.Monitoring = false;
         SwordHitArea.BodyEntered += OnSwordHitBody;
 
@@ -184,6 +217,23 @@ public partial class Tank : Sentinel
                 }
                 break;
         }
+    }
+
+    [Export] public float ShieldThrustDuration = 0.12f;
+
+    // Shield Slam's cue: the shield swings out front and back again. Left alone while blocking,
+    // since a raised shield is already there.
+    public void PlayShieldThrust()
+    {
+        if (_blockState == BlockState.Armed || _blockState == BlockState.Immune)
+        {
+            return;
+        }
+
+        _shieldTween?.Kill();
+        _shieldTween = CreateTween();
+        _shieldTween.TweenProperty(ShieldOrbit, "rotation:y", Mathf.DegToRad(ShieldBlockAngleDegrees), ShieldThrustDuration);
+        _shieldTween.TweenProperty(ShieldOrbit, "rotation:y", Mathf.DegToRad(ShieldRestAngleDegrees), BlockRaiseDuration);
     }
 
     private void RaiseShield()

@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://characters/tank/abilities/ShieldSlamWave.cs" id="1_wave"]
+
+[node name="ShieldSlamWave" type="MeshInstance3D"]
+script = ExtResource("1_wave")
