@@ -311,6 +311,23 @@ public partial class Enemy : CharacterBody3D, IDamageable
         return true;
     }
 
+    // The Sentinel a taunt is forcing this enemy to attack, if any.
+    public Sentinel ForcedTarget
+    {
+        get
+        {
+            foreach (Debuff debuff in _debuffs)
+            {
+                if (debuff is TauntedDebuff taunt && taunt.ActiveTaunter != null)
+                {
+                    return taunt.ActiveTaunter;
+                }
+            }
+
+            return null;
+        }
+    }
+
     // Every debuff's SpeedMultiplier folded together. Multiplicative, so two independent slows
     // compound toward zero rather than summing past a full stop.
     public float DebuffSpeedMultiplier

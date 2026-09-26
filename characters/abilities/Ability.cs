@@ -59,6 +59,10 @@ public abstract partial class Ability : Node
     // ordinary behavior instead of being swallowed.
     public virtual bool CanCancelCapture => true;
 
+    // While this is active, no other ability can be started - Retaliation's stance. One already
+    // running carries on.
+    public virtual bool LocksOutOtherAbilities => false;
+
     // Null for an ability with no gauge. AbilityGauge shows the first slot that has one.
     public virtual float? GaugeFraction => null;
 

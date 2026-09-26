@@ -112,9 +112,13 @@ public partial class WalkingEnemy : Enemy
         if (_engagementCheckTimer <= 0f)
         {
             _engagementCheckTimer = EngagementCheckInterval;
-            UpdateRitualEngagement();
-            UpdatePlayerLeash();
-            UpdateWallEngagement();
+
+            if (!TryFollowForcedTarget())
+            {
+                UpdateRitualEngagement();
+                UpdatePlayerLeash();
+                UpdateWallEngagement();
+            }
         }
 
         switch (_movementMode)
@@ -261,6 +265,25 @@ public partial class WalkingEnemy : Enemy
             _attackCooldown = AttackInterval;
             DealDamage(_objective);
         }
+    }
+
+    // A taunt outranks everything - lane, leash, walls, Rituals and the objective, Sappers included.
+    // Once it lapses, the ordinary checks pick back up: out of leash range, the chase gives up and
+    // rejoins the lane like any other.
+    private bool TryFollowForcedTarget()
+    {
+        Sentinel forced = ForcedTarget;
+        if (forced == null)
+        {
+            return false;
+        }
+
+        _targetSentinel = forced;
+        _targetWall = null;
+        _targetRitual = null;
+        _movementMode = MovementMode.ChasingPlayer;
+        NavAgent.TargetPosition = forced.GlobalPosition;
+        return true;
     }
 
     // A cheap distance check, not a live per-enemy nav query.

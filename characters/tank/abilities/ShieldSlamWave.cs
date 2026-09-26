@@ -13,7 +13,7 @@ public partial class ShieldSlamWave : MeshInstance3D
     private const float GroundOffset = 0.05f;
 
     // Must already be in the tree - it positions itself globally.
-    public void Play(Vector3 origin, Vector3 forward, float range, float coneDegrees)
+    public void Play(Vector3 origin, Vector3 forward, float range, float coneDegrees, Color? color = null)
     {
         GlobalPosition = origin + Vector3.Up * GroundOffset;
         Mesh = BuildFan(forward, range, Mathf.DegToRad(coneDegrees));
@@ -24,7 +24,7 @@ public partial class ShieldSlamWave : MeshInstance3D
             ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
             Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
             CullMode = BaseMaterial3D.CullModeEnum.Disabled,
-            AlbedoColor = WaveColor
+            AlbedoColor = color ?? WaveColor
         };
         MaterialOverride = material;
 
@@ -33,7 +33,7 @@ public partial class ShieldSlamWave : MeshInstance3D
         tween.TweenCallback(Callable.From(QueueFree));
     }
 
-    private static ArrayMesh BuildFan(Vector3 forward, float range, float coneRadians)
+    public static ArrayMesh BuildFan(Vector3 forward, float range, float coneRadians)
     {
         SurfaceTool surface = new SurfaceTool();
         surface.Begin(Mesh.PrimitiveType.Triangles);

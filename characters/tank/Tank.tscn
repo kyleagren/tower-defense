@@ -4,6 +4,8 @@
 [ext_resource type="Script" uid="uid://cssnvumysuo2j" path="res://characters/tank/Tank.cs" id="2_tank"]
 [ext_resource type="Script" path="res://characters/tank/abilities/ShieldSlamAbility.cs" id="3_shieldslam"]
 [ext_resource type="PackedScene" path="res://characters/tank/abilities/shield_slam_wave.tscn" id="4_slamwave"]
+[ext_resource type="Script" path="res://characters/tank/abilities/RetaliationAbility.cs" id="5_retaliation"]
+[ext_resource type="PackedScene" path="res://characters/tank/abilities/retaliation_charge_circle.tscn" id="6_chargecircle"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_tank"]
 height = 1.9
@@ -46,7 +48,7 @@ Shield = NodePath("Weapon/ShieldOrbit/ShieldArm/Shield")
 Blade = NodePath("Weapon/SwordOrbit/SwordTilt/Blade")
 Weapon = NodePath("Weapon")
 BaseMaxHealth = 180.0
-AbilitySlots = [NodePath("ShieldSlam"), null, null, null]
+AbilitySlots = [NodePath("ShieldSlam"), NodePath("Retaliation"), null, null]
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
@@ -96,3 +98,8 @@ mesh = SubResource("BoxMesh_shield")
 [node name="ShieldSlam" type="Node" parent="."]
 script = ExtResource("3_shieldslam")
 WaveScene = ExtResource("4_slamwave")
+
+[node name="Retaliation" type="Node" parent="."]
+script = ExtResource("5_retaliation")
+WaveScene = ExtResource("4_slamwave")
+ChargeScene = ExtResource("6_chargecircle")

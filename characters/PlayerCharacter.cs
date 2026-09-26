@@ -38,6 +38,10 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     // sprint key through it resumes sprinting the moment it clears.
     protected virtual bool CanSprint => true;
 
+    // Hook for a subclass to plant its feet - no walking, jumping or sprinting - while still letting
+    // it look around and act. Forced movement like a dodge is the subclass's own to refuse.
+    protected virtual bool CanMove => true;
+
     // While non-null, replaces input-driven horizontal movement for this tick - a dodge. Called once
     // per ApplyGroundMovement, so an override can advance its own timer here.
     protected virtual Vector3? UpdateForcedMovement(float delta) => null;
@@ -173,6 +177,12 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     protected void ApplyGroundMovement(double delta, Vector2 inputDir, bool allowJump = true)
     {
+        if (!CanMove)
+        {
+            inputDir = Vector2.Zero;
+            allowJump = false;
+        }
+
         Vector3 velocity = Velocity;
         Vector3? forced = UpdateForcedMovement((float)delta);
 

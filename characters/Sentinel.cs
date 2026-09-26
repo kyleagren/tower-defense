@@ -389,7 +389,26 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             return;
         }
 
+        if (IsLockedOutBy(ability))
+        {
+            return;
+        }
+
         ability.TryActivate();
+    }
+
+    // The locking ability never locks itself out, so a second press can still end it.
+    private bool IsLockedOutBy(Ability ability)
+    {
+        foreach (Ability other in AllAbilities)
+        {
+            if (other != ability && other.IsActive && other.LocksOutOtherAbilities)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private Ability GetHoldAbility(int slot) => slot < HoldAbilitySlots.Count ? HoldAbilitySlots[slot] : null;
@@ -410,7 +429,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // Rolls along the movement input, or straight ahead with none. Grounded only.
     private bool TryStartDodge()
     {
-        if (!CanUseCombatInput || !IsOnFloor())
+        if (!CanUseCombatInput || !CanMove || !IsOnFloor())
         {
             return false;
         }
@@ -500,7 +519,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         _timeSinceLastHit = 0f;
 
         bool isProjectile = hit.Damage.Origin == DamageOrigin.Projectile;
-        float remainingDamage = hit.Damage.Total * (1f - DamageReductionPercent(isProjectile));
+        float remainingDamage = hit.Damage.Total * IncomingDamageMultiplier * (1f - DamageReductionPercent(isProjectile));
         remainingDamage = AbsorbWithShield(remainingDamage, isProjectile ? GameRules.ShieldProjectileEffectiveness : 1f);
 
         _currentHealth = Mathf.Max(0f, _currentHealth - remainingDamage);
@@ -511,6 +530,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             Die();
         }
     }
+
+    // Scales every incoming hit before armor or Shield sees it - Retaliation's damage reduction.
+    protected virtual float IncomingDamageMultiplier => 1f;
 
     // Armor goes first, so it also slows how fast a hit drains Shield.
     private float DamageReductionPercent(bool isProjectile) =>

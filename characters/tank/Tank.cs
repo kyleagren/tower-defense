@@ -109,10 +109,45 @@ public partial class Tank : Sentinel
     private BlockState _blockState = BlockState.Idle;
     private float _blockStateTimer;
     private readonly HashSet<Enemy> _hitThisSwing = new();
+    private RetaliationAbility _retaliation;
+
+    protected override float IncomingDamageMultiplier => _retaliation?.IncomingDamageMultiplier ?? 1f;
+
+    private bool IsRetaliating => _retaliation != null && _retaliation.IsActive;
+
+    // Retaliation plants the Tank's feet for its whole window.
+    protected override bool CanMove => !IsRetaliating;
+
+    // Retaliation's stance: shield up in front for the whole window. A block already raised drops to
+    // idle - the stance isn't a block, and blocked hits wouldn't feed the blast anyway. Immunity from
+    // a block that had already landed is left to run out.
+    public void EnterRetaliationStance()
+    {
+        if (_blockState == BlockState.Armed)
+        {
+            _blockState = BlockState.Idle;
+        }
+
+        RaiseShield();
+    }
+
+    public void ExitRetaliationStance()
+    {
+        LowerShield();
+    }
 
     public override void _Ready()
     {
         base._Ready();
+
+        foreach (Ability ability in AllAbilities)
+        {
+            if (ability is RetaliationAbility retaliation)
+            {
+                _retaliation = retaliation;
+            }
+        }
+
         _idleTiltRotationZ = SwordTilt.Rotation.Z;
         _bladeRestColor = ((StandardMaterial3D)Blade.GetActiveMaterial(0)).AlbedoColor;
         SwordHitArea.Monitoring = false;
@@ -159,7 +194,7 @@ public partial class Tank : Sentinel
 
         bool isBlocking = _blockState == BlockState.Armed;
 
-        if (!isBlocking && CanUseWeaponInput && Input.IsActionPressed("attack") && _attackCooldown <= 0f)
+        if (!isBlocking && !IsRetaliating && CanUseWeaponInput && Input.IsActionPressed("attack") && _attackCooldown <= 0f)
         {
             _attackCooldown = 1f / AttackSpeed;
             Swing();
@@ -181,7 +216,7 @@ public partial class Tank : Sentinel
         switch (_blockState)
         {
             case BlockState.Idle:
-                if (CanUseCombatInput && Input.IsActionPressed("alt_action"))
+                if (CanUseCombatInput && !IsRetaliating && Input.IsActionPressed("alt_action"))
                 {
                     _blockState = BlockState.Armed;
                     RaiseShield();
@@ -202,8 +237,13 @@ public partial class Tank : Sentinel
                 {
                     _blockState = BlockState.Cooldown;
                     _blockStateTimer = BlockCooldownDuration;
-                    LowerShield();
                     SetShieldColor(ShieldCooldownColor, 0.3f);
+
+                    // Mid-stance, the shield stays up for Retaliation's pose.
+                    if (!IsRetaliating)
+                    {
+                        LowerShield();
+                    }
                     Shield.Scale = Vector3.One;
                 }
                 break;
@@ -322,6 +362,7 @@ public partial class Tank : Sentinel
         if (!IsDead)
         {
             AddHeat(hit.Damage.Total / MaxHealth * 100f * HeatPerPercentHealthTaken);
+            _retaliation?.RecordHit(hit.Damage.Total);
         }
 
         base.TakeDamage(hit);
