@@ -260,11 +260,11 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (Input.IsActionJustPressedByEvent("attack", @event))
+        if (InputPress.Began(@event, "attack"))
         {
             _weaponOwnsAttackPress = true;
         }
-        else if (Input.IsActionJustReleasedByEvent("attack", @event))
+        else if (InputPress.Ended(@event, "attack"))
         {
             _weaponOwnsAttackPress = false;
         }
@@ -416,7 +416,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     private Ability GetHoldAbility(int slot) => slot < HoldAbilitySlots.Count ? HoldAbilitySlots[slot] : null;
 
-    // "Beckon / Purge" for a paired slot, the lone name otherwise, null for an empty slot.
+    // "Converge / Repel" for a paired slot, the lone name otherwise, null for an empty slot.
     public string SlotDisplayName(int slot)
     {
         Ability tap = slot < AbilitySlots.Count ? AbilitySlots[slot] : null;

@@ -1,6 +1,6 @@
 using Godot;
 
-// An ability that drops a field on the ground under the crosshair for Duration - Beckon and Purge.
+// An ability that drops a field on the ground under the crosshair for Duration - Converge and Repel.
 // Active while the field stands, with the cooldown starting once it's gone. A subclass only decides
 // how to configure the field it spawns.
 public abstract partial class PlacedFieldAbility : Ability

@@ -1,10 +1,10 @@
 using Godot;
 
-// Purge's field: every pulse, throws whatever is inside outward along one of an octagon's side
+// Repel's field: every pulse, throws whatever is inside outward along one of an octagon's side
 // normals rather than straight away from the center, so enemies scatter along a few readable lines.
 // The octagon lines up with the caster's facing, and the four sides on those axes are wider than the
 // diagonals, so most enemies fly forward, back, left or right.
-public partial class PurgeField : EffectVolume
+public partial class RepelField : EffectVolume
 {
     [Export] public float AxisWedgeDegrees { get; private set; } = 60f;
 

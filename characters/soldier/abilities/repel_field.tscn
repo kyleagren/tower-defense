@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://dmdj1y7jd3wnd" path="res://characters/soldier/abilities/RepelField.cs" id="1_repelfield"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_repel"]
+radius = 1.0
+height = 4.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_repel_disc"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.55, 0.15, 0.25)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_repel_disc"]
+material = SubResource("StandardMaterial3D_repel_disc")
+top_radius = 1.0
+bottom_radius = 1.0
+height = 0.02
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_repel_core"]
+albedo_color = Color(1, 0.55, 0.15, 1)
+emission_enabled = true
+emission = Color(1, 0.55, 0.15, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_repel_core"]
+material = SubResource("StandardMaterial3D_repel_core")
+radius = 0.3
+height = 0.6
+
+[node name="RepelField" type="Area3D" node_paths=PackedStringArray("BodyCollision", "Footprint")]
+script = ExtResource("1_repelfield")
+BodyCollision = NodePath("BodyCollision")
+Footprint = NodePath("Footprint")
+TickInterval = 1.0
+
+[node name="BodyCollision" type="CollisionShape3D" parent="."]
+shape = SubResource("CylinderShape3D_repel")
+
+[node name="Footprint" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+mesh = SubResource("CylinderMesh_repel_disc")
+cast_shadow = 0
+
+[node name="Core" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("SphereMesh_repel_core")

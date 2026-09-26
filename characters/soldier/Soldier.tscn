@@ -9,11 +9,11 @@
 [ext_resource type="PackedScene" path="res://visual_effects/HealthLinkSpike.tscn" id="7_spike"]
 [ext_resource type="PackedScene" path="res://visual_effects/HealthLinkTether.tscn" id="8_tether"]
 [ext_resource type="Script" uid="uid://x0csyihmuaxr" path="res://characters/soldier/abilities/HarvestAbility.cs" id="9_statusstrip"]
-[ext_resource type="Script" path="res://characters/soldier/abilities/OverdriveAbility.cs" id="10_overdrive"]
-[ext_resource type="Script" path="res://characters/soldier/abilities/BeckonAbility.cs" id="11_beckon"]
-[ext_resource type="Script" path="res://characters/soldier/abilities/PurgeAbility.cs" id="12_purge"]
-[ext_resource type="PackedScene" path="res://characters/soldier/abilities/beckon_field.tscn" id="13_beckonfield"]
-[ext_resource type="PackedScene" path="res://characters/soldier/abilities/purge_field.tscn" id="14_purgefield"]
+[ext_resource type="Script" uid="uid://bigfcr1tmwnan" path="res://characters/soldier/abilities/OverdriveAbility.cs" id="10_overdrive"]
+[ext_resource type="Script" uid="uid://cgkry81di1bjn" path="res://characters/soldier/abilities/ConvergeAbility.cs" id="11_converge"]
+[ext_resource type="Script" uid="uid://bba6oo25q3doh" path="res://characters/soldier/abilities/RepelAbility.cs" id="12_repel"]
+[ext_resource type="PackedScene" path="res://characters/soldier/abilities/converge_field.tscn" id="13_convergefield"]
+[ext_resource type="PackedScene" path="res://characters/soldier/abilities/repel_field.tscn" id="14_repelfield"]
 [ext_resource type="PackedScene" path="res://characters/soldier/abilities/health_link_bolt.tscn" id="15_bolt"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soldier"]
@@ -49,8 +49,8 @@ ImpactScene = ExtResource("3_impact")
 MuzzlePoint = NodePath("Weapon/MuzzlePoint")
 TracerScene = ExtResource("4_tracer")
 Weapon = NodePath("Weapon")
-AbilitySlots = [NodePath("Beckon"), NodePath("WeakPointVisor"), NodePath("HealthLink"), NodePath("Harvest")]
-HoldAbilitySlots = [NodePath("Purge"), null, null, NodePath("Overdrive")]
+AbilitySlots = [NodePath("Converge"), NodePath("WeakPointVisor"), NodePath("HealthLink"), NodePath("Harvest")]
+HoldAbilitySlots = [NodePath("Repel"), null, null, NodePath("Overdrive")]
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
@@ -96,12 +96,12 @@ script = ExtResource("9_statusstrip")
 script = ExtResource("10_overdrive")
 Harvest = NodePath("../Harvest")
 
-[node name="Beckon" type="Node" parent="." index="13" node_paths=PackedStringArray("CooldownPartner")]
-script = ExtResource("11_beckon")
-CooldownPartner = NodePath("../Purge")
-FieldScene = ExtResource("13_beckonfield")
+[node name="Converge" type="Node" parent="." index="13" node_paths=PackedStringArray("CooldownPartner")]
+script = ExtResource("11_converge")
+CooldownPartner = NodePath("../Repel")
+FieldScene = ExtResource("13_convergefield")
 
-[node name="Purge" type="Node" parent="." index="14" node_paths=PackedStringArray("CooldownPartner")]
-script = ExtResource("12_purge")
-CooldownPartner = NodePath("../Beckon")
-FieldScene = ExtResource("14_purgefield")
+[node name="Repel" type="Node" parent="." index="14" node_paths=PackedStringArray("CooldownPartner")]
+script = ExtResource("12_repel")
+CooldownPartner = NodePath("../Converge")
+FieldScene = ExtResource("14_repelfield")

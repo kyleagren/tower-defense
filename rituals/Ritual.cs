@@ -302,9 +302,7 @@ public partial class Ritual : Node3D, IDamageable
 
         if (_currentTarget != null)
         {
-            Vector3 targetPosition = _currentTarget.GlobalPosition;
-            Vector3 levelAimPosition = new Vector3(targetPosition.X, SpawnPoint.GlobalPosition.Y, targetPosition.Z);
-            SpawnPoint.LookAt(levelAimPosition, Vector3.Up);
+            AimSpawnPointAt(_currentTarget.AimPoint);
         }
 
         effect.Cast(context, SpawnPoint, this);
@@ -318,5 +316,20 @@ public partial class Ritual : Node3D, IDamageable
         {
             _spellInstance.StartCast(context.ResolvedCastTime, context.ResolvedCooldown);
         }
+    }
+
+    // Straight at the target's center mass, so a projectile arrives where it's meant to hit. A
+    // target almost directly above or below keeps the previous aim, since LookAt can't resolve a
+    // direction parallel to its up vector - an enemy walking through a Shrouded Ritual can get there.
+    private void AimSpawnPointAt(Vector3 target)
+    {
+        Vector3 toTarget = (target - SpawnPoint.GlobalPosition).Normalized();
+
+        if (Mathf.Abs(toTarget.Dot(Vector3.Up)) > 0.999f)
+        {
+            return;
+        }
+
+        SpawnPoint.LookAt(target, Vector3.Up);
     }
 }

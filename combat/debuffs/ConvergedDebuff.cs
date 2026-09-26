@@ -1,10 +1,10 @@
-// Beckon's root: the host can't walk anywhere, though it can still turn and attack. Short-lived and
+// Converge's root: the host can't walk anywhere, though it can still turn and attack. Short-lived and
 // refreshed by the field every tick, so it ends on its own once the enemy is out of the field.
-public class BeckonedDebuff : Debuff
+public class ConvergedDebuff : Debuff
 {
     private float _remainingDuration;
 
-    public BeckonedDebuff(float duration)
+    public ConvergedDebuff(float duration)
     {
         _remainingDuration = duration;
     }

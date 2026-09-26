@@ -12,7 +12,7 @@ public abstract partial class Ability : Node
 
     public virtual float BaseCooldown { get; protected set; } = 10f;
 
-    // Another ability that goes on cooldown whenever this one does - Beckon and Purge, which share a
+    // Another ability that goes on cooldown whenever this one does - Converge and Repel, which share a
     // slot and one field between them. Wired both ways in the scene.
     [Export] public Ability CooldownPartner { get; private set; }
 

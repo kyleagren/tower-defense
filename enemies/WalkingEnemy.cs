@@ -55,10 +55,13 @@ public partial class WalkingEnemy : Enemy
     private bool _hasFacedInitialDirection;
     private Vector3 _knockbackVelocity;
     private bool _rejoinPending;
+    private float _gravity;
+    private float _fallSpeed;
 
     public override void _Ready()
     {
         base._Ready();
+        _gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
 
         _walkAnimator = new ProceduralWalkAnimator(Skeleton, WalkCycleFrequency, LegSwingAmplitude, ArmSwingAmplitude);
 
@@ -161,7 +164,7 @@ public partial class WalkingEnemy : Enemy
     // and carries on from wherever it landed.
     private void ProcessKnockback(double delta)
     {
-        Velocity = _knockbackVelocity;
+        Velocity = _knockbackVelocity + Vector3.Down * UpdateFallSpeed((float)delta);
         MoveAndSlide();
         _walkAnimator.Animate(0.0, delta);
 
@@ -206,9 +209,11 @@ public partial class WalkingEnemy : Enemy
             Vector3 current = _lane.Waypoints[_waypointIndex];
             Vector3 next = _lane.Waypoints[_waypointIndex + 1];
             Vector3 forward = (next - current).Normalized();
+            Vector3 offset = GlobalPosition - current;
+            offset.Y = 0f;
 
-            bool arrived = GlobalPosition.DistanceTo(current) <= WaypointArrivalDistance;
-            bool alreadyPastIt = (GlobalPosition - current).Dot(forward) > 0f;
+            bool arrived = offset.Length() <= WaypointArrivalDistance;
+            bool alreadyPastIt = offset.Dot(forward) > 0f;
 
             if (!arrived && !alreadyPastIt)
             {
@@ -639,8 +644,11 @@ public partial class WalkingEnemy : Enemy
         _walkAnimator.Animate(0.0, delta);
     }
 
+    // Direction arrives pointing at a path point, which sits at navmesh height rather than on the
+    // floor - only its horizontal part is steering.
     private void Move(Vector3 direction, double delta)
     {
+        direction = new Vector3(direction.X, 0f, direction.Z).Normalized();
         NavAgent.Velocity = direction * Speed;
 
         RotateTowardsMovement(direction, delta);
@@ -649,8 +657,17 @@ public partial class WalkingEnemy : Enemy
 
     private void OnVelocityComputed(Vector3 safeVelocity)
     {
-        Velocity = safeVelocity;
+        float fallSpeed = UpdateFallSpeed((float)GetPhysicsProcessDeltaTime());
+        Velocity = new Vector3(safeVelocity.X, -fallSpeed, safeVelocity.Z);
         MoveAndSlide();
+    }
+
+    // Steering is horizontal only, so this is what keeps a walking enemy on the real floor - the
+    // navmesh its lanes and paths come from sits a little above it.
+    private float UpdateFallSpeed(float delta)
+    {
+        _fallSpeed = IsOnFloor() ? 0f : _fallSpeed + _gravity * delta;
+        return _fallSpeed;
     }
 
     private static Basis? ComputeFacingBasis(Vector3 direction)

@@ -74,7 +74,7 @@ public partial class OverdriveAbility : Ability
     {
         // Health Link's spikes, or any other capture layered on top, take the click first.
         if (!IsActive || !Character.CanUseAbilityInput || Character.IsAnotherAbilityCapturing(this)
-            || !Input.IsActionJustPressedByEvent("attack", @event))
+            || !InputPress.Began(@event, "attack"))
         {
             return;
         }

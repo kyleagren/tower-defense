@@ -1,10 +1,10 @@
 using Godot;
 
-// Beckon's field: pulls every enemy inside toward its center like a spring and roots it there. The
+// Converge's field: pulls every enemy inside toward its center like a spring and roots it there. The
 // root is a short ailment each tick refreshes, so an enemy that leaves - or outlives the field -
 // walks free a moment later without anything having to release it. A rooted enemy still attacks
 // whatever comes within reach.
-public partial class BeckonField : EffectVolume
+public partial class ConvergeField : EffectVolume
 {
     // How many ticks a root survives unrefreshed, so one late tick doesn't free an enemy.
     private const float RootTicks = 3f;
@@ -22,7 +22,7 @@ public partial class BeckonField : EffectVolume
 
     protected override void OnTick(Enemy enemy)
     {
-        enemy.ApplyDebuff(new BeckonedDebuff(TickInterval * RootTicks));
+        enemy.ApplyDebuff(new ConvergedDebuff(TickInterval * RootTicks));
 
         Vector3 offset = GlobalPosition - enemy.GlobalPosition;
         offset.Y = 0f;

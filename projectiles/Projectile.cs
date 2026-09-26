@@ -228,7 +228,7 @@ public partial class Projectile : Area3D
         }
 
         ChainHitTracker?.Add(next);
-        LookAt(next.GlobalPosition, Vector3.Up);
+        LookAt(next.AimPoint, Vector3.Up);
         return true;
     }
 }

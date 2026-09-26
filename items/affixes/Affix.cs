@@ -18,7 +18,7 @@ public class Affix
     public int AbilitySlot = -1;
 
     // The template with {ability} filled in from the local Sentinel's own abilities in that slot, so
-    // the same item reads "Beckon / Purge Duration" on a Soldier and names Tank's slot on a Tank. The
+    // the same item reads "Converge / Repel Duration" on a Soldier and names Tank's slot on a Tank. The
     // one place item text reaches into live gameplay - the names only exist on the ability nodes.
     public string ResolvedTemplate => AbilitySlot < 0
         ? DescriptionTemplate
