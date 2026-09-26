@@ -64,6 +64,12 @@ The player deals direct damage and has their own health, but can't solo-carry th
 - **Respawns on the spot, as a stand-in** — dying inside a pack puts you straight back into it, so a proper respawn location is still open.
 - **Ally revive is not built.** `Sentinel.Respawn()` is the hook it will call.
 
+**Movement.** No stamina and no cooldowns on either of these for now — both are free to use as often as the player likes.
+
+- **Sprint** (`sprint`, Shift) is held, for 1.3× speed and a small FOV widening. It's on `PlayerCharacter`, so the Architect sprints too. A Sentinel is held out of sprint while firing, aiming, swinging, blocking or rolling; keeping the key down resumes it the moment that stops, so sprint never blocks combat, it just can't overlap it.
+- **Dodge roll** (`dodge`, Ctrl) is a Sentinel-only, grounded roll of 5m over 0.35s along the movement input, or straight ahead with none. The first 0.25s is immune to damage — checked before Tank's block, so a raised shield isn't spent on a hit the roll already avoided. Combat input is off for the roll's duration, and the capsule tumbles one full turn over it.
+- **Camera pitch** runs almost straight up to almost straight down (±89°) — being tried out; the previous range stopped at 10° above the horizon.
+
 Characters are **fixed-kit, not gem-built**, keeping the "too much freedom collapses into one optimal build" problem contained to towers. The fighting roster collectively goes by **Sentinel** (used in code too, e.g. `CharacterId`).
 
 **Roster:** Soldier and Tank are implemented. Assassin and Templar come later — Assassin's kit isn't designed; Templar has one floated idea (something like PoE's Divine Ire, a channeled ramping-damage release). Sniper is shelved, not cancelled.
@@ -340,7 +346,7 @@ A shared `ItemTooltip` autoload replaces Godot's built-in `Control.TooltipText` 
 It's **event-driven, not polled**: `Register(control, getItem)` wires the control's real hover signals, subscribes to `ItemDragController.Changed` to catch a slot's contents changing while the mouse never left, and treats the advanced-view modifier as a discrete input event. Only the panel's on-screen position tracks per frame, since that's a genuinely continuous quantity.
 
 - **Hold `advanced_tooltip` (Alt)** for a PoE2-style layout: each mod is an `AffixRowView` row with a right-aligned tier badge, grouped under Prefix/Suffix headers. Rows are single-line — wrapping created a circular width↔height loop with the auto-sizing parent. Hovering a tier badge opens a nested popup with the mod's full name and its `AffixTag[]`.
-- **Hold `compare_item` (Ctrl)** to show the equipped item(s) in the same slot alongside, up to 2 panels — 2 rather than 1 specifically for `Ring`'s dual slots, via `EquippedLoadout.GetEquipped(slot)` yielding both rings when asked for either. `compare_item` is a separate action from `quick_move` despite both defaulting to Ctrl, so a controller can bind them differently.
+- **Hold `compare_item` (Shift)** to show the equipped item(s) in the same slot alongside, up to 2 panels — 2 rather than 1 specifically for `Ring`'s dual slots, via `EquippedLoadout.GetEquipped(slot)` yielding both rings when asked for either. It's off Ctrl because Ctrl is the dodge roll, and comparing a ground item mid-level would roll the player.
 - **Position anchors to the hovered control, not the mouse** — recomputed while hovered, then frozen once the mouse leaves. This is what lets the mouse catch the tooltip and move into it while a modifier holds it open, instead of the tooltip fleeing the cursor. It flips right when there isn't room on the left, checked against the combined extent of the main panel plus the widest visible comparison panel.
 - For `Armor`, resolved Armor/Shield values show under the item name in a distinct blue so they read as a different kind of information.
 - **Escape closes every open panel at once**, via `UiPanelStack.CloseAll()` — Godot stops delivering an input event once a handler marks it handled, so only the topmost panel used to see it. `BuildMenu` is the deliberate exception: it steps backward through its own wizard screens one at a time when it's the top panel, and is only swept away in full when something else is above it.
@@ -408,6 +414,8 @@ The original subclass design broke as soon as a spell needed two capabilities wi
 
 **A level is its own content plus two shared scenes.** Each level scene holds only what genuinely varies per level: a `LevelContext` (first child), geometry, lights and environment, the objective, the lanes and their `EnemySpawner`s, a `WaveController` pointed at the level's wave file, and the `Architect` — whose position is the level's player start, since the Sentinel spawns where the Architect stands. Everything else comes from two instanced scenes: `levels/level_systems.tscn` (economy, loot, game-over handling, debug keys, route preview, Sentinel spawner — levels only) and `ui/player_hud.tscn` (crosshair, health/shield, ability and token bars, respawn overlay, phase bar, nameplates, inventory, character sheet — the hub uses it too, where the phase bar hides itself). Shared-scene nodes never hold references into the level that instances them; they look level content up through `LevelContext` (e.g. `PrimaryObjective` for the loot spray), which is what keeps them reusable and clear of the inherited-scene export hazard below. `levels/test_level/` is the one level so far, and a test bed rather than shipping content.
 
+**Lighting is shared too.** The hub and every level point their `WorldEnvironment` at one `levels/default_environment.tres` — procedural sky, sky-lit ambient and reflections, AgX tonemapping, light SSAO and glow — so tuning it tunes everything. The sun (`DirectionalLight3D`, shadows on) stays per level, since its angle is a per-map choice, and a level wanting its own mood points at a different resource. Clouds aren't built; Godot's sky materials have none, so they'd be a small custom sky shader.
+
 Content (spells, runes, enemies, items) is data-driven via `Resource` assets so iteration doesn't slow as the roster grows.
 
 ### Two real hazards
@@ -436,7 +444,7 @@ A deliberately bare-bones staging area — meshes and colored boxes, no art pass
 - **Floating combat text** is capped at a fixed count via `ActiveRegistry`, oldest evicted first — a zero-cooldown tower with chain, fork and salvo stacked could otherwise keep hundreds alive and cost over 100fps.
 - **Players collide with the `Obstacles` layer.** This is a real gameplay rule, not a hub detail: `IceWallSegment` sits on that layer alone, so before this the player could walk through their own wall despite the design always saying otherwise.
 
-**Not built:** a real environment pass, and any detail beyond a name in the selection panels — no thumbnails, stats or descriptions.
+**Not built:** a real art pass, and any detail beyond a name in the selection panels — no thumbnails, stats or descriptions.
 
 ## 9. Open Questions
 
@@ -528,7 +536,6 @@ Every rune should hook a _tag_, not a spell class, so it applies to any future s
 - **Navmesh re-baking on tower placement.** Placed Rituals have solid collision, but the navmesh only bakes at level load, so enemies won't route around anything placed after. The idea is to re-bake once at the end of a build phase and once when a token deploys mid-wave — not per placement (expensive) and not never (broken pathing). Note this is distinct from the wall-rebaking dead end in Section 4.
 - **Non-lethal knockback.** `RagdollForce` only applies via the on-death ragdoll launch. Knocking back a _living_ enemy needs a different mechanism, since it's `CharacterBody3D`-driven rather than free ragdoll physics.
 - **Ritual line of sight and non-horizontal projectile aiming** — both confirmed needed eventually.
-- **Sprint** for Sentinels — wanted, not designed.
 
 ### Rune and spell iconography
 

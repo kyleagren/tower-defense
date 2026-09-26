@@ -47,8 +47,9 @@ public partial class AbilityGauge : TextureProgressBar
         TintProgress = gaugeAbility.IsActive ? ActiveColor : DamageTypeColors.Get(gaugeAbility.GaugeElement);
     }
 
-    // Re-fetched every frame rather than cached - the local Sentinel can swap out (hub character
-    // select), same as AbilityBar.
+    // An ability spending its gauge wins over one filling it, so Overdrive's draining shots show in
+    // place of Harvest's empty charge. Re-fetched every frame rather than cached - the local Sentinel
+    // can swap out (hub character select), same as AbilityBar.
     private static Ability FindGaugeAbility()
     {
         Sentinel sentinel = Sentinel.Local;
@@ -57,14 +58,23 @@ public partial class AbilityGauge : TextureProgressBar
             return null;
         }
 
-        foreach (Ability ability in sentinel.AbilitySlots)
+        Ability filling = null;
+
+        foreach (Ability ability in sentinel.AllAbilities)
         {
-            if (ability != null && IsInstanceValid(ability) && ability.GaugeFraction.HasValue)
+            if (!IsInstanceValid(ability) || !ability.GaugeFraction.HasValue)
+            {
+                continue;
+            }
+
+            if (ability.IsActive)
             {
                 return ability;
             }
+
+            filling ??= ability;
         }
 
-        return null;
+        return filling;
     }
 }

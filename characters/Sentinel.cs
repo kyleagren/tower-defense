@@ -20,6 +20,33 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public RitualPlacer RitualTokenPlacer { get; private set; }
     public TokenDeployer TokenDeployer { get; private set; }
     [Export] public Godot.Collections.Array<Ability> AbilitySlots { get; private set; } = new();
+    // The ability each slot fires on a hold instead of a tap, or null. A slot with one waits on every
+    // press: releasing before GameRules.AbilityHoldThreshold is a tap, reaching it is a hold. A slot
+    // without one fires on press.
+    [Export] public Godot.Collections.Array<Ability> HoldAbilitySlots { get; private set; } = new();
+
+    // Every ability this Sentinel carries, tap and hold alike.
+    public IEnumerable<Ability> AllAbilities
+    {
+        get
+        {
+            foreach (Ability ability in AbilitySlots)
+            {
+                if (ability != null)
+                {
+                    yield return ability;
+                }
+            }
+
+            foreach (Ability ability in HoldAbilitySlots)
+            {
+                if (ability != null)
+                {
+                    yield return ability;
+                }
+            }
+        }
+    }
 
     public abstract CharacterId Id { get; }
 
@@ -129,9 +156,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         get
         {
-            foreach (Ability ability in AbilitySlots)
+            foreach (Ability ability in AllAbilities)
             {
-                if (ability != null && ability.CapturesAttackInput)
+                if (ability.CapturesAttackInput)
                 {
                     return true;
                 }
@@ -144,9 +171,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // Lets a long-running capture stand aside for a short one layered on top of it.
     public bool IsAnotherAbilityCapturing(Ability self)
     {
-        foreach (Ability ability in AbilitySlots)
+        foreach (Ability ability in AllAbilities)
         {
-            if (ability != null && ability != self && ability.CapturesAttackInput)
+            if (ability != self && ability.CapturesAttackInput)
             {
                 return true;
             }
@@ -160,6 +187,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     private float _currentHealth;
     private float _currentShield;
     private float _timeSinceLastHit;
+    private int _heldSlot = -1;
+    private float _heldTime;
 
     public override void ActivateStandalone()
     {
@@ -276,17 +305,84 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         {
             if (@event.IsActionPressed(_abilityActions[slot]))
             {
-                AbilitySlots[slot]?.Press();
+                PressSlot(slot);
                 return;
             }
 
             if (@event.IsActionReleased(_abilityActions[slot]))
             {
-                AbilitySlots[slot]?.Release();
+                ReleaseSlot(slot);
                 return;
             }
         }
     }
+
+    public override void _Process(double delta)
+    {
+        if (_heldSlot < 0)
+        {
+            return;
+        }
+
+        // Losing ability input mid-hold (death, token pick mode) drops the press rather than letting
+        // it fire later - and a release arriving while input is gated would never be seen anyway.
+        if (!CanUseAbilityInput)
+        {
+            _heldSlot = -1;
+            return;
+        }
+
+        _heldTime += (float)delta;
+
+        if (_heldTime >= GameRules.AbilityHoldThreshold)
+        {
+            int slot = _heldSlot;
+            _heldSlot = -1;
+            TryActivateInSlot(slot, GetHoldAbility(slot));
+        }
+    }
+
+    private void PressSlot(int slot)
+    {
+        if (GetHoldAbility(slot) == null)
+        {
+            TryActivateInSlot(slot, AbilitySlots[slot]);
+            return;
+        }
+
+        _heldSlot = slot;
+        _heldTime = 0f;
+    }
+
+    private void ReleaseSlot(int slot)
+    {
+        if (_heldSlot != slot)
+        {
+            return;
+        }
+
+        _heldSlot = -1;
+        TryActivateInSlot(slot, AbilitySlots[slot]);
+    }
+
+    // A slot's two abilities never run at once - one field at a time, no Harvest mid-Overdrive.
+    private void TryActivateInSlot(int slot, Ability ability)
+    {
+        if (ability == null)
+        {
+            return;
+        }
+
+        Ability partner = ability == AbilitySlots[slot] ? GetHoldAbility(slot) : AbilitySlots[slot];
+        if (partner != null && partner.IsActive)
+        {
+            return;
+        }
+
+        ability.TryActivate();
+    }
+
+    private Ability GetHoldAbility(int slot) => slot < HoldAbilitySlots.Count ? HoldAbilitySlots[slot] : null;
 
     // Rolls along the movement input, or straight ahead with none. Grounded only.
     private bool TryStartDodge()
@@ -336,9 +432,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     private bool TryCancelCapturingAbility()
     {
-        foreach (Ability ability in AbilitySlots)
+        foreach (Ability ability in AllAbilities)
         {
-            if (ability != null && ability.CapturesAttackInput && ability.CanCancelCapture)
+            if (ability.CapturesAttackInput && ability.CanCancelCapture)
             {
                 ability.CancelCapture();
                 return true;
@@ -437,10 +533,10 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             RitualTokenPlacer.CancelPlacement();
         }
 
-        foreach (Ability ability in AbilitySlots)
+        foreach (Ability ability in AllAbilities)
         {
-            ability?.CancelCapture();
-            ability?.OnCharacterDied();
+            ability.CancelCapture();
+            ability.OnCharacterDied();
         }
     }
 

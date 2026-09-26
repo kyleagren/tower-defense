@@ -89,18 +89,23 @@ public partial class AbilityBar : Control
 
         for (int i = 0; i < SlotCount; i++)
         {
-            Ability ability = sentinel != null && i < sentinel.AbilitySlots.Count ? sentinel.AbilitySlots[i] : null;
+            Ability tap = sentinel != null && i < sentinel.AbilitySlots.Count ? sentinel.AbilitySlots[i] : null;
+            Ability hold = sentinel != null && i < sentinel.HoldAbilitySlots.Count ? sentinel.HoldAbilitySlots[i] : null;
 
-            if (ability == null || !IsInstanceValid(ability))
+            if (tap == null || !IsInstanceValid(tap))
             {
                 _cooldownOverlays[i].Progress = 0f;
                 _nameLabels[i].Text = "";
                 continue;
             }
 
-            _cooldownOverlays[i].FillColor = ability.IsActive ? _activeColor : _readyColor;
-            _cooldownOverlays[i].Progress = ability.IsActive ? ability.ActiveFraction : 1f - ability.CooldownFraction;
-            _nameLabels[i].Text = ability.DisplayName;
+            bool holdValid = hold != null && IsInstanceValid(hold);
+            Ability active = tap.IsActive ? tap : holdValid && hold.IsActive ? hold : null;
+            float cooldown = Mathf.Max(tap.CooldownFraction, holdValid ? hold.CooldownFraction : 0f);
+
+            _cooldownOverlays[i].FillColor = active != null ? _activeColor : _readyColor;
+            _cooldownOverlays[i].Progress = active != null ? active.ActiveFraction : 1f - cooldown;
+            _nameLabels[i].Text = holdValid ? $"{tap.DisplayName} / {hold.DisplayName}" : tap.DisplayName;
         }
     }
 }

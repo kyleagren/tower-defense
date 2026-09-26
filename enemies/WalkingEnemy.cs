@@ -20,6 +20,10 @@ public partial class WalkingEnemy : Enemy
     [Export] public float AttackRange = 1.5f;
     [Export] public float AttackDamage = 10f;
     [Export] public float AttackInterval = 1f;
+    // Per second, exponential - how fast a shove bleeds off.
+    [Export] public float KnockbackDrag = 6f;
+    // Below this a shove is spent and the enemy takes back control.
+    [Export] public float KnockbackRecoverySpeed = 0.5f;
     [Export] public NavigationAgent3D NavAgent { get; private set; }
     [Export] public Skeleton3D Skeleton { get; private set; }
     [Export] public PhysicalBoneSimulator3D BoneSimulator { get; private set; }
@@ -28,6 +32,8 @@ public partial class WalkingEnemy : Enemy
     // Ailments fold in here rather than at the Move() call site, so anything reading Speed sees the
     // slowed value.
     public float Speed => BaseSpeed * AilmentSpeedMultiplier;
+
+    public bool IsKnockedBack => _knockbackVelocity != Vector3.Zero;
 
     [Export] public float WalkCycleFrequency = 6.0f;
     [Export] public float LegSwingAmplitude = 0.5f;
@@ -47,6 +53,8 @@ public partial class WalkingEnemy : Enemy
     private Sentinel _targetSentinel;
     private float _attackCooldown;
     private bool _hasFacedInitialDirection;
+    private Vector3 _knockbackVelocity;
+    private bool _rejoinPending;
 
     public override void _Ready()
     {
@@ -83,6 +91,20 @@ public partial class WalkingEnemy : Enemy
 
         UpdateDistanceToGoal();
 
+        if (IsKnockedBack)
+        {
+            ProcessKnockback(delta);
+            return;
+        }
+
+        // Deferred until the enemy can walk again, so one rooted in place doesn't re-path every time
+        // a pull nudges it.
+        if (_rejoinPending && Speed > 0f)
+        {
+            _rejoinPending = false;
+            BeginRejoin();
+        }
+
         // Engagement is decided on an interval (mirrors Ritual.TargetSearchInterval) rather than every
         // frame: towers, then players, then walls, in that priority order.
         _engagementCheckTimer -= (float)delta;
@@ -115,6 +137,42 @@ public partial class WalkingEnemy : Enemy
             default:
                 ProcessLaneFollowing(delta);
                 break;
+        }
+    }
+
+    // Horizontal only: a real launch would need a stand-up animation per enemy type.
+    public override void ApplyKnockback(Vector3 impulse)
+    {
+        if (IsDead)
+        {
+            return;
+        }
+
+        _knockbackVelocity += new Vector3(impulse.X, 0f, impulse.Z) / Mass;
+    }
+
+    // A shoved enemy isn't steering: it slides with the shove and can't attack. Once the shove is
+    // spent, an enemy that was on a lane re-paths to one rather than walking a straight line back to
+    // a waypoint that may now be behind a wall - every other mode already steers by the nav agent
+    // and carries on from wherever it landed.
+    private void ProcessKnockback(double delta)
+    {
+        Velocity = _knockbackVelocity;
+        MoveAndSlide();
+        _walkAnimator.Animate(0.0, delta);
+
+        _knockbackVelocity *= Mathf.Exp(-KnockbackDrag * (float)delta);
+
+        if (_knockbackVelocity.Length() > KnockbackRecoverySpeed)
+        {
+            return;
+        }
+
+        _knockbackVelocity = Vector3.Zero;
+
+        if (_movementMode == MovementMode.FollowingLane || _movementMode == MovementMode.RejoiningLane)
+        {
+            _rejoinPending = true;
         }
     }
 
@@ -563,7 +621,7 @@ public partial class WalkingEnemy : Enemy
         NavAgent.Velocity = direction * Speed;
 
         RotateTowardsMovement(direction, delta);
-        _walkAnimator.Animate(1.0, delta);
+        _walkAnimator.Animate(Speed > 0f ? 1.0 : 0.0, delta);
     }
 
     private void OnVelocityComputed(Vector3 safeVelocity)

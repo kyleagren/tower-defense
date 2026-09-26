@@ -5,10 +5,15 @@
 [ext_resource type="PackedScene" path="res://visual_effects/ImpactFlash.tscn" id="3_impact"]
 [ext_resource type="PackedScene" path="res://visual_effects/BulletTracer.tscn" id="4_tracer"]
 [ext_resource type="Script" uid="uid://gs7mfjclhw6" path="res://characters/soldier/abilities/WeakPointVisorAbility.cs" id="5_enuph"]
-[ext_resource type="Script" path="res://characters/soldier/abilities/HealthLinkAbility.cs" id="6_healthlink"]
+[ext_resource type="Script" uid="uid://b67t475136skj" path="res://characters/soldier/abilities/HealthLinkAbility.cs" id="6_healthlink"]
 [ext_resource type="PackedScene" path="res://visual_effects/HealthLinkSpike.tscn" id="7_spike"]
 [ext_resource type="PackedScene" path="res://visual_effects/HealthLinkTether.tscn" id="8_tether"]
-[ext_resource type="Script" path="res://characters/soldier/abilities/StatusStripAbility.cs" id="9_statusstrip"]
+[ext_resource type="Script" uid="uid://x0csyihmuaxr" path="res://characters/soldier/abilities/HarvestAbility.cs" id="9_statusstrip"]
+[ext_resource type="Script" path="res://characters/soldier/abilities/OverdriveAbility.cs" id="10_overdrive"]
+[ext_resource type="Script" path="res://characters/soldier/abilities/BeckonAbility.cs" id="11_beckon"]
+[ext_resource type="Script" path="res://characters/soldier/abilities/PurgeAbility.cs" id="12_purge"]
+[ext_resource type="PackedScene" path="res://characters/soldier/abilities/beckon_field.tscn" id="13_beckonfield"]
+[ext_resource type="PackedScene" path="res://characters/soldier/abilities/purge_field.tscn" id="14_purgefield"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soldier"]
 albedo_color = Color(0.1, 0.15, 0.5, 1)
@@ -37,13 +42,14 @@ size = Vector3(0.06, 0.12, 0.2)
 material = SubResource("StandardMaterial3D_rifle")
 size = Vector3(0.05, 0.2, 0.06)
 
-[node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "AbilitySlots", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
+[node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "AbilitySlots", "HoldAbilitySlots", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
 script = ExtResource("2_soldier")
 ImpactScene = ExtResource("3_impact")
 MuzzlePoint = NodePath("Weapon/MuzzlePoint")
 TracerScene = ExtResource("4_tracer")
 Weapon = NodePath("Weapon")
-AbilitySlots = [NodePath("WeakPointVisor"), NodePath("HealthLink"), NodePath("StatusStrip"), null]
+AbilitySlots = [NodePath("Beckon"), NodePath("WeakPointVisor"), NodePath("HealthLink"), NodePath("Harvest")]
+HoldAbilitySlots = [NodePath("Purge"), null, null, NodePath("Overdrive")]
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")
 BodyMesh = NodePath("MeshInstance3D")
@@ -81,5 +87,19 @@ SpikeScene = ExtResource("7_spike")
 TetherScene = ExtResource("8_tether")
 BeamOrigin = NodePath("../Weapon/MuzzlePoint")
 
-[node name="StatusStrip" type="Node" parent="." index="11"]
+[node name="Harvest" type="Node" parent="." index="11"]
 script = ExtResource("9_statusstrip")
+
+[node name="Overdrive" type="Node" parent="." index="12" node_paths=PackedStringArray("Harvest")]
+script = ExtResource("10_overdrive")
+Harvest = NodePath("../Harvest")
+
+[node name="Beckon" type="Node" parent="." index="13" node_paths=PackedStringArray("CooldownPartner")]
+script = ExtResource("11_beckon")
+CooldownPartner = NodePath("../Purge")
+FieldScene = ExtResource("13_beckonfield")
+
+[node name="Purge" type="Node" parent="." index="14" node_paths=PackedStringArray("CooldownPartner")]
+script = ExtResource("12_purge")
+CooldownPartner = NodePath("../Beckon")
+FieldScene = ExtResource("14_purgefield")

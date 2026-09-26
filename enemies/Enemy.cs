@@ -15,6 +15,8 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public float RagdollCleanupDelay = 2f;
     [Export] public float MaxHealth = 100f;
     [Export] public float CenterMassHeight = 1f;
+    // Kilograms. Knockback divides by it, so a heavy enemy moves less but is never made immune.
+    [Export] public float Mass = 80f;
     [Export] public int ManaReward = 1;
     [Export] public int GoldReward = 1;
     [Export] public float DropChance = 0.15f;
@@ -346,6 +348,12 @@ public partial class Enemy : CharacterBody3D, IDamageable
         BodyCollision.Disabled = true;
 
         GetTree().CreateTimer(RagdollCleanupDelay).Timeout += QueueFree;
+    }
+
+    // A non-lethal shove from outside - a pylon, a shield slam - in kg·m/s. No-op for an enemy that
+    // can't be moved, like the training dummy.
+    public virtual void ApplyKnockback(Vector3 impulse)
+    {
     }
 
     // No-op by default — only an enemy with a ragdoll-capable rig (WalkingEnemy) does anything here.

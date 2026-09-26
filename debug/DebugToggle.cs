@@ -49,5 +49,36 @@ public partial class DebugToggle : Node
 
             PlayerProfiles.Local.TryAddToInventory(tome);
         }
+        else if (keyEvent.PhysicalKeycode == Key.F7)
+        {
+            KnockBackEnemiesAroundLocalSentinel();
+        }
+    }
+
+    private const float DebugKnockbackRadius = 10f;
+    private const float DebugKnockbackImpulse = 1600f;
+
+    // Shoves every enemy near the local Sentinel straight away from it - exercises knockback without
+    // the pylon or shield slam that will eventually drive it.
+    private static void KnockBackEnemiesAroundLocalSentinel()
+    {
+        Sentinel sentinel = Sentinel.Local;
+        if (sentinel == null)
+        {
+            return;
+        }
+
+        foreach (Enemy enemy in LevelContext.Current.Enemies.Active)
+        {
+            Vector3 offset = enemy.GlobalPosition - sentinel.GlobalPosition;
+            offset.Y = 0f;
+
+            if (offset == Vector3.Zero || offset.LengthSquared() > DebugKnockbackRadius * DebugKnockbackRadius)
+            {
+                continue;
+            }
+
+            enemy.ApplyKnockback(offset.Normalized() * DebugKnockbackImpulse);
+        }
     }
 }

@@ -12,6 +12,10 @@ public abstract partial class Ability : Node
 
     public virtual float BaseCooldown { get; protected set; } = 10f;
 
+    // Another ability that goes on cooldown whenever this one does - Beckon and Purge, which share a
+    // slot and one field between them. Wired both ways in the scene.
+    [Export] public Ability CooldownPartner { get; private set; }
+
     public bool IsReady => _cooldownRemaining <= 0f;
     public bool IsActive { get; protected set; }
 
@@ -42,16 +46,6 @@ public abstract partial class Ability : Node
     // ordinary behavior instead of being swallowed.
     public virtual bool CanCancelCapture => true;
 
-    // An ability with a hold variant defers its press: releasing before GameRules.AbilityHoldThreshold
-    // is a tap (TryActivate), and holding to the threshold fires TryActivateHold the moment it's
-    // reached. Without one, a press fires TryActivate straight away.
-    public virtual bool HasHoldVariant => false;
-
-    public virtual bool TryActivateHold()
-    {
-        return false;
-    }
-
     // Null for an ability with no gauge. AbilityGauge shows the first slot that has one.
     public virtual float? GaugeFraction => null;
 
@@ -69,8 +63,6 @@ public abstract partial class Ability : Node
 
     private float _cooldownRemaining;
     private float _cooldownDuration;
-    private bool _isHeld;
-    private float _heldTime;
 
     public override void _Ready()
     {
@@ -85,63 +77,23 @@ public abstract partial class Ability : Node
         {
             _cooldownRemaining = Mathf.Max(0f, _cooldownRemaining - (float)delta);
         }
-
-        if (_isHeld)
-        {
-            UpdateHold((float)delta);
-        }
-    }
-
-    public void Press()
-    {
-        if (!HasHoldVariant)
-        {
-            TryActivate();
-            return;
-        }
-
-        _isHeld = true;
-        _heldTime = 0f;
-    }
-
-    public void Release()
-    {
-        if (!_isHeld)
-        {
-            return;
-        }
-
-        _isHeld = false;
-        TryActivate();
-    }
-
-    // Losing ability input mid-hold (death, token pick mode) drops the press rather than letting it
-    // fire later - and a release arriving while input is gated would never reach Release anyway.
-    private void UpdateHold(float delta)
-    {
-        if (!Character.CanUseAbilityInput)
-        {
-            _isHeld = false;
-            return;
-        }
-
-        _heldTime += delta;
-
-        if (_heldTime >= GameRules.AbilityHoldThreshold)
-        {
-            _isHeld = false;
-            TryActivateHold();
-        }
     }
 
     public virtual bool TryActivate()
     {
-        if (IsActive || !IsReady)
+        if (IsActive || !IsReady || !CanActivate())
         {
             return false;
         }
 
         Activate();
+        return true;
+    }
+
+    // A last check before activating, for an ability with its own precondition - somewhere to place
+    // a field, a full gauge to spend.
+    protected virtual bool CanActivate()
+    {
         return true;
     }
 
@@ -153,7 +105,13 @@ public abstract partial class Ability : Node
     protected void StartCooldown()
     {
         float recoveryRate = 1f + Character.Sheet.GetBonus(StatId.SentinelCooldownRecoveryRate);
-        _cooldownDuration = BaseCooldown / recoveryRate;
-        _cooldownRemaining = _cooldownDuration;
+        SetCooldown(BaseCooldown / recoveryRate);
+        CooldownPartner?.SetCooldown(_cooldownDuration);
+    }
+
+    private void SetCooldown(float duration)
+    {
+        _cooldownDuration = duration;
+        _cooldownRemaining = duration;
     }
 }
