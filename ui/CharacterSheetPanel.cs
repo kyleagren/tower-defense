@@ -133,8 +133,8 @@ public partial class CharacterSheetPanel : Control
             // name, so rows read "X : +N%" (or "Reduced X : -N%" for the two reductions) instead of
             // the raw "+{0}% X" template.
             Affix affix = AffixTable.Get(stat);
-            bool isReduction = affix.DescriptionTemplate.StartsWith("-{0}% ");
-            string statName = affix.DescriptionTemplate.Replace(isReduction ? "-{0}% " : "+{0}% ", "");
+            bool isReduction = affix.ResolvedTemplate.StartsWith("-{0}% ");
+            string statName = affix.ResolvedTemplate.Replace(isReduction ? "-{0}% " : "+{0}% ", "");
 
             if (isReduction)
             {

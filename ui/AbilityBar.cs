@@ -105,7 +105,7 @@ public partial class AbilityBar : Control
 
             _cooldownOverlays[i].FillColor = active != null ? _activeColor : _readyColor;
             _cooldownOverlays[i].Progress = active != null ? active.ActiveFraction : 1f - cooldown;
-            _nameLabels[i].Text = holdValid ? $"{tap.DisplayName} / {hold.DisplayName}" : tap.DisplayName;
+            _nameLabels[i].Text = sentinel.SlotDisplayName(i);
         }
     }
 }

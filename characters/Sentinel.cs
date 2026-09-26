@@ -88,8 +88,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
     }
 
-    // Shield past MaxShield is overshield. It lives in the same pool, so a hit drains it first, and
-    // regen never reaches it since regen stops at MaxShield.
+    // Shield past MaxShield is overshield - only Harvest grants it. It lives in the same pool, so a
+    // hit drains it first; regen never reaches it, since regen stops at MaxShield, and any gear
+    // change clamps back down to MaxShield, wiping it.
     public float ShieldCeiling => MaxShield * GameRules.OvershieldCeilingMultiplier;
 
     public float TotalArmor
@@ -202,6 +203,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         RitualTokenPlacer = GetNode<RitualPlacer>("RitualTokenPlacer");
         TokenDeployer = GetNode<TokenDeployer>("TokenDeployer");
         _bodyMeshRestBasis = BodyMesh.Basis;
+
+        for (int slot = 0; slot < AbilitySlots.Count; slot++)
+        {
+            AbilitySlots[slot]?.AssignSlot(slot);
+            GetHoldAbility(slot)?.AssignSlot(slot);
+        }
         _currentHealth = MaxHealth;
         _currentShield = MaxShield;
         Level.Sentinels[OwnerId] = this;
@@ -242,7 +249,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         PlayerProfiles.Get(OwnerId).InvalidateSheets();
 
         _currentHealth = Mathf.Min(_currentHealth, MaxHealth);
-        _currentShield = Mathf.Min(_currentShield, ShieldCeiling);
+        _currentShield = Mathf.Min(_currentShield, MaxShield);
 
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
@@ -383,6 +390,19 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     }
 
     private Ability GetHoldAbility(int slot) => slot < HoldAbilitySlots.Count ? HoldAbilitySlots[slot] : null;
+
+    // "Beckon / Purge" for a paired slot, the lone name otherwise, null for an empty slot.
+    public string SlotDisplayName(int slot)
+    {
+        Ability tap = slot < AbilitySlots.Count ? AbilitySlots[slot] : null;
+        if (tap == null || !IsInstanceValid(tap))
+        {
+            return null;
+        }
+
+        Ability hold = GetHoldAbility(slot);
+        return hold != null && IsInstanceValid(hold) ? $"{tap.DisplayName} / {hold.DisplayName}" : tap.DisplayName;
+    }
 
     // Rolls along the movement input, or straight ahead with none. Grounded only.
     private bool TryStartDodge()

@@ -16,9 +16,10 @@ public abstract partial class PlacedFieldAbility : Ability
     // Backs off the aimed surface before dropping, so a shot into a wall settles in front of it.
     private const float SurfaceBackoff = 0.1f;
 
-    public override float ActiveFraction => Duration <= 0f ? 0f : _fieldRemaining / Duration;
+    public override float ActiveFraction => _activeDuration <= 0f ? 0f : _fieldRemaining / _activeDuration;
 
     private Vector3 _placement;
+    private float _activeDuration;
     private float _fieldRemaining;
 
     // Nowhere to put the field means no cast and no cooldown.
@@ -29,13 +30,15 @@ public abstract partial class PlacedFieldAbility : Ability
 
     protected override void Activate()
     {
+        _activeDuration = ScaledDuration(Duration);
+
         EffectVolume field = FieldScene.Instantiate<EffectVolume>();
         GetTree().CurrentScene.AddChild(field);
-        field.Initialize(_placement, Radius, Duration);
+        field.Initialize(_placement, ScaledArea(Radius), _activeDuration);
         ConfigureField(field);
 
         IsActive = true;
-        _fieldRemaining = Duration;
+        _fieldRemaining = _activeDuration;
     }
 
     protected abstract void ConfigureField(EffectVolume field);

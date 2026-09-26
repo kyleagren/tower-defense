@@ -76,7 +76,8 @@ public partial class HarvestAbility : Ability
         strippedCount = 0;
 
         Vector3 origin = Character.GlobalPosition;
-        float radiusSquared = Radius * Radius;
+        float radius = ScaledArea(Radius);
+        float radiusSquared = radius * radius;
 
         foreach (Enemy enemy in LevelContext.Current.Enemies.Active)
         {

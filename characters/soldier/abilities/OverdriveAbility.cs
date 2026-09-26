@@ -15,6 +15,9 @@ public partial class OverdriveAbility : Ability
     [Export] public float ShotInterval { get; private set; } = 0.5f;
     [Export] public float Expiry { get; private set; } = 20f;
     [Export] public int PierceCount { get; private set; } = 3;
+    // Overdrive has no area of its own, so Area of Effect buys extra pierce instead - one per this
+    // much of it, rounded down.
+    [Export] public float AreaPerExtraPierce { get; private set; } = 0.33f;
     // Seconds of weapon DPS each shot deals, so a fast gun and a slow heavy one land equal shots.
     [Export] public float DpsSecondsPerShot { get; private set; } = 1f;
     // A share of the shot's own Fire damage.
@@ -36,6 +39,7 @@ public partial class OverdriveAbility : Ability
     private int _shotsRemaining;
     private float _expiryRemaining;
     private float _shotCooldown;
+    private int _pierceCount;
     private Dictionary<Tag, float> _shares;
     private Tag? _ailmentElement;
 
@@ -52,7 +56,8 @@ public partial class OverdriveAbility : Ability
 
         IsActive = true;
         _shotsRemaining = OverdriveShots;
-        _expiryRemaining = Expiry;
+        _expiryRemaining = ScaledDuration(Expiry);
+        _pierceCount = PierceCount + Mathf.FloorToInt(EffectiveBonus(AbilityStatKind.Area) / AreaPerExtraPierce);
         _shotCooldown = 0f;
         Wielder.SetWeaponTint(DamageTypeColors.Get(_ailmentElement));
     }
@@ -107,7 +112,7 @@ public partial class OverdriveAbility : Ability
         Vector3 origin = Character.Camera.GlobalPosition;
         Vector3 forward = -Character.Camera.GlobalTransform.Basis.Z;
         Vector3 end = origin + forward * Wielder.AttackRange;
-        float baseDamage = Character.AttackDamage * Character.AttackSpeed * DpsSecondsPerShot;
+        float baseDamage = ScaledDamage(Character.AttackDamage * Character.AttackSpeed * DpsSecondsPerShot);
 
         PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
@@ -116,7 +121,7 @@ public partial class OverdriveAbility : Ability
         Godot.Collections.Array<Rid> pierced = new Godot.Collections.Array<Rid>();
         Vector3 tracerEnd = end;
 
-        for (int i = 0; i < PierceCount; i++)
+        for (int i = 0; i < _pierceCount; i++)
         {
             Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
             if (result.Count == 0 || result["collider"].As<Node3D>() is not Enemy enemy)
@@ -129,7 +134,7 @@ public partial class OverdriveAbility : Ability
             HitEnemy(enemy, origin, end, baseDamage);
 
             // The last enemy it can pierce stops the tracer; fewer than that and it runs full range.
-            if (i == PierceCount - 1)
+            if (i == _pierceCount - 1)
             {
                 tracerEnd = hitPosition;
             }

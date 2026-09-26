@@ -16,6 +16,19 @@ public abstract partial class Ability : Node
     // slot and one field between them. Wired both ways in the scene.
     [Export] public Ability CooldownPartner { get; private set; }
 
+    // How strongly this ability responds to each kind of ability stat from gear - a lever for keeping
+    // one ability's scaling from running away without touching the mods themselves. Applies to the
+    // generic and per-slot bonus together. A subclass wanting a different default sets it in its
+    // constructor, so the Inspector still shows the real default.
+    [Export] public float CooldownRecoveryEffectiveness { get; protected set; } = 1f;
+    [Export] public float AreaEffectiveness { get; protected set; } = 1f;
+    [Export] public float DurationEffectiveness { get; protected set; } = 1f;
+    [Export] public float DamageEffectiveness { get; protected set; } = 1f;
+
+    // Which slot this ability sits in - what its per-slot gear stats are rolled against. A hold
+    // ability shares its slot's index. -1 until the Sentinel assigns it.
+    public int SlotIndex { get; private set; } = -1;
+
     public bool IsReady => _cooldownRemaining <= 0f;
     public bool IsActive { get; protected set; }
 
@@ -69,6 +82,40 @@ public abstract partial class Ability : Node
         Character = GetParent<Sentinel>();
     }
 
+    public void AssignSlot(int slot)
+    {
+        SlotIndex = slot;
+    }
+
+    // Read by each ability when it activates, so re-gearing mid-cast doesn't reshape a cast already
+    // running.
+    protected float ScaledArea(float baseValue) => baseValue * (1f + EffectiveBonus(AbilityStatKind.Area));
+    protected float ScaledDuration(float baseValue) => baseValue * (1f + EffectiveBonus(AbilityStatKind.Duration));
+    protected float ScaledDamage(float baseValue) => baseValue * (1f + EffectiveBonus(AbilityStatKind.Damage));
+
+    // The gear bonus for one kind of ability stat - the generic one and this slot's own, added
+    // together - scaled by this ability's effectiveness for that kind.
+    protected float EffectiveBonus(AbilityStatKind kind)
+    {
+        CharacterSheet sheet = Character.Sheet;
+        float bonus = sheet.GetBonus(AbilityStats.Generic(kind));
+
+        if (SlotIndex >= 0)
+        {
+            bonus += sheet.GetBonus(AbilityStats.For(SlotIndex, kind));
+        }
+
+        return bonus * Effectiveness(kind);
+    }
+
+    private float Effectiveness(AbilityStatKind kind) => kind switch
+    {
+        AbilityStatKind.CooldownRecoveryRate => CooldownRecoveryEffectiveness,
+        AbilityStatKind.Area => AreaEffectiveness,
+        AbilityStatKind.Duration => DurationEffectiveness,
+        _ => DamageEffectiveness
+    };
+
     // A subclass that needs per-frame work of its own must call base._PhysicsProcess(delta) - the
     // cooldown timer runs here.
     public override void _PhysicsProcess(double delta)
@@ -104,7 +151,7 @@ public abstract partial class Ability : Node
     // rate divides in, matching SpellCastContext.ResolvedCooldown's shape.
     protected void StartCooldown()
     {
-        float recoveryRate = 1f + Character.Sheet.GetBonus(StatId.SentinelCooldownRecoveryRate);
+        float recoveryRate = 1f + EffectiveBonus(AbilityStatKind.CooldownRecoveryRate);
         SetCooldown(BaseCooldown / recoveryRate);
         CooldownPartner?.SetCooldown(_cooldownDuration);
     }

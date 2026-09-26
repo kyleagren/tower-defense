@@ -13,17 +13,25 @@ public partial class Soldier : Sentinel
     [Export] public float AdsSpringLength = 0.5f;
     [Export] public float AdsTransitionSpeed = 10f;
     [Export] public float AdsSensitivityMultiplier = 0.5f;
-    [Export] public float WeakPointDamageMultiplier { get; private set; } = 1.3f;
 
     public override CharacterId Id => CharacterId.Soldier;
 
     private float _fireCooldown;
     private readonly List<MeshInstance3D> _weaponMeshes = new List<MeshInstance3D>();
     private StandardMaterial3D _weaponTintMaterial;
+    private WeakPointVisorAbility _visor;
 
     public override void _Ready()
     {
         base._Ready();
+
+        foreach (Ability ability in AllAbilities)
+        {
+            if (ability is WeakPointVisorAbility visor)
+            {
+                _visor = visor;
+            }
+        }
 
         foreach (Node node in Weapon.FindChildren("*", nameof(MeshInstance3D)))
         {
@@ -131,7 +139,7 @@ public partial class Soldier : Sentinel
 
         if (enemy.IsWeakPointHit(rayOrigin, rayEnd))
         {
-            damage *= WeakPointDamageMultiplier;
+            damage *= _visor?.WeakPointMultiplier ?? 1f;
         }
 
         return damage;

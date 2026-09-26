@@ -14,5 +14,7 @@ public enum AffixTag
     Water,
     Cold,
     Lightning,
-    Wind
+    Wind,
+    Duration,
+    Area
 }

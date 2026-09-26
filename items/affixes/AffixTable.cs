@@ -454,7 +454,7 @@ public static class AffixTable
         {
             Name = "Celerity",
             DescriptionTemplate = "+{0}% Ability Cooldown Recovery Rate",
-            AffixType = AffixType.Prefix,
+            AffixType = AffixType.Suffix,
             Stat = StatId.SentinelCooldownRecoveryRate,
             AllowedSlots = ArmorSlots,
             Tags = [AffixTag.Cooldown],
@@ -465,6 +465,57 @@ public static class AffixTable
                 new PercentTierRange(3, 9, 12),
                 new PercentTierRange(4, 13, 16),
                 new PercentTierRange(5, 17, 20)
+            ]
+        },
+        [StatId.AbilityArea] = new Affix
+        {
+            Name = "Breadth",
+            DescriptionTemplate = "+{0}% Ability Area of Effect",
+            AffixType = AffixType.Prefix,
+            Stat = StatId.AbilityArea,
+            AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Area],
+            TierTable =
+            [
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
+                new PercentTierRange(3, 9, 12),
+                new PercentTierRange(4, 13, 16),
+                new PercentTierRange(5, 17, 20)
+            ]
+        },
+        [StatId.AbilityDuration] = new Affix
+        {
+            Name = "Lingering",
+            DescriptionTemplate = "+{0}% Ability Duration",
+            AffixType = AffixType.Suffix,
+            Stat = StatId.AbilityDuration,
+            AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Duration],
+            TierTable =
+            [
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
+                new PercentTierRange(3, 9, 12),
+                new PercentTierRange(4, 13, 16),
+                new PercentTierRange(5, 17, 20)
+            ]
+        },
+        [StatId.AbilityDamage] = new Affix
+        {
+            Name = "Ferocity",
+            DescriptionTemplate = "+{0}% Ability Damage",
+            AffixType = AffixType.Prefix,
+            Stat = StatId.AbilityDamage,
+            AllowedSlots = ArmorSlots,
+            Tags = [AffixTag.Damage],
+            TierTable =
+            [
+                new PercentTierRange(1, 5, 8),
+                new PercentTierRange(2, 9, 13),
+                new PercentTierRange(3, 14, 19),
+                new PercentTierRange(4, 20, 25),
+                new PercentTierRange(5, 26, 32)
             ]
         },
 
@@ -487,6 +538,51 @@ public static class AffixTable
             ]
         }
     };
+
+    static AffixTable()
+    {
+        AddAbilitySlotAffixes();
+    }
+
+    // Four per slot, identical but for which slot they name. Weighted at a half of the usual 1000
+    // per tier, so each kind - summed across all four slots - turns up about twice as often as a single
+    // ordinary armor mod rather than flooding the armor pool.
+    private const int AbilitySlotAffixWeight = 500;
+
+    private static void AddAbilitySlotAffixes()
+    {
+        for (int slot = 0; slot < AbilityStats.SlotCount; slot++)
+        {
+            AddAbilitySlotAffix(slot, AbilityStatKind.CooldownRecoveryRate, "Readiness", "+{0}% {ability} Cooldown Recovery Rate",
+                AffixType.Suffix, AffixTag.Cooldown, (5, 8), (9, 12), (13, 17), (18, 23), (24, 30));
+            AddAbilitySlotAffix(slot, AbilityStatKind.Area, "Expanse", "+{0}% {ability} Area of Effect",
+                AffixType.Prefix, AffixTag.Area, (5, 8), (9, 12), (13, 17), (18, 23), (24, 30));
+            AddAbilitySlotAffix(slot, AbilityStatKind.Duration, "Persistence", "+{0}% {ability} Duration",
+                AffixType.Suffix, AffixTag.Duration, (5, 8), (9, 12), (13, 17), (18, 23), (24, 30));
+            AddAbilitySlotAffix(slot, AbilityStatKind.Damage, "Force", "+{0}% {ability} Damage",
+                AffixType.Prefix, AffixTag.Damage, (8, 12), (13, 18), (19, 25), (26, 34), (35, 45));
+        }
+    }
+
+    private static void AddAbilitySlotAffix(int slot, AbilityStatKind kind, string name, string template,
+        AffixType type, AffixTag tag, params (float Min, float Max)[] tiers)
+    {
+        StatId stat = AbilityStats.For(slot, kind);
+
+        _affixes[stat] = new Affix
+        {
+            Name = name,
+            DescriptionTemplate = template,
+            AffixType = type,
+            Stat = stat,
+            AbilitySlot = slot,
+            AllowedSlots = ArmorSlots,
+            Tags = [tag],
+            TierTable = tiers
+                .Select((range, index) => (AffixTierRange)new PercentTierRange(index + 1, range.Min, range.Max, AbilitySlotAffixWeight))
+                .ToArray()
+        };
+    }
 
     public static Affix Get(StatId stat) => _affixes[stat];
     public static IEnumerable<Affix> All => _affixes.Values;

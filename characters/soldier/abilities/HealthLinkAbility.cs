@@ -45,7 +45,7 @@ public partial class HealthLinkAbility : Ability
     public override float ActiveFraction => _phase switch
     {
         Phase.Arming => ArmingTimeout <= 0f ? 0f : _armingRemaining / ArmingTimeout,
-        Phase.Linked => Duration <= 0f ? 0f : _linkRemaining / Duration,
+        Phase.Linked => _linkDuration <= 0f ? 0f : _linkRemaining / _linkDuration,
         Phase.Dud => DudDuration <= 0f ? 0f : _dudRemaining / DudDuration,
         _ => 0f
     };
@@ -54,6 +54,7 @@ public partial class HealthLinkAbility : Ability
 
     private Phase _phase = Phase.Idle;
     private float _armingRemaining;
+    private float _linkDuration;
     private float _linkRemaining;
     private float _dudRemaining;
     private int _shotsFired;
@@ -184,11 +185,13 @@ public partial class HealthLinkAbility : Ability
     }
 
     // Launches from the muzzle toward whatever the crosshair is on, so the bolt lands where the
-    // player aimed even though it doesn't start at the camera.
+    // player aimed even though it doesn't start at the camera. Area of Effect stretches its reach -
+    // Health Link has no area of its own for it to grow.
     private void FireBolt()
     {
+        float range = ScaledArea(SpikeRange);
         Vector3 origin = Character.Camera.GlobalPosition;
-        Vector3 end = origin - Character.Camera.GlobalTransform.Basis.Z * SpikeRange;
+        Vector3 end = origin - Character.Camera.GlobalTransform.Basis.Z * range;
 
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
         query.CollisionMask = PhysicsLayers.Enemies | PhysicsLayers.World | PhysicsLayers.Obstacles;
@@ -198,7 +201,7 @@ public partial class HealthLinkAbility : Ability
         _shotsFired++;
         _boltInFlight = BoltScene.Instantiate<HealthLinkBolt>();
         GetTree().CurrentScene.AddChild(_boltInFlight);
-        _boltInFlight.Launch(BeamOrigin.GlobalPosition, aimPoint, SpikeRange, OnBoltResolved);
+        _boltInFlight.Launch(BeamOrigin.GlobalPosition, aimPoint, range, OnBoltResolved);
     }
 
     private void OnBoltResolved(HealthLinkBolt.Impact impact)
@@ -229,8 +232,10 @@ public partial class HealthLinkAbility : Ability
         _secondSpike = spike;
         _secondTarget = impact.Enemy;
 
+        _linkDuration = ScaledDuration(Duration);
+
         bool linked = _firstTarget != null && _secondTarget != null && _secondTarget != _firstTarget
-            && HealthLinkAilment.Link(_firstTarget, _secondTarget, Duration, MirrorPercent);
+            && HealthLinkAilment.Link(_firstTarget, _secondTarget, _linkDuration, MirrorPercent);
 
         // After the link forms, so the second spike's own damage mirrors onto the first enemy.
         DealSpikeDamage(impact);
@@ -238,7 +243,7 @@ public partial class HealthLinkAbility : Ability
         if (linked)
         {
             _phase = Phase.Linked;
-            _linkRemaining = Duration;
+            _linkRemaining = _linkDuration;
             EnsureTether().Link(_firstSpike, _secondSpike);
             return;
         }
@@ -267,7 +272,7 @@ public partial class HealthLinkAbility : Ability
             return;
         }
 
-        float baseDamage = Character.AttackDamage * SpikeDamageMultiplier;
+        float baseDamage = ScaledDamage(Character.AttackDamage * SpikeDamageMultiplier);
         DamagePacket damage = Wielder.RollShotDamage(impact.Enemy, impact.SegmentFrom, impact.SegmentTo, baseDamage);
         impact.Enemy.TakeDamage(new Hit { Damage = damage, Attribution = Character.HitAttribution });
     }

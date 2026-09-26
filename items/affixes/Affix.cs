@@ -13,6 +13,17 @@ public class Affix
     public bool IsFlatValue;
     public AffixGroup Group = AffixGroup.None;
 
+    // The ability slot a per-slot mod belongs to, or -1. Its template carries an {ability} token for
+    // that slot's name.
+    public int AbilitySlot = -1;
+
+    // The template with {ability} filled in from the local Sentinel's own abilities in that slot, so
+    // the same item reads "Beckon / Purge Duration" on a Soldier and names Tank's slot on a Tank. The
+    // one place item text reaches into live gameplay - the names only exist on the ability nodes.
+    public string ResolvedTemplate => AbilitySlot < 0
+        ? DescriptionTemplate
+        : DescriptionTemplate.Replace("{ability}", Sentinel.Local?.SlotDisplayName(AbilitySlot) ?? $"Ability {AbilitySlot + 1}");
+
     public bool ConflictsWith(Affix other) => other.Stat == Stat || (Group != AffixGroup.None && other.Group == Group);
 
     // The character half of "can this mod roll here", parallel to AllowedSlots' slot half. An
