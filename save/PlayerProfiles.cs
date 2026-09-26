@@ -11,6 +11,10 @@ public static class PlayerProfiles
     // networking decides who hosts.
     public static PlayerId HostId { get; } = PlayerId.P1;
 
+    // Whether other players share this session - a pause menu can't freeze a game someone else is
+    // still playing. False until real networking exists.
+    public static bool IsMultiplayer => false;
+
     private static readonly Dictionary<PlayerId, PlayerProfile> _profiles = new();
 
     public static PlayerProfile Local => Get(LocalId);

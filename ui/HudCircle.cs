@@ -1,16 +1,17 @@
 using Godot;
 
 // Shared visual building blocks for the field HUD's circular slot rows (TokenBar, AbilityBar) -
-// both are a strip of same-sized circles with a numbered badge at the bottom edge, differing only
-// in what fills them, so the node construction lives in one place instead of two copies.
+// both are a strip of same-sized circles with a button-prompt badge at the bottom edge, differing
+// only in what fills them, so the node construction lives in one place instead of two copies.
 public static class HudCircle
 {
     public const float CircleSize = 83f;
     public const float Spacing = 16f;
     public const float BadgeSize = 29f;
     public const float RowGap = BadgeSize;
-
-    private static readonly Color _badgeColor = new Color(0f, 0f, 0f, 0.85f);
+    public const float ChipSize = 32f;
+    // Room at the left of each row for its modifier chip (L1, R1, or Q).
+    public const float ChipWidth = ChipSize + 8f;
 
     public static Panel CreateCircle(Control parent, Vector2 position)
     {
@@ -29,28 +30,13 @@ public static class HudCircle
         return overlay;
     }
 
-    public static Panel CreateBadge(Panel circle, int number)
-    {
-        Panel badge = new Panel { MouseFilter = Control.MouseFilterEnum.Ignore };
-        badge.Size = new Vector2(BadgeSize, BadgeSize);
-        badge.Position = new Vector2(CircleSize / 2f - BadgeSize / 2f, CircleSize - BadgeSize / 2f);
-        badge.AddThemeStyleboxOverride("panel", BuildCircularStyle(_badgeColor));
-        circle.AddChild(badge);
+    public static PromptBadge CreateBadge(Panel circle) =>
+        PromptBadge.Create(circle, new Vector2(CircleSize / 2f - BadgeSize / 2f, CircleSize - BadgeSize / 2f), BadgeSize);
 
-        Label numberLabel = new Label
-        {
-            Text = number.ToString(),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            MouseFilter = Control.MouseFilterEnum.Ignore
-        };
-        numberLabel.AddThemeFontSizeOverride("font_size", 13);
-        numberLabel.AddThemeColorOverride("font_color", Colors.White);
-        numberLabel.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        badge.AddChild(numberLabel);
+    public static PromptBadge CreateChip(Control row) =>
+        PromptBadge.Create(row, new Vector2(0f, CircleSize / 2f - ChipSize / 2f), ChipSize);
 
-        return badge;
-    }
+    public static float SlotX(int index) => ChipWidth + index * (CircleSize + Spacing);
 
     public static StyleBoxFlat BuildCircularStyle(Color fillColor, Color? borderColor = null)
     {
@@ -72,7 +58,7 @@ public static class HudCircle
         return style;
     }
 
-    public static float RowWidth(int slotCount) => slotCount * CircleSize + (slotCount - 1) * Spacing;
+    public static float RowWidth(int slotCount) => ChipWidth + slotCount * CircleSize + (slotCount - 1) * Spacing;
 
     // A row's own full extent, including the badge that hangs BadgeSize/2 below the circle.
     public static float RowHeight => CircleSize + BadgeSize / 2f;

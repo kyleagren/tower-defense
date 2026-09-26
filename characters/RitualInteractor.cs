@@ -1,33 +1,23 @@
 using Godot;
 
 // Repair (hold to confirm) / destroy (hold to confirm) on whichever Ritual the character is
-// looking at - the contextual world prompt in README's Towers/Spells/Runes section.
+// looking at - the contextual world prompt in README's Rituals/Spells/Runes section.
 public partial class RitualInteractor : LookInteractor
 {
     [Export] public float InteractionRange { get; private set; } = GameRules.RitualReach;
     [Export] public float RepairHoldDuration = 1f;
     [Export] public float DestroyHoldDuration = 1f;
 
-    private string _promptText;
     private float _repairHoldTime;
     private float _destroyHoldTime;
 
     protected override uint CollisionMask => PhysicsLayers.RitualHitbox;
     protected override float Range => InteractionRange;
 
-    public override void _Ready()
-    {
-        base._Ready();
-
-        string repairKey = InputPromptHelper.GetActionKeyName("repair_ritual");
-        string destroyKey = InputPromptHelper.GetActionKeyName("destroy_ritual");
-        _promptText = $"Hold {repairKey} to Repair\nHold {destroyKey} to Destroy";
-    }
-
     // The raycast reports the Ritual's StaticBody3D child, not the Ritual itself.
     protected override Node3D ResolveTarget(Node3D collider) => collider?.GetParent() as Ritual;
 
-    // Looking away mid-hold cancels either action, per README's Towers/Spells/Runes section.
+    // Looking away mid-hold cancels either action, per README's Rituals/Spells/Runes section.
     protected override void OnTargetChanged(Node3D target)
     {
         _repairHoldTime = 0f;
@@ -108,6 +98,7 @@ public partial class RitualInteractor : LookInteractor
             return $"Repairing... {percent}%";
         }
 
-        return _promptText;
+        return $"Hold {InputPromptHelper.GetPrompt("repair_ritual")} to Repair\n"
+            + $"Hold {InputPromptHelper.GetPrompt("destroy_ritual")} to Destroy";
     }
 }

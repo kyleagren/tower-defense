@@ -52,9 +52,11 @@ public partial class Architect : PlayerCharacter
             HandleLook(mouseMotion);
         }
 
-        if (@event.IsActionPressed("ui_cancel") && !RitualPlacer.IsPlacing && @event is not InputEventJoypadButton)
+        if (@event.IsActionPressed("ui_cancel") && !RitualPlacer.IsPlacing && !UiPanelStack.AnyOpen
+            && @event is not InputEventJoypadButton)
         {
-            ToggleMouseCapture();
+            PauseMenu.Instance?.Open();
+            GetViewport().SetInputAsHandled();
         }
     }
 

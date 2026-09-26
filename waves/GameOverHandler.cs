@@ -9,12 +9,14 @@ public partial class GameOverHandler : Node
     public override void _Ready()
     {
         EventBus.Instance.GameEnded += OnGameEnded;
+        EventBus.Instance.ReturnToHubRequested += ReturnToHub;
         LevelContext.Current.Match.ReadyCheckPassed += OnReadyCheckPassed;
     }
 
     public override void _ExitTree()
     {
         EventBus.Instance.GameEnded -= OnGameEnded;
+        EventBus.Instance.ReturnToHubRequested -= ReturnToHub;
     }
 
     // Leaving PostGame goes through the same ready check as every other "move on" - the level is

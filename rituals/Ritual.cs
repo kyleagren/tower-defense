@@ -221,7 +221,7 @@ public partial class Ritual : Node3D, IDamageable
 
     // Resolved once here rather than per frame: a Ritual's rune loadout is fixed for its lifetime,
     // since runes are only socketed during Build. Leaving PhysicsLayers.Rituals is what lets enemies
-    // and the player walk through; PhysicsLayers.RitualHitbox stays, so the tower can still be shot,
+    // and the player walk through; PhysicsLayers.RitualHitbox stays, so the ritual can still be shot,
     // repaired and built around.
     private void ApplyShroud()
     {

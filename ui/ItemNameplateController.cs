@@ -48,16 +48,27 @@ public partial class ItemNameplateController : CanvasLayer
         _expandedPanel = new TooltipPanelView(this, (_, _) => { });
         _expandedPanel.Root.Scale = new Vector2(ExpandedPanelScale, ExpandedPanelScale);
 
-        string pickupHintText = $"Press {InputPromptHelper.GetActionKeyName("interact")} to Pick Up";
         _pickupHintLabel = new Label
         {
-            Text = pickupHintText,
             Visible = false,
             MouseFilter = Control.MouseFilterEnum.Ignore,
             Scale = new Vector2(ExpandedPanelScale, ExpandedPanelScale)
         };
         _pickupHintLabel.AddThemeColorOverride("font_color", Colors.White);
         AddChild(_pickupHintLabel);
+
+        UpdatePickupHint();
+        InputDevice.Changed += UpdatePickupHint;
+    }
+
+    public override void _ExitTree()
+    {
+        InputDevice.Changed -= UpdatePickupHint;
+    }
+
+    private void UpdatePickupHint()
+    {
+        _pickupHintLabel.Text = $"Press {InputPromptHelper.GetPrompt("interact")} to Pick Up";
     }
 
     public override void _Process(double delta)

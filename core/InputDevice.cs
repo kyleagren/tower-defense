@@ -10,7 +10,16 @@ public partial class InputDevice : Node
 
     public static bool UsingController { get; private set; }
 
+    // The controller whose labels prompts should use.
+    public static int LastJoypad { get; private set; }
+
     public static event Action Changed;
+
+    public override void _Ready()
+    {
+        // Pause-menu navigation has to keep the device current while the tree is stopped.
+        ProcessMode = ProcessModeEnum.Always;
+    }
 
     public override void _Input(InputEvent @event)
     {
@@ -23,10 +32,20 @@ public partial class InputDevice : Node
             _ => null
         };
 
-        if (controller.HasValue && controller.Value != UsingController)
+        if (!controller.HasValue)
         {
-            UsingController = controller.Value;
-            Changed?.Invoke();
+            return;
         }
+
+        int joypad = controller.Value ? @event.Device : LastJoypad;
+
+        if (controller.Value == UsingController && joypad == LastJoypad)
+        {
+            return;
+        }
+
+        UsingController = controller.Value;
+        LastJoypad = joypad;
+        Changed?.Invoke();
     }
 }

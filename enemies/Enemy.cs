@@ -186,7 +186,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         Level.Enemies.Register(this);
 
         HealthBar.SetFraction(1f);
-        HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
+        RefreshHealthBarVisibility();
 
         CollectMeshInstances();
 
@@ -194,6 +194,11 @@ public partial class Enemy : CharacterBody3D, IDamageable
         {
             ExposeWeakPoints(Level.WeakPointVisorCount);
         }
+    }
+
+    public void RefreshHealthBarVisibility()
+    {
+        HealthBar.Visible = DebugSettings.ShowEnemyHealthBars;
     }
 
     // Safety net for enemies freed without dying. Unregistering twice is a no-op, so the Die() path
@@ -383,7 +388,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // this for DPS tracking) without overriding all of TakeDamage.
     protected virtual void OnDamageTaken(DamagePacket amount)
     {
-        bool enabled = amount.Source == DamageSource.Weapon ? DebugSettings.ShowWeaponDamageNumbers : DebugSettings.ShowTowerDamageNumbers;
+        bool enabled = amount.Source == DamageSource.Weapon ? DebugSettings.ShowWeaponDamageNumbers : DebugSettings.ShowRitualDamageNumbers;
         if (!enabled || FloatingTextScene == null)
         {
             return;

@@ -9,11 +9,8 @@ public partial class RespawnOverlay : Control
 
     private static readonly Color _unaffordableColor = new Color(1f, 0.3f, 0.3f);
 
-    private string _skipKey;
-
     public override void _Ready()
     {
-        _skipKey = InputPromptHelper.GetActionKeyName("interact");
         Visible = false;
     }
 
@@ -30,7 +27,7 @@ public partial class RespawnOverlay : Control
         int skipCost = sentinel.RespawnSkipCost;
 
         CountdownLabel.Text = $"Respawning in {Mathf.CeilToInt(sentinel.RespawnRemaining)}";
-        SkipLabel.Text = $"Press {_skipKey} to respawn now ({skipCost} mana)";
+        SkipLabel.Text = $"Press {InputPromptHelper.GetPrompt("interact")} to respawn now ({skipCost} mana)";
         SkipLabel.Modulate = EconomyManager.Instance.CanAffordMana(skipCost) ? Colors.White : _unaffordableColor;
     }
 }

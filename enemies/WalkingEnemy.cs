@@ -106,7 +106,7 @@ public partial class WalkingEnemy : Enemy
         }
 
         // Engagement is decided on an interval (mirrors Ritual.TargetSearchInterval) rather than every
-        // frame: towers, then players, then walls, in that priority order.
+        // frame: rituals, then players, then walls, in that priority order.
         _engagementCheckTimer -= (float)delta;
 
         if (_engagementCheckTimer <= 0f)
@@ -290,7 +290,7 @@ public partial class WalkingEnemy : Enemy
     private void UpdatePlayerLeash()
     {
         // A ritual attack only blocks the leash for enemies where rituals outrank the player
-        // (Sapper). For everything else, the player can interrupt an opportunistic tower attack
+        // (Sapper). For everything else, the player can interrupt an opportunistic ritual attack
         // at any time.
         if (RitualsOutrankPlayer && _movementMode == MovementMode.AttackingRitual)
         {
@@ -489,10 +489,10 @@ public partial class WalkingEnemy : Enemy
         Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
     }
 
-    // Opt-in per enemy (CanAttackRituals) - most enemies never touch towers at all. Sapper sets an
+    // Opt-in per enemy (CanAttackRituals) - most enemies never touch rituals at all. Sapper sets an
     // effectively unlimited RitualDetectionRange (and RitualsOutrankPlayer) so this fires the
     // instant it spawns and outranks the player entirely; a short-range, RitualsOutrankPlayer=false
-    // enemy instead only attacks a tower opportunistically, and the player can interrupt it at any
+    // enemy instead only attacks a ritual opportunistically, and the player can interrupt it at any
     // time via UpdatePlayerLeash's own matching check.
     private void UpdateRitualEngagement()
     {

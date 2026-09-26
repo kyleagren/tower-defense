@@ -7,6 +7,7 @@ public partial class EventBus : Node
     [Signal] public delegate void GamePhaseChangedEventHandler(GamePhase phase);
     [Signal] public delegate void PlacementModeChangedEventHandler(bool isActive);
     [Signal] public delegate void GameEndedEventHandler(bool victory);
+    [Signal] public delegate void ReturnToHubRequestedEventHandler();
     [Signal] public delegate void EnemyKilledEventHandler(int reward, int goldReward, Vector3 position, float dropChance, int lootRolls);
     [Signal] public delegate void PlayerHealthChangedEventHandler(PlayerId player, float currentHealth, float maxHealth);
     [Signal] public delegate void PlayerShieldChangedEventHandler(PlayerId player, float currentShield, float maxShield);

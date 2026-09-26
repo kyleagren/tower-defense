@@ -4,11 +4,13 @@ using Godot;
 // AbilitySlots fresh every frame rather than through an event - CooldownFraction and IsActive are
 // continuous quantities with no "changed" signal of their own, the same reason
 // ItemDragController's cursor icon and CharacterSheetPanel's live Shield row also poll per frame.
-// Number badges only show outside pick mode, deciding that independently off the same
-// TokenPickModeChanged signal TokenBar reacts to.
+// On keyboard, the slot badges only show outside pick mode, deciding that independently off the
+// same TokenPickModeChanged signal TokenBar reacts to. On a controller the row's L1 chip shows and
+// the badges always do, since the face buttons never collide with tokens.
 public partial class AbilityBar : Control
 {
     private const int SlotCount = 4;
+    private static readonly string[] _abilityActions = { "ability_1", "ability_2", "ability_3", "ability_4" };
 
     // Placeholder palette, not yet rarity/element-coded - abilities have no equivalent of a
     // spell's element to color by. The base circle always stays _emptyColor; CooldownOverlay draws
@@ -18,8 +20,9 @@ public partial class AbilityBar : Control
     private static readonly Color _activeColor = new Color(0.85f, 0.75f, 0.15f);
 
     private readonly Label[] _nameLabels = new Label[SlotCount];
-    private readonly Panel[] _badges = new Panel[SlotCount];
+    private readonly PromptBadge[] _badges = new PromptBadge[SlotCount];
     private readonly CooldownOverlay[] _cooldownOverlays = new CooldownOverlay[SlotCount];
+    private PromptBadge _chip;
 
     private bool _pickModeActive;
 
@@ -28,9 +31,11 @@ public partial class AbilityBar : Control
         MouseFilter = MouseFilterEnum.Ignore;
         CustomMinimumSize = new Vector2(HudCircle.RowWidth(SlotCount), HudCircle.RowHeight);
 
+        _chip = HudCircle.CreateChip(this);
+
         for (int i = 0; i < SlotCount; i++)
         {
-            Panel circle = HudCircle.CreateCircle(this, new Vector2(i * (HudCircle.CircleSize + HudCircle.Spacing), 0f));
+            Panel circle = HudCircle.CreateCircle(this, new Vector2(HudCircle.SlotX(i), 0f));
             circle.AddThemeStyleboxOverride("panel", HudCircle.BuildCircularStyle(_emptyColor));
 
             _cooldownOverlays[i] = HudCircle.CreateCooldownOverlay(circle);
@@ -48,17 +53,19 @@ public partial class AbilityBar : Control
             circle.AddChild(nameLabel);
             _nameLabels[i] = nameLabel;
 
-            _badges[i] = HudCircle.CreateBadge(circle, i + 1);
+            _badges[i] = HudCircle.CreateBadge(circle);
         }
 
         EventBus.Instance.TokenPickModeChanged += OnPickModeChanged;
-        UpdateBadgeVisibility();
+        InputDevice.Changed += UpdateBadges;
+        UpdateBadges();
         UpdateRow();
     }
 
     public override void _ExitTree()
     {
         EventBus.Instance.TokenPickModeChanged -= OnPickModeChanged;
+        InputDevice.Changed -= UpdateBadges;
     }
 
     public override void _Process(double delta)
@@ -69,14 +76,21 @@ public partial class AbilityBar : Control
     private void OnPickModeChanged(bool active)
     {
         _pickModeActive = active;
-        UpdateBadgeVisibility();
+        UpdateBadges();
     }
 
-    private void UpdateBadgeVisibility()
+    // L1 only exists on a controller; keyboard has no ability modifier, and shares 1/2/3 with pick mode.
+    private void UpdateBadges()
     {
+        _chip.ShowAction("ability_modifier");
+        _chip.Visible = InputDevice.UsingController;
+
+        bool showBadges = InputDevice.UsingController || !_pickModeActive;
+
         for (int i = 0; i < SlotCount; i++)
         {
-            _badges[i].Visible = !_pickModeActive;
+            _badges[i].ShowAction(_abilityActions[i]);
+            _badges[i].Visible = showBadges;
         }
     }
 

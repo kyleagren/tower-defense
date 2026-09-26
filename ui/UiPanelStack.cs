@@ -3,12 +3,18 @@ using System;
 using System.Collections.Generic;
 
 // Tracks which modal UI panels (build menu, inventory, ...) are open so they can stack -
-// most-recently-opened draws on top and is the only one that responds to ui_cancel. Mouse
-// capture is centralized here too, since it should stay released as long as anything is open.
+// most-recently-opened draws on top and is the only one that responds to ui_cancel. Mouse mode is
+// centralized here too: captured during play, released while anything is open.
 public static class UiPanelStack
 {
     private static readonly List<Control> _open = new();
     private static readonly Dictionary<Control, Action> _closers = new();
+
+    // Holds for the whole session: InputDevice outlives every scene.
+    static UiPanelStack()
+    {
+        InputDevice.Changed += ApplyMouseMode;
+    }
 
     public static void Push(Control panel, Action close)
     {
@@ -16,7 +22,7 @@ public static class UiPanelStack
         _open.Add(panel);
         _closers[panel] = close;
         ReassignZIndices();
-        Input.MouseMode = Input.MouseModeEnum.Visible;
+        ApplyMouseMode();
     }
 
     public static void Pop(Control panel)
@@ -24,11 +30,7 @@ public static class UiPanelStack
         _open.Remove(panel);
         _closers.Remove(panel);
         ReassignZIndices();
-
-        if (_open.Count == 0)
-        {
-            Input.MouseMode = Input.MouseModeEnum.Captured;
-        }
+        ApplyMouseMode();
     }
 
     // Closes every currently-open panel in one Escape press instead of requiring one press per
@@ -49,7 +51,16 @@ public static class UiPanelStack
     {
         _open.Clear();
         _closers.Clear();
-        Input.MouseMode = Input.MouseModeEnum.Captured;
+        ApplyMouseMode();
+    }
+
+    // Captured for play; free while a panel is open, but hidden on a controller, where a cursor
+    // parked wherever the mouse was last left is just clutter.
+    private static void ApplyMouseMode()
+    {
+        Input.MouseMode = _open.Count == 0 ? Input.MouseModeEnum.Captured
+            : InputDevice.UsingController ? Input.MouseModeEnum.Hidden
+            : Input.MouseModeEnum.Visible;
     }
 
     public static bool IsTop(Control panel)

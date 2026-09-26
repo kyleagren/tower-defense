@@ -1,5 +1,5 @@
 public enum DamageSource
 {
-    Tower,
+    Ritual,
     Weapon
 }

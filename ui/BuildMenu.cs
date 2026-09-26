@@ -173,7 +173,7 @@ public partial class BuildMenu : Control
 
     // Straight to placement, no socket-screen stop - a Favorite is a locked stamp, not a starting point.
     // While authoring a token instead, it stamps the token slot the same way rather than placing a
-    // real tower.
+    // real ritual.
     private void OnFavoriteSelected(FavoriteLoadout favorite)
     {
         if (_editingTokenIndex >= 0)

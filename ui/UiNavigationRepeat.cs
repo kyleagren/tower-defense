@@ -20,6 +20,11 @@ public partial class UiNavigationRepeat : Node
     private int _heldDirection = -1;
     private float _timeUntilRepeat;
 
+    public override void _Ready()
+    {
+        ProcessMode = ProcessModeEnum.Always;
+    }
+
     public override void _Process(double delta)
     {
         int direction = InputDevice.UsingController && UiPanelStack.AnyOpen ? StrongestDirection() : -1;

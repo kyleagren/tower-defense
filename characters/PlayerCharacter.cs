@@ -193,13 +193,6 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         SpringArm.Rotation = new Vector3(_cameraPitch, 0f, 0f);
     }
 
-    protected void ToggleMouseCapture()
-    {
-        Input.MouseMode = Input.MouseMode == Input.MouseModeEnum.Captured
-            ? Input.MouseModeEnum.Visible
-            : Input.MouseModeEnum.Captured;
-    }
-
     protected void ApplyGroundMovement(double delta, Vector2 inputDir, bool allowJump = true)
     {
         // A controller's sticks drive an open panel's focus instead of the character.

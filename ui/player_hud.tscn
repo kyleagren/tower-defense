@@ -11,6 +11,8 @@
 [ext_resource type="PackedScene" path="res://ui/CharacterSheetPanel.tscn" id="9_charactersheetpanel"]
 [ext_resource type="PackedScene" path="res://ui/ability_gauge.tscn" id="10_abilitygauge"]
 [ext_resource type="PackedScene" path="res://ui/heat_gauge.tscn" id="11_heatgauge"]
+[ext_resource type="Script" path="res://ui/PauseMenu.cs" id="12_pausemenu"]
+[ext_resource type="Script" path="res://ui/OptionsMenu.cs" id="13_optionsmenu"]
 
 [node name="PlayerHud" type="Node"]
 
@@ -40,3 +42,26 @@ PhaseIndicator = NodePath("../PhaseIndicator")
 
 [node name="CharacterSheetPanel" parent="." instance=ExtResource("9_charactersheetpanel")]
 anchors_preset = -1
+
+[node name="PauseMenu" type="Control" parent="." node_paths=PackedStringArray("Options")]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("12_pausemenu")
+Options = NodePath("../OptionsMenu")
+
+[node name="OptionsMenu" type="Control" parent="."]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("13_optionsmenu")

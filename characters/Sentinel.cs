@@ -295,9 +295,10 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             {
                 return;
             }
-            else if (!RitualTokenPlacer.IsPlacing && @event is not InputEventJoypadButton)
+            else if (!RitualTokenPlacer.IsPlacing && !UiPanelStack.AnyOpen && @event is not InputEventJoypadButton)
             {
-                ToggleMouseCapture();
+                PauseMenu.Instance?.Open();
+                GetViewport().SetInputAsHandled();
             }
         }
 
