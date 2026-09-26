@@ -1,11 +1,11 @@
-[gd_scene format=3 uid="uid://ckffmp54fx7dx"]
+[gd_scene format=3 uid="uid://dod5att2rugml"]
 
 [ext_resource type="Script" uid="uid://bajfmf8p2bmbb" path="res://characters/architect/Architect.cs" id="1_yt6xr"]
-[ext_resource type="PackedScene" uid="uid://d2otykwv31mch" path="res://ui/BuildMenu.tscn" id="2_7xcmu"]
+[ext_resource type="PackedScene" uid="uid://d2otykwv31mch" path="res://ui/build_menu.tscn" id="2_7xcmu"]
 [ext_resource type="Script" uid="uid://culxhorox2dqm" path="res://characters/RitualPlacer.cs" id="3_ritualplacer"]
-[ext_resource type="PackedScene" path="res://rituals/Ritual.tscn" id="4_ritualscene"]
+[ext_resource type="PackedScene" path="res://rituals/ritual.tscn" id="4_ritualscene"]
 [ext_resource type="Script" uid="uid://ceihwpb8aso4e" path="res://characters/RitualInteractor.cs" id="5_k6jo8"]
-[ext_resource type="PackedScene" path="res://ui/InteractionPrompt.tscn" id="6_8tgsg"]
+[ext_resource type="PackedScene" path="res://ui/interaction_prompt.tscn" id="6_8tgsg"]
 [ext_resource type="Script" path="res://characters/ItemInteractor.cs" id="7_iteminteractor"]
 [ext_resource type="Script" path="res://characters/StationInteractor.cs" id="8_stationinteractor"]
 

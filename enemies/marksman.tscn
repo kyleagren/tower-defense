@@ -1,9 +1,9 @@
-[gd_scene format=3 uid="uid://b11um8ll8phxe"]
+[gd_scene format=3 uid="uid://b14xsyrxfl5md"]
 
 [ext_resource type="Script" uid="uid://bygl65ysw4uvk" path="res://enemies/WalkingEnemy.cs" id="1_enemy"]
-[ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="2_healthbar"]
-[ext_resource type="PackedScene" path="res://visual_effects/FloatingCombatText.tscn" id="3_floatingtext"]
-[ext_resource type="PackedScene" path="res://enemies/EnemyProjectile.tscn" id="4_projectile"]
+[ext_resource type="PackedScene" path="res://ui/health_bar_3d.tscn" id="2_healthbar"]
+[ext_resource type="PackedScene" path="res://visual_effects/floating_combat_text.tscn" id="3_floatingtext"]
+[ext_resource type="PackedScene" path="res://enemies/enemy_projectile.tscn" id="4_projectile"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_marksman"]
 radius = 0.3

@@ -17,6 +17,8 @@ public class BurnAilment : Debuff
         _attribution = attribution;
     }
 
+    public float RemainingDamage => _damagePerSecond * _remainingDuration;
+
     public override Tag[] Elements => _elements;
 
     // Merges rather than competing: two burns on one enemy combine their remaining damage into a

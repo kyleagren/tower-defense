@@ -45,7 +45,7 @@ public partial class IceWallSegment : StaticBody3D, IDamageable
         BodyMesh.MaterialOverride = _iceMaterial;
         BodyMesh.Position = new Vector3(0f, width, 0f);
 
-        // A fresh shape per segment: the one authored in IceWallSegment.tscn is shared by every
+        // A fresh shape per segment: the one authored in ice_wall_segment.tscn is shared by every
         // instance, so resizing it in place would resize every other segment already standing.
         BodyCollision.Shape = new BoxShape3D { Size = IceWall.SegmentBoxSize(width) };
         BodyCollision.Position = IceWall.SegmentBoxCenter(Vector3.Zero, width);

@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="IceWallSpell" format=3]
 
 [ext_resource type="Script" uid="uid://d3tcsiow71g6n" path="res://spells/IceWallSpell.cs" id="1_icewallspell"]
-[ext_resource type="PackedScene" path="res://obstacles/ice_walls/IceWallSegment.tscn" id="2_segment"]
+[ext_resource type="PackedScene" path="res://obstacles/ice_walls/ice_wall_segment.tscn" id="2_segment"]
 
 [resource]
 script = ExtResource("1_icewallspell")

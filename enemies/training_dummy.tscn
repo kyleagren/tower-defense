@@ -1,8 +1,8 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://enemies/TrainingDummy.cs" id="1_dummy"]
-[ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="2_healthbar"]
-[ext_resource type="PackedScene" path="res://visual_effects/FloatingCombatText.tscn" id="3_floatingtext"]
+[ext_resource type="PackedScene" path="res://ui/health_bar_3d.tscn" id="2_healthbar"]
+[ext_resource type="PackedScene" path="res://visual_effects/floating_combat_text.tscn" id="3_floatingtext"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_dummy"]
 radius = 0.4

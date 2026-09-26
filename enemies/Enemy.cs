@@ -316,6 +316,11 @@ public partial class Enemy : CharacterBody3D, IDamageable
         return true;
     }
 
+    public void RemoveDebuff(Debuff debuff)
+    {
+        _debuffs.Remove(debuff);
+    }
+
     // The Sentinel a taunt is forcing this enemy to attack, if any.
     public Sentinel ForcedTarget
     {
@@ -416,7 +421,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // an enemy's element and ailments.
     private void UpdateElementalVisual(float delta)
     {
-        bool isBurning = _debuffs.Exists(debuff => debuff is BurnAilment);
+        bool isBurning = _debuffs.Exists(debuff => debuff is BurnAilment or ImmolationAilment);
 
         if (isBurning)
         {

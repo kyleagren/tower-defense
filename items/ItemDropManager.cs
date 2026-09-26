@@ -99,7 +99,7 @@ public partial class ItemDropManager : Node
     // Vogel's method / golden-angle spiral - spreads N points across a circle with even density
     // and no overlap, so items don't need physics collision to separate themselves. Lands at
     // GroundHeight rather than the chest's own Y - WorldItem's own mesh is already offset up by
-    // its radius internally (WorldItem.tscn), so GlobalPosition is meant to be the ground contact
+    // its radius internally (world_item.tscn), so GlobalPosition is meant to be the ground contact
     // point, not the sphere's center.
     private Vector3 SpiralLandingPoint(Vector3 chestPosition, int index, int total)
     {

@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" uid="uid://bacs6w4uhrpe1" path="res://rituals/Ritual.cs" id="1_ritual"]
-[ext_resource type="PackedScene" path="res://ui/HealthBar3D.tscn" id="9_healthbar"]
+[ext_resource type="PackedScene" path="res://ui/health_bar_3d.tscn" id="9_healthbar"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_ritual"]
 top_radius = 0.35

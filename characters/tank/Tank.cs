@@ -11,7 +11,7 @@ public partial class Tank : Sentinel
     [Export] public Node3D ShieldOrbit { get; private set; }
     [Export] public MeshInstance3D Shield { get; private set; }
     // A plain MeshInstance3D export, safe against the inherited-base hazard - and the Blade node is
-    // local to Tank.tscn anyway.
+    // local to tank.tscn anyway.
     [Export] public MeshInstance3D Blade { get; private set; }
     [Export] public float SwingLeftAngleDegrees = 200f;
     [Export] public float SwingRightOvershootDegrees = -30f;
@@ -110,13 +110,17 @@ public partial class Tank : Sentinel
     private float _blockStateTimer;
     private readonly HashSet<Enemy> _hitThisSwing = new();
     private RetaliationAbility _retaliation;
+    private ImmolateAbility _immolate;
 
     protected override float IncomingDamageMultiplier => _retaliation?.IncomingDamageMultiplier ?? 1f;
 
     private bool IsRetaliating => _retaliation != null && _retaliation.IsActive;
+    private bool IsImmolating => _immolate != null && _immolate.IsActive;
 
-    // Retaliation plants the Tank's feet for its whole window.
-    protected override bool CanMove => !IsRetaliating;
+    // Retaliation's stance and Immolate's channel both plant his feet and put the sword and block away.
+    private bool IsInStance => IsRetaliating || IsImmolating;
+
+    protected override bool CanMove => !IsInStance;
 
     // Retaliation's stance: shield up in front for the whole window. A block already raised drops to
     // idle - the stance isn't a block, and blocked hits wouldn't feed the blast anyway. Immunity from
@@ -136,6 +140,25 @@ public partial class Tank : Sentinel
         LowerShield();
     }
 
+    // Immolate's channel: sword and shield set down for its length. A raised block drops to idle,
+    // as it does for Retaliation's stance.
+    public void EnterImmolateChannel()
+    {
+        if (_blockState == BlockState.Armed)
+        {
+            _blockState = BlockState.Idle;
+            LowerShield();
+        }
+
+        Weapon.Visible = false;
+    }
+
+    // Death hides the weapon itself, so a channel that death cut short leaves it hidden.
+    public void ExitImmolateChannel()
+    {
+        Weapon.Visible = !IsDead;
+    }
+
     public override void _Ready()
     {
         base._Ready();
@@ -145,6 +168,10 @@ public partial class Tank : Sentinel
             if (ability is RetaliationAbility retaliation)
             {
                 _retaliation = retaliation;
+            }
+            else if (ability is ImmolateAbility immolate)
+            {
+                _immolate = immolate;
             }
         }
 
@@ -194,7 +221,7 @@ public partial class Tank : Sentinel
 
         bool isBlocking = _blockState == BlockState.Armed;
 
-        if (!isBlocking && !IsRetaliating && CanUseWeaponInput && Input.IsActionPressed("attack") && _attackCooldown <= 0f)
+        if (!isBlocking && !IsInStance && CanUseWeaponInput && Input.IsActionPressed("attack") && _attackCooldown <= 0f)
         {
             _attackCooldown = 1f / AttackSpeed;
             Swing();
@@ -216,7 +243,7 @@ public partial class Tank : Sentinel
         switch (_blockState)
         {
             case BlockState.Idle:
-                if (CanUseCombatInput && !IsRetaliating && Input.IsActionPressed("alt_action"))
+                if (CanUseCombatInput && !IsInStance && Input.IsActionPressed("alt_action"))
                 {
                     _blockState = BlockState.Armed;
                     RaiseShield();

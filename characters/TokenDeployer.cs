@@ -10,7 +10,7 @@ using System.Linq;
 public partial class TokenDeployer : Node
 {
     // Not exported - same reason as RitualPlacer.Character: this lives in the shared
-    // SentinelBody.tscn base scene, whose root has no script yet when Godot type-checks an
+    // sentinel_body.tscn base scene, whose root has no script yet when Godot type-checks an
     // [Export] NodePath assignment, so a typed export here fails the cast at scene-build time.
     public PlayerCharacter Character { get; private set; }
 

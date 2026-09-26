@@ -9,11 +9,9 @@ public static class EnemyCatalog
 {
     private static readonly Dictionary<string, string> _scenePaths = new()
     {
-        ["Grunt"] = "uid://ql2bmt2vm1o6",
-        ["Sapper"] = "uid://bxt8deqq77uuq",
-        // Marksman.tscn has never been resaved by the editor, so Godot hasn't assigned it a uid
-        // yet - stays a res:// path (and vulnerable to a future folder move) until that happens.
-        ["Marksman"] = "res://enemies/Marksman.tscn"
+        ["Grunt"] = "uid://dxw1ycxrs5ipl",
+        ["Sapper"] = "uid://68nn4sdmokgf",
+        ["Marksman"] = "uid://b14xsyrxfl5md"
     };
 
     public static PackedScene Get(string name)

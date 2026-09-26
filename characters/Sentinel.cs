@@ -13,7 +13,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     [Export] public float DodgeDuration = 0.35f;
     // Measured from the start of the roll, so its tail end can still be hit.
     [Export] public float DodgeImmunityDuration = 0.25f;
-    // Not exported: these point at nodes in the inherited SentinelBody.tscn base, and a typed
+    // Not exported: these point at nodes in the inherited sentinel_body.tscn base, and a typed
     // export of a custom C# class against a base-scene node fails its cast during scene-build,
     // then gets written out as null on the next save. Same reason RitualPlacer/TokenDeployer
     // resolve their own Character via GetParent() instead of an export.

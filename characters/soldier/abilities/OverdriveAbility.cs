@@ -7,7 +7,7 @@ using System.Collections.Generic;
 // ailment of whichever element fed it most.
 public partial class OverdriveAbility : Ability
 {
-    // Shares this slot and owns the gauge. A node local to Soldier.tscn, so a typed export is safe.
+    // Shares this slot and owns the gauge. A node local to soldier.tscn, so a typed export is safe.
     [Export] public HarvestAbility Harvest { get; private set; }
     [Export] public override float BaseCooldown { get; protected set; } = 0f;
     [Export] public int OverdriveShots { get; private set; } = 10;

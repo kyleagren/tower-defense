@@ -26,7 +26,7 @@ public partial class HealthLinkAbility : Ability
     // than balanced on top of it.
     [Export] public float SpikeDepth { get; private set; } = 0.05f;
     // How much of a terrain spike is buried, tip first. Out of SpikeLength, which matches the mesh in
-    // HealthLinkSpike.tscn.
+    // health_link_spike.tscn.
     [Export] public float TerrainSpikeDepth { get; private set; } = 0.08f;
     [Export] public float SpikeLength { get; private set; } = 0.28f;
     // Where bolts launch and the armed beam starts. A plain Node3D export, which is safe against the

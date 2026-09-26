@@ -29,7 +29,7 @@ public partial class HealthBar3D : Node3D
     }
 
     // A fresh mesh (and, via the deep duplicate, a fresh material) per bar: the ones authored in
-    // HealthBar3D.tscn are shared by every instance of the scene, so sizing or recoloring them in
+    // health_bar_3d.tscn are shared by every instance of the scene, so sizing or recoloring them in
     // place would hit every other bar currently on screen.
     private static QuadMesh PrepareMesh(MeshInstance3D meshInstance, Color color)
     {

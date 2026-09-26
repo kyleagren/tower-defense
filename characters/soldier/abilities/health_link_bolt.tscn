@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://characters/soldier/abilities/HealthLinkBolt.cs" id="1_bolt"]
-[ext_resource type="PackedScene" path="res://visual_effects/HealthLinkSpike.tscn" id="2_spike"]
+[ext_resource type="Script" uid="uid://dvr0axt8bqbis" path="res://characters/soldier/abilities/HealthLinkBolt.cs" id="1_bolt"]
+[ext_resource type="PackedScene" path="res://visual_effects/soldier/health_link_spike.tscn" id="2_spike"]
 
 [node name="HealthLinkBolt" type="Node3D"]
 script = ExtResource("1_bolt")
