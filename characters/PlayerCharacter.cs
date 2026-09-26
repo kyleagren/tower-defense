@@ -35,8 +35,8 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     public bool IsSprinting { get; private set; }
 
-    // Hook for a subclass to hold sprint off - a Sentinel mid-attack or mid-dodge. Holding the
-    // sprint key through it resumes sprinting the moment it clears.
+    // Hook for a subclass to end a sprint - a Sentinel firing, aiming, swinging, blocking or
+    // rolling. It stays off until sprint is pressed again.
     protected virtual bool CanSprint => true;
 
     // Hook for a subclass to plant its feet - no walking, jumping or sprinting - while still letting
@@ -62,6 +62,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     private float _cameraPitch;
     private float _gravity;
     private bool _active;
+    private bool _sprintLatched;
 
     public override void _Ready()
     {
@@ -122,6 +123,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     protected virtual void SetActive(bool value)
     {
         _active = value;
+        _sprintLatched = false;
         BodyMesh.Visible = _active;
 
         if (_active)
@@ -200,7 +202,8 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     protected void ApplyGroundMovement(double delta, Vector2 inputDir, bool allowJump = true)
     {
-        if (!CanMove)
+        // A controller's sticks drive an open panel's focus instead of the character.
+        if (!CanMove || (UiPanelStack.AnyOpen && InputDevice.UsingController))
         {
             inputDir = Vector2.Zero;
             allowJump = false;
@@ -213,13 +216,14 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         {
             velocity.Y -= _gravity * (float)delta;
         }
-        else if (allowJump && forced == null && Input.IsActionJustPressed("jump"))
+        else if (allowJump && forced == null && Input.IsActionJustPressed("jump") && !InputChords.AbilityModifierHeld)
         {
             velocity.Y = JumpVelocity;
         }
 
         Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0f, inputDir.Y)).Normalized();
-        IsSprinting = forced == null && direction != Vector3.Zero && CanSprint && Input.IsActionPressed("sprint");
+        UpdateSprintLatch(inputDir);
+        IsSprinting = forced == null && _sprintLatched;
         float speed = IsSprinting ? Speed * SprintSpeedMultiplier : Speed;
 
         if (forced.HasValue)
@@ -241,6 +245,23 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         Velocity = velocity;
         MoveAndSlide();
         UpdateFov((float)delta);
+    }
+
+    // Sprint stays on once pressed rather than being held, so a controller player isn't pinning a
+    // stick click down while steering with that same stick.
+    private void UpdateSprintLatch(Vector2 inputDir)
+    {
+        if (Input.IsActionJustPressed("sprint"))
+        {
+            _sprintLatched = true;
+        }
+
+        bool movingBackward = inputDir.Y > Mathf.Abs(inputDir.X);
+
+        if (inputDir == Vector2.Zero || movingBackward || !CanSprint)
+        {
+            _sprintLatched = false;
+        }
     }
 
     private void UpdateFov(float delta)

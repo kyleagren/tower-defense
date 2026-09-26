@@ -55,6 +55,7 @@ public partial class VendorPanel : Control
 
         Refresh();
         Visible = true;
+        LinkInventoryEdge();
         UiPanelStack.Push(this, Close);
     }
 
@@ -74,6 +75,7 @@ public partial class VendorPanel : Control
 
     private void Close()
     {
+        InventoryPanel.Instance.LinkLeftPanel(null);
         Visible = false;
         UiPanelStack.Pop(this);
     }
@@ -107,11 +109,65 @@ public partial class VendorPanel : Control
         Refresh();
     }
 
+    // Rows are rebuilt on every refresh, so focus on one would be lost with it - put it back on
+    // whatever row now sits at the same position.
     private void Refresh()
     {
+        Control focused = GetViewport().GuiGetFocusOwner();
+        VBoxContainer focusedList = focused?.GetParent() as VBoxContainer;
+        bool hadRowFocus = focusedList == ForSaleList || focusedList == BuybackList;
+        int focusedIndex = hadRowFocus ? focused.GetIndex() : -1;
+
         GoldLabel.Text = $"Gold: {SaveManager.Instance.Data.Gold}";
         RefreshForSale();
         RefreshBuyback();
+
+        if (Visible)
+        {
+            LinkInventoryEdge();
+        }
+
+        if (hadRowFocus)
+        {
+            RestoreRowFocus(focusedList, focusedIndex);
+        }
+    }
+
+    // Rebuilt rows need their cross-panel links redone - the old ones point at freed buttons.
+    private void LinkInventoryEdge()
+    {
+        Control entry = InventoryPanel.Instance.LeftEntry;
+
+        foreach (VBoxContainer list in new[] { ForSaleList, BuybackList })
+        {
+            foreach (Control row in list.GetChildren())
+            {
+                row.FocusNeighborRight = row.GetPathTo(entry);
+            }
+        }
+
+        Control first = ForSaleList.GetChildCount() > 0 ? ForSaleList.GetChild<Control>(0)
+            : BuybackList.GetChildCount() > 0 ? BuybackList.GetChild<Control>(0)
+            : null;
+        InventoryPanel.Instance.LinkLeftPanel(first);
+    }
+
+    private void RestoreRowFocus(VBoxContainer list, int index)
+    {
+        VBoxContainer other = list == ForSaleList ? BuybackList : ForSaleList;
+
+        if (list.GetChildCount() > 0)
+        {
+            list.GetChild<Control>(Mathf.Min(index, list.GetChildCount() - 1)).GrabFocus();
+        }
+        else if (other.GetChildCount() > 0)
+        {
+            other.GetChild<Control>(0).GrabFocus();
+        }
+        else
+        {
+            InventoryPanel.Instance.FocusDefaultSlot();
+        }
     }
 
     private void RefreshForSale()
@@ -142,6 +198,7 @@ public partial class VendorPanel : Control
     {
         foreach (Node child in container.GetChildren())
         {
+            container.RemoveChild(child);
             child.QueueFree();
         }
     }

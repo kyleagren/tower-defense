@@ -52,7 +52,7 @@ public partial class Architect : PlayerCharacter
             HandleLook(mouseMotion);
         }
 
-        if (@event.IsActionPressed("ui_cancel") && !RitualPlacer.IsPlacing)
+        if (@event.IsActionPressed("ui_cancel") && !RitualPlacer.IsPlacing && @event is not InputEventJoypadButton)
         {
             ToggleMouseCapture();
         }

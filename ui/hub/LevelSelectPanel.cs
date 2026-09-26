@@ -22,24 +22,31 @@ public partial class LevelSelectPanel : Control
 
     public void Open()
     {
-        RefreshList();
+        Button first = RefreshList();
         Visible = true;
+        first?.GrabFocus();
         UiPanelStack.Push(this, Close);
     }
 
-    private void RefreshList()
+    private Button RefreshList()
     {
         foreach (Node child in ListContainer.GetChildren())
         {
+            ListContainer.RemoveChild(child);
             child.QueueFree();
         }
+
+        Button first = null;
 
         foreach ((string name, string scenePath) in _levels)
         {
             Button button = new Button { Text = name };
             button.Pressed += () => OnLevelSelected(scenePath);
             ListContainer.AddChild(button);
+            first ??= button;
         }
+
+        return first;
     }
 
     private void OnLevelSelected(string scenePath)

@@ -25,19 +25,22 @@ public partial class CharacterSelectPanel : Control
     public void Open(PlayerId owner)
     {
         _owner = owner;
-        RefreshList();
+        Button first = RefreshList();
         Visible = true;
+        first?.GrabFocus();
         UiPanelStack.Push(this, Close);
     }
 
-    private void RefreshList()
+    private Button RefreshList()
     {
         foreach (Node child in ListContainer.GetChildren())
         {
+            ListContainer.RemoveChild(child);
             child.QueueFree();
         }
 
         CharacterId current = PlayerProfiles.Get(_owner).SelectedCharacter;
+        Button first = null;
 
         foreach (CharacterId character in _selectableCharacters)
         {
@@ -55,7 +58,14 @@ public partial class CharacterSelectPanel : Control
             }
 
             ListContainer.AddChild(button);
+
+            if (!isCurrent)
+            {
+                first ??= button;
+            }
         }
+
+        return first;
     }
 
     private void OnCharacterSelected(CharacterId character)

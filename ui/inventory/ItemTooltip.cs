@@ -8,8 +8,8 @@ using System.Linq;
 // ui_cancel (Escape) - which read as the tooltip flickering shut and instantly reopening the
 // moment the mouse so much as twitches.
 //
-// Event-driven, not polled: MouseEntered/MouseExited (real Godot signals) track which registered
-// control is hovered, ItemDragController.Changed (already fires on every pickup/place/swap/sell/
+// Event-driven, not polled: MouseEntered/MouseExited and FocusEntered/FocusExited (real Godot
+// signals) track which registered control is hovered or focused, ItemDragController.Changed (already fires on every pickup/place/swap/sell/
 // buy/craft) catches a slot's contents changing while the mouse never left it, and Alt/Ctrl press/
 // release (real discrete key events) catch the advanced-view and compare-to-equipped toggles.
 //
@@ -103,8 +103,10 @@ public partial class ItemTooltip : CanvasLayer
         PruneDeadSources();
         _sources[control] = getItem;
 
-        control.MouseEntered += () => OnSourceMouseEntered(control);
-        control.MouseExited += () => OnSourceMouseExited(control);
+        control.MouseEntered += () => OnSourceEntered(control);
+        control.MouseExited += () => OnSourceExited(control);
+        control.FocusEntered += () => OnSourceEntered(control);
+        control.FocusExited += () => OnSourceExited(control);
     }
 
     private void PruneDeadSources()
@@ -125,7 +127,7 @@ public partial class ItemTooltip : CanvasLayer
         }
     }
 
-    private void OnSourceMouseEntered(Control control)
+    private void OnSourceEntered(Control control)
     {
         _hoveredSource = control;
         RefreshContent();
@@ -134,7 +136,7 @@ public partial class ItemTooltip : CanvasLayer
     // Guarded by "is this still the hovered control" in case an out-of-order Exited (for a
     // control the mouse already left) arrives after a newer Entered - shouldn't normally happen,
     // but costs nothing to guard against clobbering a genuinely-still-hovered control.
-    private void OnSourceMouseExited(Control control)
+    private void OnSourceExited(Control control)
     {
         if (_hoveredSource != control)
         {

@@ -12,6 +12,33 @@ public partial class InventoryPanel : Control
     private static readonly Color HeldOriginColor = new Color(0.85f, 0.75f, 0.15f);
     private const int AcceptBorderWidth = 3;
 
+    // Each equipment slot's focus neighbor per direction (left, right, up, down), by
+    // _equipmentSlots index. The silhouette is too sparse for Godot's automatic nearest-control
+    // pick - from Gloves, a grid square is nearer to the right than Boots. Stay holds focus at an
+    // edge; Auto leaves it to Godot, used only for the bottom row's step down into the grid.
+    private const int Stay = -1;
+    private const int Auto = -2;
+
+    private const int WeaponSlot = 2;
+    private const int LeftRingSlot = 5;
+    private const int GlovesSlot = 9;
+    private const int BootsSlot = 10;
+
+    private static readonly int[,] _equipmentFocusNeighbors =
+    {
+        { 2, 1, Stay, 3 },       // Helmet
+        { 0, 4, Stay, 7 },       // Amulet
+        { Stay, 3, 0, 5 },       // Weapon
+        { 2, 4, 0, 6 },          // Chest
+        { 3, Stay, 1, 7 },       // Relic
+        { Stay, 6, 2, 9 },       // Left Ring
+        { 5, 7, 3, 8 },          // Belt
+        { 6, Stay, 1, 10 },      // Right Ring
+        { 9, 10, 6, Auto },      // Legplates
+        { Stay, 10, 8, Auto },   // Gloves
+        { 9, Stay, 8, Auto }     // Boots
+    };
+
     // One equipment slot's button, its empty-state placeholder name, and how to read/write the
     // EquippedLoadout field behind it. Built once in _Ready so the click handlers and the visual
     // refresh share one description of the eleven slots rather than two lists kept in lockstep.
@@ -41,6 +68,7 @@ public partial class InventoryPanel : Control
     private Button[] _gridButtons;
 
     private EquippedLoadout _loadout;
+    private Control _leftPanelEntry;
 
     public override void _EnterTree()
     {
@@ -102,7 +130,28 @@ public partial class InventoryPanel : Control
             CreateEquipmentSlot("Gloves", new Vector2(0.30f, 0.90f), SimpleSlot(() => _loadout.Gloves, item => _loadout.Gloves = (Gloves)item)),
             CreateEquipmentSlot("Boots", new Vector2(0.70f, 0.90f), SimpleSlot(() => _loadout.Boots, item => _loadout.Boots = (Boots)item))
         };
+
+        LinkEquipmentFocus();
     }
+
+    private void LinkEquipmentFocus()
+    {
+        for (int i = 0; i < _equipmentSlots.Length; i++)
+        {
+            Button button = _equipmentSlots[i].Button;
+            button.FocusNeighborLeft = EquipmentNeighborPath(button, _equipmentFocusNeighbors[i, 0]);
+            button.FocusNeighborRight = EquipmentNeighborPath(button, _equipmentFocusNeighbors[i, 1]);
+            button.FocusNeighborTop = EquipmentNeighborPath(button, _equipmentFocusNeighbors[i, 2]);
+            button.FocusNeighborBottom = EquipmentNeighborPath(button, _equipmentFocusNeighbors[i, 3]);
+        }
+    }
+
+    private NodePath EquipmentNeighborPath(Button from, int target) => target switch
+    {
+        Auto => new NodePath(),
+        Stay => from.GetPathTo(from),
+        _ => from.GetPathTo(_equipmentSlots[target].Button)
+    };
 
     // The slot's accessors read _loadout through this panel rather than capturing it, so a handle
     // built once here stays correct after Refresh swaps in a different character's loadout.
@@ -111,6 +160,7 @@ public partial class InventoryPanel : Control
         Button button = BuildSlotButton(anchor);
         button.Pressed += () => OnEquipmentSlotPressed(slot, button);
         button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(slot, button, @event);
+        button.GuiInput += @event => OnEquipmentSlotGuiInput(slot, @event);
         ItemDragController.Instance.RegisterSlot(button, slot);
         ItemTooltip.Instance.Register(button, () => slot.GetItem());
 
@@ -144,6 +194,41 @@ public partial class InventoryPanel : Control
             Grid.AddChild(button);
             _gridButtons[i] = button;
         }
+
+        LinkGridTopRowFocus();
+    }
+
+    // Up from the grid's top row lands on Gloves or Boots, whichever sits above that half - never
+    // Legplates, which Godot's nearest pick would reach from the middle columns.
+    private void LinkGridTopRowFocus()
+    {
+        for (int column = 0; column < Grid.Columns && column < _gridButtons.Length; column++)
+        {
+            int target = column < Grid.Columns / 2 ? GlovesSlot : BootsSlot;
+            _gridButtons[column].FocusNeighborTop = _gridButtons[column].GetPathTo(_equipmentSlots[target].Button);
+        }
+    }
+
+    // Where focus enters this panel from a side panel on its left.
+    public Control LeftEntry => _equipmentSlots[WeaponSlot].Button;
+
+    // A side panel opened alongside this one (crafting, vendor) is a separate control tree, which
+    // Godot's automatic focus search doesn't cross - so the left edge is linked to it by hand, and
+    // reset to holding focus when it closes (target null).
+    public void LinkLeftPanel(Control target)
+    {
+        _leftPanelEntry = target;
+
+        foreach (int slot in new[] { WeaponSlot, LeftRingSlot, GlovesSlot })
+        {
+            Button button = _equipmentSlots[slot].Button;
+            button.FocusNeighborLeft = button.GetPathTo(target ?? button);
+        }
+
+        for (int i = 0; i < _gridButtons.Length; i += Grid.Columns)
+        {
+            _gridButtons[i].FocusNeighborLeft = _gridButtons[i].GetPathTo(target ?? _gridButtons[i]);
+        }
     }
 
     private void OnInventoryChangedExternally()
@@ -166,6 +251,24 @@ public partial class InventoryPanel : Control
             Toggle();
             GetViewport().SetInputAsHandled();
             return;
+        }
+
+        // With a side panel open, the bumpers jump straight between it and this one.
+        if (Visible && _leftPanelEntry != null)
+        {
+            if (@event.IsActionPressed("ability_modifier"))
+            {
+                _leftPanelEntry.GrabFocus();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            if (@event.IsActionPressed("token_modifier"))
+            {
+                FocusDefaultSlot();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
         }
 
         if (Visible && UiPanelStack.IsTop(this) && @event.IsActionPressed("ui_cancel"))
@@ -196,8 +299,13 @@ public partial class InventoryPanel : Control
 
         Visible = true;
         Refresh();
-        _equipmentSlots[0].Button.GrabFocus();
+        FocusDefaultSlot();
         UiPanelStack.Push(this, Close);
+    }
+
+    public void FocusDefaultSlot()
+    {
+        _gridButtons[0].GrabFocus();
     }
 
     private void Close()
@@ -313,8 +421,8 @@ public partial class InventoryPanel : Control
         ItemDragController.Instance.OnSlotPressed(GridSlot(gridIndex), button);
     }
 
-    // Right-click (inventory_use) a Rune Tome in the grid to learn it immediately, removing it
-    // from Inventory - the one item type that isn't meant to be equipped or just sit there.
+    // inventory_use (right-click / Square) is a slot's one-press action: learn a Rune Tome, or equip
+    // anything else straight from the grid.
     private void OnGridSlotGuiInput(int gridIndex, InputEvent @event)
     {
         if (!@event.IsActionPressed("inventory_use"))
@@ -322,7 +430,27 @@ public partial class InventoryPanel : Control
             return;
         }
 
-        PlayerProfiles.Local.LearnRuneTome(gridIndex);
+        GetViewport().SetInputAsHandled();
+
+        if (SaveManager.Instance.Data.Inventory[gridIndex] is RuneTome)
+        {
+            PlayerProfiles.Local.LearnRuneTome(gridIndex);
+        }
+        else
+        {
+            QuickEquip(gridIndex);
+        }
+    }
+
+    private void OnEquipmentSlotGuiInput(SlotHandle slot, InputEvent @event)
+    {
+        if (!@event.IsActionPressed("inventory_use"))
+        {
+            return;
+        }
+
+        GetViewport().SetInputAsHandled();
+        QuickUnequip(slot);
     }
 
     // Shift-click a grid item to equip it directly, skipping the click-to-pick-up-then-place flow.

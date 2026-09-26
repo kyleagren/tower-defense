@@ -22,7 +22,7 @@ public partial class StationInteractor : LookInteractor
             return;
         }
 
-        if (@event.IsActionPressed("interact"))
+        if (InputChords.IsPressedWithoutAbilityModifier(@event, "interact"))
         {
             TargetedStation.Interact(Character);
         }

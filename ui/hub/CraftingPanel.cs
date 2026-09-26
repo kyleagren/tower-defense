@@ -121,7 +121,20 @@ public partial class CraftingPanel : Control
 
         Refresh();
         Visible = true;
+        InventoryPanel.Instance.LinkLeftPanel(ItemSlotButton);
+        LinkRightEdge();
         UiPanelStack.Push(this, Close);
+    }
+
+    private void LinkRightEdge()
+    {
+        Control entry = InventoryPanel.Instance.LeftEntry;
+        ItemSlotButton.FocusNeighborRight = ItemSlotButton.GetPathTo(entry);
+
+        foreach (Button button in _actionButtons)
+        {
+            button.FocusNeighborRight = button.GetPathTo(entry);
+        }
     }
 
     private void AddSectionHeader(string text)
@@ -251,6 +264,7 @@ public partial class CraftingPanel : Control
 
     private void Close()
     {
+        InventoryPanel.Instance.LinkLeftPanel(null);
         Visible = false;
         UiPanelStack.Pop(this);
     }

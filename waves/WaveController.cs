@@ -74,7 +74,8 @@ public partial class WaveController : Node
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event.IsActionPressed("start_wave"))
+        // D-pad right is also token 3 while R1 is held.
+        if (@event.IsActionPressed("start_wave") && !InputChords.TokenModifierHeld)
         {
             _match.ToggleReady(PlayerProfiles.LocalId);
         }

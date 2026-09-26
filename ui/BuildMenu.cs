@@ -113,10 +113,7 @@ public partial class BuildMenu : Control
 
     private void RefreshSpellGrid()
     {
-        foreach (Node child in Grid.GetChildren())
-        {
-            child.QueueFree();
-        }
+        ClearChildren(Grid);
 
         if (_showingFavorites)
         {
@@ -453,13 +450,13 @@ public partial class BuildMenu : Control
 
         if (string.IsNullOrEmpty(name))
         {
-            return;
+            name = _selectedSpell.Name;
         }
 
         PlayerProfiles.Local.AddFavorite(name, _selectedSpell, _socketedRunes);
     }
 
-    private void ShowSocketScreen()
+    private void ShowSocketScreen(int focusedSocket = 0)
     {
         Grid.Visible = false;
         SetTokenBarVisible(false);
@@ -468,7 +465,7 @@ public partial class BuildMenu : Control
 
         RefreshSocketScreen();
         ShowDescription(_selectedSpell?.Name, _selectedSpell?.Description);
-        _socketButtons[0].GrabFocus();
+        _socketButtons[focusedSocket].GrabFocus();
     }
 
     private void RefreshSocketScreen()
@@ -705,10 +702,7 @@ public partial class BuildMenu : Control
         _tierPopupSocketIndex = socketIndex;
         Rune currentRune = _socketedRunes[socketIndex];
 
-        foreach (Node child in _tierPopup.GetChildren())
-        {
-            child.QueueFree();
-        }
+        ClearChildren(_tierPopup);
 
         Rune maxOwnedTier = SaveManager.Instance.Data.KnownRunes
             .Select(entry => entry.Rune)
@@ -770,6 +764,7 @@ public partial class BuildMenu : Control
         _tierPopup.AddChild(removeButton);
 
         Button currentTierButton = null;
+        List<Button> tierButtons = new();
 
         for (int i = 0; i < tiers.Count; i++)
         {
@@ -814,10 +809,11 @@ public partial class BuildMenu : Control
             }
 
             _tierPopup.AddChild(tierButton);
+            tierButtons.Add(tierButton);
         }
 
         _tierPopup.Visible = true;
-        AnimateSocketExpand(socketIndex, true);
+        TrapTierPopupFocus(tierButtons, removeButton, currentTierButton);
         currentTierButton?.GrabFocus();
     }
 
@@ -825,22 +821,32 @@ public partial class BuildMenu : Control
     {
         if (_tierPopupSocketIndex >= 0)
         {
-            AnimateSocketExpand(_tierPopupSocketIndex, false);
+            // The rows are about to hide, taking focus with them.
+            _socketButtons[_tierPopupSocketIndex].GrabFocus();
         }
 
         _tierPopup.Visible = false;
         _tierPopupSocketIndex = -1;
     }
 
-    // Scales the socket button up slightly around its own center (not the default top-left pivot)
-    // while its popup is open, as a lightweight "this is the one being edited" cue.
-    private void AnimateSocketExpand(int socketIndex, bool expand)
+    // The popup sits over the socket screen, so Godot's automatic neighbors would happily wander
+    // out onto the other sockets - every edge is pinned instead, keeping focus inside until it
+    // closes.
+    private static void TrapTierPopupFocus(List<Button> tierButtons, Button removeButton, Button currentTierButton)
     {
-        Button socketButton = _socketButtons[socketIndex];
-        socketButton.PivotOffset = socketButton.Size / 2f;
+        for (int i = 0; i < tierButtons.Count; i++)
+        {
+            Button button = tierButtons[i];
+            button.FocusNeighborTop = button.GetPathTo(i > 0 ? tierButtons[i - 1] : button);
+            button.FocusNeighborBottom = button.GetPathTo(i < tierButtons.Count - 1 ? tierButtons[i + 1] : button);
+            button.FocusNeighborLeft = button.GetPathTo(removeButton);
+            button.FocusNeighborRight = button.GetPathTo(button);
+        }
 
-        Tween tween = CreateTween();
-        tween.TweenProperty(socketButton, "scale", expand ? new Vector2(1.06f, 1.06f) : Vector2.One, 0.12f);
+        removeButton.FocusNeighborTop = removeButton.GetPathTo(removeButton);
+        removeButton.FocusNeighborBottom = removeButton.GetPathTo(removeButton);
+        removeButton.FocusNeighborLeft = removeButton.GetPathTo(removeButton);
+        removeButton.FocusNeighborRight = removeButton.GetPathTo(currentTierButton ?? removeButton);
     }
 
     private void ShowRunePicker(int socketIndex)
@@ -848,15 +854,13 @@ public partial class BuildMenu : Control
         _socketBeingAssigned = socketIndex;
         Rune currentSocketRune = _socketedRunes[socketIndex];
 
-        foreach (Node child in _runeGrid.GetChildren())
-        {
-            child.QueueFree();
-        }
+        ClearChildren(_runeGrid);
 
         List<Rune> compatibleRunes = GetCompatibleRunes(socketIndex);
         int baseCost = ComputeManaCost(_socketedRunes);
 
         int pageSize = _runeGrid.Columns * _runeGrid.Rows;
+        Button focusTarget = null;
 
         for (int i = 0; i < pageSize; i++)
         {
@@ -888,6 +892,11 @@ public partial class BuildMenu : Control
                     button.Pressed += () => OnRuneSelected(rune);
                 }
 
+                if (isCurrentSocketRune || (focusTarget == null && !disabled))
+                {
+                    focusTarget = button;
+                }
+
                 _runeGrid.AddChild(button);
             }
             else
@@ -902,6 +911,7 @@ public partial class BuildMenu : Control
         _runePickerScreen.Visible = true;
 
         ShowDescription(currentSocketRune?.Name, currentSocketRune?.Description);
+        focusTarget?.GrabFocus();
     }
 
     private List<Rune> GetCompatibleRunes(int socketIndex)
@@ -936,7 +946,7 @@ public partial class BuildMenu : Control
     private void OnRuneSelected(Rune rune)
     {
         _socketedRunes[_socketBeingAssigned] = rune;
-        ShowSocketScreen();
+        ShowSocketScreen(_socketBeingAssigned);
     }
 
     private Button CreateTileButton(string buttonText, string descriptionTitle, string descriptionBody)
@@ -990,6 +1000,17 @@ public partial class BuildMenu : Control
         Button okButton = dialog.GetOkButton();
         Button cancelButton = dialog.GetCancelButton();
         okButton.GetParent().MoveChild(cancelButton, okButton.GetIndex());
+    }
+
+    // Detached now rather than left to QueueFree's end-of-frame removal, so a rebuilt container
+    // only holds its new children - GetChild(0) and focus grabs land on the live ones.
+    private static void ClearChildren(Control container)
+    {
+        foreach (Node child in container.GetChildren())
+        {
+            container.RemoveChild(child);
+            child.QueueFree();
+        }
     }
 
     private static Control CreateSpacer()
@@ -1055,7 +1076,7 @@ public partial class BuildMenu : Control
     {
         if (_runePickerScreen.Visible)
         {
-            ShowSocketScreen();
+            ShowSocketScreen(_socketBeingAssigned);
         }
         else if (_socketScreen.Visible)
         {

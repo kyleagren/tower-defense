@@ -66,7 +66,7 @@ The player deals direct damage and has their own health, but can't solo-carry th
 
 **Movement.** No stamina and no cooldowns on either of these for now — both are free to use as often as the player likes.
 
-- **Sprint** (`sprint`, Shift) is held, for 1.3× speed and a small FOV widening. It's on `PlayerCharacter`, so the Architect sprints too. A Sentinel is held out of sprint while firing, aiming, swinging, blocking or rolling; keeping the key down resumes it the moment that stops, so sprint never blocks combat, it just can't overlap it.
+- **Sprint** (`sprint`, Shift / L3) is pressed once and stays on, for 1.3× speed and a small FOV widening — latched rather than held so a controller player isn't pinning down a stick click while steering with it. It's on `PlayerCharacter`, so the Architect sprints too. It ends when the player stops moving or moves mostly backward, and for a Sentinel, on firing, aiming, swinging, blocking or rolling; after that it takes a fresh press. Sprint never blocks combat, it just can't overlap it.
 - **Dodge roll** (`dodge`, Ctrl) is a Sentinel-only, grounded roll of 5m over 0.35s along the movement input, or straight ahead with none. The first 0.25s is immune to damage — checked before Tank's block, so a raised shield isn't spent on a hit the roll already avoided. Combat input is off for the roll's duration, and the capsule tumbles one full turn over it.
 - **Camera pitch** runs almost straight up to almost straight down (±89°) — being tried out; the previous range stopped at 10° above the horizon.
 

@@ -260,11 +260,11 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event.IsActionPressed("attack"))
+        if (Input.IsActionJustPressedByEvent("attack", @event))
         {
             _weaponOwnsAttackPress = true;
         }
-        else if (@event.IsActionReleased("attack"))
+        else if (Input.IsActionJustReleasedByEvent("attack", @event))
         {
             _weaponOwnsAttackPress = false;
         }
@@ -279,13 +279,13 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             HandleLook(mouseMotion);
         }
 
-        if (IsDead && @event.IsActionPressed("interact"))
+        if (IsDead && InputChords.IsPressedWithoutAbilityModifier(@event, "interact"))
         {
             TrySkipRespawn();
             return;
         }
 
-        if (@event.IsActionPressed("ui_cancel"))
+        if (InputChords.IsPressedWithoutAbilityModifier(@event, "ui_cancel"))
         {
             if (TokenDeployer.IsPickModeActive)
             {
@@ -295,13 +295,13 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             {
                 return;
             }
-            else if (!RitualTokenPlacer.IsPlacing)
+            else if (!RitualTokenPlacer.IsPlacing && @event is not InputEventJoypadButton)
             {
                 ToggleMouseCapture();
             }
         }
 
-        if (@event.IsActionPressed("dodge") && TryStartDodge())
+        if (InputChords.IsPressedWithoutAbilityModifier(@event, "dodge") && TryStartDodge())
         {
             return;
         }
@@ -313,7 +313,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
         for (int slot = 0; slot < _abilityActions.Length && slot < AbilitySlots.Count; slot++)
         {
-            if (@event.IsActionPressed(_abilityActions[slot]))
+            if (InputChords.IsAbilityPressed(@event, _abilityActions[slot]))
             {
                 PressSlot(slot);
                 return;

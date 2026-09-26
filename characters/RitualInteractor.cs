@@ -36,6 +36,14 @@ public partial class RitualInteractor : LookInteractor
 
     protected override void UpdateTarget(Node3D target, float delta)
     {
+        // D-pad up is also token 2 while R1 is held.
+        if (InputChords.TokenModifierHeld)
+        {
+            _repairHoldTime = 0f;
+            _destroyHoldTime = 0f;
+            return;
+        }
+
         Ritual ritual = (Ritual)target;
 
         if (Input.IsActionPressed("destroy_ritual"))

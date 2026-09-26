@@ -39,7 +39,7 @@ public partial class ItemInteractor : LookInteractor
             return;
         }
 
-        if (@event.IsActionPressed("interact"))
+        if (InputChords.IsPressedWithoutAbilityModifier(@event, "interact"))
         {
             TargetedItem.PickUp();
             ClearTarget();

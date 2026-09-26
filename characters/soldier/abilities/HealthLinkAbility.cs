@@ -113,7 +113,7 @@ public partial class HealthLinkAbility : Ability
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (_phase != Phase.Arming || !Character.CanUseAbilityInput || !@event.IsActionPressed("attack"))
+        if (_phase != Phase.Arming || !Character.CanUseAbilityInput || !Input.IsActionJustPressedByEvent("attack", @event))
         {
             return;
         }

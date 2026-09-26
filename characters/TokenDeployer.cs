@@ -1,8 +1,9 @@
 using Godot;
 using System.Linq;
 
-// README's "any player, mid-wave" token deployment: Q toggles a lightweight pick mode
-// that remaps 1/2/3 to the Sentinel's current tokens, only usable during the Combat phase.
+// README's "any player, mid-wave" token deployment: Q toggles (or R1 holds) a lightweight pick mode
+// that remaps 1/2/3 (d-pad left/up/right) to the Sentinel's current tokens, only usable during the
+// Combat phase.
 // Pressing a mapped, non-empty slot hands straight off to RitualPlacer's ordinary ghost/reticle
 // flow - this class's only remaining job past that point is consuming the token once placement is
 // actually confirmed.
@@ -43,8 +44,28 @@ public partial class TokenDeployer : Node
         }
     }
 
+    // Outside a match (the hub) tokens work anytime, for testing; in a match, only in Combat.
+    private static bool CanDeployNow
+    {
+        get
+        {
+            MatchState match = LevelContext.Current.Match;
+            return match == null || match.Phase == GamePhase.Combat;
+        }
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (@event.IsActionReleased("token_modifier"))
+        {
+            if (IsPickModeActive)
+            {
+                SetPickModeActive(false);
+            }
+
+            return;
+        }
+
         // While an actual placement is underway, RitualPlacer owns escape-to-cancel and
         // PlayerCharacter.ExtraCombatInputGate already suppresses attack/alt_action - nothing
         // here needs to react until that resolves.
@@ -53,13 +74,20 @@ public partial class TokenDeployer : Node
             return;
         }
 
+        // Keyboard toggles pick mode; a controller holds R1 for exactly as long as it wants it.
+        if (@event.IsActionPressed("token_modifier"))
+        {
+            if (CanDeployNow)
+            {
+                SetPickModeActive(true);
+            }
+
+            return;
+        }
+
         if (@event.IsActionPressed("toggle_token_mode"))
         {
-            // Outside a match (the hub) tokens work anytime, for testing; in a match, only in Combat.
-            MatchState match = LevelContext.Current.Match;
-            bool canDeploy = match == null || match.Phase == GamePhase.Combat;
-
-            if (IsPickModeActive || canDeploy)
+            if (IsPickModeActive || CanDeployNow)
             {
                 SetPickModeActive(!IsPickModeActive);
             }

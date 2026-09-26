@@ -31,6 +31,7 @@ public partial class ItemDragController : CanvasLayer
     private const float DropDistance = 1f;
     private const float DropDistanceVariance = 0.2f;
     private const float DropAngleSpread = 45f;
+    private const float DropHoldDuration = 0.5f;
 
     public static ItemDragController Instance { get; private set; }
 
@@ -54,6 +55,10 @@ public partial class ItemDragController : CanvasLayer
     private Vector2 _dragStartPosition;
     private bool _isDragging;
     private bool _dragJustHandled;
+
+    private SlotHandle? _heldSource;
+    private bool _cancelHeld;
+    private float _cancelHeldTime;
 
     public override void _EnterTree()
     {
@@ -80,7 +85,82 @@ public partial class ItemDragController : CanvasLayer
             return;
         }
 
-        _cursorIcon.GlobalPosition = GetViewport().GetMousePosition() - _cursorIcon.Size / 2f;
+        _cursorIcon.GlobalPosition = HeldIconAnchor() - _cursorIcon.Size / 2f;
+
+        if (_cancelHeld)
+        {
+            _cancelHeldTime += (float)delta;
+
+            if (_cancelHeldTime >= DropHoldDuration)
+            {
+                _cancelHeld = false;
+                DropHeldInWorld();
+            }
+        }
+    }
+
+    // While carrying an item on a controller, Circle stops meaning "close the panel": a tap puts
+    // the item back, a hold drops it on the ground. _ShortcutInput runs after every _Input and
+    // before any _UnhandledInput, so it claims the press after InputDevice has seen it but before
+    // a panel's own ui_cancel handling closes everything.
+    public override void _ShortcutInput(InputEvent @event)
+    {
+        if (@event is not InputEventJoypadButton)
+        {
+            return;
+        }
+
+        if (@event.IsActionPressed("ui_cancel") && Held != null && UiPanelStack.AnyOpen)
+        {
+            _cancelHeld = true;
+            _cancelHeldTime = 0f;
+            GetViewport().SetInputAsHandled();
+        }
+        else if (@event.IsActionReleased("ui_cancel") && _cancelHeld)
+        {
+            _cancelHeld = false;
+            PutHeldBack();
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
+    // Back to the slot it came from if that's still free, else the first open Inventory slot,
+    // else the ground - never left floating.
+    private void PutHeldBack()
+    {
+        if (Held == null)
+        {
+            return;
+        }
+
+        if (_heldSource is SlotHandle source && source.GetItem() == null && source.CanAccept(Held))
+        {
+            source.PlaceItem(Held);
+            SetHeld(null);
+            CommitChange();
+            return;
+        }
+
+        if (_inventoryFallback != null && _inventoryFallback(Held))
+        {
+            SetHeld(null);
+            CommitChange();
+            return;
+        }
+
+        DropHeldInWorld();
+    }
+
+    // A controller has no pointer, so the held item rides on the focused slot's corner instead.
+    private Vector2 HeldIconAnchor()
+    {
+        if (InputDevice.UsingController && GetViewport().GuiGetFocusOwner() is Control focused)
+        {
+            Rect2 rect = focused.GetGlobalRect();
+            return rect.Position + new Vector2(rect.Size.X, 0f);
+        }
+
+        return GetViewport().GetMousePosition();
     }
 
     // Registers a button for its whole lifetime; only its contents change. Dead keys are swept
@@ -162,6 +242,7 @@ public partial class ItemDragController : CanvasLayer
             slot.PlaceItem(Held);
             SetHeld(displaced);
             HeldOriginButton = null;
+            _heldSource = null;
             CommitChange();
             return;
         }
@@ -175,6 +256,7 @@ public partial class ItemDragController : CanvasLayer
 
         SetHeld(pickedUpItem);
         HeldOriginButton = button;
+        _heldSource = slot;
         slot.PlaceItem(null);
         Changed?.Invoke();
     }
@@ -184,6 +266,18 @@ public partial class ItemDragController : CanvasLayer
     // keeps gamepad confirm working - it never emits these event types at all.
     public void OnSlotGuiInput(SlotHandle slot, Control button, InputEvent @event)
     {
+        // A controller has no Ctrl+click, so quick move gets its own button press.
+        if (@event is InputEventJoypadButton && @event.IsActionPressed("quick_move"))
+        {
+            if (Held == null && slot.GetItem() != null)
+            {
+                TryQuickMove(slot);
+            }
+
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
         if (@event is InputEventMouseButton mouseButton && mouseButton.ButtonIndex == MouseButton.Left)
         {
             if (mouseButton.Pressed)
@@ -455,6 +549,7 @@ public partial class ItemDragController : CanvasLayer
         if (item == null)
         {
             HeldOriginButton = null;
+            _heldSource = null;
         }
     }
 }
