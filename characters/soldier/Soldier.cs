@@ -153,7 +153,7 @@ public partial class Soldier : Sentinel
         }
 
         ImpactFlash impact = ImpactScene.Instantiate<ImpactFlash>();
-        GetTree().CurrentScene.AddChild(impact);
+        LevelContext.Current.LevelRoot.AddChild(impact);
         impact.Show(position);
     }
 
@@ -165,7 +165,7 @@ public partial class Soldier : Sentinel
         }
 
         ArcVisual tracer = TracerScene.Instantiate<ArcVisual>();
-        GetTree().CurrentScene.AddChild(tracer);
+        LevelContext.Current.LevelRoot.AddChild(tracer);
         tracer.Show(MuzzlePoint.GlobalPosition, end);
     }
 }

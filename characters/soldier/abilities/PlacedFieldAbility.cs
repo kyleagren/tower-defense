@@ -33,7 +33,7 @@ public abstract partial class PlacedFieldAbility : Ability
         _activeDuration = ScaledDuration(Duration);
 
         EffectVolume field = FieldScene.Instantiate<EffectVolume>();
-        GetTree().CurrentScene.AddChild(field);
+        LevelContext.Current.LevelRoot.AddChild(field);
         field.Initialize(_placement, ScaledArea(Radius), _activeDuration);
         ConfigureField(field);
 

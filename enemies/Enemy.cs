@@ -402,7 +402,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         (Color fill, Color outline) = DamageTypeColors.GetForDamage(amount);
 
         FloatingCombatText text = FloatingTextScene.Instantiate<FloatingCombatText>();
-        GetTree().CurrentScene.AddChild(text);
+        LevelContext.Current.LevelRoot.AddChild(text);
         text.Show(GetJitteredCenterMass(0.2f), amount.Total, fill, outline, amount.IsCrit);
     }
 

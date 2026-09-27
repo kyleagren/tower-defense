@@ -164,7 +164,7 @@ public partial class RitualPlacer : Node
     {
         _ghost = RitualScene.Instantiate<Ritual>();
         _ghost.IsPreview = true;
-        GetTree().CurrentScene.AddChild(_ghost);
+        LevelContext.Current.LevelRoot.AddChild(_ghost);
 
         _ghostMesh = _ghost.GetNode<MeshInstance3D>("MeshInstance3D");
         _ghostCollisionShape = _ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
@@ -201,7 +201,7 @@ public partial class RitualPlacer : Node
     private void ConfirmPlacement()
     {
         Ritual placed = RitualScene.Instantiate<Ritual>();
-        GetTree().CurrentScene.AddChild(placed);
+        LevelContext.Current.LevelRoot.AddChild(placed);
         placed.GlobalTransform = _ghost.GlobalTransform;
         placed.SetOwnerId(Character.OwnerId);
         placed.Configure(_pendingSpell, _pendingRunes, _flow.Data);

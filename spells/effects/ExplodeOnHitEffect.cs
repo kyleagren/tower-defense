@@ -16,7 +16,7 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
         if (VisualScene != null)
         {
             ExplosionVisual visual = VisualScene.Instantiate<ExplosionVisual>();
-            projectile.GetTree().CurrentScene.AddChild(visual);
+            LevelContext.Current.LevelRoot.AddChild(visual);
             visual.Show(explosionCenter, radius);
         }
 

@@ -27,6 +27,10 @@ public partial class LevelContext : Node
     // The objective PostGame loot sprays from. Null in a scene with no match.
     public DefendableObjective PrimaryObjective { get; set; }
 
+    // Where anything the level creates at runtime goes - projectiles, placed Rituals, dropped items,
+    // effects - so it's freed with the level. LevelContext sits directly under the level's root.
+    public Node LevelRoot => GetParent();
+
     // Each player's currently controlled body - their Sentinel or their Architect, never both.
     public Dictionary<PlayerId, PlayerCharacter> ActiveCharacters { get; } = new();
 

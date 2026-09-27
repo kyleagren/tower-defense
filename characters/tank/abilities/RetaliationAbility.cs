@@ -72,7 +72,7 @@ public partial class RetaliationAbility : Ability
         TauntNewcomers();
 
         _chargeCircle = ChargeScene.Instantiate<RetaliationChargeCircle>();
-        GetTree().CurrentScene.AddChild(_chargeCircle);
+        LevelContext.Current.LevelRoot.AddChild(_chargeCircle);
         _chargeCircle.Begin(Character.GlobalPosition, _radius);
     }
 
@@ -222,7 +222,7 @@ public partial class RetaliationAbility : Ability
     private void PlayWave(Color color)
     {
         ShieldSlamWave wave = WaveScene.Instantiate<ShieldSlamWave>();
-        GetTree().CurrentScene.AddChild(wave);
+        LevelContext.Current.LevelRoot.AddChild(wave);
         wave.Play(Character.GlobalPosition, Vector3.Forward, _radius, 360f, color);
     }
 }

@@ -63,7 +63,7 @@ public static class ChainResolver
         }
 
         ArcVisual visual = arcVisualScene.Instantiate<ArcVisual>();
-        context.GetTree().CurrentScene.AddChild(visual);
+        LevelContext.Current.LevelRoot.AddChild(visual);
         visual.Show(from, to);
     }
 }

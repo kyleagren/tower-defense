@@ -56,7 +56,7 @@ public abstract partial class LookInteractor : Node
     {
         Character = (PlayerCharacter)GetParent();
         _prompt = PromptScene.Instantiate<InteractionPrompt>();
-        GetTree().CurrentScene.CallDeferred(Node.MethodName.AddChild, _prompt);
+        LevelContext.Current.LevelRoot.CallDeferred(Node.MethodName.AddChild, _prompt);
         _prompt.HidePrompt();
     }
 

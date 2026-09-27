@@ -4,7 +4,6 @@ public partial class GameOverHandler : Node
 {
     [Export] public float ReloadDelay = 3f;
     [Export] public int GoldPerVictory = 100;
-    [Export] public PackedScene HubScene { get; private set; }
 
     public override void _Ready()
     {
@@ -43,8 +42,9 @@ public partial class GameOverHandler : Node
         GetTree().CreateTimer(ReloadDelay).Timeout += ReturnToHub;
     }
 
+    // Host only, through LevelLoader - everyone else follows.
     private void ReturnToHub()
     {
-        GetTree().ChangeSceneToPacked(HubScene);
+        LevelLoader.Instance.LoadHub();
     }
 }

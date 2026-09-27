@@ -625,7 +625,7 @@ public partial class WalkingEnemy : Enemy
         if (ProjectileScene != null)
         {
             EnemyProjectile projectile = ProjectileScene.Instantiate<EnemyProjectile>();
-            GetTree().CurrentScene.AddChild(projectile);
+            LevelContext.Current.LevelRoot.AddChild(projectile);
             projectile.GlobalPosition = CenterMass;
             projectile.Initialize(target.AimPoint, AttackDamage, this);
             return;

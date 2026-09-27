@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/LevelLoader.cs" id="1_levelloader"]
+[ext_resource type="PackedScene" uid="uid://ct3j8oj7yvja4" path="res://levels/hub/hub.tscn" id="2_hub"]
+
+[node name="Main" type="Node" node_paths=PackedStringArray("LevelContainer", "LevelSpawner")]
+script = ExtResource("1_levelloader")
+LevelContainer = NodePath("Level")
+LevelSpawner = NodePath("LevelSpawner")
+HubScene = ExtResource("2_hub")
+
+[node name="Level" type="Node" parent="."]
+
+[node name="LevelSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Level")

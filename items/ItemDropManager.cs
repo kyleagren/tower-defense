@@ -77,7 +77,7 @@ public partial class ItemDropManager : Node
     {
         WorldItem worldItem = WorldItemScene.Instantiate<WorldItem>();
         worldItem.Initialize(item);
-        GetTree().CurrentScene.AddChild(worldItem);
+        LevelContext.Current.LevelRoot.AddChild(worldItem);
         worldItem.GlobalPosition = chestPosition;
 
         Vector3 landingPoint = SpiralLandingPoint(chestPosition, index, total);

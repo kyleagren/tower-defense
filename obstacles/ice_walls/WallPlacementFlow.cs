@@ -26,7 +26,7 @@ public class WallPlacementFlow : PlacementFlow
         _placer = placer;
         _context = context;
         _preview = new WallPlacementPreview();
-        placer.GetTree().CurrentScene.AddChild(_preview);
+        LevelContext.Current.LevelRoot.AddChild(_preview);
     }
 
     public override bool IsPickingPoints => _stage != Stage.Done;

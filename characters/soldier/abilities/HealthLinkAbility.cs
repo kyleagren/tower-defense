@@ -200,7 +200,7 @@ public partial class HealthLinkAbility : Ability
 
         _shotsFired++;
         _boltInFlight = BoltScene.Instantiate<HealthLinkBolt>();
-        GetTree().CurrentScene.AddChild(_boltInFlight);
+        LevelContext.Current.LevelRoot.AddChild(_boltInFlight);
         _boltInFlight.Launch(BeamOrigin.GlobalPosition, aimPoint, range, OnBoltResolved);
     }
 
@@ -302,7 +302,7 @@ public partial class HealthLinkAbility : Ability
         if (_tether == null)
         {
             _tether = TetherScene.Instantiate<HealthLinkTether>();
-            GetTree().CurrentScene.AddChild(_tether);
+            LevelContext.Current.LevelRoot.AddChild(_tether);
         }
 
         return _tether;
@@ -344,7 +344,7 @@ public partial class HealthLinkAbility : Ability
     private Node3D SpawnSpikeInTerrain(HealthLinkBolt.Impact impact)
     {
         Node3D spike = SpikeScene.Instantiate<Node3D>();
-        GetTree().CurrentScene.AddChild(spike);
+        LevelContext.Current.LevelRoot.AddChild(spike);
 
         // The arc constructor can't pick an axis for a half-turn, so straight down is built by hand.
         spike.GlobalBasis = impact.Direction.Dot(Vector3.Down) > 0.999f

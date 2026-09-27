@@ -518,7 +518,7 @@ public partial class ItemDragController : CanvasLayer
 
         WorldItem worldItem = GD.Load<PackedScene>(WorldItemScenePath).Instantiate<WorldItem>();
         worldItem.Initialize(item);
-        GetTree().CurrentScene.AddChild(worldItem);
+        LevelContext.Current.LevelRoot.AddChild(worldItem);
         worldItem.GlobalPosition = player.GlobalPosition + direction * distance;
     }
 

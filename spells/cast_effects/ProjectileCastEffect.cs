@@ -18,7 +18,7 @@ public class ProjectileCastEffect : CastEffect
 
             Projectile projectile = projectileData.ProjectileScene.Instantiate<Projectile>();
             projectile.Initialize(context, returnHitTracker, chainHitTracker);
-            spawnPoint.GetTree().CurrentScene.AddChild(projectile);
+            LevelContext.Current.LevelRoot.AddChild(projectile);
 
             projectile.GlobalTransform = spawnPoint.GlobalTransform;
             projectile.RotateY(Mathf.DegToRad(angleOffset));

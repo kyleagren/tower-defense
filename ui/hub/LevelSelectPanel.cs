@@ -51,7 +51,7 @@ public partial class LevelSelectPanel : Control
 
     private void OnLevelSelected(string scenePath)
     {
-        GetTree().ChangeSceneToFile(scenePath);
+        LevelLoader.Instance.Load(scenePath);
     }
 
     public override void _UnhandledInput(InputEvent @event)

@@ -51,7 +51,7 @@ public partial class ShieldSlamAbility : Ability
         Wielder.PlayShieldThrust();
 
         ShieldSlamWave wave = WaveScene.Instantiate<ShieldSlamWave>();
-        GetTree().CurrentScene.AddChild(wave);
+        LevelContext.Current.LevelRoot.AddChild(wave);
         wave.Play(origin, forward, range, ConeDegrees);
 
         StartCooldown();

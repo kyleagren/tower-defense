@@ -230,7 +230,7 @@ public partial class ImmolateAbility : Ability
     private void PlayExplosion(Vector3 position, float radius)
     {
         ExplosionVisual explosion = ExplosionScene.Instantiate<ExplosionVisual>();
-        GetTree().CurrentScene.AddChild(explosion);
+        LevelContext.Current.LevelRoot.AddChild(explosion);
         explosion.Show(position, radius);
     }
 

@@ -15,7 +15,7 @@ public class BombardmentCastEffect : CastEffect
         float areaMultiplier = context.Area?.Multiplier.Value ?? 1f;
 
         Bombardment bombardment = data.Scene.Instantiate<Bombardment>();
-        caster.GetTree().CurrentScene.AddChild(bombardment);
+        LevelContext.Current.LevelRoot.AddChild(bombardment);
         bombardment.Initialize(target, data.Radius * areaMultiplier, data.Duration.Value, context.Damage, context.SpellHit);
 
         SpawnGroundEffect(context, caster, target, areaMultiplier);
@@ -33,7 +33,7 @@ public class BombardmentCastEffect : CastEffect
         }
 
         GroundEffect ground = data.Scene.Instantiate<GroundEffect>();
-        caster.GetTree().CurrentScene.AddChild(ground);
+        LevelContext.Current.LevelRoot.AddChild(ground);
         ground.Initialize(target, data.Radius * areaMultiplier, data.Duration.Value, data.Magnitude);
     }
 }

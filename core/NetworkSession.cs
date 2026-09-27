@@ -177,14 +177,27 @@ public partial class NetworkSession : Node
         EmitSignal(SignalName.SeatsChanged);
     }
 
+    // Leaving on purpose, from the pause menu: drop the connection and play on alone.
+    public void Leave()
+    {
+        Multiplayer.MultiplayerPeer.Close();
+        ReturnToSolo();
+    }
+
     // Losing the host, or never reaching it, drops back to playing alone from the hub.
     private void ReturnToSolo()
     {
+        // Can run twice - leaving on purpose may also raise the disconnect it causes.
+        if (Multiplayer.MultiplayerPeer is OfflineMultiplayerPeer)
+        {
+            return;
+        }
+
         Multiplayer.MultiplayerPeer = new OfflineMultiplayerPeer();
         _seatsByPeer.Clear();
         _seatsByPeer[HostPeerId] = PlayerId.P1;
         PlayerProfiles.Reset();
         EmitSignal(SignalName.SeatsChanged);
-        GetTree().ChangeSceneToFile((string)ProjectSettings.GetSetting("application/run/main_scene"));
+        LevelLoader.Instance.LoadHub();
     }
 }
