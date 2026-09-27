@@ -133,7 +133,7 @@ public partial class ImmolateAbility : Ability
                 HitAround(origin, eruptionRadius, eruptionDamage);
             }
 
-            PlayExplosion(origin, eruptionRadius);
+            Rpc(MethodName.PlayExplosion, origin, eruptionRadius);
         }
 
         Wielder.AddHeat(-(Wielder.Heat + Tank.HeatLimit));
@@ -194,6 +194,8 @@ public partial class ImmolateAbility : Ability
         return offset.LengthSquared();
     }
 
+    // On every machine, the Tank's own included.
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
     private void PlayExplosion(Vector3 position, float radius)
     {
         ExplosionVisual explosion = ExplosionScene.Instantiate<ExplosionVisual>();

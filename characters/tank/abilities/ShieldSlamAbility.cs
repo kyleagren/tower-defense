@@ -50,11 +50,18 @@ public partial class ShieldSlamAbility : Ability
         Wielder.AddHeat(HeatGain);
         Wielder.PlayShieldThrust();
 
+        Rpc(MethodName.PlayWave, origin, forward, range);
+
+        StartCooldown();
+    }
+
+    // On every machine, the Tank's own included.
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void PlayWave(Vector3 origin, Vector3 forward, float range)
+    {
         ShieldSlamWave wave = WaveScene.Instantiate<ShieldSlamWave>();
         LevelContext.Current.LevelRoot.AddChild(wave);
         wave.Play(origin, forward, range, ConeDegrees);
-
-        StartCooldown();
     }
 
     // Measured flat, so a slope or a taller enemy doesn't change what counts as in front.

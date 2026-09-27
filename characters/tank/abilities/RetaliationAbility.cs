@@ -197,7 +197,7 @@ public partial class RetaliationAbility : Ability
             Wielder.AddHeat(HeatGain);
         }
 
-        PlayWave(BlastWaveColor);
+        Rpc(MethodName.PlayWave, Character.GlobalPosition, _radius, BlastWaveColor);
         StartCooldown();
     }
 
@@ -221,10 +221,12 @@ public partial class RetaliationAbility : Ability
         return found;
     }
 
-    private void PlayWave(Color color)
+    // On every machine, the Tank's own included.
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void PlayWave(Vector3 position, float radius, Color color)
     {
         ShieldSlamWave wave = WaveScene.Instantiate<ShieldSlamWave>();
         LevelContext.Current.LevelRoot.AddChild(wave);
-        wave.Play(Character.GlobalPosition, Vector3.Forward, _radius, 360f, color);
+        wave.Play(position, Vector3.Forward, radius, 360f, color);
     }
 }

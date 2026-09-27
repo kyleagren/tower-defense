@@ -160,6 +160,18 @@ public partial class Soldier : Sentinel
 
     public void ShowImpact(Vector3 position)
     {
+        Rpc(MethodName.PlayImpact, position);
+    }
+
+    public void ShowTracer(Vector3 end)
+    {
+        Rpc(MethodName.PlayTracer, end);
+    }
+
+    // On every machine, this Soldier's own included.
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void PlayImpact(Vector3 position)
+    {
         if (ImpactScene == null)
         {
             return;
@@ -170,7 +182,9 @@ public partial class Soldier : Sentinel
         impact.Show(position);
     }
 
-    public void ShowTracer(Vector3 end)
+    // A puppet's tint arrives through its synchronizer, so its tracers are colored too.
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void PlayTracer(Vector3 end)
     {
         if (TracerScene == null)
         {
