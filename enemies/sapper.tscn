@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bygl65ysw4uvk" path="res://enemies/WalkingEnemy.cs" id="1_enemy"]
 [ext_resource type="PackedScene" path="res://ui/health_bar_3d.tscn" id="2_healthbar"]
 [ext_resource type="PackedScene" path="res://visual_effects/floating_combat_text.tscn" id="3_floatingtext"]
+[ext_resource type="Script" path="res://core/MotionPlayback.cs" id="9_motion"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sapper"]
 radius = 0.35
@@ -60,11 +61,11 @@ radius = 0.08
 height = 0.55
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_enemy"]
-properties/0/path = NodePath(".:position")
-properties/0/spawn = true
+properties/0/path = NodePath("Motion:SyncedTime")
+properties/0/spawn = false
 properties/0/replication_mode = 1
-properties/1/path = NodePath(".:rotation")
-properties/1/spawn = true
+properties/1/path = NodePath("Motion:SyncedPosition")
+properties/1/spawn = false
 properties/1/replication_mode = 1
 properties/2/path = NodePath(".:SyncedHealth")
 properties/2/spawn = true
@@ -75,6 +76,9 @@ properties/3/replication_mode = 2
 properties/4/path = NodePath(".:SyncedDebuffTypes")
 properties/4/spawn = true
 properties/4/replication_mode = 2
+properties/5/path = NodePath("Motion:SyncedYaw")
+properties/5/spawn = false
+properties/5/replication_mode = 1
 
 [node name="Sapper" type="CharacterBody3D" unique_id=803744385 node_paths=PackedStringArray("NavAgent", "Skeleton", "BoneSimulator", "RootPhysicalBone", "BodyCollision", "HeadCollision", "HeadWeakPoint", "BodyWeakPoint", "ArmLWeakPoint", "ArmRWeakPoint", "LegLWeakPoint", "LegRWeakPoint", "ShoulderAttachment", "HealthBar")]
 collision_layer = 2
@@ -381,3 +385,7 @@ shape = SubResource("CapsuleShape3D_ragdoll_leg_r")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_enemy")
+
+[node name="Motion" type="Node" parent="." node_paths=PackedStringArray("Synchronizer")]
+script = ExtResource("9_motion")
+Synchronizer = NodePath("../MultiplayerSynchronizer")

@@ -556,6 +556,9 @@ public partial class Enemy : CharacterBody3D, IDamageable
         SetPhysicsProcess(false);
         BodyCollision.Disabled = true;
 
+        // The ragdoll takes over from wherever a copy is being shown.
+        GetNodeOrNull<MotionPlayback>("Motion")?.Stop();
+
         // A copy only shows the death. The host pays out, tells the copies, and later frees the body,
         // which removes it everywhere - its synchronizer going first, so no update arrives for a body
         // another machine has already removed.

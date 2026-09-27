@@ -25,6 +25,9 @@ public partial class WaveController : Node
     }
 
     private MatchState _match;
+    // This level's, kept rather than read through LevelContext.Current - during a level switch,
+    // Current is already the incoming level for a frame.
+    private LevelContext _level;
     private List<Wave> _waves = new();
     private Dictionary<string, EnemySpawner> _spawnersById;
     private int _nextWaveIndex;
@@ -40,7 +43,8 @@ public partial class WaveController : Node
     {
         Instance = this;
         _match = new MatchState();
-        LevelContext.Current.Match = _match;
+        _level = LevelContext.Current;
+        _level.Match = _match;
         _match.ReadyCheckPassed += OnReadyCheckPassed;
         _match.ReadyStateChanged += OnReadyStateChanged;
     }
@@ -264,7 +268,7 @@ public partial class WaveController : Node
         }
 
         // Every step has run - the wave ends once the last enemy it spawned is gone.
-        if (LevelContext.Current.Enemies.Active.Count == 0)
+        if (_level.Enemies.Active.Count == 0)
         {
             EndWave();
         }

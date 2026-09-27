@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://culxhorox2dqm" path="res://characters/RitualPlacer.cs" id="5_ritualplacer"]
 [ext_resource type="PackedScene" path="res://rituals/ritual.tscn" id="6_ritualscene"]
 [ext_resource type="Script" path="res://characters/TokenDeployer.cs" id="7_tokendeployer"]
+[ext_resource type="Script" path="res://core/MotionPlayback.cs" id="8_motion"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.4
@@ -17,11 +18,11 @@ radius = 0.4
 height = 1.8
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_body"]
-properties/0/path = NodePath(".:position")
-properties/0/spawn = true
+properties/0/path = NodePath("Motion:SyncedTime")
+properties/0/spawn = false
 properties/0/replication_mode = 1
-properties/1/path = NodePath(".:rotation")
-properties/1/spawn = true
+properties/1/path = NodePath("Motion:SyncedPosition")
+properties/1/spawn = false
 properties/1/replication_mode = 1
 properties/2/path = NodePath("SpringArm3D:rotation")
 properties/2/spawn = true
@@ -29,6 +30,9 @@ properties/2/replication_mode = 1
 properties/3/path = NodePath("MeshInstance3D:rotation")
 properties/3/spawn = true
 properties/3/replication_mode = 1
+properties/4/path = NodePath("Motion:SyncedYaw")
+properties/4/spawn = false
+properties/4/replication_mode = 1
 
 [node name="SentinelBody" type="CharacterBody3D"]
 collision_layer = 8
@@ -73,3 +77,7 @@ Placer = NodePath("../RitualTokenPlacer")
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 process_mode = 3
 replication_config = SubResource("SceneReplicationConfig_body")
+
+[node name="Motion" type="Node" parent="." node_paths=PackedStringArray("Synchronizer")]
+script = ExtResource("8_motion")
+Synchronizer = NodePath("../MultiplayerSynchronizer")

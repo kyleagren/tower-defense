@@ -183,7 +183,9 @@ public partial class NetworkSession : Node
     public void Leave()
     {
         Multiplayer.MultiplayerPeer.Close();
-        ReturnToSolo();
+
+        // Deferred: this runs from the pause menu, which lives in the level ReturnToSolo tears out.
+        CallDeferred(MethodName.ReturnToSolo);
     }
 
     // Losing the host, or never reaching it, drops back to playing alone from the hub.
@@ -195,6 +197,7 @@ public partial class NetworkSession : Node
             return;
         }
 
+        LevelLoader.Instance.DropLevel();
         Multiplayer.MultiplayerPeer = new OfflineMultiplayerPeer();
         _seatsByPeer.Clear();
         _seatsByPeer[HostPeerId] = PlayerId.P1;

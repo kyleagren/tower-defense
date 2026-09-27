@@ -128,6 +128,18 @@ public partial class LevelLoader : Node
         LevelSpawner.Spawn(scenePath);
     }
 
+    // Leaving a session: the level being left is taken out at once, before this machine becomes its
+    // own host - otherwise, for the frame it lingered, every copy in it would find itself in charge and
+    // start simulating with none of what the real host gave it.
+    public void DropLevel()
+    {
+        foreach (Node level in LevelContainer.GetChildren())
+        {
+            LevelContainer.RemoveChild(level);
+            level.QueueFree();
+        }
+    }
+
     private Node BuildLevel(Variant scenePath)
     {
         return GD.Load<PackedScene>(scenePath.AsString()).Instantiate();

@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://ui/interaction_prompt.tscn" id="6_8tgsg"]
 [ext_resource type="Script" path="res://characters/ItemInteractor.cs" id="7_iteminteractor"]
 [ext_resource type="Script" path="res://characters/StationInteractor.cs" id="8_stationinteractor"]
+[ext_resource type="Script" path="res://core/MotionPlayback.cs" id="9_motion"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_s42qg"]
 radius = 0.4
@@ -18,15 +19,18 @@ radius = 0.4
 height = 1.8
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_body"]
-properties/0/path = NodePath(".:position")
-properties/0/spawn = true
+properties/0/path = NodePath("Motion:SyncedTime")
+properties/0/spawn = false
 properties/0/replication_mode = 1
-properties/1/path = NodePath(".:rotation")
-properties/1/spawn = true
+properties/1/path = NodePath("Motion:SyncedPosition")
+properties/1/spawn = false
 properties/1/replication_mode = 1
 properties/2/path = NodePath("SpringArm3D:rotation")
 properties/2/spawn = true
 properties/2/replication_mode = 1
+properties/3/path = NodePath("Motion:SyncedYaw")
+properties/3/spawn = false
+properties/3/replication_mode = 1
 
 [node name="Architect" type="CharacterBody3D" unique_id=65489996 node_paths=PackedStringArray("SpringArm", "BuildMenu", "RitualPlacer", "BodyMesh", "Camera")]
 collision_layer = 8
@@ -73,3 +77,7 @@ PromptScene = ExtResource("6_8tgsg")
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 process_mode = 3
 replication_config = SubResource("SceneReplicationConfig_body")
+
+[node name="Motion" type="Node" parent="." node_paths=PackedStringArray("Synchronizer")]
+script = ExtResource("9_motion")
+Synchronizer = NodePath("../MultiplayerSynchronizer")

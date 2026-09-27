@@ -7,8 +7,13 @@ public partial class EnemySpawner : Node3D
 
     public Lane Lane { get; private set; }
 
+    // This level's, kept from _Ready - during a level switch, LevelContext.Current is already the
+    // incoming level for a frame.
+    private LevelContext _level;
+
     public override async void _Ready()
     {
+        _level = LevelContext.Current;
         await NavigationReady.WaitFor(this, TryBuildLane, $"EnemySpawner '{Id}'");
     }
 
@@ -24,7 +29,7 @@ public partial class EnemySpawner : Node3D
             return;
         }
 
-        LevelContext.Current.EnemyRoster.Spawn(enemyName, this);
+        _level.EnemyRoster.Spawn(enemyName, this);
     }
 
     private bool TryBuildLane()

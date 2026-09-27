@@ -44,11 +44,11 @@ material = SubResource("StandardMaterial3D_rifle")
 size = Vector3(0.05, 0.2, 0.06)
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_soldier"]
-properties/0/path = NodePath(".:position")
-properties/0/spawn = true
+properties/0/path = NodePath("Motion:SyncedTime")
+properties/0/spawn = false
 properties/0/replication_mode = 1
-properties/1/path = NodePath(".:rotation")
-properties/1/spawn = true
+properties/1/path = NodePath("Motion:SyncedPosition")
+properties/1/spawn = false
 properties/1/replication_mode = 1
 properties/2/path = NodePath("SpringArm3D:rotation")
 properties/2/spawn = true
@@ -59,6 +59,12 @@ properties/3/replication_mode = 1
 properties/4/path = NodePath(".:SyncedWeaponTint")
 properties/4/spawn = true
 properties/4/replication_mode = 2
+properties/5/path = NodePath("Motion:SyncedYaw")
+properties/5/spawn = false
+properties/5/replication_mode = 1
+properties/6/path = NodePath("Weapon:rotation")
+properties/6/spawn = true
+properties/6/replication_mode = 1
 
 [node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "AbilitySlots", "HoldAbilitySlots", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
 script = ExtResource("2_soldier")
