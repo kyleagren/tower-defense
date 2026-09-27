@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 // Immolate's channel placeholder: a thin ring that starts at the edge of the radius and closes in on
@@ -19,12 +20,21 @@ public partial class ImmolateChannelVisual : Node3D
     private ArrayMesh _markerMesh;
     private StandardMaterial3D _markerMaterial;
     private float _radius;
+    private float _duration;
+    private float _elapsed;
+    private Func<List<Enemy>> _findTargets;
 
     // Must be parented to the Tank.
-    public void Begin(float radius)
+    public void Begin(float radius, float duration, Func<List<Enemy>> findTargets)
     {
+        // Its own process mode rather than the Tank's: on another player's screen the Tank is a
+        // puppet that doesn't process, and this still has to close in and track its targets.
+        ProcessMode = ProcessModeEnum.Pausable;
+
         Position = Vector3.Up * GroundOffset;
         _radius = radius;
+        _duration = duration;
+        _findTargets = findTargets;
 
         _ring = new MeshInstance3D
         {
@@ -36,17 +46,25 @@ public partial class ImmolateChannelVisual : Node3D
         _markerMesh = GroundMesh.Disc(MarkerRadius);
         _markerMaterial = GroundMesh.Material(MarkerColor);
         SetProgress(0f);
+        MarkTargets(_findTargets());
+    }
+
+    public override void _Process(double delta)
+    {
+        _elapsed += (float)delta;
+        SetProgress(_duration > 0f ? Mathf.Min(_elapsed / _duration, 1f) : 1f);
+        MarkTargets(_findTargets());
     }
 
     // 0 as the channel starts, 1 as it erupts. Rebuilt rather than scaled, so the ring keeps its
     // width as it closes in.
-    public void SetProgress(float progress)
+    private void SetProgress(float progress)
     {
         float outer = Mathf.Lerp(_radius, RingWidth, progress);
         _ring.Mesh = GroundMesh.Ring(Mathf.Max(outer - RingWidth, 0f), outer);
     }
 
-    public void MarkTargets(List<Enemy> targets)
+    private void MarkTargets(List<Enemy> targets)
     {
         while (_markers.Count < targets.Count)
         {

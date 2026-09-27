@@ -31,14 +31,25 @@ public abstract partial class PlacedFieldAbility : Ability
     protected override void Activate()
     {
         _activeDuration = ScaledDuration(Duration);
+        float radius = ScaledArea(Radius);
 
         EffectVolume field = FieldScene.Instantiate<EffectVolume>();
         LevelContext.Current.LevelRoot.AddChild(field);
-        field.Initialize(_placement, ScaledArea(Radius), _activeDuration);
+        field.Initialize(_placement, radius, _activeDuration);
         ConfigureField(field);
+        Rpc(MethodName.ReceiveField, _placement, radius, _activeDuration);
 
         IsActive = true;
         _fieldRemaining = _activeDuration;
+    }
+
+    // Another player's field, as a copy that never ticks - theirs is the one that moves enemies.
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveField(Vector3 position, float radius, float duration)
+    {
+        EffectVolume copy = FieldScene.Instantiate<EffectVolume>();
+        LevelContext.Current.LevelRoot.AddChild(copy);
+        copy.InitializeCopy(position, radius, duration);
     }
 
     protected abstract void ConfigureField(EffectVolume field);

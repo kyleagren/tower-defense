@@ -73,9 +73,22 @@ public partial class RetaliationAbility : Ability
         Wielder.EnterRetaliationStance();
         TauntNewcomers();
 
+        Rpc(MethodName.BeginChargeCircle, Character.GlobalPosition, _radius, _activeDuration);
+    }
+
+    // On every machine, the Tank's own included.
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void BeginChargeCircle(Vector3 origin, float radius, float duration)
+    {
         _chargeCircle = ChargeScene.Instantiate<RetaliationChargeCircle>();
         LevelContext.Current.LevelRoot.AddChild(_chargeCircle);
-        _chargeCircle.Begin(Character.GlobalPosition, _radius);
+        _chargeCircle.Begin(origin, radius, duration);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void EndChargeCircle()
+    {
+        FreeChargeCircle();
     }
 
     // The circle lives in the scene, not under this node, so a Sentinel torn down mid-window (hub
@@ -138,7 +151,6 @@ public partial class RetaliationAbility : Ability
             return;
         }
 
-        _chargeCircle?.SetProgress(1f - _remaining / _activeDuration);
         _tauntTimer -= (float)delta;
 
         if (_tauntTimer <= 0f)
@@ -165,7 +177,7 @@ public partial class RetaliationAbility : Ability
     {
         IsActive = false;
         Wielder.ExitRetaliationStance();
-        FreeChargeCircle();
+        Rpc(MethodName.EndChargeCircle);
     }
 
     private void Release()

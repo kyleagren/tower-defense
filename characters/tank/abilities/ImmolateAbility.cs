@@ -59,11 +59,30 @@ public partial class ImmolateAbility : Ability
         _radius = ScaledArea(Radius);
         Wielder.EnterImmolateChannel();
 
-        // A child of the Tank, so it goes with him if he's torn down mid-channel.
+        Rpc(MethodName.BeginChannelVisual, _radius);
+    }
+
+    // On every machine, the Tank's own included. A child of the Tank, so it goes with him if he's torn
+    // down mid-channel. The radius is kept here too, since the ring finds its targets through
+    // FindErupting.
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void BeginChannelVisual(float radius)
+    {
+        _radius = radius;
         _channel = ChannelScene.Instantiate<ImmolateChannelVisual>();
         Character.AddChild(_channel);
-        _channel.Begin(_radius);
-        _channel.MarkTargets(FindErupting());
+        _channel.Begin(_radius, ChannelDuration, FindErupting);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void EndChannelVisual()
+    {
+        if (_channel != null && IsInstanceValid(_channel))
+        {
+            _channel.QueueFree();
+        }
+
+        _channel = null;
     }
 
     public override void OnCharacterDied()
@@ -96,11 +115,7 @@ public partial class ImmolateAbility : Ability
         if (_remaining <= 0f)
         {
             Erupt();
-            return;
         }
-
-        _channel.SetProgress(1f - _remaining / ChannelDuration);
-        _channel.MarkTargets(FindErupting());
     }
 
     // Who erupts is decided as the channel ends, so an enemy set alight mid-channel still counts.
@@ -207,12 +222,6 @@ public partial class ImmolateAbility : Ability
     {
         IsActive = false;
         Wielder.ExitImmolateChannel();
-
-        if (_channel != null && IsInstanceValid(_channel))
-        {
-            _channel.QueueFree();
-        }
-
-        _channel = null;
+        Rpc(MethodName.EndChannelVisual);
     }
 }

@@ -12,13 +12,16 @@ public partial class RetaliationChargeCircle : MeshInstance3D
     private const float GroundOffset = 0.05f;
 
     private StandardMaterial3D _material;
+    private float _duration;
+    private float _elapsed;
 
     // Must already be in the tree - it positions itself globally.
-    public void Begin(Vector3 origin, float radius)
+    public void Begin(Vector3 origin, float radius, float duration)
     {
         GlobalPosition = origin + Vector3.Up * GroundOffset;
         Mesh = ShieldSlamWave.BuildFan(Vector3.Forward, radius, Mathf.Tau);
         CastShadow = ShadowCastingSetting.Off;
+        _duration = duration;
 
         _material = new StandardMaterial3D
         {
@@ -30,8 +33,15 @@ public partial class RetaliationChargeCircle : MeshInstance3D
         SetProgress(0f);
     }
 
+    // Its own clock, so a copy on another screen fills in step without being told each frame.
+    public override void _Process(double delta)
+    {
+        _elapsed += (float)delta;
+        SetProgress(_duration > 0f ? Mathf.Min(_elapsed / _duration, 1f) : 1f);
+    }
+
     // 0 at the start of the window, 1 as the blast releases.
-    public void SetProgress(float progress)
+    private void SetProgress(float progress)
     {
         _material.AlbedoColor = StartColor.Lerp(EndColor, progress);
     }

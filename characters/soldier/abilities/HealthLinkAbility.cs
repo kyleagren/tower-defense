@@ -202,6 +202,7 @@ public partial class HealthLinkAbility : Ability
         _boltInFlight = BoltScene.Instantiate<HealthLinkBolt>();
         LevelContext.Current.LevelRoot.AddChild(_boltInFlight);
         _boltInFlight.Launch(BeamOrigin.GlobalPosition, aimPoint, range, OnBoltResolved);
+        Rpc(MethodName.ReceiveBolt, BeamOrigin.GlobalPosition, aimPoint, range);
     }
 
     private void OnBoltResolved(HealthLinkBolt.Impact impact)
@@ -214,6 +215,8 @@ public partial class HealthLinkAbility : Ability
         }
 
         Node3D spike = PlantSpike(impact);
+        Rpc(MethodName.ReceiveSpike, _shotsFired, impact.Enemy != null ? GetPathTo(impact.Enemy) : new NodePath(),
+            impact.HitSurface, impact.Position, impact.Direction);
 
         if (_shotsFired == 1)
         {
@@ -245,6 +248,7 @@ public partial class HealthLinkAbility : Ability
             _phase = Phase.Linked;
             _linkRemaining = _linkDuration;
             EnsureTether().Link(_firstSpike, _secondSpike);
+            Rpc(MethodName.ReceiveBeam, true);
             return;
         }
 
@@ -263,6 +267,7 @@ public partial class HealthLinkAbility : Ability
         _phase = Phase.Dud;
         _dudRemaining = DudDuration;
         EnsureTether().Fail(_firstSpike, _secondSpike);
+        Rpc(MethodName.ReceiveBeam, false);
     }
 
     private void DealSpikeDamage(HealthLinkBolt.Impact impact)
@@ -361,6 +366,7 @@ public partial class HealthLinkAbility : Ability
     private void EndCast(bool payCooldown)
     {
         ClearVisuals();
+        Rpc(MethodName.ReceiveCleared);
 
         _firstTarget = null;
         _secondTarget = null;
@@ -375,6 +381,66 @@ public partial class HealthLinkAbility : Ability
         {
             StartCooldown();
         }
+    }
+
+    // Another player's Health Link, drawn from what their machine sends. A bolt here is only
+    // something to see - it resolves nothing.
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveBolt(Vector3 from, Vector3 toward, float range)
+    {
+        FreeIfValid(_boltInFlight);
+        _boltInFlight = BoltScene.Instantiate<HealthLinkBolt>();
+        LevelContext.Current.LevelRoot.AddChild(_boltInFlight);
+        _boltInFlight.Launch(from, toward, range, null);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveSpike(int shot, NodePath enemyPath, bool hitSurface, Vector3 position, Vector3 direction)
+    {
+        Node3D spike = PlantSpike(new HealthLinkBolt.Impact
+        {
+            Enemy = enemyPath.IsEmpty ? null : GetNodeOrNull<Enemy>(enemyPath),
+            HitSurface = hitSurface,
+            Position = position,
+            Direction = direction
+        });
+
+        if (shot > 1)
+        {
+            _secondSpike = spike;
+            return;
+        }
+
+        _firstSpike = spike;
+
+        if (spike != null)
+        {
+            EnsureTether().Arm(BeamOrigin, spike);
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveBeam(bool linked)
+    {
+        if (_firstSpike == null || _secondSpike == null)
+        {
+            return;
+        }
+
+        if (linked)
+        {
+            EnsureTether().Link(_firstSpike, _secondSpike);
+        }
+        else
+        {
+            EnsureTether().Fail(_firstSpike, _secondSpike);
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveCleared()
+    {
+        ClearVisuals();
     }
 
     private void ClearVisuals()

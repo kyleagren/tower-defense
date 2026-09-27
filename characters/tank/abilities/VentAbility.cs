@@ -58,10 +58,7 @@ public partial class VentAbility : Ability
         _burnInterval = ScaledDuration(BurnInterval);
         _burnDamage = ScaledDamage(Character.AttackDamage * BurnDamagePerApplication);
 
-        // A child of the Tank, so it follows him and goes with him if he's torn down mid-vent.
-        _aura = AuraScene.Instantiate<VentAura>();
-        Character.AddChild(_aura);
-        _aura.Begin(_radius);
+        Rpc(MethodName.BeginAura, _radius);
 
         ApplyBurns();
         _burnTimer = _burnInterval;
@@ -129,13 +126,28 @@ public partial class VentAbility : Ability
     private void End()
     {
         IsActive = false;
+        Rpc(MethodName.EndAura);
+        StartCooldown();
+    }
 
+    // On every machine, the Tank's own included. A child of the Tank, so it follows him and goes with
+    // him if he's torn down mid-vent.
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void BeginAura(float radius)
+    {
+        _aura = AuraScene.Instantiate<VentAura>();
+        Character.AddChild(_aura);
+        _aura.Begin(radius);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void EndAura()
+    {
         if (_aura != null && IsInstanceValid(_aura))
         {
             _aura.QueueFree();
         }
 
         _aura = null;
-        StartCooldown();
     }
 }
