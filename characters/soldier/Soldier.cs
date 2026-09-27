@@ -178,7 +178,25 @@ public partial class Soldier : Sentinel
         }
 
         ArcVisual tracer = TracerScene.Instantiate<ArcVisual>();
+
+        // A tinted rifle fires tinted tracers, so Overdrive's shots take its element's color. The
+        // scene's material is shared by every tracer, so this instance gets its own.
+        if (_weaponTint.HasValue)
+        {
+            tracer.SegmentMaterial = TintedTracerMaterial((StandardMaterial3D)tracer.SegmentMaterial, _weaponTint.Value);
+        }
+
         LevelContext.Current.LevelRoot.AddChild(tracer);
         tracer.Show(MuzzlePoint.GlobalPosition, end);
+    }
+
+    private StandardMaterial3D _tracerTintMaterial;
+
+    private StandardMaterial3D TintedTracerMaterial(StandardMaterial3D authored, Color tint)
+    {
+        _tracerTintMaterial ??= (StandardMaterial3D)authored.Duplicate();
+        _tracerTintMaterial.AlbedoColor = tint;
+        _tracerTintMaterial.Emission = tint;
+        return _tracerTintMaterial;
     }
 }

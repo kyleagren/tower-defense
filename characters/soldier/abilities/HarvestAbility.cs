@@ -111,6 +111,14 @@ public partial class HarvestAbility : Ability
         State.HarvestCharge += castCharge;
     }
 
+    // Fills the gauge as if every point came from element. For the debug key.
+    public void FillGauge(Tag element)
+    {
+        ResetGauge();
+        State.HarvestChargeByElement[element] = 1f;
+        State.HarvestCharge = 1f;
+    }
+
     private void ResetGauge()
     {
         State.HarvestCharge = 0f;
