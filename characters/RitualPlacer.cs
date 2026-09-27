@@ -81,6 +81,7 @@ public partial class RitualPlacer : Node
         _onConfirmed = onConfirmed;
 
         IsPlacing = true;
+        LevelContext.Current.RitualRoster.BeginGhost();
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, true);
 
         if (!_flow.IsPickingPoints)
@@ -153,6 +154,7 @@ public partial class RitualPlacer : Node
     {
         _ghost.GlobalPosition = _flow.ConstrainRitualPosition(_cursorPosition);
         UpdateGhostValidity();
+        LevelContext.Current.RitualRoster.MoveGhost(_ghost.GlobalPosition);
 
         if (Input.IsActionJustPressed("confirm_placement") && _isValidPlacement)
         {
@@ -174,6 +176,8 @@ public partial class RitualPlacer : Node
         {
             _ghost.AddChild(BuildRangeIndicator(_pendingContext.Range.Value));
         }
+
+        LevelContext.Current.RitualRoster.ShowGhost(_flow.ShowsRangeIndicator ? _pendingContext.Range.Value : 0f, _flow.ConstrainRitualPosition(_cursorPosition));
     }
 
     private void UpdateGhostValidity()
@@ -213,6 +217,7 @@ public partial class RitualPlacer : Node
     {
         _flow?.End();
         _flow = null;
+        LevelContext.Current.RitualRoster.HideGhost();
 
         if (_ghost != null)
         {
@@ -225,7 +230,7 @@ public partial class RitualPlacer : Node
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, false);
     }
 
-    private static MeshInstance3D BuildRangeIndicator(float range)
+    public static MeshInstance3D BuildRangeIndicator(float range)
     {
         return new MeshInstance3D
         {

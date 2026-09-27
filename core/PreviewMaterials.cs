@@ -6,6 +6,7 @@ public static class PreviewMaterials
     public static readonly StandardMaterial3D Valid = CreateGhost(new Color(0.2f, 1f, 0.3f, 0.5f));
     public static readonly StandardMaterial3D Invalid = CreateGhost(new Color(1f, 0.2f, 0.2f, 0.5f));
     public static readonly StandardMaterial3D Faded = CreateGhost(new Color(0.2f, 1f, 0.3f, 0.2f));
+    public static readonly StandardMaterial3D OtherPlayer = CreateGhost(new Color(1f, 1f, 1f, 0.35f));
 
     public static readonly StandardMaterial3D RangeFill = CreateFlatOverlay(new Color(0.3f, 0.6f, 1f, 0.25f));
     public static readonly StandardMaterial3D RangeBorder = CreateFlatOverlay(new Color(0.5f, 0.8f, 1f, 0.9f));

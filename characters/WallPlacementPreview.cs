@@ -21,7 +21,10 @@ public partial class WallPlacementPreview : Node3D
     private float _segmentMeshWidth = -1f;
     private bool _frozen;
 
-    public void UpdateWall(Vector3 start, Vector3 end, WallCastData wallData, IReadOnlyList<bool> segmentValid)
+    // Set for a copy of another player's wall, which shows this whatever the wall's validity.
+    public StandardMaterial3D FixedSegmentMaterial { get; set; }
+
+    public void UpdateWall(Vector3 start, Vector3 end, float segmentWidth, IReadOnlyList<bool> segmentValid)
     {
         if (_frozen)
         {
@@ -29,7 +32,7 @@ public partial class WallPlacementPreview : Node3D
         }
 
         int segmentCount = segmentValid.Count;
-        ResizeSegmentPool(segmentCount, wallData.SegmentWidth);
+        ResizeSegmentPool(segmentCount, segmentWidth);
 
         bool allValid = true;
         for (int i = 0; i < segmentCount; i++)
@@ -45,8 +48,8 @@ public partial class WallPlacementPreview : Node3D
         {
             Vector3 ground = IceWall.SegmentPosition(start, end, i, segmentCount);
 
-            _segmentMeshes[i].Position = IceWall.SegmentBoxCenter(ground, wallData.SegmentWidth);
-            _segmentMeshes[i].MaterialOverride = allValid ? PreviewMaterials.Valid : PreviewMaterials.Invalid;
+            _segmentMeshes[i].Position = IceWall.SegmentBoxCenter(ground, segmentWidth);
+            _segmentMeshes[i].MaterialOverride = FixedSegmentMaterial ?? (allValid ? PreviewMaterials.Valid : PreviewMaterials.Invalid);
         }
     }
 
@@ -67,7 +70,7 @@ public partial class WallPlacementPreview : Node3D
 
         foreach (MeshInstance3D mesh in _segmentMeshes)
         {
-            mesh.MaterialOverride = PreviewMaterials.Faded;
+            mesh.MaterialOverride = FixedSegmentMaterial ?? PreviewMaterials.Faded;
         }
 
         BuildRangeZone(start, end, range);

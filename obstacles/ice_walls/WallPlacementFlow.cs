@@ -10,6 +10,7 @@ public class WallPlacementFlow : PlacementFlow
     private readonly RitualPlacer _placer;
     private readonly SpellCastContext _context;
     private readonly WallPlacementPreview _preview;
+    private readonly RitualRoster _roster;
 
     private Stage _stage = Stage.Start;
     private Vector3 _start;
@@ -27,6 +28,7 @@ public class WallPlacementFlow : PlacementFlow
         _context = context;
         _preview = new WallPlacementPreview();
         LevelContext.Current.LevelRoot.AddChild(_preview);
+        _roster = LevelContext.Current.RitualRoster;
     }
 
     public override bool IsPickingPoints => _stage != Stage.Done;
@@ -40,7 +42,8 @@ public class WallPlacementFlow : PlacementFlow
         if (_stage == Stage.Start)
         {
             bool[] startValid = ComputeSegmentValidity(cursor, cursor, ComputeAffordableChargedSegments());
-            _preview.UpdateWall(cursor, cursor, Wall, startValid);
+            _preview.UpdateWall(cursor, cursor, Wall.SegmentWidth, startValid);
+            _roster.MoveWallGhost(cursor, cursor, Wall.SegmentWidth);
 
             if (confirmPressed)
             {
@@ -55,7 +58,8 @@ public class WallPlacementFlow : PlacementFlow
         int affordableChargedSegments = ComputeAffordableChargedSegments();
 
         bool[] segmentValid = ComputeSegmentValidity(_start, cursor, affordableChargedSegments);
-        _preview.UpdateWall(_start, cursor, Wall, segmentValid);
+        _preview.UpdateWall(_start, cursor, Wall.SegmentWidth, segmentValid);
+        _roster.MoveWallGhost(_start, cursor, Wall.SegmentWidth);
 
         bool affordable = IceWall.ChargedSegmentCount(segmentCount) <= affordableChargedSegments;
         bool placementValid = affordable && System.Array.TrueForAll(segmentValid, v => v);
@@ -67,6 +71,7 @@ public class WallPlacementFlow : PlacementFlow
             _data = new WallPlacementData(_start, _end);
             _stage = Stage.Done;
             _preview.Freeze(_start, _end, _context.Range.Value);
+            _roster.FreezeWallGhost(_start, _end, Wall.SegmentWidth, _context.Range.Value);
         }
     }
 

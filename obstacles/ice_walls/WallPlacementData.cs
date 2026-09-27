@@ -33,7 +33,7 @@ public class WallPlacementData : PlacementData
 
     public override Godot.Collections.Array ToNetwork() => new() { NetworkKind, Start, End };
 
-    public static WallPlacementData FromNetwork(Godot.Collections.Array data) => new(data[1].AsVector3(), data[2].AsVector3());
+    public static WallPlacementData Decode(Godot.Collections.Array data) => new(data[1].AsVector3(), data[2].AsVector3());
 
     // The wall's reserved footprint, until the wall itself rises.
     public override void AttachTo(Ritual ritual, SpellCastContext context)

@@ -14,5 +14,5 @@ public abstract class PlacementData
     public abstract Godot.Collections.Array ToNetwork();
 
     public static PlacementData FromNetwork(Godot.Collections.Array data) =>
-        data.Count > 0 && data[0].AsString() == WallPlacementData.NetworkKind ? WallPlacementData.FromNetwork(data) : null;
+        data.Count > 0 && data[0].AsString() == WallPlacementData.NetworkKind ? WallPlacementData.Decode(data) : null;
 }
