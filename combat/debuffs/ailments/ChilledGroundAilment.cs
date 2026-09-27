@@ -9,4 +9,6 @@ public class ChilledGroundAilment : SlowDebuff
     }
 
     public override Tag[] Elements => _elements;
+
+    public override DebuffType Type => DebuffType.ChilledGround;
 }

@@ -9,7 +9,13 @@ public class ConvergedDebuff : Debuff
         _remainingDuration = duration;
     }
 
+    public override DebuffType Type => DebuffType.Converged;
+
     public override float SpeedMultiplier => 0f;
+
+    public override Godot.Collections.Array ToNetwork() => new() { (int)Type, _remainingDuration };
+
+    public static ConvergedDebuff Decode(Godot.Collections.Array data) => new(data[1].AsSingle());
 
     public override bool Tick(Enemy enemy, float delta)
     {

@@ -18,7 +18,30 @@ public abstract class Debuff
 
     public bool IsAilment => Elements.Length > 0;
 
+    public abstract DebuffType Type { get; }
+
     public abstract bool Tick(Enemy enemy, float delta);
+
+    // Runs on the enemy the moment this lands, before it's slotted - for a debuff that takes
+    // something from the enemy as it arrives.
+    public virtual void OnApplying(Enemy host)
+    {
+    }
+
+    // Sent to the host when applied to a copy, as an array led by the debuff's type. Null for a
+    // debuff that only ever starts on the host.
+    public virtual Godot.Collections.Array ToNetwork() => null;
+
+    // attribution is the sender's - their seat and their Sentinel on this machine.
+    public static Debuff FromNetwork(Godot.Collections.Array data, Attribution attribution) => (DebuffType)data[0].AsInt32() switch
+    {
+        DebuffType.Burn => BurnAilment.Decode(data, attribution),
+        DebuffType.Immolation => ImmolationAilment.Decode(data, attribution),
+        DebuffType.Chill => ChillAilment.Decode(data),
+        DebuffType.Converged => ConvergedDebuff.Decode(data),
+        DebuffType.Taunted => TauntedDebuff.Decode(data, attribution),
+        _ => null
+    };
 
     // Fired after the host's health has been reduced but before its death check, so a killing blow
     // still reaches anything keyed off being hit. Never fired for a Mirrored hit - damage that is

@@ -78,7 +78,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     // Only the host simulates an enemy - AI, debuffs, death and what it pays out. Everywhere else it's
     // a copy its MultiplayerSynchronizer keeps in step.
-    protected bool IsSimulatedHere => IsMultiplayerAuthority();
+    public bool IsSimulatedHere => IsMultiplayerAuthority();
 
     // What copies need from the host, synced by the enemy's MultiplayerSynchronizer.
     public float SyncedHealth
@@ -94,9 +94,38 @@ public partial class Enemy : CharacterBody3D, IDamageable
         set => Status = value < 0 ? null : (Tag)value;
     }
 
-    // Whether a Burn or Immolation is ticking. Worked out where the enemy is simulated, since copies
-    // don't run debuffs.
-    public bool IsBurning { get; set; }
+    private DebuffType _copyDebuffTypes;
+
+    // Which types of debuff are on this enemy. Read live where it's simulated; a copy holds no
+    // debuffs, so it keeps the summary its synchronizer last brought.
+    public DebuffType DebuffTypes
+    {
+        get
+        {
+            if (!IsSimulatedHere)
+            {
+                return _copyDebuffTypes;
+            }
+
+            DebuffType types = DebuffType.None;
+
+            foreach (Debuff debuff in _debuffs)
+            {
+                types |= debuff.Type;
+            }
+
+            return types;
+        }
+    }
+
+    // DebuffTypes as one number, for the synchronizer.
+    public int SyncedDebuffTypes
+    {
+        get => (int)DebuffTypes;
+        set => _copyDebuffTypes = (DebuffType)value;
+    }
+
+    public bool HasDebuff(DebuffType types) => (DebuffTypes & types) != 0;
 
     public Vector3 CenterMass => GlobalPosition + Vector3.Up * CenterMassHeight;
     public Vector3 AimPoint => CenterMass;
@@ -235,7 +264,6 @@ public partial class Enemy : CharacterBody3D, IDamageable
         if (IsSimulatedHere)
         {
             TickDebuffs((float)delta);
-            IsBurning = _debuffs.Exists(debuff => debuff is BurnAilment or ImmolationAilment);
         }
         else
         {
@@ -276,12 +304,10 @@ public partial class Enemy : CharacterBody3D, IDamageable
             return;
         }
 
-        Level.SentinelSpawners.TryGetValue(dealer, out SentinelSpawner spawner);
-
         ResolveHit(new Hit
         {
             Damage = DamagePacket.FromNetwork(damage),
-            Attribution = new Attribution { Player = dealer, Source = spawner?.Current as Sentinel },
+            Attribution = AttributionFor(dealer),
             Type = (HitType)type,
             RagdollImpulse = ragdollImpulse
         }, dealerShowedNumber: true);
@@ -369,7 +395,22 @@ public partial class Enemy : CharacterBody3D, IDamageable
     {
         Tag? removed = Status;
         Status = null;
+
+        if (removed.HasValue && !IsSimulatedHere)
+        {
+            RpcId(1, MethodName.ReceiveStatusRemoved);
+        }
+
         return removed;
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveStatusRemoved()
+    {
+        if (IsSimulatedHere && NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        {
+            Status = null;
+        }
     }
 
     // Backwards, like TickDebuffs: a hook can reach back into this list, and this can itself run
@@ -386,6 +427,21 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // its effect actually landed. At most one occupant per slot, since every add resolves.
     public bool ApplyDebuff(Debuff debuff)
     {
+        // A copy holds no debuffs; the host applies it, and it's assumed to land.
+        if (!IsSimulatedHere)
+        {
+            Godot.Collections.Array data = debuff.ToNetwork();
+
+            if (data != null)
+            {
+                RpcId(1, MethodName.ReceiveDebuff, data);
+            }
+
+            return true;
+        }
+
+        debuff.OnApplying(this);
+
         for (int i = 0; i < _debuffs.Count; i++)
         {
             if (!debuff.OccupiesSameSlotAs(_debuffs[i]))
@@ -406,6 +462,42 @@ public partial class Enemy : CharacterBody3D, IDamageable
         _debuffs.Add(debuff);
         return true;
     }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveDebuff(Godot.Collections.Array data)
+    {
+        PlayerId sender = NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId());
+
+        if (_isDead || !IsSimulatedHere || sender == default)
+        {
+            return;
+        }
+
+        Debuff debuff = Debuff.FromNetwork(data, AttributionFor(sender));
+
+        if (debuff != null)
+        {
+            ApplyDebuff(debuff);
+        }
+    }
+
+    public void RequestHealthLink(Enemy partner, float duration, float mirrorPercent)
+    {
+        RpcId(1, MethodName.ReceiveHealthLink, GetPathTo(partner), duration, mirrorPercent);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveHealthLink(NodePath partnerPath, float duration, float mirrorPercent)
+    {
+        if (IsSimulatedHere && NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        {
+            HealthLinkDebuff.Link(this, GetNodeOrNull<Enemy>(partnerPath), duration, mirrorPercent);
+        }
+    }
+
+    // What a sender's hit or debuff is credited to - their seat, and their Sentinel on this machine.
+    private Attribution AttributionFor(PlayerId seat) =>
+        new Attribution { Player = seat, Source = Level.Sentinels.GetValueOrDefault(seat) };
 
     public void RemoveDebuff(Debuff debuff)
     {
@@ -554,7 +646,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // an enemy's element and ailments.
     private void UpdateElementalVisual(float delta)
     {
-        bool isBurning = IsBurning;
+        bool isBurning = HasDebuff(DebuffType.Burn | DebuffType.Immolation);
 
         if (isBurning)
         {

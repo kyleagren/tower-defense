@@ -15,6 +15,14 @@ public class TauntedDebuff : Debuff
         _remainingDuration = duration;
     }
 
+    public override DebuffType Type => DebuffType.Taunted;
+
+    public override Godot.Collections.Array ToNetwork() => new() { (int)Type, _remainingDuration };
+
+    // The taunter is the sender's own Sentinel.
+    public static TauntedDebuff Decode(Godot.Collections.Array data, Attribution attribution) =>
+        attribution.Source is Sentinel taunter ? new TauntedDebuff(taunter, data[1].AsSingle()) : null;
+
     // Null once the taunter is gone or down, so a taunt on a dead Tank stops pulling at once.
     public Sentinel ActiveTaunter =>
         GodotObject.IsInstanceValid(Taunter) && Taunter.IsActive && !Taunter.IsDead ? Taunter : null;

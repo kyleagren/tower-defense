@@ -21,6 +21,13 @@ public class BurnAilment : Debuff
 
     public override Tag[] Elements => _elements;
 
+    public override DebuffType Type => DebuffType.Burn;
+
+    public override Godot.Collections.Array ToNetwork() => new() { (int)Type, RemainingDamage, _remainingDuration };
+
+    public static BurnAilment Decode(Godot.Collections.Array data, Attribution attribution) =>
+        new(data[1].AsSingle(), data[2].AsSingle(), attribution);
+
     // Merges rather than competing: two burns on one enemy combine their remaining damage into a
     // single instance instead of the stronger erasing the weaker. The merged burn is this, the
     // incoming one, so its credit goes to whoever lit it most recently.

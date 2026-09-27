@@ -17,6 +17,8 @@ public class HealthLinkDebuff : Debuff
         MirrorPercent = mirrorPercent;
     }
 
+    public override DebuffType Type => DebuffType.HealthLink;
+
     // One link per partner rather than one per enemy - an enemy linked to two others carries two,
     // and only a second link to the same partner is a conflict.
     public override bool OccupiesSameSlotAs(Debuff other) =>
@@ -33,6 +35,13 @@ public class HealthLinkDebuff : Debuff
         if (a == null || b == null || a == b || a.IsDead || b.IsDead)
         {
             return false;
+        }
+
+        // Resolved where the enemies are simulated, both halves at once.
+        if (!a.IsSimulatedHere)
+        {
+            a.RequestHealthLink(b, duration, mirrorPercent);
+            return true;
         }
 
         // Symmetric, so the two halves stand or fall together: if the first is refused by a stronger

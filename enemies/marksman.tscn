@@ -73,7 +73,7 @@ properties/2/replication_mode = 2
 properties/3/path = NodePath(".:SyncedStatus")
 properties/3/spawn = true
 properties/3/replication_mode = 2
-properties/4/path = NodePath(".:IsBurning")
+properties/4/path = NodePath(".:SyncedDebuffTypes")
 properties/4/spawn = true
 properties/4/replication_mode = 2
 

@@ -8,4 +8,10 @@ public class ChillAilment : SlowDebuff
     }
 
     public override Tag[] Elements => _elements;
+
+    public override DebuffType Type => DebuffType.Chill;
+
+    public override Godot.Collections.Array ToNetwork() => new() { (int)Type, SlowPercent, RemainingDuration };
+
+    public static ChillAilment Decode(Godot.Collections.Array data) => new(data[1].AsSingle(), data[2].AsSingle());
 }

@@ -43,6 +43,7 @@ public partial class RetaliationAbility : Ability
     private float _tauntTimer;
     private float _recordedDamage;
     private RetaliationChargeCircle _chargeCircle;
+    private readonly HashSet<Enemy> _taunted = new();
 
     private Tank Wielder => (Tank)Character;
 
@@ -67,6 +68,7 @@ public partial class RetaliationAbility : Ability
         _radius = ScaledArea(Radius);
         _recordedDamage = 0f;
         _tauntTimer = TauntInterval;
+        _taunted.Clear();
 
         Wielder.EnterRetaliationStance();
         TauntNewcomers();
@@ -147,12 +149,12 @@ public partial class RetaliationAbility : Ability
     }
 
     // Each taunt runs to the end of the window, so an enemy caught once stays on the Tank even if
-    // it's shoved back out of range.
+    // it's shoved back out of range - and is taunted only once, since a copy can't see its own taunt.
     private void TauntNewcomers()
     {
         foreach (Enemy enemy in EnemiesInRadius())
         {
-            if (enemy.ForcedTarget != Character)
+            if (_taunted.Add(enemy))
             {
                 enemy.ApplyDebuff(new TauntedDebuff(Character, _remaining));
             }

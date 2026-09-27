@@ -119,11 +119,10 @@ public partial class ImmolateAbility : Ability
         foreach (Enemy enemy in erupting)
         {
             origins.Add(enemy.CenterMass);
-            float immolationDamage = eruptionDamage + ConsumeFire(enemy);
 
-            if (immolationDamage > 0f)
+            if (eruptionDamage > 0f || enemy.HasDebuff(DebuffType.Burn))
             {
-                enemy.ApplyDebuff(new ImmolationAilment(immolationDamage, ImmolationPacing, immolationDuration, Character.HitAttribution));
+                enemy.ApplyDebuff(new ImmolationAilment(eruptionDamage, ImmolationPacing, immolationDuration, Character.HitAttribution));
             }
         }
 
@@ -179,45 +178,13 @@ public partial class ImmolateAbility : Ability
         foreach (Enemy enemy in LevelContext.Current.Enemies.Active)
         {
             if (FlatDistanceSquared(enemy.GlobalPosition, origin) <= _radius * _radius
-                && (enemy.Status == Tag.Fire || FindBurn(enemy) != null))
+                && (enemy.Status == Tag.Fire || enemy.HasDebuff(DebuffType.Burn)))
             {
                 found.Add(enemy);
             }
         }
 
         return found;
-    }
-
-    private static BurnAilment FindBurn(Enemy enemy)
-    {
-        foreach (Debuff debuff in enemy.Debuffs)
-        {
-            if (debuff is BurnAilment burn)
-            {
-                return burn;
-            }
-        }
-
-        return null;
-    }
-
-    // Takes the enemy's Fire Status and Burn, returning what the Burn still had left to deal.
-    private static float ConsumeFire(Enemy enemy)
-    {
-        if (enemy.Status == Tag.Fire)
-        {
-            enemy.RemoveStatus();
-        }
-
-        BurnAilment burn = FindBurn(enemy);
-
-        if (burn == null)
-        {
-            return 0f;
-        }
-
-        enemy.RemoveDebuff(burn);
-        return burn.RemainingDamage;
     }
 
     private static float FlatDistanceSquared(Vector3 a, Vector3 b)

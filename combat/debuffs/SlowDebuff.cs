@@ -15,6 +15,9 @@ public abstract class SlowDebuff : Debuff
         _remainingDuration = duration;
     }
 
+    protected float SlowPercent => _slowPercent;
+    protected float RemainingDuration => _remainingDuration;
+
     public override float SpeedMultiplier => 1f - _slowPercent;
 
     protected override float Magnitude => _slowPercent;
