@@ -43,6 +43,23 @@ size = Vector3(0.06, 0.12, 0.2)
 material = SubResource("StandardMaterial3D_rifle")
 size = Vector3(0.05, 0.2, 0.06)
 
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_soldier"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("SpringArm3D:rotation")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+properties/3/path = NodePath("MeshInstance3D:rotation")
+properties/3/spawn = true
+properties/3/replication_mode = 1
+properties/4/path = NodePath(".:SyncedWeaponTint")
+properties/4/spawn = true
+properties/4/replication_mode = 2
+
 [node name="Soldier" unique_id=199482515 node_paths=PackedStringArray("MuzzlePoint", "Weapon", "AbilitySlots", "HoldAbilitySlots", "SpringArm", "Camera", "BodyMesh") instance=ExtResource("1_base")]
 script = ExtResource("2_soldier")
 ImpactScene = ExtResource("3_impact")
@@ -105,3 +122,6 @@ FieldScene = ExtResource("13_convergefield")
 script = ExtResource("12_repel")
 CooldownPartner = NodePath("../Converge")
 FieldScene = ExtResource("14_repelfield")
+
+[node name="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_soldier")

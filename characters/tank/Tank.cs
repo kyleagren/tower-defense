@@ -48,10 +48,38 @@ public partial class Tank : Sentinel
     [Export] public Color HeatGlowHighColor = new Color(1f, 0.55f, 0.1f);
     [Export] public float MaxHeatGlowEnergy = 2f;
 
-    public float Heat => LevelState.Heat;
+    public float Heat => IsLocallyControlled ? LevelState.Heat : _copyHeat;
 
     private StandardMaterial3D _bladeHeatMaterial;
     private Color _bladeRestColor;
+
+    private enum ShieldLook { Normal, Immune, Cooldown }
+
+    private ShieldLook _shieldLook;
+    private float _copyHeat;
+
+    // The Tank's heat, and the shield's look, for its synchronizer. A puppet has no heat of its own -
+    // the owner's machine keeps it - so it holds what was last sent. Either can arrive before _Ready,
+    // which applies whatever is held by then.
+    public float SyncedHeat
+    {
+        get => Heat;
+        set
+        {
+            _copyHeat = value;
+
+            if (IsNodeReady())
+            {
+                UpdateSwordGlow();
+            }
+        }
+    }
+
+    public int SyncedShieldLook
+    {
+        get => (int)_shieldLook;
+        set => ShowShieldLook((ShieldLook)value);
+    }
 
     public void AddHeat(float amount)
     {
@@ -187,10 +215,25 @@ public partial class Tank : Sentinel
             EmissionEnergyMultiplier = 0f
         };
         Shield.MaterialOverride = _shieldMaterial;
+        ShowShieldLook(_shieldLook);
     }
 
-    private void SetShieldColor(Color color, float emissionEnergy)
+    private void ShowShieldLook(ShieldLook look)
     {
+        _shieldLook = look;
+
+        if (_shieldMaterial == null)
+        {
+            return;
+        }
+
+        (Color color, float emissionEnergy) = look switch
+        {
+            ShieldLook.Immune => (ShieldImmuneColor, 2f),
+            ShieldLook.Cooldown => (ShieldCooldownColor, 0.3f),
+            _ => (ShieldNormalColor, 0f)
+        };
+
         _shieldMaterial.AlbedoColor = color;
         _shieldMaterial.Emission = color;
         _shieldMaterial.EmissionEnergyMultiplier = emissionEnergy;
@@ -263,7 +306,7 @@ public partial class Tank : Sentinel
                 {
                     _blockState = BlockState.Cooldown;
                     _blockStateTimer = BlockCooldownDuration;
-                    SetShieldColor(ShieldCooldownColor, 0.3f);
+                    ShowShieldLook(ShieldLook.Cooldown);
 
                     // Mid-stance, the shield stays up for Retaliation's pose.
                     if (!IsRetaliating)
@@ -279,7 +322,7 @@ public partial class Tank : Sentinel
                 if (_blockStateTimer <= 0f)
                 {
                     _blockState = BlockState.Idle;
-                    SetShieldColor(ShieldNormalColor, 0f);
+                    ShowShieldLook(ShieldLook.Normal);
                 }
                 break;
         }
@@ -374,7 +417,7 @@ public partial class Tank : Sentinel
         {
             _blockState = BlockState.Immune;
             _blockStateTimer = BlockImmunityDuration;
-            SetShieldColor(ShieldImmuneColor, 2f);
+            ShowShieldLook(ShieldLook.Immune);
             Shield.Scale = Vector3.One * 1.5f;
             return;
         }

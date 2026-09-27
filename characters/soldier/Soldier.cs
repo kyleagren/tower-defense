@@ -20,6 +20,15 @@ public partial class Soldier : Sentinel
     private readonly List<MeshInstance3D> _weaponMeshes = new List<MeshInstance3D>();
     private StandardMaterial3D _weaponTintMaterial;
     private WeakPointVisorAbility _visor;
+    private Color? _weaponTint;
+
+    // The rifle's tint for its synchronizer - transparent for none. Can arrive before _Ready, which
+    // applies it.
+    public Color SyncedWeaponTint
+    {
+        get => _weaponTint ?? Colors.Transparent;
+        set => SetWeaponTint(value.A > 0f ? value : null);
+    }
 
     public override void _Ready()
     {
@@ -37,12 +46,16 @@ public partial class Soldier : Sentinel
         {
             _weaponMeshes.Add((MeshInstance3D)node);
         }
+
+        SetWeaponTint(_weaponTint);
     }
 
     // Recolors the whole rifle, or restores its authored look with null. The material is this
     // Soldier's own - the scene's rifle material is shared by every Soldier instance.
     public void SetWeaponTint(Color? color)
     {
+        _weaponTint = color;
+
         if (color.HasValue)
         {
             _weaponTintMaterial ??= new StandardMaterial3D { EmissionEnabled = true, EmissionEnergyMultiplier = 0.6f };
