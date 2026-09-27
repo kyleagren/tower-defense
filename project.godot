@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 [autoload]
 
 EventBus="*res://core/EventBus.cs"
+NetworkSession="*res://core/NetworkSession.cs"
 SaveManager="*res://save/SaveManager.cs"
 ItemDragController="*res://ui/inventory/ItemDragController.cs"
 ItemTooltip="*res://ui/inventory/ItemTooltip.cs"

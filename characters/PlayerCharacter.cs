@@ -18,6 +18,10 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     public bool IsActive => _active;
 
+    // Whether this machine drives this body. Offline that's every body; in a session, only the
+    // owning player's machine does.
+    public bool IsLocallyControlled => IsMultiplayerAuthority();
+
     // True only while this character is both the active combatant and no UI panel (inventory,
     // build menu, etc.) is capturing input instead - combat actions check this rather than IsActive
     // alone, so clicking inside an open panel doesn't also swing a sword or fire a gun.
@@ -69,6 +73,14 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         Level = LevelContext.Current;
         _gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
         _defaultFov = Camera.Fov;
+
+        // Another player's body is a puppet here: its owner's machine moves it and its
+        // MultiplayerSynchronizer carries that across, so nothing on this side reads input or
+        // simulates it.
+        if (!IsLocallyControlled)
+        {
+            ProcessMode = ProcessModeEnum.Disabled;
+        }
     }
 
     public override void _ExitTree()
@@ -112,12 +124,23 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         SetActive(true);
     }
 
+    // Where a body stands and looks - what a handoff carries across. A value rather than a body, so
+    // a handoff can outlive the body it was read from.
+    public readonly record struct Pose(Vector3 Position, float Yaw, float Pitch);
+
+    public Pose CurrentPose => new Pose(GlobalPosition, GlobalRotation.Y, _cameraPitch);
+
+    public void ApplyPose(Pose pose)
+    {
+        GlobalPosition = pose.Position;
+        GlobalRotation = new Vector3(0f, pose.Yaw, 0f);
+        _cameraPitch = pose.Pitch;
+        SpringArm.Rotation = new Vector3(_cameraPitch, 0f, 0f);
+    }
+
     public void HandoffFrom(PlayerCharacter previous)
     {
-        GlobalPosition = previous.GlobalPosition;
-        GlobalRotation = new Vector3(0f, previous.GlobalRotation.Y, 0f);
-        _cameraPitch = previous._cameraPitch;
-        SpringArm.Rotation = new Vector3(_cameraPitch, 0f, 0f);
+        ApplyPose(previous.CurrentPose);
     }
 
     protected virtual void SetActive(bool value)
@@ -129,8 +152,12 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         if (_active)
         {
             Level.ActiveCharacters[OwnerId] = this;
-            Input.MouseMode = Input.MouseModeEnum.Captured;
-            MakeCameraCurrent();
+
+            if (IsLocallyControlled)
+            {
+                Input.MouseMode = Input.MouseModeEnum.Captured;
+                MakeCameraCurrent();
+            }
         }
         else
         {

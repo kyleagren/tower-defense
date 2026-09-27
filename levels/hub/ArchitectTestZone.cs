@@ -15,7 +15,7 @@ public partial class ArchitectTestZone : Area3D
         // BodyExited fires mid-physics-step, while the scene tree is blocked against structural
         // changes - SelectSentinel's AddChild/QueueFree calls need to happen after that, or Godot
         // rejects them ("Parent node is busy setting up children").
-        if (body is Architect architect)
+        if (body is Architect architect && architect.IsLocallyControlled)
         {
             CallDeferred(nameof(RespawnSentinel), architect);
         }

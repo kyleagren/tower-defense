@@ -332,40 +332,56 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 6)
 [node name="SpawnPointP4" type="Marker3D" parent="." unique_id=161712994]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -6, 0, 0)
 
-[node name="SentinelSpawnerP1" type="Node" parent="." unique_id=1027289134 node_paths=PackedStringArray("SpawnPoint")]
+[node name="SentinelSpawnerP1" type="Node" parent="." unique_id=1027289134 node_paths=PackedStringArray("SpawnPoint", "BodySpawner")]
 script = ExtResource("1_sentinelspawner")
 ActivateImmediately = true
 SpawnPoint = NodePath("../SpawnPointP1")
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
 ArchitectScene = ExtResource("24_architectscene")
+BodySpawner = NodePath("BodySpawner")
 
-[node name="SentinelSpawnerP2" type="Node" parent="." unique_id=206408576 node_paths=PackedStringArray("SpawnPoint")]
+[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP1" unique_id=1416225481]
+spawn_path = NodePath("..")
+
+[node name="SentinelSpawnerP2" type="Node" parent="." unique_id=206408576 node_paths=PackedStringArray("SpawnPoint", "BodySpawner")]
 script = ExtResource("1_sentinelspawner")
-OwnerId = 0
+OwnerId = 2
 ActivateImmediately = true
 SpawnPoint = NodePath("../SpawnPointP2")
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
 ArchitectScene = ExtResource("24_architectscene")
+BodySpawner = NodePath("BodySpawner")
 
-[node name="SentinelSpawnerP3" type="Node" parent="." unique_id=1548015078 node_paths=PackedStringArray("SpawnPoint")]
+[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP2" unique_id=954741291]
+spawn_path = NodePath("..")
+
+[node name="SentinelSpawnerP3" type="Node" parent="." unique_id=1548015078 node_paths=PackedStringArray("SpawnPoint", "BodySpawner")]
 script = ExtResource("1_sentinelspawner")
-OwnerId = 0
+OwnerId = 3
 ActivateImmediately = true
 SpawnPoint = NodePath("../SpawnPointP3")
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
 ArchitectScene = ExtResource("24_architectscene")
+BodySpawner = NodePath("BodySpawner")
 
-[node name="SentinelSpawnerP4" type="Node" parent="." unique_id=2061658122 node_paths=PackedStringArray("SpawnPoint")]
+[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP3" unique_id=2041372724]
+spawn_path = NodePath("..")
+
+[node name="SentinelSpawnerP4" type="Node" parent="." unique_id=2061658122 node_paths=PackedStringArray("SpawnPoint", "BodySpawner")]
 script = ExtResource("1_sentinelspawner")
-OwnerId = 0
+OwnerId = 4
 ActivateImmediately = true
 SpawnPoint = NodePath("../SpawnPointP4")
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
 ArchitectScene = ExtResource("24_architectscene")
+BodySpawner = NodePath("BodySpawner")
+
+[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP4" unique_id=608043930]
+spawn_path = NodePath("..")
 
 [node name="EconomyManager" type="Node" parent="." unique_id=1149411335]
 script = ExtResource("2_economymanager")

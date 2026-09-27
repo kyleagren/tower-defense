@@ -26,6 +26,8 @@ public partial class PauseMenu : Control
         {
             Instance = null;
         }
+
+        NetworkSession.Instance.SeatsChanged -= OnSeatsChanged;
     }
 
     public override void _Ready()
@@ -50,6 +52,7 @@ public partial class PauseMenu : Control
         AddButton(_column, "Exit Game", () => GetTree().Quit());
 
         Options.Closed += OnOptionsClosed;
+        NetworkSession.Instance.SeatsChanged += OnSeatsChanged;
     }
 
     private static Button AddButton(Container column, string text, System.Action onPressed)
@@ -111,6 +114,14 @@ public partial class PauseMenu : Control
         Visible = false;
         UiPanelStack.Pop(this);
         GetTree().Paused = false;
+    }
+
+    private void OnSeatsChanged()
+    {
+        if (Visible)
+        {
+            GetTree().Paused = !PlayerProfiles.IsMultiplayer;
+        }
     }
 
     private void OpenOptions()

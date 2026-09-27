@@ -31,8 +31,12 @@ HubScene = ExtResource("6_hubscene")
 [node name="RoutePreview" type="Node3D" parent="."]
 script = ExtResource("7_routepreview")
 
-[node name="SentinelSpawner" type="Node" parent="."]
+[node name="SentinelSpawner" type="Node" parent="." node_paths=PackedStringArray("BodySpawner")]
 script = ExtResource("8_sentinelspawner")
 SoldierScene = ExtResource("9_soldierscene")
 TankScene = ExtResource("10_tankscene")
 ArchitectScene = ExtResource("11_architectscene")
+BodySpawner = NodePath("BodySpawner")
+
+[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawner"]
+spawn_path = NodePath("..")
