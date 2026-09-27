@@ -50,7 +50,7 @@ Tower capacity is a fixed ceiling for the whole match. Pacing comes from the eco
 
 Minimap shows monster positions, which lane they came from, and disabled-tower status.
 
-Co-op shares capacity and currency during a match; at the end every player gets the full gold earned, since a co-op match doesn't spawn more enemies than a solo one. Pause is single-player only: every player can open their own pause menu, but it only freezes the game when nobody else is in the session (Section 3, Controls).
+Co-op shares capacity and currency during a match; at the end every player gets the full gold earned, since a co-op match doesn't spawn more enemies than a solo one. It makes them tougher instead: each player past the first adds 50% to every enemy's health (`GameRules.EnemyHealthPerExtraPlayer`), so four players face 250% — otherwise extra Sentinels kill everything too fast to leave much to do. An enemy's multiplier is fixed when it spawns, so someone leaving mid-match only affects later spawns. Pause is single-player only: every player can open their own pause menu, but it only freezes the game when nobody else is in the session (Section 3, Controls).
 
 **Loot is instanced per player in co-op (decided, not built).** Each player sees only the drops rolled for them; an item becomes visible to everyone only once its owner drops it on the ground from their inventory. Today every drop is effectively the local player's, which matches this for single-player. Building it means rolling each kill's drops once per player (so a dropped weapon's Sentinel bias follows that player's pick, not the host's), and giving `WorldItem` an optional owning `PlayerId` that gates both its nameplate and its pickup — cleared to "everyone" when a player drops it from inventory.
 

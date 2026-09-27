@@ -96,7 +96,7 @@ ArmRWeakPoint = NodePath("Skeleton3D/ArmRAttachment/WeakSpot")
 LegLWeakPoint = NodePath("Skeleton3D/LegLAttachment/WeakSpot")
 LegRWeakPoint = NodePath("Skeleton3D/LegRAttachment/WeakSpot")
 ShoulderAttachment = NodePath("Skeleton3D/ArmLAttachment")
-MaxHealth = 200.0
+MaxHealth = 400.0
 HealthBar = NodePath("HealthBar3D")
 FloatingTextScene = ExtResource("3_floatingtext")
 

@@ -13,7 +13,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public MeshInstance3D LegRWeakPoint { get; private set; }
     [Export] public Node3D ShoulderAttachment { get; private set; }
     [Export] public float RagdollCleanupDelay = 2f;
-    [Export] public float MaxHealth = 100f;
+    [Export] public float MaxHealth = 200f;
     [Export] public float CenterMassHeight = 1f;
     // Kilograms. Knockback divides by it, so a heavy enemy moves less but is never made immune.
     [Export] public float Mass = 80f;

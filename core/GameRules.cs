@@ -26,4 +26,6 @@ public static class GameRules
     public const float RespawnSecondsPerExtraDeath = 5f;
     public const int RespawnSkipBaseManaCost = 10;
     public const int RespawnSkipManaCostPerExtraDeath = 5;
+    // Each player past the first adds this much to an enemy's health: 150% for two, up to 250% for four.
+    public const float EnemyHealthPerExtraPlayer = 0.5f;
 }

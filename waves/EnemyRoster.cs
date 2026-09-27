@@ -21,7 +21,8 @@ public partial class EnemyRoster : Node
     public void Spawn(string enemyName, EnemySpawner lane)
     {
         _spawnCount++;
-        Spawner.Spawn(new Godot.Collections.Array { enemyName, lane.Id, _spawnCount });
+        float healthMultiplier = 1f + GameRules.EnemyHealthPerExtraPlayer * (NetworkSession.Instance.PlayerCount - 1);
+        Spawner.Spawn(new Godot.Collections.Array { enemyName, lane.Id, _spawnCount, healthMultiplier });
     }
 
     // Spawner's spawn function - runs on every machine, host included, for each enemy the host
@@ -34,6 +35,8 @@ public partial class EnemyRoster : Node
 
         WalkingEnemy enemy = EnemyCatalog.Get(enemyName).Instantiate<WalkingEnemy>();
         enemy.Name = $"{enemyName}_{args[2].AsInt32()}";
+        // Before _Ready, which starts the enemy at full health.
+        enemy.MaxHealth *= args[3].AsSingle();
         enemy.Position = lane.GlobalPosition;
         enemy.SetInitialFacing(lane.InitialFacing);
 

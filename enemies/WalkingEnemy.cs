@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 // navmesh/leash/wall-engagement logic it has no use for.
 public partial class WalkingEnemy : Enemy
 {
-    [Export] public float BaseSpeed = 3.5f;
+    [Export] public float BaseSpeed = 2.625f;
     [Export] public float RotationSpeed = 10f;
     [Export] public float WaypointArrivalDistance = 0.5f;
     [Export] public float EngagementCheckInterval = 0.25f;
