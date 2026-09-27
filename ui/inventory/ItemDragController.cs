@@ -23,11 +23,6 @@ public partial class ItemDragController : CanvasLayer
     }
 
     private const float DragThreshold = 8f;
-    // Stays a res:// path rather than an [Export] PackedScene: this class is registered directly
-    // as a bare-script autoload (project.godot), with no .tscn wrapper and so no Inspector slot to
-    // wire one into. world_item.tscn also has no uid assigned yet (never resaved by the editor), so
-    // there's no move-proof alternative available for it either.
-    private const string WorldItemScenePath = "res://world_items/world_item.tscn";
     private const float DropDistance = 1f;
     private const float DropDistanceVariance = 0.2f;
     private const float DropAngleSpread = 45f;
@@ -393,10 +388,9 @@ public partial class ItemDragController : CanvasLayer
         Changed?.Invoke();
     }
 
-    // Finishes a drag - but only for a release somewhere other than the slot it started from. If
-    // the cursor ended up back over the origin button, this does nothing: Button.Pressed fires for
-    // that release exactly like an ordinary click would, and OnSlotPressed's existing pick-up-then-
-    // place logic puts the item right back where it came from.
+    // Finishes a drag: onto another slot that accepts it (swapping with whatever was there), into a
+    // sell zone, back to its own slot, snapped back if released elsewhere inside a panel, or dropped
+    // in the world if released outside every panel.
     private void EndDrag()
     {
         _isDragging = false;
@@ -405,8 +399,10 @@ public partial class ItemDragController : CanvasLayer
 
         Control hovered = GetViewport().GuiGetHoveredControl();
 
+        // Back over the slot it started from: straight back in.
         if (hovered == _dragOriginButton)
         {
+            ReturnHeldToSource();
             return;
         }
 
@@ -516,10 +512,7 @@ public partial class ItemDragController : CanvasLayer
         Vector3 direction = forward.Rotated(Vector3.Up, Mathf.DegToRad((float)GD.RandRange(-DropAngleSpread, DropAngleSpread)));
         float distance = DropDistance + (float)GD.RandRange(-DropDistanceVariance, DropDistanceVariance);
 
-        WorldItem worldItem = GD.Load<PackedScene>(WorldItemScenePath).Instantiate<WorldItem>();
-        worldItem.Initialize(item);
-        LevelContext.Current.LevelRoot.AddChild(worldItem);
-        worldItem.GlobalPosition = player.GlobalPosition + direction * distance;
+        LevelContext.Current.WorldItemRoster.Drop(item, player.GlobalPosition + direction * distance);
     }
 
     // Every mutating placement ends the same way: the profile persists it and tells the rest of the

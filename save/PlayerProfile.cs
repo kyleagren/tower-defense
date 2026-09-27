@@ -89,6 +89,11 @@ public class PlayerProfile
         return TryAddToInventory(item);
     }
 
+    // Whether PickUp would find item a place.
+    public bool CanPickUp(Item item) =>
+        (item.IsCompatibleWith(SelectedCharacter) && GetLoadout(SelectedCharacter).HasOpenSlotFor(item))
+        || Data.Inventory.Contains(null);
+
     public bool KnowsRune(Rune rune) => Data.KnownRunes.Any(entry => entry.Rune == rune);
 
     // Learning a tier also learns every lower tier of the same rune not yet known, so owned tiers are

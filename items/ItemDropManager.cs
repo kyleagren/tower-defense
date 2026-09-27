@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-// Rolls drop chances as enemies die, but holds every result until the level is won. The whole
-// pile then sprays out of the level's primary objective during PostGame, ordered
+// Rolls this machine's own player's drops as enemies die, but holds every result until the level is
+// won. Every machine rolls its own - the host announces each kill - so each player's loot is theirs
+// alone and never has to cross the network. The whole pile then sprays out of the level's primary
+// objective during PostGame, ordered
 // common-to-legendary, and the objective itself is freed as the spray starts - the shield defended
 // all level becomes the reward. A loss never fires GameEnded(true), so queued loot simply never spawns, which is
 // the "nothing to loot after a loss" rule applied to everything.
@@ -35,10 +37,23 @@ public partial class ItemDropManager : Node
         EventBus.Instance.GameEnded -= OnGameEnded;
     }
 
+    // Host only - kills happen there.
+    private void OnEnemyKilled(int reward, int goldReward, Vector3 position, float dropChance, int lootRolls)
+    {
+        RollLoot(dropChance, lootRolls);
+        Rpc(MethodName.ReceiveKill, dropChance, lootRolls);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveKill(float dropChance, int lootRolls)
+    {
+        RollLoot(dropChance, lootRolls);
+    }
+
     // PoE-style: quantity (LootRolls) increases the number of independent drop-chance rolls per
     // kill, not the size of a single roll - each roll either drops one item or doesn't, so a kill
     // can end up with anywhere from 0 to LootRolls items.
-    private void OnEnemyKilled(int reward, int goldReward, Vector3 position, float dropChance, int lootRolls)
+    private void RollLoot(float dropChance, int lootRolls)
     {
         for (int i = 0; i < lootRolls; i++)
         {
@@ -49,9 +64,10 @@ public partial class ItemDropManager : Node
         }
     }
 
+    // The objective goes even with nothing to spray, so it's gone on every screen at once.
     private void OnGameEnded(bool victory)
     {
-        if (victory && _pendingLoot.Count > 0)
+        if (victory)
         {
             _ = SprayLoot();
         }

@@ -9,6 +9,10 @@ public partial class WorldItem : StaticBody3D
 
     public Item Item { get; private set; }
 
+    // Shared through the WorldItemRoster - dropped by a player, and anyone's to take. Victory loot
+    // isn't: it only exists for the player it was rolled for.
+    public bool IsShared { get; set; }
+
     private static readonly Color _currencyGoldColor = new Color(0.83f, 0.69f, 0.22f);
 
     private LevelContext _level;
@@ -52,6 +56,12 @@ public partial class WorldItem : StaticBody3D
     // completely full, nothing happens - the item stays in the world until there's room.
     public void PickUp()
     {
+        if (IsShared)
+        {
+            _level.WorldItemRoster.RequestPickUp(this);
+            return;
+        }
+
         if (PlayerProfiles.Local.PickUp(Item))
         {
             QueueFree();

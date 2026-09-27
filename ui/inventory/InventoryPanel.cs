@@ -59,7 +59,6 @@ public partial class InventoryPanel : Control
     [Export] public Control SlotArea { get; private set; }
     [Export] public TileGrid Grid { get; private set; }
     [Export] public Control PhaseIndicator { get; private set; }
-    [Export] public PackedScene WorldItemScene { get; private set; }
     [Export] public float DropDistance = 1f;
     [Export] public float DropDistanceVariance = 0.2f;
     [Export] public float DropAngleSpread = 45f;
@@ -554,10 +553,7 @@ public partial class InventoryPanel : Control
         Vector3 direction = forward.Rotated(Vector3.Up, Mathf.DegToRad((float)GD.RandRange(-DropAngleSpread, DropAngleSpread)));
         float distance = DropDistance + (float)GD.RandRange(-DropDistanceVariance, DropDistanceVariance);
 
-        WorldItem worldItem = WorldItemScene.Instantiate<WorldItem>();
-        worldItem.Initialize(item);
-        LevelContext.Current.LevelRoot.AddChild(worldItem);
-        worldItem.GlobalPosition = player.GlobalPosition + direction * distance;
+        LevelContext.Current.WorldItemRoster.Drop(item, player.GlobalPosition + direction * distance);
     }
 
     // highlighted draws a green border on top of whatever background applies (rarity tint, or none)

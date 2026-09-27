@@ -179,12 +179,10 @@ public partial class NetworkSession : Node
         EmitSignal(SignalName.SeatsChanged);
     }
 
-    // Leaving on purpose, from the pause menu: drop the connection and play on alone.
+    // Leaving on purpose, from the pause menu: drop the connection and play on alone. Deferred -
+    // this runs from the pause menu, which lives in the level ReturnToSolo tears out.
     public void Leave()
     {
-        Multiplayer.MultiplayerPeer.Close();
-
-        // Deferred: this runs from the pause menu, which lives in the level ReturnToSolo tears out.
         CallDeferred(MethodName.ReturnToSolo);
     }
 
@@ -198,6 +196,7 @@ public partial class NetworkSession : Node
         }
 
         LevelLoader.Instance.DropLevel();
+        Multiplayer.MultiplayerPeer.Close();
         Multiplayer.MultiplayerPeer = new OfflineMultiplayerPeer();
         _seatsByPeer.Clear();
         _seatsByPeer[HostPeerId] = PlayerId.P1;

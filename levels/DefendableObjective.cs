@@ -28,20 +28,38 @@ public partial class DefendableObjective : Area3D, IDamageable
         }
     }
 
+    // Only the host's objective takes damage; every other copy shows the health it sends.
     public void TakeDamage(Hit hit)
     {
-        if (_destroyed)
+        if (_destroyed || !IsMultiplayerAuthority())
         {
             return;
         }
 
-        _currentHealth -= hit.Damage.Total;
-        HealthBar.SetFraction(_currentHealth / MaxHealth);
+        SetHealth(_currentHealth - hit.Damage.Total);
 
         if (_currentHealth <= 0f)
         {
             _destroyed = true;
             LevelContext.Current.Match.End(victory: false);
         }
+    }
+
+    private void SetHealth(float health)
+    {
+        ShowHealth(health);
+        Rpc(MethodName.ReceiveHealth, health);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveHealth(float health)
+    {
+        ShowHealth(health);
+    }
+
+    private void ShowHealth(float health)
+    {
+        _currentHealth = health;
+        HealthBar.SetFraction(Mathf.Max(health, 0f) / MaxHealth);
     }
 }

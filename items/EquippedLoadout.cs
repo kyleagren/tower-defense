@@ -37,6 +37,22 @@ public partial class EquippedLoadout : Resource
         }
     }
 
+    // Whether TryEquip would place item, without placing it.
+    public bool HasOpenSlotFor(Item item) => item switch
+    {
+        Weapon _ => Weapon == null,
+        Helmet _ => Helmet == null,
+        Chest _ => Chest == null,
+        Legplates _ => Legplates == null,
+        Boots _ => Boots == null,
+        Gloves _ => Gloves == null,
+        Belt _ => Belt == null,
+        Amulet _ => Amulet == null,
+        Ring _ => LeftRing == null || RightRing == null,
+        Relic _ => Relic == null,
+        _ => false
+    };
+
     // Force-equips item into its matching slot regardless of whether it was already occupied,
     // returning whatever got displaced (null if the slot was empty). Rings prefer whichever slot
     // is open, bumping LeftRing specifically if both are already occupied - arbitrary but consistent.
