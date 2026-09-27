@@ -20,7 +20,7 @@ public partial class WaveController : Node
     private class LaneQueue
     {
         public EnemySpawner Spawner;
-        public Queue<PackedScene> Pending;
+        public Queue<string> Pending;
         public float Cooldown;
     }
 
@@ -304,15 +304,13 @@ public partial class WaveController : Node
                 continue;
             }
 
-            Queue<PackedScene> pending = new Queue<PackedScene>();
+            Queue<string> pending = new Queue<string>();
 
             foreach (WaveSpawnGroup group in laneGroups)
             {
-                PackedScene scene = EnemyCatalog.Get(group.Enemy);
-
                 for (int i = 0; i < group.Count; i++)
                 {
-                    pending.Enqueue(scene);
+                    pending.Enqueue(group.Enemy);
                 }
             }
 

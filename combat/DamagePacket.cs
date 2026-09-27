@@ -19,6 +19,28 @@ public struct DamagePacket
 
     public readonly float Total => PhysicalDamage + FireDamage + WaterDamage + ColdDamage + LightningDamage + WindDamage;
 
+    // Flattened for an RPC, which can't carry a C# struct: the six amounts, then Origin, Source,
+    // IsCrit and IsTrueDamage as numbers.
+    public readonly float[] ToNetwork() => new[]
+    {
+        PhysicalDamage, FireDamage, WaterDamage, ColdDamage, LightningDamage, WindDamage,
+        (float)Origin, (float)Source, IsCrit ? 1f : 0f, IsTrueDamage ? 1f : 0f
+    };
+
+    public static DamagePacket FromNetwork(float[] data) => new DamagePacket
+    {
+        PhysicalDamage = data[0],
+        FireDamage = data[1],
+        WaterDamage = data[2],
+        ColdDamage = data[3],
+        LightningDamage = data[4],
+        WindDamage = data[5],
+        Origin = (DamageOrigin)(int)data[6],
+        Source = (DamageSource)(int)data[7],
+        IsCrit = data[8] != 0f,
+        IsTrueDamage = data[9] != 0f
+    };
+
     public readonly Tag? DominantElement
     {
         get

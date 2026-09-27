@@ -508,7 +508,34 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         Weapon.Visible = false;
     }
 
-    public virtual void TakeDamage(Hit hit)
+    public void TakeDamage(Hit hit)
+    {
+        if (IsDead)
+        {
+            return;
+        }
+
+        // Resolved by this Sentinel's own player, whose machine knows their gear, block and dodge.
+        if (!IsLocallyControlled)
+        {
+            RpcId(GetMultiplayerAuthority(), MethodName.ReceiveHit, hit.Damage.ToNetwork(), (int)hit.Type);
+            return;
+        }
+
+        ResolveHit(hit);
+    }
+
+    // Only enemies hurt a Sentinel, and only the host runs enemies.
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveHit(float[] damage, int type)
+    {
+        if (Multiplayer.GetRemoteSenderId() == 1 && IsLocallyControlled && !IsDead)
+        {
+            ResolveHit(new Hit { Damage = DamagePacket.FromNetwork(damage), Type = (HitType)type });
+        }
+    }
+
+    protected virtual void ResolveHit(Hit hit)
     {
         if (IsDead || IsDodgeImmune)
         {
@@ -559,17 +586,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         LevelState.Deaths++;
         OnDied();
-        _dodgeRemaining = 0f;
-        BodyMesh.Basis = _bodyMeshRestBasis;
         RespawnRemaining = GameRules.RespawnBaseSeconds + GameRules.RespawnSecondsPerExtraDeath * (LevelState.Deaths - 1);
-
-        BodyMesh.Visible = false;
-        Weapon.Visible = false;
-
-        // Off every layer rather than just hidden, so enemies walk through the body and nothing
-        // collides with it until it stands back up.
-        _aliveCollisionLayer = CollisionLayer;
-        CollisionLayer = 0;
+        GoDown();
+        Rpc(MethodName.ReceiveDowned);
 
         TokenDeployer.ExitPickMode();
 
@@ -583,6 +602,25 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             ability.CancelCapture();
             ability.OnCharacterDied();
         }
+    }
+
+    // What every machine shows of a death. Off every layer rather than just hidden, so enemies walk
+    // through the body and nothing collides with it until it stands back up.
+    private void GoDown()
+    {
+        _dodgeRemaining = 0f;
+        BodyMesh.Basis = _bodyMeshRestBasis;
+        BodyMesh.Visible = false;
+        Weapon.Visible = false;
+        _aliveCollisionLayer = CollisionLayer;
+        CollisionLayer = 0;
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveDowned()
+    {
+        _currentHealth = 0f;
+        GoDown();
     }
 
     // For a subclass with its own state that death should clear.
@@ -604,6 +642,17 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         BodyMesh.Visible = IsActive;
         Weapon.Visible = IsActive;
         HealToFull();
+
+        if (IsLocallyControlled)
+        {
+            Rpc(MethodName.ReceiveStoodUp);
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveStoodUp()
+    {
+        Respawn();
     }
 
     public void TrySkipRespawn()

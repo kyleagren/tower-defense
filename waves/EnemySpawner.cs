@@ -12,7 +12,11 @@ public partial class EnemySpawner : Node3D
         await NavigationReady.WaitFor(this, TryBuildLane, $"EnemySpawner '{Id}'");
     }
 
-    public void Spawn(PackedScene enemyScene)
+    // Which way an enemy faces as it steps out - down the lane. Zero until the lane exists.
+    public Vector3 InitialFacing => Lane == null ? Vector3.Zero : (Lane.Waypoints[1] - Lane.Waypoints[0]).Normalized();
+
+    // Host only.
+    public void Spawn(string enemyName)
     {
         if (Lane == null)
         {
@@ -20,11 +24,7 @@ public partial class EnemySpawner : Node3D
             return;
         }
 
-        WalkingEnemy enemy = enemyScene.Instantiate<WalkingEnemy>();
-        GetParent().AddChild(enemy);
-        enemy.GlobalPosition = GlobalPosition;
-        enemy.SetInitialFacing((Lane.Waypoints[1] - Lane.Waypoints[0]).Normalized());
-        enemy.SetLane(Lane, Target);
+        LevelContext.Current.EnemyRoster.Spawn(enemyName, this);
     }
 
     private bool TryBuildLane()

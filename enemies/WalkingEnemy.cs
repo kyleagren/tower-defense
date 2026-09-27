@@ -58,6 +58,13 @@ public partial class WalkingEnemy : Enemy
     private float _gravity;
     private float _fallSpeed;
 
+    // Copies only: where the synced position was last frame, and how much longer to keep walking
+    // after it last moved - sync updates don't land every physics frame, so a copy that animated only
+    // on the frames it moved would stutter between walking and standing.
+    private Vector3 _copyLastPosition;
+    private float _copyWalkRemaining;
+    private const float CopyWalkHold = 0.2f;
+
     public override void _Ready()
     {
         base._Ready();
@@ -65,7 +72,9 @@ public partial class WalkingEnemy : Enemy
 
         _walkAnimator = new ProceduralWalkAnimator(Skeleton, WalkCycleFrequency, LegSwingAmplitude, ArmSwingAmplitude);
 
-        NavAgent.AvoidanceEnabled = true;
+        // A copy on another machine doesn't steer or path; left on, avoidance would move it on its
+        // own and fight the synced position.
+        NavAgent.AvoidanceEnabled = IsSimulatedHere;
         if (BodyCollision.Shape is CapsuleShape3D capsuleShape)
         {
             NavAgent.Radius = capsuleShape.Radius;
@@ -91,6 +100,12 @@ public partial class WalkingEnemy : Enemy
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
+
+        if (!IsSimulatedHere)
+        {
+            AnimateCopy(delta);
+            return;
+        }
 
         UpdateDistanceToGoal();
 
@@ -148,7 +163,7 @@ public partial class WalkingEnemy : Enemy
     }
 
     // Horizontal only: a real launch would need a stand-up animation per enemy type.
-    public override void ApplyKnockback(Vector3 impulse)
+    protected override void ResolveKnockback(Vector3 impulse)
     {
         if (IsDead)
         {
@@ -624,10 +639,8 @@ public partial class WalkingEnemy : Enemy
     {
         if (ProjectileScene != null)
         {
-            EnemyProjectile projectile = ProjectileScene.Instantiate<EnemyProjectile>();
-            LevelContext.Current.LevelRoot.AddChild(projectile);
-            projectile.GlobalPosition = CenterMass;
-            projectile.Initialize(target.AimPoint, AttackDamage, this);
+            LaunchProjectile().Initialize(target.AimPoint, AttackDamage, this);
+            Rpc(MethodName.ReceiveShot, target.AimPoint);
             return;
         }
 
@@ -636,6 +649,32 @@ public partial class WalkingEnemy : Enemy
             Damage = new DamagePacket { PhysicalDamage = AttackDamage },
             Attribution = new Attribution { Source = this }
         });
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void ReceiveShot(Vector3 targetPosition)
+    {
+        LaunchProjectile().InitializeVisual(targetPosition);
+    }
+
+    private EnemyProjectile LaunchProjectile()
+    {
+        EnemyProjectile projectile = ProjectileScene.Instantiate<EnemyProjectile>();
+        LevelContext.Current.LevelRoot.AddChild(projectile);
+        projectile.GlobalPosition = CenterMass;
+        return projectile;
+    }
+
+    // A copy has no steering to drive its walk cycle, so it runs off how far the synced position
+    // moves instead.
+    private void AnimateCopy(double delta)
+    {
+        Vector3 moved = GlobalPosition - _copyLastPosition;
+        moved.Y = 0f;
+        _copyLastPosition = GlobalPosition;
+
+        _copyWalkRemaining = moved.LengthSquared() > 0.0001f ? CopyWalkHold : _copyWalkRemaining - (float)delta;
+        _walkAnimator.Animate(_copyWalkRemaining > 0f ? 1.0 : 0.0, delta);
     }
 
     private void Stop(double delta)

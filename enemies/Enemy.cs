@@ -76,6 +76,29 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     protected float CurrentHealth { get; set; }
 
+    // Only the host simulates an enemy - AI, debuffs, death and what it pays out. Everywhere else it's
+    // a copy its MultiplayerSynchronizer keeps in step. A training dummy is the exception: each
+    // machine owns its own.
+    protected bool IsSimulatedHere => IsMultiplayerAuthority();
+
+    // What copies need from the host, synced by the enemy's MultiplayerSynchronizer.
+    public float SyncedHealth
+    {
+        get => CurrentHealth;
+        set => CurrentHealth = value;
+    }
+
+    // -1 for no Status.
+    public int SyncedStatus
+    {
+        get => Status.HasValue ? (int)Status.Value : -1;
+        set => Status = value < 0 ? null : (Tag)value;
+    }
+
+    // Whether a Burn or Immolation is ticking. Worked out where the enemy is simulated, since copies
+    // don't run debuffs.
+    public bool IsBurning { get; set; }
+
     public Vector3 CenterMass => GlobalPosition + Vector3.Up * CenterMassHeight;
     public Vector3 AimPoint => CenterMass;
 
@@ -210,7 +233,16 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     public override void _PhysicsProcess(double delta)
     {
-        TickDebuffs((float)delta);
+        if (IsSimulatedHere)
+        {
+            TickDebuffs((float)delta);
+            IsBurning = _debuffs.Exists(debuff => debuff is BurnAilment or ImmolationAilment);
+        }
+        else
+        {
+            HealthBar.SetFraction(CurrentHealth / MaxHealth);
+        }
+
         UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
     }
 
@@ -221,6 +253,43 @@ public partial class Enemy : CharacterBody3D, IDamageable
             return;
         }
 
+        // A copy can't resolve a hit. The dealer sees their number straight away; the host applies
+        // the damage and the result syncs back.
+        if (!IsSimulatedHere)
+        {
+            ShowDamageNumber(hit.Damage);
+            RpcId(1, MethodName.ReceiveForwardedHit, hit.Damage.ToNetwork(), (int)hit.Type, hit.RagdollImpulse);
+            return;
+        }
+
+        ResolveHit(hit, dealerShowedNumber: false);
+    }
+
+    // Credited to whoever sent it. Rune on-hits don't travel: only Rituals carry them, and the host
+    // runs every Ritual.
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveForwardedHit(float[] damage, int type, Vector3 ragdollImpulse)
+    {
+        PlayerId dealer = NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId());
+
+        if (_isDead || !IsSimulatedHere || dealer == default)
+        {
+            return;
+        }
+
+        Level.SentinelSpawners.TryGetValue(dealer, out SentinelSpawner spawner);
+
+        ResolveHit(new Hit
+        {
+            Damage = DamagePacket.FromNetwork(damage),
+            Attribution = new Attribution { Player = dealer, Source = spawner?.Current as Sentinel },
+            Type = (HitType)type,
+            RagdollImpulse = ragdollImpulse
+        }, dealerShowedNumber: true);
+    }
+
+    private void ResolveHit(Hit hit, bool dealerShowedNumber)
+    {
         DamagePacket amount = hit.Damage;
         bool statusConsumed = false;
 
@@ -245,6 +314,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         CurrentHealth -= amount.Total;
         HealthBar.SetFraction(CurrentHealth / MaxHealth);
         OnDamageTaken(amount);
+        RouteDamageNumber(hit, dealerShowedNumber);
 
         if (hit.SetsStatus)
         {
@@ -271,6 +341,28 @@ public partial class Enemy : CharacterBody3D, IDamageable
         {
             Die(hit.RagdollImpulse);
         }
+    }
+
+    // Each player sees the numbers credited to them. A hit with no player behind it counts as the
+    // host's.
+    private void RouteDamageNumber(Hit hit, bool dealerShowedNumber)
+    {
+        PlayerId credited = hit.Attribution.Player ?? PlayerProfiles.HostId;
+
+        if (credited == PlayerProfiles.LocalId)
+        {
+            ShowDamageNumber(hit.Damage);
+        }
+        else if (!dealerShowedNumber && NetworkSession.Instance.IsSeatFilled(credited))
+        {
+            RpcId(NetworkSession.Instance.PeerOf(credited), MethodName.ReceiveDamageNumber, hit.Damage.ToNetwork());
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void ReceiveDamageNumber(float[] damage)
+    {
+        ShowDamageNumber(DamagePacket.FromNetwork(damage));
     }
 
     // Takes this enemy's Status outright, for something that spends it without landing a hit.
@@ -356,9 +448,10 @@ public partial class Enemy : CharacterBody3D, IDamageable
     }
 
     // Universal death handling: unregister, hide the health bar, stop simulating, disable
-    // collision, pay out rewards/loot, free after a delay. A subclass with more to do on death
-    // (ragdoll physics) overrides this and calls base.Die() first — see WalkingEnemy. A subclass
-    // that shouldn't die at all (a training dummy) overrides this and skips base entirely.
+    // collision - and where the enemy is simulated, pay out rewards/loot and free after a delay. A
+    // subclass with more to do on death (ragdoll physics) overrides this and calls base.Die() first -
+    // see WalkingEnemy. A subclass that shouldn't die at all (a training dummy) overrides this and
+    // skips base entirely.
     public virtual void Die(Vector3 ragdollImpulse)
     {
         if (_isDead)
@@ -369,17 +462,54 @@ public partial class Enemy : CharacterBody3D, IDamageable
         _isDead = true;
         Level.Enemies.Unregister(this);
         HealthBar.Visible = false;
-        EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward, GlobalPosition, DropChance, LootRolls);
-
         SetPhysicsProcess(false);
         BodyCollision.Disabled = true;
 
+        // A copy only shows the death. The host pays out, tells the copies, and later frees the body,
+        // which removes it everywhere - its synchronizer going first, so no update arrives for a body
+        // another machine has already removed.
+        if (!IsSimulatedHere)
+        {
+            return;
+        }
+
+        EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward, GlobalPosition, DropChance, LootRolls);
+        GetNodeOrNull("MultiplayerSynchronizer")?.QueueFree();
+        Rpc(MethodName.ReceiveDeath, ragdollImpulse);
         GetTree().CreateTimer(RagdollCleanupDelay).Timeout += QueueFree;
     }
 
-    // A non-lethal shove from outside - a pylon, a shield slam - in kg·m/s. No-op for an enemy that
-    // can't be moved, like the training dummy.
-    public virtual void ApplyKnockback(Vector3 impulse)
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveDeath(Vector3 ragdollImpulse)
+    {
+        Die(ragdollImpulse);
+    }
+
+    // A non-lethal shove from outside - a pylon, a shield slam - in kg·m/s. A copy passes it to the
+    // host.
+    public void ApplyKnockback(Vector3 impulse)
+    {
+        if (IsSimulatedHere)
+        {
+            ResolveKnockback(impulse);
+        }
+        else
+        {
+            RpcId(1, MethodName.ReceiveKnockback, impulse);
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveKnockback(Vector3 impulse)
+    {
+        if (IsSimulatedHere && NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        {
+            ResolveKnockback(impulse);
+        }
+    }
+
+    // No-op for an enemy that can't be moved, like the training dummy.
+    protected virtual void ResolveKnockback(Vector3 impulse)
     {
     }
 
@@ -388,10 +518,14 @@ public partial class Enemy : CharacterBody3D, IDamageable
     {
     }
 
-    // Spawns a floating damage number for this hit, colored by its dominant element. Virtual so a
-    // subclass can also hook into "I just took damage" for its own purposes (TrainingDummy uses
-    // this for DPS tracking) without overriding all of TakeDamage.
+    // For a subclass that wants to know it just took damage (TrainingDummy's DPS readout). Runs only
+    // where the enemy is simulated.
     protected virtual void OnDamageTaken(DamagePacket amount)
+    {
+    }
+
+    // A floating number colored by the hit's dominant element.
+    private void ShowDamageNumber(DamagePacket amount)
     {
         bool enabled = amount.Source == DamageSource.Weapon ? DebugSettings.ShowWeaponDamageNumbers : DebugSettings.ShowRitualDamageNumbers;
         if (!enabled || FloatingTextScene == null)
@@ -421,7 +555,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // an enemy's element and ailments.
     private void UpdateElementalVisual(float delta)
     {
-        bool isBurning = _debuffs.Exists(debuff => debuff is BurnAilment or ImmolationAilment);
+        bool isBurning = IsBurning;
 
         if (isBurning)
         {

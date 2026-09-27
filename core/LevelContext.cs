@@ -24,6 +24,9 @@ public partial class LevelContext : Node
     // The level's match - its phase and whether it's over. Null in a scene with no match (the hub).
     public MatchState Match { get; set; }
 
+    // Where the host spawns enemies. Null in a scene with no match (the hub).
+    public EnemyRoster EnemyRoster { get; set; }
+
     // The objective PostGame loot sprays from. Null in a scene with no match.
     public DefendableObjective PrimaryObjective { get; set; }
 

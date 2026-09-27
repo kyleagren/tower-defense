@@ -363,7 +363,7 @@ public partial class Tank : Sentinel
         }
     }
 
-    public override void TakeDamage(Hit hit)
+    protected override void ResolveHit(Hit hit)
     {
         if (IsDodgeImmune)
         {
@@ -391,6 +391,6 @@ public partial class Tank : Sentinel
             _retaliation?.RecordHit(hit.Damage.Total);
         }
 
-        base.TakeDamage(hit);
+        base.ResolveHit(hit);
     }
 }

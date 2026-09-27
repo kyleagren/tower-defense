@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://c2e8ekj1x02pc" path="res://characters/soldier/soldier.tscn" id="9_soldierscene"]
 [ext_resource type="PackedScene" uid="uid://bxhdubyyf3032" path="res://characters/tank/tank.tscn" id="10_tankscene"]
 [ext_resource type="PackedScene" uid="uid://dod5att2rugml" path="res://characters/architect/architect.tscn" id="11_architectscene"]
+[ext_resource type="Script" path="res://waves/EnemyRoster.cs" id="12_enemyroster"]
 
 [node name="LevelSystems" type="Node"]
 
@@ -28,6 +29,13 @@ script = ExtResource("5_gameoverhandler")
 
 [node name="RoutePreview" type="Node3D" parent="."]
 script = ExtResource("7_routepreview")
+
+[node name="Enemies" type="Node" parent="." node_paths=PackedStringArray("Spawner")]
+script = ExtResource("12_enemyroster")
+Spawner = NodePath("Spawner")
+
+[node name="Spawner" type="MultiplayerSpawner" parent="Enemies"]
+spawn_path = NodePath("..")
 
 [node name="SentinelSpawnerP1" type="Node" parent="." node_paths=PackedStringArray("BodySpawner")]
 script = ExtResource("8_sentinelspawner")

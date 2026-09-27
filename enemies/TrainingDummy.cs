@@ -11,6 +11,13 @@ public partial class TrainingDummy : Enemy
     private readonly List<(double time, float amount)> _recentHits = new();
     private int _displayedDps = -1;
 
+    // Placed in the hub rather than spawned, so every machine has its own set - and owns it, which
+    // keeps each player's DPS readout their own.
+    public override void _EnterTree()
+    {
+        SetMultiplayerAuthority(Multiplayer.GetUniqueId());
+    }
+
     public override void Die(Vector3 ragdollImpulse)
     {
         CurrentHealth = MaxHealth;

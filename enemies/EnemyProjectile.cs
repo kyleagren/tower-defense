@@ -15,6 +15,7 @@ public partial class EnemyProjectile : Area3D
     private Node _source;
     private float _lifetime;
     private bool _hasHit;
+    private bool _isVisualOnly;
 
     // source is whoever fired it, carried on the hit it lands.
     public void Initialize(Vector3 targetPosition, float damage, Node source, DamageOrigin origin = DamageOrigin.Projectile)
@@ -22,6 +23,14 @@ public partial class EnemyProjectile : Area3D
         _damage = damage;
         _source = source;
         _origin = origin;
+        LookAt(targetPosition, Vector3.Up);
+    }
+
+    // A copy of a shot the host fired: it flies and vanishes on contact, but the host's own shot
+    // decides the hit.
+    public void InitializeVisual(Vector3 targetPosition)
+    {
+        _isVisualOnly = true;
         LookAt(targetPosition, Vector3.Up);
     }
 
@@ -51,7 +60,7 @@ public partial class EnemyProjectile : Area3D
         _hasHit = true;
 
         IDamageable hitTarget = ResolveTarget(body);
-        if (hitTarget != null && !hitTarget.IsDestroyed)
+        if (!_isVisualOnly && hitTarget != null && !hitTarget.IsDestroyed)
         {
             hitTarget.TakeDamage(new Hit
             {
