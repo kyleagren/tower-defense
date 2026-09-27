@@ -36,7 +36,10 @@ public static class RuneCatalog
             return true;
         }
 
-        int inUse = LevelContext.Current.Rituals.Active.SelectMany(ritual => ritual.RuneSlots).Count(socketed => socketed == rune);
+        int inUse = LevelContext.Current.Rituals.Active
+            .Where(ritual => ritual.OwnerId == PlayerProfiles.LocalId)
+            .SelectMany(ritual => ritual.RuneSlots)
+            .Count(socketed => socketed == rune);
         return inUse < entry.Quantity;
     }
 

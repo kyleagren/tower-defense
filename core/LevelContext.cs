@@ -27,6 +27,9 @@ public partial class LevelContext : Node
     // Where the host spawns enemies. Null in a scene with no match (the hub).
     public EnemyRoster EnemyRoster { get; set; }
 
+    // Where the host spawns placed Rituals.
+    public RitualRoster RitualRoster { get; set; }
+
     // The objective PostGame loot sprays from. Null in a scene with no match.
     public DefendableObjective PrimaryObjective { get; set; }
 

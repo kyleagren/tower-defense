@@ -74,13 +74,6 @@ public class WallPlacementFlow : PlacementFlow
 
     public override bool IsRitualPositionAllowed(Vector3 position) => !OverlapsOwnWallLine(position);
 
-    public override void OnPlaced(Ritual ritual)
-    {
-        WallFootprintMarker marker = new WallFootprintMarker();
-        ritual.AddChild(marker);
-        marker.Initialize(_start, _end, Wall.SegmentWidth);
-    }
-
     public override void End()
     {
         _preview.Clear();

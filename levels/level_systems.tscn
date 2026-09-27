@@ -11,6 +11,8 @@
 [ext_resource type="PackedScene" uid="uid://bxhdubyyf3032" path="res://characters/tank/tank.tscn" id="10_tankscene"]
 [ext_resource type="PackedScene" uid="uid://dod5att2rugml" path="res://characters/architect/architect.tscn" id="11_architectscene"]
 [ext_resource type="Script" path="res://waves/EnemyRoster.cs" id="12_enemyroster"]
+[ext_resource type="Script" path="res://rituals/RitualRoster.cs" id="13_ritualroster"]
+[ext_resource type="PackedScene" path="res://rituals/ritual.tscn" id="14_ritualscene"]
 
 [node name="LevelSystems" type="Node"]
 
@@ -35,6 +37,14 @@ script = ExtResource("12_enemyroster")
 Spawner = NodePath("Spawner")
 
 [node name="Spawner" type="MultiplayerSpawner" parent="Enemies"]
+spawn_path = NodePath("..")
+
+[node name="Rituals" type="Node" parent="." node_paths=PackedStringArray("Spawner")]
+script = ExtResource("13_ritualroster")
+Spawner = NodePath("Spawner")
+RitualScene = ExtResource("14_ritualscene")
+
+[node name="Spawner" type="MultiplayerSpawner" parent="Rituals"]
 spawn_path = NodePath("..")
 
 [node name="SentinelSpawnerP1" type="Node" parent="." node_paths=PackedStringArray("BodySpawner")]

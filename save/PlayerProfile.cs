@@ -27,7 +27,7 @@ public class PlayerProfile
     public void SelectCharacter(CharacterId character)
     {
         Data.LastPlayedCharacter = character;
-        Save();
+        CommitChange(saveNow: true);
     }
 
     // Only the local profile has a file behind it; a remote player's copy is theirs to persist.
@@ -198,9 +198,21 @@ public class PlayerProfile
         return sheet;
     }
 
+    // A remote player's sheets aren't derived here - they're what that player last sent.
     public void InvalidateSheets()
     {
-        _sheets.Clear();
+        if (IsLocal)
+        {
+            _sheets.Clear();
+        }
+    }
+
+    // Another player's gear as they last shared it.
+    public void ReceiveSheet(CharacterId character, CharacterSheet sheet)
+    {
+        Data.LastPlayedCharacter = character;
+        _sheets[character] = sheet;
+        CommitChange();
     }
 
     private CharacterSheet Resolve(CharacterId character)

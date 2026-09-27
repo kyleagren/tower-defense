@@ -32,4 +32,6 @@ public class CharacterSheet
     {
         return _localTotals.TryGetValue(stat, out float value) ? value : 0f;
     }
+
+    public IReadOnlyDictionary<StatId, float> LocalTotals => _localTotals;
 }

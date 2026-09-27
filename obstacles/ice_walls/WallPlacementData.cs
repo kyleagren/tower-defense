@@ -4,6 +4,8 @@ using Godot;
 // the per-segment cost they imply, kept as placement cost so repair can leave it out.
 public class WallPlacementData : PlacementData
 {
+    public const string NetworkKind = "wall";
+
     public WallPlacementData(Vector3 start, Vector3 end)
     {
         Start = start;
@@ -27,5 +29,17 @@ public class WallPlacementData : PlacementData
         context.Wall.End = End;
         context.PlacementManaCost += chargedSegments * context.Wall.ManaCostPerSegment;
         context.PlacementCapacityCost += chargedSegments * context.Wall.CapacityCostPerSegment;
+    }
+
+    public override Godot.Collections.Array ToNetwork() => new() { NetworkKind, Start, End };
+
+    public static WallPlacementData FromNetwork(Godot.Collections.Array data) => new(data[1].AsVector3(), data[2].AsVector3());
+
+    // The wall's reserved footprint, until the wall itself rises.
+    public override void AttachTo(Ritual ritual, SpellCastContext context)
+    {
+        WallFootprintMarker marker = new WallFootprintMarker();
+        ritual.AddChild(marker);
+        marker.Initialize(Start, End, context.Wall.SegmentWidth);
     }
 }

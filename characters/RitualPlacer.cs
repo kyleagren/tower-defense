@@ -31,8 +31,8 @@ public partial class RitualPlacer : Node
     private PlacementFlow _flow;
     private bool _isValidPlacement;
 
-    // Invoked once placement is actually confirmed (not on cancel) - lets a caller like
-    // TokenDeployer know it should consume the token that was just spent.
+    // Invoked once the Ritual has actually been placed (not on cancel, or a placement the host turns
+    // down) - lets a caller like TokenDeployer know it should consume the token that was just spent.
     private Action _onConfirmed;
 
     private Vector3 _cursorPosition;
@@ -200,19 +200,8 @@ public partial class RitualPlacer : Node
 
     private void ConfirmPlacement()
     {
-        Ritual placed = RitualScene.Instantiate<Ritual>();
-        LevelContext.Current.LevelRoot.AddChild(placed);
-        placed.GlobalTransform = _ghost.GlobalTransform;
-        placed.SetOwnerId(Character.OwnerId);
-        placed.Configure(_pendingSpell, _pendingRunes, _flow.Data);
-        _flow.OnPlaced(placed);
-
-        (int manaCost, int capacityCost) = _economy.SpendOnRitual(_pendingContext);
-        placed.SetCost(manaCost, capacityCost);
-
-        Action onConfirmed = _onConfirmed;
+        LevelContext.Current.RitualRoster.RequestPlacement(_pendingSpell, _pendingRunes, _ghost.GlobalTransform, _flow.Data, _onConfirmed);
         EndPlacement();
-        onConfirmed?.Invoke();
     }
 
     public void CancelPlacement()

@@ -115,6 +115,7 @@ Deliberately keeps one foot in traditional-shooter appeal — not every characte
     - **Repel** pulses once a second, throwing whatever is inside at that moment, so enemies walking in go in small batches; the first pulse lands 1s after it's placed. Directions are quantized to an **octagon aligned to the caster's facing**: each enemy goes along the outward normal of the side whose wedge it's in, and the four sides on those axes (60° wedges) are wider than the diagonals (30°), so most enemies fly forward, back, left or right and the scatter stays readable. Scattering enemies away from AoE Rituals is the intended cost of choosing it over Converge.
     - **Strength** is fixed for now; it's meant to scale with ability-damage stats, so two Soldiers with different gear cast noticeably different fields. Heavier enemies are moved less by both (Section 5), never made immune.
     - **Placeholder visuals:** a translucent disc showing the radius and a small glowing core — blue for Converge, orange for Repel.
+    - **Names:** "Grasp" is a maybe for Converge, and "Scatter" for Repel.
 - **Considered, not slotted:** a rune-configured super-shot whose effect depends on the socketed rune, reading each Rune's own numbers directly rather than routing a gunshot through the spell pipeline. Would need a narrow new `Rune` hook, not a pipeline change.
 
 ### Tank

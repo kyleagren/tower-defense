@@ -66,8 +66,8 @@ public partial class Ritual : Node3D, IDamageable
 
         EventBus.Instance.InventoryChanged += OnInventoryChanged;
 
-        // A ritual placed by RitualPlacer is configured explicitly right after AddChild, so only
-        // one authored into a scene with a Spell already assigned configures itself here.
+        // A Ritual the RitualRoster spawns is configured once it's ready, so only one authored into
+        // a scene with a Spell already assigned configures itself here.
         if (Spell != null)
         {
             Configure(Spell, RuneSlots);
@@ -122,21 +122,12 @@ public partial class Ritual : Node3D, IDamageable
 
     public void TakeDamage(Hit hit)
     {
-        if (_disabled)
+        if (_disabled || !IsMultiplayerAuthority())
         {
             return;
         }
 
-        _currentHealth -= hit.Damage.Total;
-        HealthBar.SetFraction(Mathf.Max(0f, _currentHealth) / MaxHealth);
-        HealthBar.Visible = true;
-
-        if (_currentHealth <= 0f)
-        {
-            _currentHealth = 0f;
-            _disabled = true;
-            CoreMesh.MaterialOverride = _disabledMaterial;
-        }
+        SetHealth(Mathf.Max(0f, _currentHealth - hit.Damage.Total));
     }
 
     private float MissingHealthFraction => 1f - (_currentHealth / MaxHealth);
@@ -161,16 +152,18 @@ public partial class Ritual : Node3D, IDamageable
 
     public void Repair()
     {
+        if (!IsMultiplayerAuthority())
+        {
+            RpcId(1, MethodName.RequestRepair);
+            return;
+        }
+
         if (MissingHealthFraction <= 0f || !EconomyManager.Instance.TrySpendMana(RepairCost))
         {
             return;
         }
 
-        _currentHealth = MaxHealth;
-        _disabled = false;
-        CoreMesh.MaterialOverride = _activeMaterial;
-        HealthBar.SetFraction(1f);
-        HealthBar.Visible = false;
+        SetHealth(MaxHealth);
     }
 
     public void SetCost(int manaCost, int capacityCost)
@@ -185,9 +178,57 @@ public partial class Ritual : Node3D, IDamageable
     // what can be built, not a currency, so shorting it would lose it for the rest of the match.
     public void Destroy()
     {
+        if (!IsMultiplayerAuthority())
+        {
+            RpcId(1, MethodName.RequestDestroy);
+            return;
+        }
+
         int manaRefund = Mathf.FloorToInt(_manaCost * (1f - GameRules.RepairCostFraction * MissingHealthFraction));
         EconomyManager.Instance.RefundRitual(manaRefund, _capacityCost);
         QueueFree();
+    }
+
+    // Any player can repair or tear down any Ritual.
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void RequestRepair()
+    {
+        if (NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        {
+            Repair();
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void RequestDestroy()
+    {
+        if (NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        {
+            Destroy();
+        }
+    }
+
+    // Only the host changes a Ritual's health; copies follow.
+    private void SetHealth(float health)
+    {
+        ShowHealth(health);
+        Rpc(MethodName.ReceiveHealth, health);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveHealth(float health)
+    {
+        ShowHealth(health);
+    }
+
+    // Broken at zero - greyed out, and no longer casting or targetable until repaired.
+    private void ShowHealth(float health)
+    {
+        _currentHealth = health;
+        _disabled = health <= 0f;
+        CoreMesh.MaterialOverride = _disabled ? _disabledMaterial : _activeMaterial;
+        HealthBar.SetFraction(health / MaxHealth);
+        HealthBar.Visible = health < MaxHealth;
     }
 
     public void Configure(Spell spell, IReadOnlyList<Rune> runes, PlacementData placement = null)
@@ -217,6 +258,7 @@ public partial class Ritual : Node3D, IDamageable
         CoreMesh.MaterialOverride = _activeMaterial;
 
         ApplyShroud();
+        placement?.AttachTo(this, ResolveWithOwner());
     }
 
     // Resolved once here rather than per frame: a Ritual's rune loadout is fixed for its lifetime,
@@ -248,8 +290,8 @@ public partial class Ritual : Node3D, IDamageable
     public override void _Process(double delta)
     {
         // Null until Configure runs — placement ghosts and scene-authored rituals with no Spell
-        // assigned both sit in this state.
-        if (_spellInstance == null || _disabled)
+        // assigned both sit in this state. Only the host runs a Ritual; everywhere else it's a copy.
+        if (_spellInstance == null || _disabled || !IsMultiplayerAuthority())
         {
             return;
         }

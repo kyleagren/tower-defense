@@ -4,4 +4,15 @@
 public abstract class PlacementData
 {
     public abstract void ApplyTo(SpellCastContext context);
+
+    // Anything the placement leaves on the Ritual itself. Runs on every machine, from Configure.
+    public virtual void AttachTo(Ritual ritual, SpellCastContext context)
+    {
+    }
+
+    // Sent as an array led by the kind of placement - an empty one for none.
+    public abstract Godot.Collections.Array ToNetwork();
+
+    public static PlacementData FromNetwork(Godot.Collections.Array data) =>
+        data.Count > 0 && data[0].AsString() == WallPlacementData.NetworkKind ? WallPlacementData.FromNetwork(data) : null;
 }
