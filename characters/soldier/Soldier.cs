@@ -117,8 +117,14 @@ public partial class Soldier : Sentinel
         LookSensitivity = Mathf.Lerp(LookSensitivity, targetSensitivityMultiplier, weight);
     }
 
+    // How far the rifle may turn and tilt to meet the crosshair. The turn is kept small, so a point
+    // close beside or below the Soldier can't swing it out to the side.
+    private const float MaxWeaponYawDegrees = 25f;
+    private const float MaxWeaponPitchDegrees = 80f;
+
     // The rifle points at whatever the crosshair is on - the same line a shot takes - so tracers
-    // leave the muzzle toward where the shot actually goes, not at an angle the barrel couldn't fire.
+    // leave the muzzle toward where the shot actually goes. Set as a turn and a tilt in the body's
+    // own frame rather than a look-at, so it never rolls and always stays upright.
     private void AimWeapon()
     {
         Vector3 origin = Camera.GlobalPosition;
@@ -129,13 +135,22 @@ public partial class Soldier : Sentinel
         Godot.Collections.Dictionary result = GetWorld3D().DirectSpaceState.IntersectRay(query);
 
         Vector3 target = result.Count > 0 ? (Vector3)result["position"] : end;
-        Vector3 direction = target - Weapon.GlobalPosition;
+        Vector3 local = GlobalBasis.Inverse() * (target - Weapon.GlobalPosition);
 
-        // Something pressed right up against the barrel gives no direction worth turning to.
-        if (direction.LengthSquared() > 0.25f)
+        // A point at or behind the muzzle - looking down past the Soldier's own feet - has no sensible
+        // way to be aimed at, so the rifle follows the camera instead.
+        if (local.Z > -0.1f)
         {
-            Weapon.LookAt(target, GeometryUtils.SafeUpFor(direction));
+            local = GlobalBasis.Inverse() * -Camera.GlobalTransform.Basis.Z;
         }
+
+        float yaw = Mathf.Atan2(-local.X, -local.Z);
+        float pitch = Mathf.Atan2(local.Y, new Vector2(local.X, local.Z).Length());
+
+        Weapon.Rotation = new Vector3(
+            Mathf.Clamp(pitch, -Mathf.DegToRad(MaxWeaponPitchDegrees), Mathf.DegToRad(MaxWeaponPitchDegrees)),
+            Mathf.Clamp(yaw, -Mathf.DegToRad(MaxWeaponYawDegrees), Mathf.DegToRad(MaxWeaponYawDegrees)),
+            0f);
     }
 
     private void FireShot()
