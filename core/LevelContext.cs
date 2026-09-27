@@ -18,7 +18,7 @@ public partial class LevelContext : Node
     public ActiveRegistry<WorldItem> WorldItems { get; } = new();
 
     public Dictionary<PlayerId, Sentinel> Sentinels { get; } = new();
-    public Dictionary<PlayerId, Architect> Architects { get; } = new();
+    public Dictionary<PlayerId, PlayerSpawnPoint> SpawnPoints { get; } = new();
     public Dictionary<PlayerId, SentinelSpawner> SentinelSpawners { get; } = new();
 
     // The level's match - its phase and whether it's over. Null in a scene with no match (the hub).
@@ -36,6 +36,20 @@ public partial class LevelContext : Node
 
     // View-side convenience for this machine's camera and HUD. Gameplay code takes a PlayerId instead.
     public PlayerCharacter LocalActiveCharacter => ActiveCharacters.GetValueOrDefault(PlayerProfiles.LocalId);
+
+    private readonly Dictionary<PlayerId, PlayerLevelState> _playerStates = new();
+
+    // Made on first use, so every body that asks - whenever it spawns - shares one per player.
+    public PlayerLevelState StateOf(PlayerId player)
+    {
+        if (!_playerStates.TryGetValue(player, out PlayerLevelState state))
+        {
+            state = new PlayerLevelState();
+            _playerStates[player] = state;
+        }
+
+        return state;
+    }
 
     // Counted rather than a flag, so two Soldiers running the visor at once don't have the first to
     // end strip the markers the other is still using. Scene-wide rather than per-enemy: an enemy

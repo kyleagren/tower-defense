@@ -1,18 +1,25 @@
 using Godot;
+using System.Linq;
+using System.Text;
 
 public partial class PhaseIndicator : Control
 {
     [Export] public Label PhaseLabel { get; private set; }
     [Export] public Label GoldLabel { get; private set; }
+    [Export] public RichTextLabel ReadyLabel { get; private set; }
 
-    // Whether this scene has a match to show at all - the hub has none.
-    private bool _inMatch;
+    private static readonly Color ReadyColor = new Color(0.4f, 0.85f, 0.4f);
+    private static readonly Color NotReadyColor = new Color(0.9f, 0.35f, 0.35f);
+
+    // This level's match, kept from _Ready rather than read through LevelContext.Current each time -
+    // for a frame during a level switch, Current is already the incoming level. Null in the hub.
+    private MatchState _match;
 
     public override void _Ready()
     {
-        _inMatch = LevelContext.Current.Match != null;
+        _match = LevelContext.Current.Match;
 
-        if (!_inMatch)
+        if (_match == null)
         {
             Visible = false;
             return;
@@ -25,7 +32,7 @@ public partial class PhaseIndicator : Control
 
     public override void _ExitTree()
     {
-        if (!_inMatch)
+        if (_match == null)
         {
             return;
         }
@@ -34,11 +41,53 @@ public partial class PhaseIndicator : Control
         EconomyManager.Instance.EconomyChanged -= Refresh;
     }
 
+    // Polled rather than event-driven, since the countdown runs down continuously.
+    public override void _Process(double delta)
+    {
+        if (_match != null)
+        {
+            RefreshReady();
+        }
+    }
+
+    // Each player's seat, green once they're ready and red until then, then the countdown once the
+    // host has readied. Hidden in Combat, where there's nothing to ready up for.
+    private void RefreshReady()
+    {
+        ReadyLabel.Visible = _match.CanReadyUp;
+
+        if (!ReadyLabel.Visible)
+        {
+            return;
+        }
+
+        StringBuilder text = new StringBuilder();
+
+        foreach (PlayerId seat in NetworkSession.Instance.FilledSeats.OrderBy(seat => seat))
+        {
+            bool ready = _match.ReadyPlayers.Contains(seat);
+            Color color = ready ? ReadyColor : NotReadyColor;
+            text.Append($"[color=#{color.ToHtml(false)}]{(ready ? "✓" : "✗")} {seat}[/color]  ");
+        }
+
+        if (_match.ReadyCountdown.HasValue)
+        {
+            text.Append($"{Mathf.CeilToInt(_match.ReadyCountdown.Value)}s");
+        }
+
+        string result = text.ToString();
+
+        if (ReadyLabel.Text != result)
+        {
+            ReadyLabel.Text = result;
+        }
+    }
+
     private void OnGamePhaseChanged(GamePhase phase) => Refresh();
 
     private void Refresh()
     {
-        GamePhase phase = LevelContext.Current.Match.Phase;
+        GamePhase phase = _match.Phase;
         string phaseText = phase switch
         {
             GamePhase.Planning => "Planning Phase",

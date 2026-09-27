@@ -4,8 +4,9 @@ using Godot;
 // side - since equilibrium sits in the middle rather than at an end. The fill is plain rectangles
 // drawn inside Mask, which clips them to the pill's shape, so the ends follow the pill's own curve
 // rather than rounding the fill into a smaller pill of its own. The heat side is cut from a fixed
-// red-to-orange gradient, so how much of it shows says how hot the Tank is. Hidden for any Sentinel
-// without heat, and polled per frame for the same reason AbilityGauge is.
+// red-to-orange gradient, so how much of it shows says how hot the Tank is. Shown whenever the local
+// player plays the Tank - between waves too, since it reads the player's level state rather than a
+// live Tank - and polled per frame for the same reason AbilityGauge is.
 public partial class HeatGauge : Control
 {
     [Export] public int BarWidth = 80;
@@ -59,23 +60,24 @@ public partial class HeatGauge : Control
 
     public override void _Process(double delta)
     {
-        Tank tank = Sentinel.Local as Tank;
-        Visible = tank != null;
+        bool playsTank = PlayerProfiles.Local.SelectedCharacter == CharacterId.Tank;
+        Visible = playsTank;
 
-        if (tank == null)
+        if (!playsTank)
         {
             return;
         }
 
-        float fraction = tank.Heat / Tank.HeatLimit;
+        float heat = LevelContext.Current.StateOf(PlayerProfiles.LocalId).Heat;
+        float fraction = heat / Tank.HeatLimit;
         if (!Mathf.IsEqualApprox(fraction, _fraction))
         {
             _fraction = fraction;
             Fill.QueueRedraw();
         }
 
-        int heat = Mathf.RoundToInt(tank.Heat);
-        HeatLabel.Text = heat > 0 ? $"+{heat}" : heat.ToString();
+        int rounded = Mathf.RoundToInt(heat);
+        HeatLabel.Text = rounded > 0 ? $"+{rounded}" : rounded.ToString();
     }
 
     public override void _Draw()

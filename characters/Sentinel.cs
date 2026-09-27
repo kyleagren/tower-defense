@@ -7,7 +7,6 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public static Sentinel Local => LevelContext.Current?.Sentinels.GetValueOrDefault(PlayerProfiles.LocalId);
 
     [Export] public Node3D Weapon { get; private set; }
-    [Export] public float BaseMaxHealth = 100f;
     [Export] public float AimPointHeight = 1.2f;
     [Export] public float DodgeDistance = 5f;
     [Export] public float DodgeDuration = 0.35f;
@@ -63,10 +62,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     // Mana to stand back up right now - grows with each death this match, like the wait itself.
     public int RespawnSkipCost =>
-        GameRules.RespawnSkipBaseManaCost + GameRules.RespawnSkipManaCostPerExtraDeath * (_deathsThisMatch - 1);
+        GameRules.RespawnSkipBaseManaCost + GameRules.RespawnSkipManaCostPerExtraDeath * (LevelState.Deaths - 1);
 
-    private int _deathsThisMatch;
     private uint _aliveCollisionLayer;
+
+    // This player's state for the level - what outlives this body.
+    public PlayerLevelState LevelState => Level.StateOf(OwnerId);
 
     // This Sentinel's own owner's gear - never the local save's - so two players on the same
     // Sentinel resolve independently.
@@ -76,34 +77,20 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // Carried on every hit this Sentinel's weapon deals.
     public Attribution HitAttribution => new Attribution { Player = OwnerId, Source = this };
 
-    public float MaxHealth => BaseMaxHealth * (1f + Sheet.GetBonus(StatId.SentinelMaxHealth));
+    public SentinelDefinition Definition => SentinelCatalog.Definition(Id);
+    public SentinelStats Stats => new SentinelStats(Definition, Sheet, LevelState);
+
+    public float MaxHealth => Stats.MaxHealth;
     public override float Speed => BaseSpeed * (1f + Sheet.GetBonus(StatId.SentinelMoveSpeed));
 
-    public float MaxShield
-    {
-        get
-        {
-            CharacterSheet sheet = Sheet;
-            return sheet.GetLocalTotal(StatId.SentinelShield) * (1f + sheet.GetBonus(StatId.SentinelTotalShield));
-        }
-    }
+    public float MaxShield => Stats.MaxShield;
 
     // Shield past MaxShield is overshield - only Harvest grants it. It lives in the same pool, so a
     // hit drains it first; regen never reaches it, since regen stops at MaxShield, and any gear
     // change clamps back down to MaxShield, wiping it.
     public float ShieldCeiling => MaxShield * GameRules.OvershieldCeilingMultiplier;
 
-    public float TotalArmor
-    {
-        get
-        {
-            CharacterSheet sheet = Sheet;
-            return sheet.GetLocalTotal(StatId.SentinelArmor) * (1f + sheet.GetBonus(StatId.SentinelTotalArmor)) * ArmorMultiplier;
-        }
-    }
-
-    // A Sentinel's own swing on its armor, on top of gear - the Tank's heat dial.
-    protected virtual float ArmorMultiplier => 1f;
+    public float TotalArmor => Stats.TotalArmor;
 
     public float AttackDamage
     {
@@ -194,9 +181,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     private int _heldSlot = -1;
     private float _heldTime;
 
-    public override void ActivateStandalone()
+    public override void Activate()
     {
-        base.ActivateStandalone();
+        base.Activate();
         Weapon.Visible = true;
     }
 
@@ -212,6 +199,15 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             AbilitySlots[slot]?.AssignSlot(slot);
             GetHoldAbility(slot)?.AssignSlot(slot);
         }
+
+        string[] slotNames = new string[AbilitySlots.Count];
+
+        for (int slot = 0; slot < slotNames.Length; slot++)
+        {
+            slotNames[slot] = SlotDisplayName(slot);
+        }
+
+        SentinelCatalog.RecordSlotNames(Id, slotNames);
         _currentHealth = MaxHealth;
         _currentShield = MaxShield;
         Level.Sentinels[OwnerId] = this;
@@ -221,13 +217,6 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         EventBus.Instance.InventoryChanged += OnGearChanged;
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerHealthChanged, (int)OwnerId, _currentHealth, MaxHealth);
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlayerShieldChanged, (int)OwnerId, _currentShield, MaxShield);
-
-        // Spawned into a match already underway, the phase events so far were missed - catch up
-        // on the current phase. The hub has no match; its spawner activates the body directly.
-        if (Level.Match != null)
-        {
-            OnGamePhaseChanged(Level.Match.Phase);
-        }
     }
 
     public override void _ExitTree()
@@ -489,33 +478,34 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         return false;
     }
 
+    // Build hands the player to their Architect and this body is about to be swapped out, so it
+    // stands down now rather than acting for the frames until it goes - healed first, so the HUD
+    // shows the Health and Shield the next wave starts with. A wave ending while dead revives
+    // outright, whether it leads into Build or PostGame.
     private void OnGamePhaseChanged(GamePhase phase)
     {
-        bool shouldBeActive = phase != GamePhase.Build;
-
-        // A wave ending while dead revives outright, whether it leads into Build or PostGame.
-        if (phase == GamePhase.Build || phase == GamePhase.PostGame)
+        if (phase != GamePhase.Build && phase != GamePhase.PostGame)
         {
-            Respawn();
+            return;
         }
 
-        if (phase == GamePhase.Combat)
-        {
-            HandoffFrom(Level.Architects[OwnerId]);
-        }
-        else if (phase == GamePhase.Build)
-        {
-            HealToFull();
+        Respawn();
 
-            foreach (Ability ability in AllAbilities)
-            {
-                ability.CancelCapture();
-                ability.OnCharacterDeactivated();
-            }
+        if (phase == GamePhase.PostGame)
+        {
+            return;
         }
 
-        SetActive(shouldBeActive);
-        Weapon.Visible = shouldBeActive;
+        HealToFull();
+
+        foreach (Ability ability in AllAbilities)
+        {
+            ability.CancelCapture();
+            ability.OnCharacterDeactivated();
+        }
+
+        SetActive(false);
+        Weapon.Visible = false;
     }
 
     public virtual void TakeDamage(Hit hit)
@@ -567,11 +557,11 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // last, so dying repeatedly costs more than a single slip; mana can skip the wait.
     private void Die()
     {
-        _deathsThisMatch++;
+        LevelState.Deaths++;
         OnDied();
         _dodgeRemaining = 0f;
         BodyMesh.Basis = _bodyMeshRestBasis;
-        RespawnRemaining = GameRules.RespawnBaseSeconds + GameRules.RespawnSecondsPerExtraDeath * (_deathsThisMatch - 1);
+        RespawnRemaining = GameRules.RespawnBaseSeconds + GameRules.RespawnSecondsPerExtraDeath * (LevelState.Deaths - 1);
 
         BodyMesh.Visible = false;
         Weapon.Visible = false;
@@ -643,26 +633,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         return true;
     }
 
-    // Armor's reduction against melee; projectiles get GameRules.ArmorProjectileEffectiveness of it.
-    // S-curve (exponent > 1): trivial gear barely registers, endgame gear feels strong, climbs
-    // faster in the middle than at either end. Public so the Character Sheet UI can show the same
-    // number TakeDamage actually uses, rather than a second copy of this formula.
-    public float MeleeDamageReductionPercent
-    {
-        get
-        {
-            float armorPow = Mathf.Pow(TotalArmor, GameRules.SentinelArmorCurveExponent);
-            float kPow = Mathf.Pow(GameRules.SentinelArmorCurveConstant, GameRules.SentinelArmorCurveExponent);
-            return armorPow / (armorPow + kPow);
-        }
-    }
-
-    // Public so the Character Sheet UI can show the same numbers UpdateHealthRegen actually uses,
-    // rather than a second copy of this formula.
-    public float BaseHealthRegenPerSecond => Sheet.GetBonus(StatId.SentinelBaseHealthRegen);
-
-    public float TotalHealthRegenPerSecond =>
-        BaseHealthRegenPerSecond * (1f + Sheet.GetBonus(StatId.SentinelHealthRegen));
+    public float MeleeDamageReductionPercent => Stats.MeleeDamageReductionPercent;
+    public float BaseHealthRegenPerSecond => Stats.BaseHealthRegenPerSecond;
+    public float TotalHealthRegenPerSecond => Stats.TotalHealthRegenPerSecond;
 
     // Called by whichever Sentinel is active, from its own _PhysicsProcess - passively recharges
     // Shield once it's been GameRules.ShieldRegenDelay seconds since the last hit of any kind.

@@ -5,7 +5,8 @@ using System.Text.Json;
 
 // Runs a level's waves and owns its MatchState. Driven from _PhysicsProcess rather than async
 // timers, so pausing the tree pauses the waves with it, and nothing keeps running against a scene
-// that's been freed or reloaded.
+// that's been freed or reloaded. Only the host runs the match; everyone else sends their ready
+// presses to it and follows the phase changes, ready state and ending it broadcasts.
 public partial class WaveController : Node
 {
     [Export] public string WaveFilePath = "res://assets/waves/test_level.json";
@@ -38,9 +39,10 @@ public partial class WaveController : Node
     public override void _EnterTree()
     {
         Instance = this;
-        _match = new MatchState(LevelContext.Current);
+        _match = new MatchState();
         LevelContext.Current.Match = _match;
         _match.ReadyCheckPassed += OnReadyCheckPassed;
+        _match.ReadyStateChanged += OnReadyStateChanged;
     }
 
     public override void _Ready()
@@ -56,6 +58,21 @@ public partial class WaveController : Node
                 _spawnersById[spawner.Id] = spawner;
             }
         }
+
+        EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
+        EventBus.Instance.GameEnded += OnGameEnded;
+
+        // In case the host moved the match on before this level finished loading here.
+        if (!NetworkSession.Instance.IsHost)
+        {
+            RpcId(1, MethodName.RequestMatchState);
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
+        EventBus.Instance.GameEnded -= OnGameEnded;
     }
 
     private void LoadWaves()
@@ -75,11 +92,96 @@ public partial class WaveController : Node
     public override void _UnhandledInput(InputEvent @event)
     {
         // D-pad right is also token 3 while R1 is held.
-        if (@event.IsActionPressed("start_wave") && !InputChords.TokenModifierHeld)
+        if (!@event.IsActionPressed("start_wave") || InputChords.TokenModifierHeld)
+        {
+            return;
+        }
+
+        if (NetworkSession.Instance.IsHost)
         {
             _match.ToggleReady(PlayerProfiles.LocalId);
         }
+        else
+        {
+            RpcId(1, MethodName.RequestToggleReady);
+        }
     }
+
+    // A client's own seat only - the seat comes from who sent it, not from anything it says.
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void RequestToggleReady()
+    {
+        PlayerId seat = NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId());
+
+        if (NetworkSession.Instance.IsHost && seat != default)
+        {
+            _match.ToggleReady(seat);
+        }
+    }
+
+    // Host only: every phase change, the ready state and the match ending go out to everyone else.
+    private void OnGamePhaseChanged(GamePhase phase)
+    {
+        if (NetworkSession.Instance.IsHost)
+        {
+            Rpc(MethodName.ReceivePhase, (int)phase);
+        }
+    }
+
+    private void OnReadyStateChanged()
+    {
+        if (NetworkSession.Instance.IsHost)
+        {
+            Rpc(MethodName.ReceiveReadyState, ReadySeats(), _match.ReadyCountdown ?? -1f);
+        }
+    }
+
+    private void OnGameEnded(bool victory)
+    {
+        if (NetworkSession.Instance.IsHost)
+        {
+            Rpc(MethodName.ReceiveEnd, victory);
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceivePhase(int phase)
+    {
+        _match.SetPhase((GamePhase)phase);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveReadyState(int[] ready, float countdown)
+    {
+        _match.ApplyReadyState(ready.Select(seat => (PlayerId)seat), countdown < 0f ? null : countdown);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveEnd(bool victory)
+    {
+        _match.End(victory);
+    }
+
+    // Phase, then ready state, then the ending - the order the host went through them.
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void RequestMatchState()
+    {
+        if (!NetworkSession.Instance.IsHost)
+        {
+            return;
+        }
+
+        long sender = Multiplayer.GetRemoteSenderId();
+        RpcId(sender, MethodName.ReceivePhase, (int)_match.Phase);
+        RpcId(sender, MethodName.ReceiveReadyState, ReadySeats(), _match.ReadyCountdown ?? -1f);
+
+        if (_match.IsOver)
+        {
+            RpcId(sender, MethodName.ReceiveEnd, _match.Victory);
+        }
+    }
+
+    private int[] ReadySeats() => _match.ReadyPlayers.Select(seat => (int)seat).ToArray();
 
     // PostGame's "move on" belongs to GameOverHandler, which listens for the same signal.
     private void OnReadyCheckPassed(GamePhase phase)
@@ -122,6 +224,13 @@ public partial class WaveController : Node
 
     public override void _PhysicsProcess(double delta)
     {
+        // The host runs the match; everyone else follows what it broadcasts.
+        if (!NetworkSession.Instance.IsHost)
+        {
+            _match.TickCountdownDisplay((float)delta);
+            return;
+        }
+
         _match.Tick((float)delta);
 
         if (_activeWave == null || _match.IsOver)

@@ -7,16 +7,13 @@ using System.Collections.Generic;
 // instead of waiting on an event it already missed.
 public class MatchState
 {
-    private readonly LevelContext _level;
     private readonly HashSet<PlayerId> _ready = new();
-
-    public MatchState(LevelContext level)
-    {
-        _level = level;
-    }
 
     public GamePhase Phase { get; private set; } = GamePhase.Planning;
     public bool IsOver { get; private set; }
+
+    // Meaningful once IsOver.
+    public bool Victory { get; private set; }
 
     public IReadOnlyCollection<PlayerId> ReadyPlayers => _ready;
 
@@ -26,6 +23,9 @@ public class MatchState
 
     // Fires with the phase the check was for; whoever owns that phase's "move on" acts on it.
     public event Action<GamePhase> ReadyCheckPassed;
+
+    // Whenever who's ready changes, or the countdown starts or stops - not every tick of it.
+    public event Action ReadyStateChanged;
 
     // Ready checks gate leaving Planning, starting a wave from Build and leaving PostGame - never Combat.
     public bool CanReadyUp => Phase != GamePhase.Combat;
@@ -51,6 +51,7 @@ public class MatchState
         }
 
         IsOver = true;
+        Victory = victory;
         EventBus.Instance.EmitSignal(EventBus.SignalName.GameEnded, victory);
     }
 
@@ -68,6 +69,7 @@ public class MatchState
                 ReadyCountdown = null;
             }
 
+            ReadyStateChanged?.Invoke();
             return;
         }
 
@@ -78,6 +80,7 @@ public class MatchState
             ReadyCountdown = GameRules.ReadyCountdownSeconds;
         }
 
+        ReadyStateChanged?.Invoke();
         TryPassReadyCheck();
     }
 
@@ -99,6 +102,24 @@ public class MatchState
         TryPassReadyCheck();
     }
 
+    // A client's copy of the host's ready check. Clients never tick the real check - the countdown
+    // just runs down here for the phase bar.
+    public void ApplyReadyState(IEnumerable<PlayerId> ready, float? countdown)
+    {
+        _ready.Clear();
+        _ready.UnionWith(ready);
+        ReadyCountdown = countdown;
+        ReadyStateChanged?.Invoke();
+    }
+
+    public void TickCountdownDisplay(float delta)
+    {
+        if (ReadyCountdown.HasValue)
+        {
+            ReadyCountdown = Math.Max(0f, ReadyCountdown.Value - delta);
+        }
+    }
+
     private void TryPassReadyCheck()
     {
         if (_ready.Count == 0)
@@ -106,7 +127,7 @@ public class MatchState
             return;
         }
 
-        foreach (PlayerId player in _level.Sentinels.Keys)
+        foreach (PlayerId player in NetworkSession.Instance.FilledSeats)
         {
             if (!_ready.Contains(player))
             {
@@ -128,5 +149,6 @@ public class MatchState
     {
         _ready.Clear();
         ReadyCountdown = null;
+        ReadyStateChanged?.Invoke();
     }
 }

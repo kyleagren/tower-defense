@@ -21,13 +21,13 @@ public partial class HarvestAbility : Ability
     public override string DisplayName => "Harvest";
     public override string Description => "Strips elemental Status off nearby enemies for Shield and Overdrive charge.";
 
-    public override float? GaugeFraction => _charge;
+    public override float? GaugeFraction => State.HarvestCharge;
     public override Tag? GaugeElement => DominantChargeElement();
 
-    public bool IsGaugeFull => _charge >= 1f - FullChargeTolerance;
+    public bool IsGaugeFull => State.HarvestCharge >= 1f - FullChargeTolerance;
 
-    private float _charge;
-    private readonly Dictionary<Tag, float> _chargeByElement = new Dictionary<Tag, float>();
+    // The gauge lives on the player's level state, so it survives the body being swapped.
+    private PlayerLevelState State => Character.LevelState;
 
     protected override void Activate()
     {
@@ -40,11 +40,6 @@ public partial class HarvestAbility : Ability
         }
 
         StartCooldown();
-    }
-
-    public override void OnCharacterDied()
-    {
-        ResetGauge();
     }
 
     // Empties a full gauge, handing back each element's share of it and whichever fed it most.
@@ -61,9 +56,9 @@ public partial class HarvestAbility : Ability
         dominantElement = DominantChargeElement();
         shares = new Dictionary<Tag, float>();
 
-        foreach (KeyValuePair<Tag, float> entry in _chargeByElement)
+        foreach (KeyValuePair<Tag, float> entry in State.HarvestChargeByElement)
         {
-            shares[entry.Key] = entry.Value / _charge;
+            shares[entry.Key] = entry.Value / State.HarvestCharge;
         }
 
         ResetGauge();
@@ -101,7 +96,7 @@ public partial class HarvestAbility : Ability
     // each element's share is scaled down together rather than whichever came first filling it.
     private void AddCharge(Dictionary<Tag, int> stripped, int strippedCount)
     {
-        float castCharge = Mathf.Min(Mathf.Min(strippedCount * ChargePerStatus, MaxChargePerCast), 1f - _charge);
+        float castCharge = Mathf.Min(Mathf.Min(strippedCount * ChargePerStatus, MaxChargePerCast), 1f - State.HarvestCharge);
         if (castCharge <= 0f)
         {
             return;
@@ -110,16 +105,16 @@ public partial class HarvestAbility : Ability
         foreach (KeyValuePair<Tag, int> entry in stripped)
         {
             float share = castCharge * entry.Value / strippedCount;
-            _chargeByElement[entry.Key] = _chargeByElement.GetValueOrDefault(entry.Key) + share;
+            State.HarvestChargeByElement[entry.Key] = State.HarvestChargeByElement.GetValueOrDefault(entry.Key) + share;
         }
 
-        _charge += castCharge;
+        State.HarvestCharge += castCharge;
     }
 
     private void ResetGauge()
     {
-        _charge = 0f;
-        _chargeByElement.Clear();
+        State.HarvestCharge = 0f;
+        State.HarvestChargeByElement.Clear();
     }
 
     private Tag? DominantChargeElement()
@@ -127,7 +122,7 @@ public partial class HarvestAbility : Ability
         Tag? dominant = null;
         float best = 0f;
 
-        foreach (KeyValuePair<Tag, float> entry in _chargeByElement)
+        foreach (KeyValuePair<Tag, float> entry in State.HarvestChargeByElement)
         {
             if (entry.Value > best)
             {

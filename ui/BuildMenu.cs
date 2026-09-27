@@ -1023,6 +1023,16 @@ public partial class BuildMenu : Control
         };
     }
 
+    // Freed with its Architect when Combat starts, possibly still open - an entry left on the panel
+    // stack would go on blocking combat input.
+    public override void _ExitTree()
+    {
+        if (Visible)
+        {
+            UiPanelStack.Pop(this);
+        }
+    }
+
     public void Open()
     {
         Visible = true;

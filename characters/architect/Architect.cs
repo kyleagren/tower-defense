@@ -10,28 +10,15 @@ public partial class Architect : PlayerCharacter
     public override void _Ready()
     {
         base._Ready();
-        Level.Architects[OwnerId] = this;
         BuildMenu.Closed += OnBuildMenuClosed;
         BuildMenu.Confirmed += OnBuildMenuConfirmed;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-
-        // Spawned into a match already underway, the phase events so far were missed - catch up
-        // on the current phase. The hub has no match; its spawner activates the body directly.
-        if (Level.Match != null)
-        {
-            OnGamePhaseChanged(Level.Match.Phase);
-        }
     }
 
     public override void _ExitTree()
     {
         base._ExitTree();
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
-
-        if (Level.Architects.TryGetValue(OwnerId, out Architect current) && current == this)
-        {
-            Level.Architects.Remove(OwnerId);
-        }
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -76,16 +63,14 @@ public partial class Architect : PlayerCharacter
         RitualPlacer.BeginPlacement(spell, runes);
     }
 
+    // Combat hands the player back to their Sentinel and this body is about to be swapped out, so
+    // it stands down now.
     private void OnGamePhaseChanged(GamePhase phase)
     {
-        bool shouldBeActive = phase == GamePhase.Build;
-
-        if (shouldBeActive)
+        if (phase != GamePhase.Build)
         {
-            HandoffFrom(Level.Sentinels[OwnerId]);
+            SetActive(false);
         }
-
-        SetActive(shouldBeActive);
     }
 
     public override void _PhysicsProcess(double delta)

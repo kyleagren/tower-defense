@@ -31,6 +31,8 @@ public partial class NetworkSession : Node
 
     public bool IsSeatFilled(PlayerId seat) => _seatsByPeer.ContainsValue(seat);
 
+    public IEnumerable<PlayerId> FilledSeats => _seatsByPeer.Values;
+
     public int PlayerCount => _seatsByPeer.Count;
 
     // Offline counts as the host, since that's what single-player is.

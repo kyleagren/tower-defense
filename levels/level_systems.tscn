@@ -29,12 +29,45 @@ script = ExtResource("5_gameoverhandler")
 [node name="RoutePreview" type="Node3D" parent="."]
 script = ExtResource("7_routepreview")
 
-[node name="SentinelSpawner" type="Node" parent="." node_paths=PackedStringArray("BodySpawner")]
+[node name="SentinelSpawnerP1" type="Node" parent="." node_paths=PackedStringArray("BodySpawner")]
 script = ExtResource("8_sentinelspawner")
 SoldierScene = ExtResource("9_soldierscene")
 TankScene = ExtResource("10_tankscene")
 ArchitectScene = ExtResource("11_architectscene")
 BodySpawner = NodePath("BodySpawner")
 
-[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawner"]
+[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP1"]
+spawn_path = NodePath("..")
+
+[node name="SentinelSpawnerP2" type="Node" parent="." node_paths=PackedStringArray("BodySpawner")]
+script = ExtResource("8_sentinelspawner")
+OwnerId = 2
+SoldierScene = ExtResource("9_soldierscene")
+TankScene = ExtResource("10_tankscene")
+ArchitectScene = ExtResource("11_architectscene")
+BodySpawner = NodePath("BodySpawner")
+
+[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP2"]
+spawn_path = NodePath("..")
+
+[node name="SentinelSpawnerP3" type="Node" parent="." node_paths=PackedStringArray("BodySpawner")]
+script = ExtResource("8_sentinelspawner")
+OwnerId = 3
+SoldierScene = ExtResource("9_soldierscene")
+TankScene = ExtResource("10_tankscene")
+ArchitectScene = ExtResource("11_architectscene")
+BodySpawner = NodePath("BodySpawner")
+
+[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP3"]
+spawn_path = NodePath("..")
+
+[node name="SentinelSpawnerP4" type="Node" parent="." node_paths=PackedStringArray("BodySpawner")]
+script = ExtResource("8_sentinelspawner")
+OwnerId = 4
+SoldierScene = ExtResource("9_soldierscene")
+TankScene = ExtResource("10_tankscene")
+ArchitectScene = ExtResource("11_architectscene")
+BodySpawner = NodePath("BodySpawner")
+
+[node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP4"]
 spawn_path = NodePath("..")

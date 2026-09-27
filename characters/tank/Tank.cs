@@ -39,24 +39,23 @@ public partial class Tank : Sentinel
 
     // README's heat dial: a signed gauge with equilibrium at 0. Above it the sword adds Fire and
     // armor falls; below it armor rises. It never drifts - only the kit and hits taken move it -
-    // and carries across waves, clearing only on death.
+    // and carries across waves, clearing only on death. It's kept on the player's level state, not
+    // on this body, so it survives the body being swapped.
     public const float HeatLimit = 100f;
 
-    [Export] public float MaxHeatFireFraction = 0.2f;
-    [Export] public float MaxHeatArmorShift = 0.2f;
     [Export] public float HeatPerPercentHealthTaken = 1f;
     [Export] public Color HeatGlowLowColor = new Color(0.85f, 0.1f, 0.05f);
     [Export] public Color HeatGlowHighColor = new Color(1f, 0.55f, 0.1f);
     [Export] public float MaxHeatGlowEnergy = 2f;
 
-    public float Heat { get; private set; }
+    public float Heat => LevelState.Heat;
 
     private StandardMaterial3D _bladeHeatMaterial;
     private Color _bladeRestColor;
 
     public void AddHeat(float amount)
     {
-        Heat = Mathf.Clamp(Heat + amount, -HeatLimit, HeatLimit);
+        LevelState.Heat = Mathf.Clamp(LevelState.Heat + amount, -HeatLimit, HeatLimit);
         UpdateSwordGlow();
     }
 
@@ -81,20 +80,19 @@ public partial class Tank : Sentinel
         Blade.MaterialOverride = _bladeHeatMaterial;
     }
 
-    // One formula for both sides: positive heat lowers armor, negative heat raises it.
-    protected override float ArmorMultiplier => 1f - MaxHeatArmorShift * Heat / HeatLimit;
-
     protected override void AddExtraElementalDamage(ref DamagePacket damage, float baseDamage)
     {
         if (Heat > 0f)
         {
-            damage.AddElement(Tag.Fire, baseDamage * MaxHeatFireFraction * Heat / HeatLimit);
+            damage.AddElement(Tag.Fire, baseDamage * TankDefinition.MaxHeatFireFraction * Heat / HeatLimit);
         }
     }
 
+    private TankDefinition TankDefinition => (TankDefinition)Definition;
+
     protected override void OnDied()
     {
-        Heat = 0f;
+        LevelState.Heat = 0f;
         UpdateSwordGlow();
     }
 
@@ -177,6 +175,7 @@ public partial class Tank : Sentinel
 
         _idleTiltRotationZ = SwordTilt.Rotation.Z;
         _bladeRestColor = ((StandardMaterial3D)Blade.GetActiveMaterial(0)).AlbedoColor;
+        UpdateSwordGlow();
         SwordHitArea.Monitoring = false;
         SwordHitArea.BodyEntered += OnSwordHitBody;
 

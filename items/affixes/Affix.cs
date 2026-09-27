@@ -17,12 +17,13 @@ public class Affix
     // that slot's name.
     public int AbilitySlot = -1;
 
-    // The template with {ability} filled in from the local Sentinel's own abilities in that slot, so
-    // the same item reads "Converge / Repel Duration" on a Soldier and names Tank's slot on a Tank. The
-    // one place item text reaches into live gameplay - the names only exist on the ability nodes.
+    // The template with {ability} filled in from the player's selected Sentinel's abilities in that
+    // slot, so the same item reads "Converge / Repel Duration" on a Soldier and names Tank's slot on
+    // a Tank - whether or not that Sentinel is in the level right now.
     public string ResolvedTemplate => AbilitySlot < 0
         ? DescriptionTemplate
-        : DescriptionTemplate.Replace("{ability}", Sentinel.Local?.SlotDisplayName(AbilitySlot) ?? $"Ability {AbilitySlot + 1}");
+        : DescriptionTemplate.Replace("{ability}",
+            SentinelCatalog.SlotName(PlayerProfiles.Local.SelectedCharacter, AbilitySlot) ?? $"Ability {AbilitySlot + 1}");
 
     public bool ConflictsWith(Affix other) => other.Stat == Stat || (Group != AffixGroup.None && other.Group == Group);
 

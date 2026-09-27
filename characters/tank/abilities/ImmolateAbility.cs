@@ -10,10 +10,10 @@ public partial class ImmolateAbility : Ability
 {
     [Export] public override float BaseCooldown { get; protected set; } = 12f;
     [Export] public float ChannelDuration { get; private set; } = 1f;
-    [Export] public float Radius { get; private set; } = 12f;
+    [Export] public float Radius { get; private set; } = 14f;
     [Export] public float EruptionRadius { get; private set; } = 3f;
     // Each eruption's damage at full heat, as a multiple of the sword's attack damage.
-    [Export] public float EruptionDamageAtMaxHeat { get; private set; } = 1f;
+    [Export] public float EruptionDamageAtMaxHeat { get; private set; } = 1.5f;
     // Immolation's tick size is its base damage spread over ImmolationPacing; it then keeps ticking
     // at that size for ImmolationDuration, which Duration scales.
     [Export] public float ImmolationPacing { get; private set; } = 2f;

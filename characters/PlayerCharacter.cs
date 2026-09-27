@@ -117,9 +117,8 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     public void SetOwnerId(PlayerId owner) => OwnerId = owner;
 
-    // Activates this character directly, without any phase system - for contexts like the hub,
-    // which has no phase system and nothing to hand control from.
-    public virtual void ActivateStandalone()
+    // Takes control of this body - its spawner calls this once the body is in place.
+    public virtual void Activate()
     {
         SetActive(true);
     }
@@ -130,17 +129,22 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     public Pose CurrentPose => new Pose(GlobalPosition, GlobalRotation.Y, _cameraPitch);
 
+    // For a body being retired: stops it sending sync updates while it waits to be removed, so none
+    // arrive for it after other machines have already removed it. Only this body's owner sends them.
+    public void StopSyncing()
+    {
+        if (IsLocallyControlled)
+        {
+            GetNodeOrNull("MultiplayerSynchronizer")?.QueueFree();
+        }
+    }
+
     public void ApplyPose(Pose pose)
     {
         GlobalPosition = pose.Position;
         GlobalRotation = new Vector3(0f, pose.Yaw, 0f);
         _cameraPitch = pose.Pitch;
         SpringArm.Rotation = new Vector3(_cameraPitch, 0f, 0f);
-    }
-
-    public void HandoffFrom(PlayerCharacter previous)
-    {
-        ApplyPose(previous.CurrentPose);
     }
 
     protected virtual void SetActive(bool value)

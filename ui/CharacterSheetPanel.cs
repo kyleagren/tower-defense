@@ -82,17 +82,18 @@ public partial class CharacterSheetPanel : Control
 
     private void RefreshTopSection()
     {
-        Sentinel sentinel = Sentinel.Local;
-        if (sentinel == null)
-        {
-            return;
-        }
+        SentinelStats stats = SentinelStats.For(PlayerProfiles.LocalId);
 
-        NameLabel.Text = sentinel.Id.ToString();
-        HealthLabel.Text = $"Health: {Mathf.RoundToInt(sentinel.CurrentHealth)} / {Mathf.RoundToInt(sentinel.MaxHealth)}";
-        ArmorLabel.Text = $"Armor: {Mathf.RoundToInt(sentinel.TotalArmor)}";
-        ArmorReductionLabel.Text = $"-{Mathf.RoundToInt(sentinel.MeleeDamageReductionPercent * 100f)}% Melee Dmg";
-        ShieldLabel.Text = $"Shield: {Mathf.RoundToInt(sentinel.CurrentShield)} / {Mathf.RoundToInt(sentinel.MaxShield)}";
+        // Between waves there's no Sentinel in the level; it comes back at full Health and Shield.
+        Sentinel sentinel = Sentinel.Local;
+        float health = sentinel?.CurrentHealth ?? stats.MaxHealth;
+        float shield = sentinel?.CurrentShield ?? stats.MaxShield;
+
+        NameLabel.Text = PlayerProfiles.Local.SelectedCharacter.ToString();
+        HealthLabel.Text = $"Health: {Mathf.RoundToInt(health)} / {Mathf.RoundToInt(stats.MaxHealth)}";
+        ArmorLabel.Text = $"Armor: {Mathf.RoundToInt(stats.TotalArmor)}";
+        ArmorReductionLabel.Text = $"-{Mathf.RoundToInt(stats.MeleeDamageReductionPercent * 100f)}% Melee Dmg";
+        ShieldLabel.Text = $"Shield: {Mathf.RoundToInt(shield)} / {Mathf.RoundToInt(stats.MaxShield)}";
     }
 
     private void RefreshStatsList()
@@ -102,18 +103,13 @@ public partial class CharacterSheetPanel : Control
             child.Free();
         }
 
-        Sentinel sentinel = Sentinel.Local;
-        if (sentinel == null)
-        {
-            return;
-        }
+        CharacterSheet sheet = PlayerProfiles.Local.SelectedSheet;
+        SentinelStats stats = SentinelStats.For(PlayerProfiles.LocalId);
 
-        CharacterSheet sheet = sentinel.Sheet;
-
-        if (sentinel.BaseHealthRegenPerSecond > 0f)
+        if (stats.BaseHealthRegenPerSecond > 0f)
         {
-            AddStatRow($"Base Health Regenerated per Second: {Mathf.RoundToInt(sentinel.BaseHealthRegenPerSecond)}");
-            AddStatRow($"Total Health Regenerated per Second: {Mathf.RoundToInt(sentinel.TotalHealthRegenPerSecond)}");
+            AddStatRow($"Base Health Regenerated per Second: {Mathf.RoundToInt(stats.BaseHealthRegenPerSecond)}");
+            AddStatRow($"Total Health Regenerated per Second: {Mathf.RoundToInt(stats.TotalHealthRegenPerSecond)}");
         }
 
         foreach (StatId stat in Enum.GetValues<StatId>())

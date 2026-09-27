@@ -52,7 +52,6 @@ ShieldOrbit = NodePath("Weapon/ShieldOrbit")
 Shield = NodePath("Weapon/ShieldOrbit/ShieldArm/Shield")
 Blade = NodePath("Weapon/SwordOrbit/SwordTilt/Blade")
 Weapon = NodePath("Weapon")
-BaseMaxHealth = 180.0
 AbilitySlots = [NodePath("ShieldSlam"), NodePath("Retaliation"), NodePath("Vent"), NodePath("Immolate")]
 SpringArm = NodePath("SpringArm3D")
 Camera = NodePath("SpringArm3D/Camera3D")

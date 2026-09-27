@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://ui/PhaseIndicator.cs" id="1_script"]
 
-[node name="PhaseIndicator" type="Control" node_paths=PackedStringArray("PhaseLabel", "GoldLabel")]
+[node name="PhaseIndicator" type="Control" node_paths=PackedStringArray("PhaseLabel", "GoldLabel", "ReadyLabel")]
 layout_mode = 3
 anchors_preset = 10
 anchor_right = 1.0
@@ -11,6 +11,7 @@ grow_horizontal = 2
 script = ExtResource("1_script")
 PhaseLabel = NodePath("Label")
 GoldLabel = NodePath("GoldLabel")
+ReadyLabel = NodePath("ReadyLabel")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -46,4 +47,18 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 24
 text = "Gold: 0"
 horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="ReadyLabel" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_right = 380.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_font_sizes/normal_font_size = 24
+bbcode_enabled = true
+scroll_active = false
+autowrap_mode = 0
 vertical_alignment = 1

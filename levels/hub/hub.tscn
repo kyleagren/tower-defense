@@ -20,6 +20,7 @@
 [ext_resource type="Script" uid="uid://bwo3ge3uh27eg" path="res://core/LevelContext.cs" id="25_levelcontext"]
 [ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="26_playerhud"]
 [ext_resource type="Environment" uid="uid://cl3i6wom3itph" path="res://levels/default_environment.tres" id="27_environment"]
+[ext_resource type="Script" uid="uid://cilakrnkl4liq" path="res://levels/PlayerSpawnPoint.cs" id="28_spawnpoint"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -322,20 +323,25 @@ environment = ExtResource("27_environment")
 
 [node name="SpawnPointP1" type="Marker3D" parent="." unique_id=1347966773]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -6)
+script = ExtResource("28_spawnpoint")
 
 [node name="SpawnPointP2" type="Marker3D" parent="." unique_id=554468537]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 6, 0, 0)
+script = ExtResource("28_spawnpoint")
+Seat = 2
 
 [node name="SpawnPointP3" type="Marker3D" parent="." unique_id=101297045]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 6)
+script = ExtResource("28_spawnpoint")
+Seat = 3
 
 [node name="SpawnPointP4" type="Marker3D" parent="." unique_id=161712994]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -6, 0, 0)
+script = ExtResource("28_spawnpoint")
+Seat = 4
 
-[node name="SentinelSpawnerP1" type="Node" parent="." unique_id=1027289134 node_paths=PackedStringArray("SpawnPoint", "BodySpawner")]
+[node name="SentinelSpawnerP1" type="Node" parent="." unique_id=1027289134 node_paths=PackedStringArray("BodySpawner")]
 script = ExtResource("1_sentinelspawner")
-ActivateImmediately = true
-SpawnPoint = NodePath("../SpawnPointP1")
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
 ArchitectScene = ExtResource("24_architectscene")
@@ -344,11 +350,9 @@ BodySpawner = NodePath("BodySpawner")
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP1" unique_id=1416225481]
 spawn_path = NodePath("..")
 
-[node name="SentinelSpawnerP2" type="Node" parent="." unique_id=206408576 node_paths=PackedStringArray("SpawnPoint", "BodySpawner")]
+[node name="SentinelSpawnerP2" type="Node" parent="." unique_id=206408576 node_paths=PackedStringArray("BodySpawner")]
 script = ExtResource("1_sentinelspawner")
 OwnerId = 2
-ActivateImmediately = true
-SpawnPoint = NodePath("../SpawnPointP2")
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
 ArchitectScene = ExtResource("24_architectscene")
@@ -357,11 +361,9 @@ BodySpawner = NodePath("BodySpawner")
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP2" unique_id=954741291]
 spawn_path = NodePath("..")
 
-[node name="SentinelSpawnerP3" type="Node" parent="." unique_id=1548015078 node_paths=PackedStringArray("SpawnPoint", "BodySpawner")]
+[node name="SentinelSpawnerP3" type="Node" parent="." unique_id=1548015078 node_paths=PackedStringArray("BodySpawner")]
 script = ExtResource("1_sentinelspawner")
 OwnerId = 3
-ActivateImmediately = true
-SpawnPoint = NodePath("../SpawnPointP3")
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
 ArchitectScene = ExtResource("24_architectscene")
@@ -370,11 +372,9 @@ BodySpawner = NodePath("BodySpawner")
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP3" unique_id=2041372724]
 spawn_path = NodePath("..")
 
-[node name="SentinelSpawnerP4" type="Node" parent="." unique_id=2061658122 node_paths=PackedStringArray("SpawnPoint", "BodySpawner")]
+[node name="SentinelSpawnerP4" type="Node" parent="." unique_id=2061658122 node_paths=PackedStringArray("BodySpawner")]
 script = ExtResource("1_sentinelspawner")
 OwnerId = 4
-ActivateImmediately = true
-SpawnPoint = NodePath("../SpawnPointP4")
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
 ArchitectScene = ExtResource("24_architectscene")
