@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://waves/EnemyRoster.cs" id="12_enemyroster"]
 [ext_resource type="Script" path="res://rituals/RitualRoster.cs" id="13_ritualroster"]
 [ext_resource type="PackedScene" path="res://rituals/ritual.tscn" id="14_ritualscene"]
+[ext_resource type="Script" path="res://spells/SpellEffects.cs" id="15_spelleffects"]
 
 [node name="LevelSystems" type="Node"]
 
@@ -46,6 +47,9 @@ RitualScene = ExtResource("14_ritualscene")
 
 [node name="Spawner" type="MultiplayerSpawner" parent="Rituals"]
 spawn_path = NodePath("..")
+
+[node name="SpellEffects" type="Node" parent="."]
+script = ExtResource("15_spelleffects")
 
 [node name="SentinelSpawnerP1" type="Node" parent="." node_paths=PackedStringArray("BodySpawner")]
 script = ExtResource("8_sentinelspawner")

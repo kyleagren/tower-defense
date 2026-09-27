@@ -77,8 +77,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     protected float CurrentHealth { get; set; }
 
     // Only the host simulates an enemy - AI, debuffs, death and what it pays out. Everywhere else it's
-    // a copy its MultiplayerSynchronizer keeps in step. A training dummy is the exception: each
-    // machine owns its own.
+    // a copy its MultiplayerSynchronizer keeps in step.
     protected bool IsSimulatedHere => IsMultiplayerAuthority();
 
     // What copies need from the host, synced by the enemy's MultiplayerSynchronizer.

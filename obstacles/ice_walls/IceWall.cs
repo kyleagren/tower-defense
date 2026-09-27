@@ -67,7 +67,7 @@ public partial class IceWall : Node3D
         if (_currentHealth <= 0f)
         {
             EmitSignal(SignalName.Destroyed);
-            BreakAllSegments();
+            Break();
         }
     }
 
@@ -84,11 +84,11 @@ public partial class IceWall : Node3D
             _hasDuration = false;
             _currentHealth = 0f;
             EmitSignal(SignalName.Expired);
-            BreakAllSegments();
+            Break();
         }
     }
 
-    private void BreakAllSegments()
+    public void Break()
     {
         foreach (IceWallSegment segment in _segments)
         {

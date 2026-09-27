@@ -17,6 +17,7 @@ public class BombardmentCastEffect : CastEffect
         Bombardment bombardment = data.Scene.Instantiate<Bombardment>();
         LevelContext.Current.LevelRoot.AddChild(bombardment);
         bombardment.Initialize(target, data.Radius * areaMultiplier, data.Duration.Value, context.Damage, context.SpellHit);
+        LevelContext.Current.SpellEffects.ShowVolume(data.Scene, target, data.Radius * areaMultiplier, data.Duration.Value);
 
         SpawnGroundEffect(context, caster, target, areaMultiplier);
     }
@@ -35,5 +36,6 @@ public class BombardmentCastEffect : CastEffect
         GroundEffect ground = data.Scene.Instantiate<GroundEffect>();
         LevelContext.Current.LevelRoot.AddChild(ground);
         ground.Initialize(target, data.Radius * areaMultiplier, data.Duration.Value, data.Magnitude);
+        LevelContext.Current.SpellEffects.ShowVolume(data.Scene, target, data.Radius * areaMultiplier, data.Duration.Value);
     }
 }

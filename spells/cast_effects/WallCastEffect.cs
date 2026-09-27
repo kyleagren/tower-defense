@@ -14,5 +14,9 @@ public class WallCastEffect : CastEffect
         // back into a freed Ritual.
         wall.Expired += caster.ConcludeOngoingEffect;
         wall.Destroyed += caster.ConcludeOngoingEffect;
+
+        SpellEffects effects = LevelContext.Current.SpellEffects;
+        effects.RaiseWall(caster);
+        wall.Destroyed += () => effects.BreakWall(caster);
     }
 }

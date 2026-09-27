@@ -23,6 +23,7 @@ public class ProjectileCastEffect : CastEffect
             projectile.GlobalTransform = spawnPoint.GlobalTransform;
             projectile.RotateY(Mathf.DegToRad(angleOffset));
             projectile.SpawnPosition = projectile.GlobalPosition;
+            LevelContext.Current.SpellEffects.LaunchProjectile(projectile, projectileData.ProjectileScene);
         }
     }
 

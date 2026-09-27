@@ -15,9 +15,7 @@ public partial class ExplodeOnHitEffect : ProjectileHitEffect
 
         if (VisualScene != null)
         {
-            ExplosionVisual visual = VisualScene.Instantiate<ExplosionVisual>();
-            LevelContext.Current.LevelRoot.AddChild(visual);
-            visual.Show(explosionCenter, radius);
+            LevelContext.Current.SpellEffects.ShowExplosion(VisualScene, explosionCenter, radius);
         }
 
         if (body is Enemy directHitEnemy)

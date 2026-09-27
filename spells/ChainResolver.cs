@@ -62,8 +62,6 @@ public static class ChainResolver
             return;
         }
 
-        ArcVisual visual = arcVisualScene.Instantiate<ArcVisual>();
-        LevelContext.Current.LevelRoot.AddChild(visual);
-        visual.Show(from, to);
+        LevelContext.Current.SpellEffects.ShowArc(arcVisualScene, from, to);
     }
 }

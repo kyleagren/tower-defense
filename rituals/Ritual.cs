@@ -104,7 +104,7 @@ public partial class Ritual : Node3D, IDamageable
     // The owner's sheet is held rather than re-fetched per frame: _Process calls this every tick,
     // and the lookup behind it walks PlayerProfiles -> a dictionary read. Both this and
     // SpellInstance's own cache are dropped together by OnInventoryChanged.
-    private SpellCastContext ResolveWithOwner()
+    public SpellCastContext ResolveWithOwner()
     {
         _ownerSheet ??= PlayerProfiles.Get(OwnerId).SelectedSheet;
         SpellCastContext context = _spellInstance.Resolve(_ownerSheet);

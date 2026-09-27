@@ -19,6 +19,13 @@ public partial class Projectile : Area3D
     public Vector3 LastRagdollImpulse { get; private set; }
     public SpellHit SpellHit { get; private set; }
 
+    // Set by SpellEffects on the host's projectile and on each copy of it, so the two can be matched.
+    public int ReplicaId { get; set; }
+    public float Speed => _speed;
+
+    private SpellEffects _effects;
+    private bool _isCopy;
+
     private int _pierceRemaining;
     private float _speed;
     private bool _hasExpired;
@@ -60,8 +67,19 @@ public partial class Projectile : Area3D
         _speed = context.Projectile.Speed.Value;
     }
 
+    // Another machine's view of a projectile the host fired: it only flies, turned and ended by the
+    // host, and never hits anything itself.
+    public void InitializeCopy(float speed, float radius)
+    {
+        _isCopy = true;
+        _speed = speed;
+        Radius = radius;
+        Monitoring = false;
+    }
+
     public override void _Ready()
     {
+        _effects = LevelContext.Current.SpellEffects;
         BodyEntered += OnBodyEntered;
         BodyMesh.Scale = Vector3.One * Radius;
 
@@ -79,8 +97,7 @@ public partial class Projectile : Area3D
         // Freed quietly rather than through Expire, so a timed-out Fireball doesn't explode in mid-air.
         if (_lifetime >= MaxLifetime)
         {
-            _hasExpired = true;
-            QueueFree();
+            End();
             return;
         }
 
@@ -90,13 +107,12 @@ public partial class Projectile : Area3D
             && GlobalPosition.DistanceSquaredTo(SpawnPosition) > MaxReturnDistance * MaxReturnDistance)
         {
             _hasReturned = true;
-            LookAt(SpawnPosition, Vector3.Up);
+            TurnToward(SpawnPosition);
         }
 
         if (_hasReturned && GlobalPosition.DistanceSquaredTo(SpawnPosition) < ReturnArrivalDistance * ReturnArrivalDistance)
         {
-            _hasExpired = true;
-            QueueFree();
+            End();
         }
     }
 
@@ -150,7 +166,7 @@ public partial class Projectile : Area3D
         if (_isReturn)
         {
             _hasReturned = true;
-            LookAt(SpawnPosition, Vector3.Up);
+            TurnToward(SpawnPosition);
             return;
         }
 
@@ -162,7 +178,7 @@ public partial class Projectile : Area3D
         if (_isReturn)
         {
             _hasReturned = true;
-            LookAt(SpawnPosition, Vector3.Up);
+            TurnToward(SpawnPosition);
             return;
         }
 
@@ -205,7 +221,30 @@ public partial class Projectile : Area3D
             HitEffect?.OnHit(this, lastHitBody);
         }
 
+        End();
+    }
+
+    // Ends this projectile, and with it every copy.
+    private void End()
+    {
+        _hasExpired = true;
+
+        if (!_isCopy)
+        {
+            _effects.EndProjectile(this);
+        }
+
         QueueFree();
+    }
+
+    private void TurnToward(Vector3 target)
+    {
+        LookAt(target, Vector3.Up);
+
+        if (!_isCopy)
+        {
+            _effects.TurnProjectile(this);
+        }
     }
 
     private bool TryRedirectToChainTarget(Enemy hitEnemy)
@@ -228,7 +267,7 @@ public partial class Projectile : Area3D
         }
 
         ChainHitTracker?.Add(next);
-        LookAt(next.AimPoint, Vector3.Up);
+        TurnToward(next.AimPoint);
         return true;
     }
 }

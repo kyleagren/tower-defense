@@ -30,6 +30,9 @@ public partial class LevelContext : Node
     // Where the host spawns placed Rituals.
     public RitualRoster RitualRoster { get; set; }
 
+    // Where the host shows what Rituals cast on every machine.
+    public SpellEffects SpellEffects { get; set; }
+
     // The objective PostGame loot sprays from. Null in a scene with no match.
     public DefendableObjective PrimaryObjective { get; set; }
 

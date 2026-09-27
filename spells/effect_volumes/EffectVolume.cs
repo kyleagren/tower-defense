@@ -57,6 +57,14 @@ public abstract partial class EffectVolume : Area3D
         Footprint.Scale = new Vector3(radius, 1f, radius);
     }
 
+    // Another machine's view of a volume the host placed: shown for its duration, but it detects
+    // nothing, so it never ticks.
+    public void InitializeCopy(Vector3 position, float radius, float duration)
+    {
+        Monitoring = false;
+        Initialize(position, radius, duration);
+    }
+
     public override void _PhysicsProcess(double delta)
     {
         _elapsed += (float)delta;
