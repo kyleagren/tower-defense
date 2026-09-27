@@ -30,6 +30,34 @@ public partial class EconomyManager : Node
     {
         ResetForMatch();
         EventBus.Instance.EnemyKilled += OnEnemyKilled;
+
+        if (!NetworkSession.Instance.IsHost)
+        {
+            RpcId(1, MethodName.RequestState);
+        }
+    }
+
+    // Only the host changes the economy; every other machine mirrors it.
+    private void Changed()
+    {
+        EmitSignal(SignalName.EconomyChanged);
+        Rpc(MethodName.ReceiveState, Mana, CapacityUsed, GoldEarned);
+    }
+
+    // For a machine whose copy of the level loaded after the host's.
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void RequestState()
+    {
+        RpcId(Multiplayer.GetRemoteSenderId(), MethodName.ReceiveState, Mana, CapacityUsed, GoldEarned);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveState(int mana, int capacityUsed, int goldEarned)
+    {
+        Mana = mana;
+        CapacityUsed = capacityUsed;
+        GoldEarned = goldEarned;
+        EmitSignal(SignalName.EconomyChanged);
     }
 
     public override void _ExitTree()
@@ -37,8 +65,9 @@ public partial class EconomyManager : Node
         EventBus.Instance.EnemyKilled -= OnEnemyKilled;
     }
 
-    // Restores starting match state. Called on load; also the hook a "try again" button can call
-    // to restart a failed match without reloading the scene.
+    // Restores starting match state. Called on load, before any other machine has this level - they
+    // ask for the state once theirs loads. Also the hook a "try again" button can call to restart a
+    // failed match without reloading the scene.
     public void ResetForMatch()
     {
         Mana = StartingMana;
@@ -51,7 +80,7 @@ public partial class EconomyManager : Node
     {
         Mana += reward;
         GoldEarned += goldReward;
-        EmitSignal(SignalName.EconomyChanged);
+        Changed();
     }
 
     public bool CanAfford(SpellCastContext context)
@@ -75,7 +104,7 @@ public partial class EconomyManager : Node
             CapacityUsed += capacityCost;
         }
 
-        EmitSignal(SignalName.EconomyChanged);
+        Changed();
         return (manaCost, capacityCost);
     }
 
@@ -87,7 +116,7 @@ public partial class EconomyManager : Node
             CapacityUsed -= capacityCost;
         }
 
-        EmitSignal(SignalName.EconomyChanged);
+        Changed();
     }
 
     public bool CanAffordMana(int amount) => Unlimited || Mana >= amount;
@@ -105,7 +134,7 @@ public partial class EconomyManager : Node
         }
 
         Mana -= amount;
-        EmitSignal(SignalName.EconomyChanged);
+        Changed();
         return true;
     }
 }

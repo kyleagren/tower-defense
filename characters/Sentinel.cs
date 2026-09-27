@@ -657,7 +657,40 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     public void TrySkipRespawn()
     {
-        if (IsDead && EconomyManager.Instance.TrySpendMana(RespawnSkipCost))
+        if (!IsDead)
+        {
+            return;
+        }
+
+        if (NetworkSession.Instance.IsHost)
+        {
+            if (EconomyManager.Instance.TrySpendMana(RespawnSkipCost))
+            {
+                Respawn();
+            }
+        }
+        else if (EconomyManager.Instance.CanAffordMana(RespawnSkipCost))
+        {
+            RpcId(1, MethodName.RequestRespawnSkip, RespawnSkipCost);
+        }
+    }
+
+    // The cost comes from the owner, the only machine that counts this Sentinel's deaths.
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void RequestRespawnSkip(int cost)
+    {
+        long sender = Multiplayer.GetRemoteSenderId();
+
+        if (NetworkSession.Instance.SeatOf(sender) == OwnerId && EconomyManager.Instance.TrySpendMana(cost))
+        {
+            RpcId(sender, MethodName.ReceiveRespawnSkip);
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveRespawnSkip()
+    {
+        if (Multiplayer.GetRemoteSenderId() == 1 && IsDead)
         {
             Respawn();
         }

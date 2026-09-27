@@ -11,9 +11,11 @@ public partial class PhaseIndicator : Control
     private static readonly Color ReadyColor = new Color(0.4f, 0.85f, 0.4f);
     private static readonly Color NotReadyColor = new Color(0.9f, 0.35f, 0.35f);
 
-    // This level's match, kept from _Ready rather than read through LevelContext.Current each time -
-    // for a frame during a level switch, Current is already the incoming level. Null in the hub.
+    // This level's match and economy, kept from _Ready rather than read through LevelContext.Current
+    // or EconomyManager.Instance each time - for a frame during a level switch, both already point at
+    // the incoming level. Null in the hub.
     private MatchState _match;
+    private EconomyManager _economy;
 
     public override void _Ready()
     {
@@ -25,8 +27,9 @@ public partial class PhaseIndicator : Control
             return;
         }
 
+        _economy = EconomyManager.Instance;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        EconomyManager.Instance.EconomyChanged += Refresh;
+        _economy.EconomyChanged += Refresh;
         Refresh();
     }
 
@@ -38,7 +41,7 @@ public partial class PhaseIndicator : Control
         }
 
         EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
-        EconomyManager.Instance.EconomyChanged -= Refresh;
+        _economy.EconomyChanged -= Refresh;
     }
 
     // Polled rather than event-driven, since the countdown runs down continuously.
@@ -97,9 +100,9 @@ public partial class PhaseIndicator : Control
             _ => phase.ToString()
         };
 
-        PhaseLabel.Text = $"{phaseText} — Mana: {EconomyManager.Instance.Mana} | Build Capacity: {EconomyManager.Instance.CapacityUsed}/{EconomyManager.Instance.MaxCapacity}";
+        PhaseLabel.Text = $"{phaseText} — Mana: {_economy.Mana} | Build Capacity: {_economy.CapacityUsed}/{_economy.MaxCapacity}";
 
-        int totalGold = SaveManager.Instance.Data.Gold + EconomyManager.Instance.GoldEarned;
+        int totalGold = SaveManager.Instance.Data.Gold + _economy.GoldEarned;
         GoldLabel.Text = $"Gold: {totalGold}";
     }
 }
