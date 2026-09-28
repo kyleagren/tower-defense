@@ -549,6 +549,11 @@ public partial class Enemy : CharacterBody3D, IDamageable
         SetPhysicsProcess(false);
         BodyCollision.Disabled = true;
 
+        if (HeadCollision != null)
+        {
+            HeadCollision.Disabled = true;
+        }
+
         // The ragdoll takes over from wherever a copy is being shown.
         GetNodeOrNull<MotionPlayback>("Motion")?.Stop();
 

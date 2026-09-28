@@ -17,13 +17,16 @@ albedo_color = Color(0.82, 0.82, 0.85, 1)
 size = Vector3(0.34, 0.7, 0.18)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_weakpoint"]
-shading_mode = 0
 albedo_color = Color(1, 0.85, 0.1, 1)
+emission_enabled = true
+emission = Color(1, 0.85, 0.1, 1)
+emission_energy_multiplier = 6.0
 
-[sub_resource type="SphereMesh" id="SphereMesh_weakpoint"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_weakpoint"]
 material = SubResource("StandardMaterial3D_weakpoint")
-radius = 0.12
-height = 0.24
+top_radius = 0.12
+bottom_radius = 0.12
+height = 0.02
 
 [sub_resource type="BoxMesh" id="BoxMesh_head"]
 size = Vector3(0.28, 0.28, 0.28)
@@ -94,7 +97,7 @@ Skeleton = NodePath("Skeleton3D")
 BoneSimulator = NodePath("Skeleton3D/PhysicalBoneSimulator3D")
 RootPhysicalBone = NodePath("Skeleton3D/PhysicalBoneSimulator3D/Physical Bone Body")
 BodyCollision = NodePath("CollisionShape3D")
-HeadCollision = NodePath("Skeleton3D/HeadAttachment/HeadCollision")
+HeadCollision = NodePath("HeadCollision")
 HeadWeakPoint = NodePath("Skeleton3D/HeadAttachment/WeakSpot")
 BodyWeakPoint = NodePath("Skeleton3D/BodyAttachment/WeakSpot")
 ArmLWeakPoint = NodePath("Skeleton3D/ArmLAttachment/WeakSpot")
@@ -208,9 +211,9 @@ material_override = SubResource("StandardMaterial3D_marksman")
 mesh = SubResource("BoxMesh_body")
 
 [node name="WeakSpot" type="MeshInstance3D" parent="Skeleton3D/BodyAttachment" unique_id=903154557]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, -0.21)
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0.35, -0.1)
 visible = false
-mesh = SubResource("SphereMesh_weakpoint")
+mesh = SubResource("CylinderMesh_weakpoint")
 
 [node name="HeadAttachment" type="BoneAttachment3D" parent="Skeleton3D" unique_id=2091145202]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
@@ -222,14 +225,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, 0)
 material_override = SubResource("StandardMaterial3D_marksman")
 mesh = SubResource("BoxMesh_head")
 
-[node name="HeadCollision" type="CollisionShape3D" parent="Skeleton3D/HeadAttachment" unique_id=1050384581]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, 0)
+[node name="HeadCollision" type="CollisionShape3D" parent="." unique_id=1050384581]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.79, 0)
 shape = SubResource("BoxShape3D_head")
 
 [node name="WeakSpot" type="MeshInstance3D" parent="Skeleton3D/HeadAttachment" unique_id=1743062432]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.14, -0.26)
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0.14, -0.15)
 visible = false
-mesh = SubResource("SphereMesh_weakpoint")
+mesh = SubResource("CylinderMesh_weakpoint")
 
 [node name="ArmLAttachment" type="BoneAttachment3D" parent="Skeleton3D" unique_id=2139209334]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.245, 1.533, 0)
@@ -242,9 +245,9 @@ material_override = SubResource("StandardMaterial3D_marksman")
 mesh = SubResource("BoxMesh_arm")
 
 [node name="WeakSpot" type="MeshInstance3D" parent="Skeleton3D/ArmLAttachment" unique_id=287543667]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, -0.18)
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, -0.3, -0.07)
 visible = false
-mesh = SubResource("SphereMesh_weakpoint")
+mesh = SubResource("CylinderMesh_weakpoint")
 
 [node name="ArmRAttachment" type="BoneAttachment3D" parent="Skeleton3D" unique_id=793395150]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.245, 1.533, 0)
@@ -257,9 +260,9 @@ material_override = SubResource("StandardMaterial3D_marksman")
 mesh = SubResource("BoxMesh_arm")
 
 [node name="WeakSpot" type="MeshInstance3D" parent="Skeleton3D/ArmRAttachment" unique_id=859151563]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, -0.18)
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, -0.3, -0.07)
 visible = false
-mesh = SubResource("SphereMesh_weakpoint")
+mesh = SubResource("CylinderMesh_weakpoint")
 
 [node name="LegLAttachment" type="BoneAttachment3D" parent="Skeleton3D" unique_id=1794349667]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.113, 0.95, 0)
@@ -272,9 +275,9 @@ material_override = SubResource("StandardMaterial3D_marksman")
 mesh = SubResource("BoxMesh_leg")
 
 [node name="WeakSpot" type="MeshInstance3D" parent="Skeleton3D/LegLAttachment" unique_id=1439317758]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.475, -0.19)
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, -0.475, -0.08)
 visible = false
-mesh = SubResource("SphereMesh_weakpoint")
+mesh = SubResource("CylinderMesh_weakpoint")
 
 [node name="LegRAttachment" type="BoneAttachment3D" parent="Skeleton3D" unique_id=119067134]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.113, 0.95, 0)
@@ -287,9 +290,9 @@ material_override = SubResource("StandardMaterial3D_marksman")
 mesh = SubResource("BoxMesh_leg")
 
 [node name="WeakSpot" type="MeshInstance3D" parent="Skeleton3D/LegRAttachment" unique_id=1444634388]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.475, -0.19)
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, -0.475, -0.08)
 visible = false
-mesh = SubResource("SphereMesh_weakpoint")
+mesh = SubResource("CylinderMesh_weakpoint")
 
 [node name="PhysicalBoneSimulator3D" type="PhysicalBoneSimulator3D" parent="Skeleton3D" unique_id=504909985]
 

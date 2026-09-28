@@ -32,7 +32,7 @@ height = 0.6
 script = ExtResource("1_repelfield")
 BodyCollision = NodePath("BodyCollision")
 Footprint = NodePath("Footprint")
-TickInterval = 1.0
+TickInterval = 0.5
 
 [node name="BodyCollision" type="CollisionShape3D" parent="."]
 shape = SubResource("CylinderShape3D_repel")
