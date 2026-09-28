@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 
 [GlobalClass]
+[SaveTag("equipped_loadout")]
 public partial class EquippedLoadout : Resource
 {
     [Export] public Weapon Weapon { get; set; }

@@ -1,6 +1,7 @@
 using Godot;
 
 [GlobalClass]
+[SaveTag("rune_loadout")]
 public partial class RuneLoadout : Resource
 {
     // Empty for a token built by hand (falls back to Spell.Name in the HUD); set to the source

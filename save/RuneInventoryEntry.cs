@@ -1,6 +1,7 @@
 using Godot;
 
 [GlobalClass]
+[SaveTag("rune_inventory_entry")]
 public partial class RuneInventoryEntry : Resource
 {
     [Export] public Rune Rune { get; set; }

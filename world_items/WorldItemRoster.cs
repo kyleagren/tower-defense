@@ -20,7 +20,7 @@ public partial class WorldItemRoster : Node
 
     public void Drop(Item item, Vector3 position)
     {
-        Godot.Collections.Dictionary data = ItemSerializer.Serialize(item);
+        string data = SaveCodec.EncodeItem(item);
 
         if (NetworkSession.Instance.IsHost)
         {
@@ -33,17 +33,17 @@ public partial class WorldItemRoster : Node
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceiveDrop(Godot.Collections.Dictionary data, Vector3 position)
+    private void ReceiveDrop(string data, Vector3 position)
     {
         if (NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default
-            && ItemSerializer.Deserialize(data) != null)
+            && SaveCodec.DecodeItem(data) != null)
         {
             Spawn(data, position);
         }
     }
 
     // Host only.
-    private void Spawn(Godot.Collections.Dictionary data, Vector3 position)
+    private void Spawn(string data, Vector3 position)
     {
         _spawnCount++;
         Spawner.Spawn(new Godot.Collections.Array { data, position, _spawnCount });
@@ -56,7 +56,7 @@ public partial class WorldItemRoster : Node
 
         WorldItem worldItem = WorldItemScene.Instantiate<WorldItem>();
         worldItem.Name = $"Item_{args[2].AsInt32()}";
-        worldItem.Initialize(ItemSerializer.Deserialize(args[0].AsGodotDictionary()));
+        worldItem.Initialize(SaveCodec.DecodeItem(args[0].AsString()));
         worldItem.IsShared = true;
         worldItem.Position = args[1].AsVector3();
         return worldItem;
@@ -95,15 +95,15 @@ public partial class WorldItemRoster : Node
         }
 
         worldItem.QueueFree();
-        RpcId(sender, MethodName.ReceivePickUpGranted, ItemSerializer.Serialize(worldItem.Item));
+        RpcId(sender, MethodName.ReceivePickUpGranted, SaveCodec.EncodeItem(worldItem.Item));
     }
 
     // Carries the item itself, since its node here may already have gone. If the room has run out
     // since asking, it goes back on the ground at the player's feet.
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceivePickUpGranted(Godot.Collections.Dictionary data)
+    private void ReceivePickUpGranted(string data)
     {
-        Item item = ItemSerializer.Deserialize(data);
+        Item item = SaveCodec.DecodeItem(data);
 
         if (item != null && !PlayerProfiles.Local.PickUp(item))
         {

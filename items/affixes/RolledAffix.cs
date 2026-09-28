@@ -5,6 +5,7 @@ using Godot;
 // Everything else about the mod (name, description, slot rules) is looked up through Affix
 // rather than duplicated here.
 [GlobalClass]
+[SaveTag("rolled_affix")]
 public partial class RolledAffix : Resource
 {
     [Export] public StatId Stat { get; set; }

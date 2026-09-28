@@ -4,6 +4,7 @@ using Godot;
 // InventoryPanel) - see RuneCatalog/LootGenerator for how one gets rolled. No affixes, no equip
 // slot in spirit, same reasoning as Currency; EquippedLoadout.TryEquip's type switch never matches
 // it, so it always falls through to plain inventory placement like any other unequippable Item.
+[SaveTag("rune_tome")]
 public partial class RuneTome : Item
 {
     [Export] public Rune TaughtRune { get; private set; }

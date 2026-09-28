@@ -1,6 +1,7 @@
 using Godot;
 
 [GlobalClass]
+[SaveTag("gun")]
 public partial class Gun : Weapon
 {
     [Export] public override float BaseAttackSpeed { get; protected set; } = 6f;
