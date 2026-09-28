@@ -70,6 +70,10 @@ public static class UiPanelStack
 
     public static bool AnyOpen => _open.Count > 0;
 
+    // A text field has focus, so the keyboard is typing rather than playing.
+    public static bool IsTyping =>
+        Engine.GetMainLoop() is SceneTree tree && tree.Root.GuiGetFocusOwner() is LineEdit or TextEdit;
+
     // Base offset keeps a stacked panel above ordinary always-on HUD content (health orb, shield
     // bar, token bar, ...), which sits at the default z_index 0 and would otherwise win by tree
     // order alone against a panel like BuildMenu that happens to live earlier in the tree.

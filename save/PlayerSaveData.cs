@@ -13,6 +13,9 @@ public partial class PlayerSaveData : Resource
     [Export] public Godot.Collections.Array<FavoriteLoadout> Favorites { get; set; } = new();
     [Export] public Godot.Collections.Array<RuneLoadout> Tokens { get; set; } = new();
 
+    // The hub stash's tabs, in order. Every profile has at least one, which is free.
+    [Export] public Godot.Collections.Array<StashTab> Stash { get; set; } = new();
+
     // Shown only to this profile's owner, in the profile picker.
     [Export] public string ProfileName { get; set; } = "";
 

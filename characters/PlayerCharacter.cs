@@ -226,8 +226,9 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     protected void ApplyGroundMovement(double delta, Vector2 inputDir, bool allowJump = true)
     {
-        // A controller's sticks drive an open panel's focus instead of the character.
-        if (!CanMove || (UiPanelStack.AnyOpen && InputDevice.UsingController))
+        // A controller's sticks drive an open panel's focus instead of the character, and a keyboard
+        // typing into a text field isn't walking.
+        if (!CanMove || (UiPanelStack.AnyOpen && InputDevice.UsingController) || UiPanelStack.IsTyping)
         {
             inputDir = Vector2.Zero;
             allowJump = false;

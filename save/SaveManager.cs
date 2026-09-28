@@ -343,9 +343,11 @@ public partial class SaveManager : Node
         RemoveGaps(data.KnownSpells);
         RemoveGaps(data.KnownRunes);
         RemoveGaps(data.Favorites);
+        RemoveGaps(data.Stash);
 
         EnsureInventorySize(data);
         EnsureTokenSlots(data);
+        EnsureStash(data);
 
         foreach (string path in ListResourceFiles(SpellsDirectory))
         {
@@ -388,6 +390,20 @@ public partial class SaveManager : Node
         while (data.Tokens.Count < GameRules.MaxTokens)
         {
             data.Tokens.Add(null);
+        }
+    }
+
+    // Every profile has one free tab, and every tab all its slots.
+    private static void EnsureStash(PlayerSaveData data)
+    {
+        if (data.Stash.Count == 0)
+        {
+            data.Stash.Add(StashTab.CreateEmpty("Tab 1"));
+        }
+
+        foreach (StashTab tab in data.Stash)
+        {
+            tab.PadToSlotCount();
         }
     }
 

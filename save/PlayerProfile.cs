@@ -137,6 +137,26 @@ public class PlayerProfile
         return true;
     }
 
+    // A new, empty stash tab for GameRules.StashTabGoldCost. Saved at once, like any gold trade.
+    public bool TryBuyStashTab()
+    {
+        if (Data.Gold < GameRules.StashTabGoldCost)
+        {
+            return false;
+        }
+
+        Data.Gold -= GameRules.StashTabGoldCost;
+        Data.Stash.Add(StashTab.CreateEmpty($"Tab {Data.Stash.Count + 1}"));
+        CommitChange(saveNow: true);
+        return true;
+    }
+
+    public void RenameStashTab(int index, string name)
+    {
+        Data.Stash[index].Name = name;
+        CommitChange();
+    }
+
     public void AddGold(int amount)
     {
         Data.Gold += amount;

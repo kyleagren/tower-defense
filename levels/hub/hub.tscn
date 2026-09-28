@@ -26,6 +26,8 @@
 [ext_resource type="Script" uid="uid://5i5lb0jck28f" path="res://spells/SpellEffects.cs" id="31_spelleffects"]
 [ext_resource type="Script" uid="uid://jprj1123b4b6" path="res://world_items/WorldItemRoster.cs" id="32_worlditemroster"]
 [ext_resource type="PackedScene" path="res://world_items/world_item.tscn" id="33_worlditem"]
+[ext_resource type="Script" path="res://levels/hub/StashStation.cs" id="34_stashstation"]
+[ext_resource type="PackedScene" path="res://ui/hub/stash_panel.tscn" id="35_stashpanel"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
@@ -162,6 +164,16 @@ albedo_color = Color(0.8, 0.65, 0.1, 1)
 material = SubResource("StandardMaterial3D_vendor")
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_vendor"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_stash"]
+albedo_color = Color(0.35, 0.22, 0.12, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_stash"]
+material = SubResource("StandardMaterial3D_stash")
+size = Vector3(1, 0.8, 1.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_stash"]
+size = Vector3(1, 0.8, 1.6)
 
 [node name="Hub" type="Node3D" unique_id=1931328644]
 
@@ -554,3 +566,18 @@ mesh = SubResource("CylinderMesh_vendor")
 shape = SubResource("CylinderShape3D_vendor")
 
 [node name="VendorPanel" parent="." unique_id=333437870 instance=ExtResource("16_vendorpanel")]
+
+[node name="StashStation" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0, 0)
+collision_layer = 17
+script = ExtResource("34_stashstation")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StashStation"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+mesh = SubResource("BoxMesh_stash")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StashStation"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_stash")
+
+[node name="StashPanel" parent="." instance=ExtResource("35_stashpanel")]
