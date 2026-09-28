@@ -54,5 +54,8 @@ public enum StatId
     Ability4CooldownRecoveryRate,
     Ability4Area,
     Ability4Duration,
-    Ability4Damage
+    Ability4Damage,
+
+    RitualArea,
+    RitualDuration
 }

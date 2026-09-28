@@ -5,7 +5,7 @@ public class WallCastData
     public PackedScene SegmentScene;
     public float SegmentWidth;
     public float SegmentHealth;
-    public float WallDuration;
+    public ScaledStat WallDuration = 0f;
     public float ManaCostPerSegment;
     public float CapacityCostPerSegment;
 

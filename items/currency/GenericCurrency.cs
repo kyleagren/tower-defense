@@ -3,4 +3,5 @@
 // no changes needed anywhere else.
 public partial class GenericCurrency : Currency
 {
+    public override int SaleValue => 100;
 }

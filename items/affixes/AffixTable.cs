@@ -209,6 +209,40 @@ public static class AffixTable
                 new PercentTierRange(5, 56, 70)
             ]
         },
+        [StatId.RitualArea] = new Affix
+        {
+            Name = "Sprawl",
+            DescriptionTemplate = "+{0}% Ritual Area of Effect",
+            AffixType = AffixType.Suffix,
+            Stat = StatId.RitualArea,
+            AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Area],
+            TierTable =
+            [
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
+                new PercentTierRange(3, 9, 12),
+                new PercentTierRange(4, 13, 16),
+                new PercentTierRange(5, 17, 20)
+            ]
+        },
+        [StatId.RitualDuration] = new Affix
+        {
+            Name = "Permanence",
+            DescriptionTemplate = "+{0}% Ritual Duration",
+            AffixType = AffixType.Suffix,
+            Stat = StatId.RitualDuration,
+            AllowedSlots = AccessorySlots,
+            Tags = [AffixTag.Duration],
+            TierTable =
+            [
+                new PercentTierRange(1, 3, 5),
+                new PercentTierRange(2, 6, 8),
+                new PercentTierRange(3, 9, 12),
+                new PercentTierRange(4, 13, 16),
+                new PercentTierRange(5, 17, 20)
+            ]
+        },
 
         // Sentinel (Armor-bound)
         [StatId.SentinelMaxHealth] = new Affix
@@ -300,7 +334,7 @@ public static class AffixTable
         {
             Name = "Bulwark",
             DescriptionTemplate = "+{0}% Total Armor",
-            AffixType = AffixType.Suffix,
+            AffixType = AffixType.Prefix,
             Stat = StatId.SentinelTotalArmor,
             AllowedSlots = AccessorySlots,
             Tags = [AffixTag.Defences],

@@ -92,6 +92,8 @@ public class SpellCastContext
     // into the same ScaledStat.Increased fields Runes use, which equipment and Runes legitimately
     // share; the elemental bonus goes into the private-setter field above
     // instead, and cooldown recovery rate feeds CooldownRecoveryRate rather than Cooldown itself.
+    // Area and Duration only reach components the spell (or a rune) already created - equipment
+    // never grants a capability, it only scales one.
     public void ApplyEquipmentBonuses(CharacterSheet sheet)
     {
         Range.Increased += sheet.GetBonus(StatId.RitualRange);
@@ -100,6 +102,28 @@ public class SpellCastContext
         ManaCost.Increased -= sheet.GetBonus(StatId.RitualManaCostReduction);
         CapacityCost.Increased -= sheet.GetBonus(StatId.RitualCapacityCostReduction);
         DamageScale.Increased += sheet.GetBonus(StatId.RitualDamage);
+
+        if (Area != null)
+        {
+            Area.Multiplier.Increased += sheet.GetBonus(StatId.RitualArea);
+        }
+
+        float durationBonus = sheet.GetBonus(StatId.RitualDuration);
+
+        if (Bombardment != null)
+        {
+            Bombardment.Duration.Increased += durationBonus;
+        }
+
+        if (GroundEffect != null)
+        {
+            GroundEffect.Duration.Increased += durationBonus;
+        }
+
+        if (Wall != null)
+        {
+            Wall.WallDuration.Increased += durationBonus;
+        }
 
         ElementalIncrease = new ElementalIncrease
         {

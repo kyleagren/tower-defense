@@ -35,8 +35,8 @@ public partial class IceWall : Node3D
         // own, but damage anywhere drains one shared pool, and every segment breaks together.
         _currentHealth = data.SegmentHealth * segmentCount;
 
-        _hasDuration = data.WallDuration > 0f;
-        _durationRemaining = data.WallDuration;
+        _hasDuration = data.WallDuration.Value > 0f;
+        _durationRemaining = data.WallDuration.Value;
     }
 
     // Also one entity for targeting: the point along the wall's own line nearest an arbitrary

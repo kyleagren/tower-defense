@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 
 // The crafting table. An item in the slot exposes six mod bars (3 prefix, 3 suffix) and a
-// scrollable list of crafting actions - add/remove a random prefix or suffix, or reroll every
-// existing mod's value within its own tier's range. Every action costs a flat
-// GameRules.CraftingActionGoldCost, gated by current affix counts and how much Gold is banked.
+// scrollable list of crafting actions - add/remove a random prefix or suffix, swap one bar's mod
+// for a different random one, reroll every mod's value, or upgrade a random mod's tier. Every
+// action costs a flat GameRules.CraftingActionGoldCost, gated by current affix counts and how much
+// Gold is banked.
 public partial class CraftingPanel : Control
 {
     public static CraftingPanel Instance { get; private set; }
@@ -29,22 +30,44 @@ public partial class CraftingPanel : Control
         }
     }
 
-    private static readonly CraftingAction[] Actions =
+    private static readonly CraftingAction[] Actions = BuildActions();
+
+    private static CraftingAction[] BuildActions()
     {
-        new("Add Prefix",
-            item => CraftingActions.CanAddAffix(item, AffixType.Prefix),
-            item => CraftingActions.AddAffix(item, AffixType.Prefix)),
-        new("Remove Prefix",
-            item => CraftingActions.CanRemoveAffix(item, AffixType.Prefix),
-            item => CraftingActions.RemoveRandomAffix(item, AffixType.Prefix)),
-        new("Add Suffix",
-            item => CraftingActions.CanAddAffix(item, AffixType.Suffix),
-            item => CraftingActions.AddAffix(item, AffixType.Suffix)),
-        new("Remove Suffix",
-            item => CraftingActions.CanRemoveAffix(item, AffixType.Suffix),
-            item => CraftingActions.RemoveRandomAffix(item, AffixType.Suffix)),
-        new("Reroll All", CraftingActions.CanReroll, CraftingActions.RerollAll)
-    };
+        List<CraftingAction> actions = new()
+        {
+            new("Add Prefix",
+                item => CraftingActions.CanAddAffix(item, AffixType.Prefix),
+                item => CraftingActions.AddAffix(item, AffixType.Prefix)),
+            new("Remove Prefix",
+                item => CraftingActions.CanRemoveAffix(item, AffixType.Prefix),
+                item => CraftingActions.RemoveRandomAffix(item, AffixType.Prefix)),
+            new("Add Suffix",
+                item => CraftingActions.CanAddAffix(item, AffixType.Suffix),
+                item => CraftingActions.AddAffix(item, AffixType.Suffix)),
+            new("Remove Suffix",
+                item => CraftingActions.CanRemoveAffix(item, AffixType.Suffix),
+                item => CraftingActions.RemoveRandomAffix(item, AffixType.Suffix)),
+            new("Reroll All", CraftingActions.CanReroll, CraftingActions.RerollAll),
+            new("Upgrade Random Tier", CraftingActions.CanUpgradeTier, CraftingActions.UpgradeRandomTier)
+        };
+
+        AddPerBarReplacements(actions, AffixType.Prefix, GameRules.MaxPrefixAffixes);
+        AddPerBarReplacements(actions, AffixType.Suffix, GameRules.MaxSuffixAffixes);
+
+        return actions.ToArray();
+    }
+
+    private static void AddPerBarReplacements(List<CraftingAction> actions, AffixType type, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            int index = i;
+            actions.Add(new($"Reroll {type} {index + 1}",
+                item => CraftingActions.CanReplaceAffixAt(item, type, index),
+                item => CraftingActions.ReplaceAffixAt(item, type, index)));
+        }
+    }
 
     private static readonly Color BarBackground = new Color(0.16f, 0.16f, 0.16f);
 
