@@ -16,13 +16,17 @@ public partial class MotionPlayback : Node
     private const double MaxPlaybackDelay = 0.15;
     // How quickly the measured jitter forgets an old spike.
     private const double JitterDecayPerSecond = 0.5;
+    // How fast the clock offset creeps back up between updates, so it follows two clocks drifting
+    // apart instead of holding the smallest gap ever seen. Far faster than any real clock drift, far
+    // slower than jitter.
+    private const double ClockOffsetRelaxPerSecond = 0.001;
 
     [Export] public MultiplayerSynchronizer Synchronizer { get; private set; }
 
     private readonly List<(double Time, Vector3 Position, float Yaw)> _snapshots = new();
     private Node3D _body;
     private double _clockOffset = double.MaxValue;
-    private double _updateInterval = 1.0 / 60.0;
+    private double _updateInterval = 1.0 / 30.0;
     private double _jitter;
     private double _lastUpdateTime;
     private double _receivedTime;
@@ -86,9 +90,9 @@ public partial class MotionPlayback : Node
 
         double now = Now;
 
-        // The smallest gap seen is the update that spent least time in transit - the best estimate
+        // The smallest recent gap is the update that spent least time in transit - the best estimate
         // of how the two clocks line up.
-        _clockOffset = Math.Min(_clockOffset, now - _receivedTime);
+        _clockOffset = Math.Min(_clockOffset + ClockOffsetRelaxPerSecond * (now - _lastUpdateTime), now - _receivedTime);
 
         // How late this update is compared to the fastest one seen - arrival jitter. Spikes are kept
         // at once and fade slowly, so one late packet widens the buffer rather than stalling playback.

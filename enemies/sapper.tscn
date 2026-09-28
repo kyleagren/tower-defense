@@ -388,6 +388,8 @@ transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0)
 shape = SubResource("CapsuleShape3D_ragdoll_leg_r")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+delta_interval = 0.033
 replication_config = SubResource("SceneReplicationConfig_enemy")
 
 [node name="Motion" type="Node" parent="." node_paths=PackedStringArray("Synchronizer")]

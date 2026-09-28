@@ -95,6 +95,14 @@ public partial class NetworkSession : Node
 
     public void Join(string address)
     {
+        CallDeferred(MethodName.ConnectTo, address);
+    }
+
+    // Deferred - a join can start from inside a level, like accepting an invite in the hub. The
+    // level being left goes before this machine stops being peer 1: otherwise, for a frame, every
+    // node in it would lose its authority, and the host's level couldn't arrive under the same name.
+    private void ConnectTo(string address)
+    {
         ENetMultiplayerPeer peer = new ENetMultiplayerPeer();
         Error error = peer.CreateClient(address, Port);
 
@@ -104,6 +112,8 @@ public partial class NetworkSession : Node
             return;
         }
 
+        LevelLoader.Instance?.DropLevel();
+        Multiplayer.MultiplayerPeer.Close();
         Multiplayer.MultiplayerPeer = peer;
         _seatsByPeer.Clear();
         PlayerProfiles.Reset();

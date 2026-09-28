@@ -32,14 +32,32 @@ public partial class GameOverHandler : Node
     {
         GD.Print(victory ? "Victory!" : "Defeat...");
 
-        if (victory)
+        if (!victory)
         {
-            PlayerProfiles.Local.AddGold(GoldPerVictory + EconomyManager.Instance.GoldEarned);
-            GD.Print($"Gold: {PlayerProfiles.Local.Data.Gold}");
+            GetTree().CreateTimer(ReloadDelay).Timeout += ReturnToHub;
             return;
         }
 
-        GetTree().CreateTimer(ReloadDelay).Timeout += ReturnToHub;
+        // The host counts the gold earned, so it works out the award and sends it rather than each
+        // machine reading its mirrored copy, which could still be a kill behind.
+        if (NetworkSession.Instance.IsHost)
+        {
+            int gold = GoldPerVictory + EconomyManager.Instance.GoldEarned;
+            AwardGold(gold);
+            Rpc(MethodName.ReceiveVictoryGold, gold);
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveVictoryGold(int gold)
+    {
+        AwardGold(gold);
+    }
+
+    private void AwardGold(int gold)
+    {
+        PlayerProfiles.Local.AddGold(gold);
+        GD.Print($"Gold: {PlayerProfiles.Local.Data.Gold}");
     }
 
     // Host only, through LevelLoader - everyone else follows.

@@ -62,10 +62,11 @@ public partial class WorldItemRoster : Node
         return worldItem;
     }
 
-    // Only once there's room, so a full inventory never claims an item it can't hold.
+    // Only once there's room, so a full inventory never claims an item it can't hold. An item
+    // already queued to go was claimed by someone else this frame.
     public void RequestPickUp(WorldItem worldItem)
     {
-        if (!PlayerProfiles.Local.CanPickUp(worldItem.Item))
+        if (worldItem.IsQueuedForDeletion() || !PlayerProfiles.Local.CanPickUp(worldItem.Item))
         {
             return;
         }
