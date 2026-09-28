@@ -11,7 +11,8 @@ public static class EnemyCatalog
     {
         ["Grunt"] = "uid://dxw1ycxrs5ipl",
         ["Sapper"] = "uid://68nn4sdmokgf",
-        ["Marksman"] = "uid://b14xsyrxfl5md"
+        ["Marksman"] = "uid://b14xsyrxfl5md",
+        ["Brute"] = "res://enemies/brute.tscn"
     };
 
     public static PackedScene Get(string name)

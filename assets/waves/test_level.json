@@ -42,9 +42,11 @@
             { "lane": "LaneA", "enemy": "Grunt", "count": 15 },
             { "lane": "LaneA", "enemy": "Sapper", "count": 3 },
             { "lane": "LaneA", "enemy": "Marksman", "count": 3 },
+            { "lane": "LaneA", "enemy": "Brute", "count": 1 },
             { "lane": "LaneB", "enemy": "Grunt", "count": 15 },
             { "lane": "LaneB", "enemy": "Sapper", "count": 3 },
-            { "lane": "LaneB", "enemy": "Marksman", "count": 3 }
+            { "lane": "LaneB", "enemy": "Marksman", "count": 3 },
+            { "lane": "LaneB", "enemy": "Brute", "count": 1 }
         ]}
       ]
     },
@@ -68,9 +70,11 @@
             { "lane": "LaneA", "enemy": "Grunt", "count": 20 },
             { "lane": "LaneA", "enemy": "Sapper", "count": 5 },
             { "lane": "LaneA", "enemy": "Marksman", "count": 5 },
+            { "lane": "LaneA", "enemy": "Brute", "count": 2 },
             { "lane": "LaneB", "enemy": "Grunt", "count": 20 },
             { "lane": "LaneB", "enemy": "Sapper", "count": 5 },
-            { "lane": "LaneB", "enemy": "Marksman", "count": 5 }
+            { "lane": "LaneB", "enemy": "Marksman", "count": 5 },
+            { "lane": "LaneB", "enemy": "Brute", "count": 2 }
         ]}
       ]
     }

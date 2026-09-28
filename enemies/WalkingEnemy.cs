@@ -635,7 +635,7 @@ public partial class WalkingEnemy : Enemy
     // Always uses a real traveling projectile when ProjectileScene is set - no instant-hit
     // fallback for a ranged enemy, regardless of target type. Only enemies with no ProjectileScene
     // (Grunt, Sapper) keep the instant-hit path.
-    private void DealDamage(IDamageable target)
+    protected virtual void DealDamage(IDamageable target)
     {
         if (ProjectileScene != null)
         {
