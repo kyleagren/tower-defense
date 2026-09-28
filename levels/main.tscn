@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://levels/LevelLoader.cs" id="1_levelloader"]
 [ext_resource type="PackedScene" uid="uid://ct3j8oj7yvja4" path="res://levels/hub/hub.tscn" id="2_hub"]
 [ext_resource type="Script" path="res://save/ProfileSync.cs" id="3_profilesync"]
+[ext_resource type="Script" path="res://ui/MainMenu.cs" id="4_mainmenu"]
 
 [node name="Main" type="Node" node_paths=PackedStringArray("LevelContainer", "LevelSpawner")]
 script = ExtResource("1_levelloader")
@@ -17,3 +18,15 @@ spawn_path = NodePath("../Level")
 
 [node name="ProfileSync" type="Node" parent="."]
 script = ExtResource("3_profilesync")
+
+[node name="MenuLayer" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="MainMenu" type="Control" parent="MenuLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_mainmenu")

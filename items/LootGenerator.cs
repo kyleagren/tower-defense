@@ -90,6 +90,16 @@ public static class LootGenerator
         return item;
     }
 
+    // A profile's first weapon for a Sentinel: Common with no mods, so it's plainer than anything
+    // that drops.
+    public static Weapon GenerateStarterWeapon(CharacterId character)
+    {
+        Weapon weapon = (Weapon)CreateItemForSlot(EquipmentSlot.Weapon, character);
+        weapon.RollBaseStats(Rarity.Common);
+        weapon.Initialize(Rarity.Common, DefaultItemIcons.Get(weapon), character, new Godot.Collections.Array<RolledAffix>());
+        return weapon;
+    }
+
     // A fully random item - random droppable slot, random weighted rarity, a random Sentinel if
     // that slot happens to be Weapon. Shared by enemy drops (ItemDropManager) and the vendor's
     // stock generation so both draw from the exact same distribution.

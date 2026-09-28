@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,7 +7,7 @@ using System.Linq;
 // code that knows which MultiplayerPeer carries the game - ENet over localhost/LAN in development,
 // Steam at release - so swapping transports touches this file alone. Offline, Godot's default peer
 // already makes this machine peer 1, the id a host has, so single-player is a host nobody has
-// joined. Development starts a session from launch flags: --host, or --join [address].
+// joined. Development starts one from launch flags (LaunchFlags).
 public partial class NetworkSession : Node
 {
     public const int Port = 24736;
@@ -14,7 +15,6 @@ public partial class NetworkSession : Node
     private const long HostPeerId = 1;
     // The host holds P1, so three more fill the remaining seats.
     private const int MaxClients = 3;
-    private const string DefaultJoinAddress = "127.0.0.1";
 
     public static NetworkSession Instance { get; private set; }
 
@@ -54,28 +54,6 @@ public partial class NetworkSession : Node
         // Deferred - swapping the peer from inside one of its own signals isn't safe.
         Multiplayer.ConnectionFailed += () => CallDeferred(MethodName.ReturnToSolo);
         Multiplayer.ServerDisconnected += () => CallDeferred(MethodName.ReturnToSolo);
-
-        StartFromLaunchFlags();
-    }
-
-    // Read from both lists, so a flag works whether or not it was passed after a "--" separator.
-    private void StartFromLaunchFlags()
-    {
-        List<string> args = OS.GetCmdlineArgs().Concat(OS.GetCmdlineUserArgs()).ToList();
-
-        if (args.Contains("--host"))
-        {
-            Host();
-            return;
-        }
-
-        int joinIndex = args.IndexOf("--join");
-
-        if (joinIndex >= 0)
-        {
-            bool hasAddress = joinIndex + 1 < args.Count && !args[joinIndex + 1].StartsWith("--");
-            Join(hasAddress ? args[joinIndex + 1] : DefaultJoinAddress);
-        }
     }
 
     public void Host()
@@ -189,11 +167,68 @@ public partial class NetworkSession : Node
         EmitSignal(SignalName.SeatsChanged);
     }
 
-    // Leaving on purpose, from the pause menu: drop the connection and play on alone. Deferred -
-    // this runs from the pause menu, which lives in the level ReturnToSolo tears out.
-    public void Leave()
+    // How long a client that's leaving waits for the host's go-ahead before leaving anyway.
+    private const float LeaveTimeout = 1f;
+
+    private Action _afterLeaving;
+    private SceneTreeTimer _leaveTimer;
+
+    // Leaving on purpose, then running afterLeaving once back offline with no level loaded. A client
+    // first stops sending sync updates and waits for the host to answer: by then every update it sent
+    // has arrived, so none reaches the host after it has forgotten this player. Deferred - this runs
+    // from the pause menu, which lives in the level being dropped.
+    public void LeaveSession(Action afterLeaving)
     {
-        CallDeferred(MethodName.ReturnToSolo);
+        _afterLeaving = afterLeaving;
+        CallDeferred(MethodName.StartLeaving);
+    }
+
+    private void StartLeaving()
+    {
+        if (IsHost)
+        {
+            FinishLeaving();
+            return;
+        }
+
+        LevelLoader.Instance.StopSyncingOutgoingLevel();
+        RpcId(1, MethodName.ReceiveLeaving);
+        _leaveTimer = GetTree().CreateTimer(LeaveTimeout);
+        _leaveTimer.Timeout += FinishLeaving;
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveLeaving()
+    {
+        RpcId(Multiplayer.GetRemoteSenderId(), MethodName.ReceiveLeaveAccepted);
+    }
+
+    // Deferred - closing the connection from inside one of its own messages isn't safe.
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveLeaveAccepted()
+    {
+        CallDeferred(MethodName.FinishLeaving);
+    }
+
+    // The go-ahead and the timeout can both arrive; whichever comes first leaves.
+    private void FinishLeaving()
+    {
+        if (_afterLeaving == null)
+        {
+            return;
+        }
+
+        if (_leaveTimer != null)
+        {
+            _leaveTimer.Timeout -= FinishLeaving;
+            _leaveTimer = null;
+        }
+
+        Action afterLeaving = _afterLeaving;
+        _afterLeaving = null;
+        LevelLoader.Instance.DropLevel();
+        CloseSession();
+        afterLeaving();
     }
 
     // Losing the host, or never reaching it, drops back to playing alone from the hub.
@@ -206,12 +241,25 @@ public partial class NetworkSession : Node
         }
 
         LevelLoader.Instance.DropLevel();
+        CloseSession();
+        LevelLoader.Instance.LoadHub();
+    }
+
+    // Back to offline, where this machine is peer 1 again. The level must already be gone: otherwise,
+    // for the frame it lingered, every copy in it would find itself in charge and start simulating with
+    // none of what the real host gave it.
+    public void CloseSession()
+    {
+        if (Multiplayer.MultiplayerPeer is OfflineMultiplayerPeer)
+        {
+            return;
+        }
+
         Multiplayer.MultiplayerPeer.Close();
         Multiplayer.MultiplayerPeer = new OfflineMultiplayerPeer();
         _seatsByPeer.Clear();
         _seatsByPeer[HostPeerId] = PlayerId.P1;
         PlayerProfiles.Reset();
         EmitSignal(SignalName.SeatsChanged);
-        LevelLoader.Instance.LoadHub();
     }
 }

@@ -1,7 +1,7 @@
 using Godot;
 
-// Resume / Options / Return to Hub (host, in a match) or Leave Session (anyone who joined) / Exit
-// Game. Opened by the pause action, or by Escape when nothing else wanted it. Freezes the game while
+// Resume / Options / Return to Hub (host, in a match) or Leave Session (anyone who joined) / Main
+// Menu / Exit Game. Opened by the pause action, or by Escape when nothing else wanted it. Freezes the game while
 // open, unless other players share the session - one player's menu can't stop everyone else's game.
 // Runs with process_mode Always (player_hud.tscn) so it keeps working while the tree it paused is
 // stopped.
@@ -52,6 +52,7 @@ public partial class PauseMenu : Control
         _optionsButton = AddButton(_column, "Options", OpenOptions);
         _returnToHubButton = AddButton(_column, "Return to Hub", ReturnToHub);
         _leaveSessionButton = AddButton(_column, "Leave Session", LeaveSession);
+        AddButton(_column, "Main Menu", ReturnToMainMenu);
         AddButton(_column, "Exit Game", () => GetTree().Quit());
 
         Options.Closed += OnOptionsClosed;
@@ -149,7 +150,14 @@ public partial class PauseMenu : Control
     private void LeaveSession()
     {
         UiPanelStack.CloseAll();
-        NetworkSession.Instance.Leave();
+        NetworkSession.Instance.LeaveSession(LevelLoader.Instance.LoadHub);
+    }
+
+    // Leaves any session - for a host, that ends it for everyone else too.
+    private void ReturnToMainMenu()
+    {
+        UiPanelStack.CloseAll();
+        MainMenu.Instance.Return();
     }
 
     // Leaving mid-match is the level's to carry out - GameOverHandler already owns the way back to

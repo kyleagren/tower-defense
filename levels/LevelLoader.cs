@@ -32,12 +32,6 @@ public partial class LevelLoader : Node
     public override void _Ready()
     {
         LevelSpawner.SpawnFunction = new Callable(this, MethodName.BuildLevel);
-
-        // A joiner waits for the host's level to arrive rather than loading one of its own.
-        if (NetworkSession.Instance.IsHost)
-        {
-            CallDeferred(MethodName.LoadHub);
-        }
     }
 
     public void LoadHub()
@@ -88,7 +82,7 @@ public partial class LevelLoader : Node
 
     // Everything this machine sends updates for in the outgoing level - its own bodies, and on the
     // host anything else it owns - stops now, while the level still exists everywhere.
-    private void StopSyncingOutgoingLevel()
+    public void StopSyncingOutgoingLevel()
     {
         foreach (Node level in LevelContainer.GetChildren())
         {

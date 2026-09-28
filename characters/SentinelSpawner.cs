@@ -202,8 +202,13 @@ public partial class SentinelSpawner : Node
             return;
         }
 
-        // Stop it driving interactors/input immediately, but keep the body itself alive for now.
+        // Gone from view and out of the way the moment its replacement takes over, on every machine,
+        // rather than whenever the host's removal arrives - which on a slow machine or connection is
+        // long enough to see. Kept in the tree until then, since its camera may still be the current one.
         previous.ProcessMode = ProcessModeEnum.Disabled;
+        previous.Visible = false;
+        previous.CollisionLayer = 0;
+        previous.CollisionMask = 0;
         previous.StopSyncing();
 
         // Only the host frees a body - freeing it there despawns it everywhere.
