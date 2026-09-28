@@ -10,7 +10,7 @@ using System.Text.Json;
 public partial class WaveController : Node
 {
     [Export] public string WaveFilePath = "res://assets/waves/test_level.json";
-    [Export] public float SpawnInterval = 0.3f;
+    [Export] public float SpawnInterval = 0.4f;
 
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 

@@ -24,6 +24,8 @@ public partial class Brute : WalkingEnemy
 
     private bool IsSwinging => _swingElapsed >= 0f;
 
+    protected override bool IsCommittedToAttack => IsSwinging;
+
     // The strike phase is linear, so this is exactly when the club points straight ahead.
     private float ImpactTime => WindUpDuration + StrikeDuration * WindUpYawDegrees / (WindUpYawDegrees - FollowThroughYawDegrees);
 

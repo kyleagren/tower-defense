@@ -12,6 +12,9 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public MeshInstance3D LegLWeakPoint { get; private set; }
     [Export] public MeshInstance3D LegRWeakPoint { get; private set; }
     [Export] public Node3D ShoulderAttachment { get; private set; }
+    // TODO placeholder: the one mesh the status tint and burn flash swap onto - the torso, so the rest
+    // of the body keeps its own look. Optional; an enemy with none wired just shows no tint.
+    [Export] public MeshInstance3D StatusMesh { get; private set; }
     [Export] public float RagdollCleanupDelay = 2f;
     [Export] public float MaxHealth = 200f;
     [Export] public float CenterMassHeight = 1f;
@@ -33,7 +36,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // enemy shows and the color its damage numbers use can't drift apart.
     private static readonly Dictionary<Tag, StandardMaterial3D> _statusMaterials = BuildStatusMaterials();
 
-    private static readonly StandardMaterial3D _burnFlashMaterial = CreateOverlayMaterial(new Color(0.5f, 0f, 0f));
+    private static readonly StandardMaterial3D _burnFlashMaterial = CreateTintMaterial(new Color(0.5f, 0f, 0f));
     private const float BurnFlashDuration = 0.1f;
 
     private static Dictionary<Tag, StandardMaterial3D> BuildStatusMaterials()
@@ -42,26 +45,21 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         foreach (Tag element in _statusElements)
         {
-            materials[element] = CreateOverlayMaterial(DamageTypeColors.GetStatusOverlay(element));
+            materials[element] = CreateTintMaterial(DamageTypeColors.GetStatusOverlay(element));
         }
 
         return materials;
     }
 
-    private static StandardMaterial3D CreateOverlayMaterial(Color color)
+    private static StandardMaterial3D CreateTintMaterial(Color color)
     {
-        return new StandardMaterial3D
-        {
-            AlbedoColor = color,
-            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-        };
+        return new StandardMaterial3D { AlbedoColor = color };
     }
 
     private bool _isDead;
     private readonly List<Debuff> _debuffs = new List<Debuff>();
-    // TODO placeholder: remove alongside StatusMaterials/BurnFlashMaterial above.
-    private readonly List<MeshInstance3D> _meshInstances = new List<MeshInstance3D>();
-    private Material _appliedOverlay;
+    private Material _appliedTint;
+    private Material _statusMeshRestMaterial;
     private float _burnFlashTimer;
 
     public bool IsDead => _isDead;
@@ -211,10 +209,6 @@ public partial class Enemy : CharacterBody3D, IDamageable
         _activeWeakPoints.Add(spot);
     }
 
-    private bool IsWeakPointMarker(MeshInstance3D meshInstance) =>
-        meshInstance == HeadWeakPoint || meshInstance == BodyWeakPoint || meshInstance == ArmLWeakPoint ||
-        meshInstance == ArmRWeakPoint || meshInstance == LegLWeakPoint || meshInstance == LegRWeakPoint;
-
     public Vector3 GetJitteredCenterMass(float jitterAmount)
     {
         Vector3 jitter = new Vector3(
@@ -229,6 +223,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     public override void _Ready()
     {
         CurrentHealth = MaxHealth;
+        _statusMeshRestMaterial = StatusMesh?.MaterialOverride;
         Level = LevelContext.Current;
 
         // Group membership is for editor / remote-debugger inspection only — code paths that need
@@ -238,8 +233,6 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         HealthBar.SetFraction(1f);
         RefreshHealthBarVisibility();
-
-        CollectMeshInstances();
 
         if (Level.IsWeakPointVisorActive)
         {
@@ -645,7 +638,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         }
     }
 
-    // TODO placeholder: remove this and CollectMeshInstances once there is a real way to display
+    // TODO placeholder: remove this and StatusMesh once there is a real way to display
     // an enemy's element and ailments.
     private void UpdateElementalVisual(float delta)
     {
@@ -666,44 +659,31 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         bool isFlashing = isBurning && _burnFlashTimer < BurnFlashDuration;
 
-        Material overlay = null;
+        Material tint = null;
         if (isFlashing)
         {
-            overlay = _burnFlashMaterial;
+            tint = _burnFlashMaterial;
         }
         else if (Status.HasValue && _statusMaterials.TryGetValue(Status.Value, out StandardMaterial3D statusMaterial))
         {
-            overlay = statusMaterial;
+            tint = statusMaterial;
         }
 
         // Only write on an actual transition. This runs every physics frame for every living enemy
-        // and the overlay is usually unchanged, so reassigning unconditionally would cost a property
-        // write per mesh per enemy per frame for nothing.
-        if (overlay == _appliedOverlay)
+        // and the tint is usually unchanged, so reassigning unconditionally would cost a property
+        // write per enemy per frame for nothing.
+        if (tint == _appliedTint)
         {
             return;
         }
 
-        _appliedOverlay = overlay;
+        _appliedTint = tint;
 
-        foreach (MeshInstance3D meshInstance in _meshInstances)
+        // Swapped in rather than drawn as a material_overlay: an opaque overlay shares the surface's
+        // depth, so whether it shows depends on draw order, and a lit one reliably loses.
+        if (StatusMesh != null)
         {
-            meshInstance.MaterialOverlay = overlay;
-        }
-    }
-
-    private void CollectMeshInstances()
-    {
-        // owned: false is required to walk into instanced sub-scenes rather than stopping at their
-        // roots. That also reaches HealthBar's own Fill/Empty quads, which must be excluded: they
-        // would otherwise take the body's elemental status overlay, whose material doesn't share
-        // their no_depth_test/cull_mode setup, and render as a stray second bar.
-        foreach (Node node in FindChildren("*", nameof(MeshInstance3D), recursive: true, owned: false))
-        {
-            if (node is MeshInstance3D meshInstance && !HealthBar.IsAncestorOf(meshInstance) && !IsWeakPointMarker(meshInstance))
-            {
-                _meshInstances.Add(meshInstance);
-            }
+            StatusMesh.MaterialOverride = tint ?? _statusMeshRestMaterial;
         }
     }
 }

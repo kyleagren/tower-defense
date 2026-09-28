@@ -35,6 +35,10 @@ public partial class WalkingEnemy : Enemy
 
     public bool IsKnockedBack => _knockbackVelocity != Vector3.Zero;
 
+    // True while a subclass is mid-attack and must neither turn nor walk - a committed attack has to
+    // stay dodgeable, so it can't track its target once it's begun.
+    protected virtual bool IsCommittedToAttack => false;
+
     [Export] public float WalkCycleFrequency = 6.0f;
     [Export] public float LegSwingAmplitude = 0.5f;
     [Export] public float ArmSwingAmplitude = 0.2f;
@@ -687,6 +691,12 @@ public partial class WalkingEnemy : Enemy
     // floor - only its horizontal part is steering.
     private void Move(Vector3 direction, double delta)
     {
+        if (IsCommittedToAttack)
+        {
+            Stop(delta);
+            return;
+        }
+
         direction = new Vector3(direction.X, 0f, direction.Z).Normalized();
         NavAgent.Velocity = direction * Speed;
 
@@ -732,6 +742,11 @@ public partial class WalkingEnemy : Enemy
 
     private void RotateTowardsMovement(Vector3 direction, double delta)
     {
+        if (IsCommittedToAttack)
+        {
+            return;
+        }
+
         Basis? targetBasis = ComputeFacingBasis(direction);
         if (!targetBasis.HasValue)
         {

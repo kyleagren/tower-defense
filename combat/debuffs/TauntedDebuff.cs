@@ -7,6 +7,8 @@ public class TauntedDebuff : Debuff
 {
     public Sentinel Taunter { get; }
 
+    private const float ChaseSpeedMultiplier = 1.5f;
+
     private float _remainingDuration;
 
     public TauntedDebuff(Sentinel taunter, float duration)
@@ -26,6 +28,10 @@ public class TauntedDebuff : Debuff
     // Null once the taunter is gone or down, so a taunt on a dead Tank stops pulling at once.
     public Sentinel ActiveTaunter =>
         GodotObject.IsInstanceValid(Taunter) && Taunter.IsActive && !Taunter.IsDead ? Taunter : null;
+
+    // A taunt that has to spend most of its window walking wastes the Tank's opening, so a taunted
+    // enemy hurries toward its taunter.
+    public override float SpeedMultiplier => ActiveTaunter != null ? ChaseSpeedMultiplier : 1f;
 
     public override bool Tick(Enemy enemy, float delta)
     {

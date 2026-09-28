@@ -80,7 +80,7 @@ properties/5/path = NodePath("Motion:SyncedYaw")
 properties/5/spawn = false
 properties/5/replication_mode = 1
 
-[node name="Enemy" type="CharacterBody3D" unique_id=1298715792 node_paths=PackedStringArray("NavAgent", "Skeleton", "BoneSimulator", "RootPhysicalBone", "BodyCollision", "HeadCollision", "HeadWeakPoint", "BodyWeakPoint", "ArmLWeakPoint", "ArmRWeakPoint", "LegLWeakPoint", "LegRWeakPoint", "ShoulderAttachment", "HealthBar")]
+[node name="Enemy" type="CharacterBody3D" unique_id=1298715792 node_paths=PackedStringArray("NavAgent", "Skeleton", "BoneSimulator", "RootPhysicalBone", "BodyCollision", "HeadCollision", "HeadWeakPoint", "BodyWeakPoint", "ArmLWeakPoint", "ArmRWeakPoint", "LegLWeakPoint", "LegRWeakPoint", "ShoulderAttachment", "StatusMesh", "HealthBar")]
 collision_layer = 2
 collision_mask = 51
 script = ExtResource("1_enemy")
@@ -97,6 +97,7 @@ ArmRWeakPoint = NodePath("Skeleton3D/ArmRAttachment/WeakSpot")
 LegLWeakPoint = NodePath("Skeleton3D/LegLAttachment/WeakSpot")
 LegRWeakPoint = NodePath("Skeleton3D/LegRAttachment/WeakSpot")
 ShoulderAttachment = NodePath("Skeleton3D/ArmLAttachment")
+StatusMesh = NodePath("Skeleton3D/BodyAttachment/MeshInstance3D")
 HealthBar = NodePath("HealthBar3D")
 FloatingTextScene = ExtResource("3_floatingtext")
 
