@@ -111,16 +111,17 @@ public abstract partial class LookInteractor : Node
         OnTargetChanged(target);
     }
 
+    // Reused every tick rather than made fresh - a new one each physics tick is a steady stream of
+    // objects for the garbage collector to clear.
+    private readonly PhysicsRayQueryParameters3D _query = new();
+
     protected virtual Node3D FindTargetAhead()
     {
-        Vector3 origin = Character.Camera.GlobalPosition;
-        Vector3 end = Character.GetCameraAimPoint(Range);
+        _query.From = Character.Camera.GlobalPosition;
+        _query.To = Character.GetCameraAimPoint(Range);
+        _query.CollisionMask = CollisionMask;
 
-        PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
-        PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
-        query.CollisionMask = CollisionMask;
-
-        Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
+        Godot.Collections.Dictionary result = Character.GetWorld3D().DirectSpaceState.IntersectRay(_query);
 
         if (result.Count == 0)
         {

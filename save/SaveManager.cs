@@ -127,7 +127,7 @@ public partial class SaveManager : Node
         }
         catch (System.InvalidOperationException exception)
         {
-            GD.PushError($"SaveManager: {exception.Message}");
+            ReportSaveFailure($"SaveManager: {exception.Message}");
             return false;
         }
 
@@ -135,7 +135,7 @@ public partial class SaveManager : Node
 
         if (file == null)
         {
-            GD.PushError($"SaveManager: couldn't open {path} ({FileAccess.GetOpenError()}).");
+            ReportSaveFailure($"SaveManager: couldn't open {path} ({FileAccess.GetOpenError()}).");
             return false;
         }
 
@@ -531,7 +531,23 @@ public partial class SaveManager : Node
         if (!WriteProfileFile(TempPathFor(_profileId), Data, _quarantine)
             || DirAccess.RenameAbsolute(TempPathFor(_profileId), PathFor(_profileId)) != Error.Ok)
         {
-            GD.PushError($"SaveManager: couldn't write profile {_profileId}.");
+            ReportSaveFailure($"SaveManager: couldn't write profile {_profileId}.");
+        }
+    }
+
+    private static bool _saveFailureShown;
+
+    // In a debug build - the editor, or a debug export - a failed save can only mean a bug to fix before
+    // anything else, so it stops the game with a message box, once per session. A release build logs it
+    // and carries on, keeping the last good save.
+    private static void ReportSaveFailure(string message)
+    {
+        GD.PushError(message);
+
+        if (OS.IsDebugBuild() && !_saveFailureShown)
+        {
+            _saveFailureShown = true;
+            OS.Alert(message, "Save failed");
         }
     }
 }
