@@ -27,7 +27,9 @@ public partial class BuildMenu : Control
     private enum Screen
     {
         ElementRing,
+        PinnedWheel,
         SpellRing,
+        FavoritesRing,
         Inscription,
         BucketRing,
         RuneRing,
@@ -40,6 +42,9 @@ public partial class BuildMenu : Control
 
     // The element ring's top wedge; the element groups follow it clockwise.
     private const int FavoritesSlot = 0;
+
+    // A spell's favorites ring: New build at the top, then its favorites in saved order.
+    private const int NewBuildSlot = 0;
 
     // The inscription's actions, on the cardinals clockwise from the top. Sockets fill the diagonals
     // between.
@@ -87,6 +92,10 @@ public partial class BuildMenu : Control
     private SpellWheelGroup _openGroup;
     private readonly List<Spell> _ringSpells = new();
 
+    // What each slot of the favorites ring or pinned wheel holds; null for New build or an empty pin.
+    private readonly List<FavoriteLoadout> _ringFavorites = new();
+    private Spell _favoritesRingSpell;
+
     private Spell _selectedSpell;
     private readonly Rune[] _socketedRunes = new Rune[GameRules.MaxRuneSlots];
     private int _socketBeingAssigned = -1;
@@ -106,7 +115,7 @@ public partial class BuildMenu : Control
         .GroupBy(rune => rune.GetType())
         .Select(group => group.OrderByDescending(rune => rune.Rarity).First());
 
-    private bool IsSpellScreen => _screen is Screen.ElementRing or Screen.SpellRing;
+    private bool IsSpellScreen => _screen is Screen.ElementRing or Screen.PinnedWheel or Screen.SpellRing or Screen.FavoritesRing;
     private bool IsRuneScreen => _screen is Screen.BucketRing or Screen.RuneRing or Screen.TierWheel;
 
     public override void _Ready()
@@ -166,7 +175,7 @@ public partial class BuildMenu : Control
 
         List<RadialWheelItem> items = new List<RadialWheelItem>
         {
-            new RadialWheelItem { Label = "Favorites", Color = _favoritesColor, Enabled = false }
+            new RadialWheelItem { Label = "Favorites", Color = _favoritesColor, Enabled = AnythingPinned }
         };
 
         items.AddRange(_groups.Select(group => new RadialWheelItem
@@ -205,6 +214,59 @@ public partial class BuildMenu : Control
         ShowSpellScreenInfo(highlighted);
     }
 
+    // --- Favorites: the pinned wheel and each spell's favorites ring ---
+
+    private static bool AnythingPinned =>
+        SaveManager.Instance.Data.PinnedFavorites.Any(name => PlayerProfiles.Local.FavoriteNamed(name) != null);
+
+    private static IEnumerable<FavoriteLoadout> FavoritesOf(Spell spell) =>
+        SaveManager.Instance.Data.Favorites.Where(favorite => favorite.Spell == spell);
+
+    private static bool IsAvailable(FavoriteLoadout favorite) =>
+        favorite.Runes.Where(rune => rune != null).All(RuneCatalog.IsAvailable);
+
+    private static RadialWheelItem FavoriteItem(FavoriteLoadout favorite) => new RadialWheelItem
+    {
+        Label = favorite.Name,
+        Color = DamageTypeColors.GetForSpell(favorite.Spell),
+        Enabled = IsAvailable(favorite)
+    };
+
+    private void ShowPinnedWheel()
+    {
+        SetScreen(Screen.PinnedWheel);
+        _ringFavorites.Clear();
+        _ringFavorites.AddRange(SaveManager.Instance.Data.PinnedFavorites.Select(PlayerProfiles.Local.FavoriteNamed));
+
+        Wheel.SetItems(_ringFavorites.Select(favorite => favorite == null ? null : FavoriteItem(favorite)).ToList());
+        ShowSpellScreenInfo(-1);
+    }
+
+    // Skipped for a spell with no favorites, which goes straight to a new build.
+    private void ShowFavoritesRing(Spell spell, int highlighted = -1)
+    {
+        SetScreen(Screen.FavoritesRing);
+        _favoritesRingSpell = spell;
+        _ringFavorites.Clear();
+        _ringFavorites.Add(null);
+        _ringFavorites.AddRange(FavoritesOf(spell));
+
+        List<RadialWheelItem> items = new List<RadialWheelItem>
+        {
+            new RadialWheelItem { Label = "New build", Color = _actionColor }
+        };
+        items.AddRange(_ringFavorites.Skip(1).Select(FavoriteItem));
+
+        Wheel.SetItems(PadToRing(items), highlighted);
+        ShowSpellScreenInfo(highlighted);
+    }
+
+    private void PlaceFavorite(FavoriteLoadout favorite)
+    {
+        EmitSignal(SignalName.Confirmed, favorite.Spell, new Godot.Collections.Array<Rune>(favorite.Runes.Where(rune => rune != null)));
+        Close();
+    }
+
     private void OnSpellChosen(Spell spell)
     {
         if (spell != _selectedSpell)
@@ -230,7 +292,7 @@ public partial class BuildMenu : Control
         switch (_screen)
         {
             case Screen.ElementRing when slot == FavoritesSlot:
-                ShowText("Favorites", "Pinned favorites");
+                ShowText("Favorites", AnythingPinned ? "Pinned favorites" : "Nothing pinned yet");
                 break;
 
             case Screen.ElementRing:
@@ -244,6 +306,17 @@ public partial class BuildMenu : Control
                 int cost = ComputeManaCost(spell, Enumerable.Empty<Rune>());
                 ShowText(spell.Name, spell.Description);
                 SetCostText(CostLabel, $"Cost: {cost} / Mana: {_economy.Mana}", cost > _economy.Mana);
+                break;
+
+            case Screen.FavoritesRing when slot == NewBuildSlot:
+                ShowText("New build", "Start from empty sockets.");
+                break;
+
+            case Screen.PinnedWheel or Screen.FavoritesRing when slot < _ringFavorites.Count && _ringFavorites[slot] != null:
+                FavoriteLoadout favorite = _ringFavorites[slot];
+                int favoriteCost = ComputeManaCost(favorite.Spell, favorite.Runes);
+                ShowText(favorite.Name, string.Join(", ", favorite.Runes.Where(rune => rune != null).Select(rune => rune.Name)));
+                SetCostText(CostLabel, $"Cost: {favoriteCost} / Mana: {_economy.Mana}", favoriteCost > _economy.Mana);
                 break;
 
             default:
@@ -378,8 +451,11 @@ public partial class BuildMenu : Control
                 break;
 
             case SaveFavoriteSlot:
-                string name = PlayerProfiles.Local.AddFavorite(FavoriteLoadout.DefaultName(_selectedSpell, _socketedRunes), _selectedSpell, _socketedRunes);
-                Inscription.DescriptionLabel.Text = $"Saved as \"{name}\".";
+                FavoriteLoadout existing = PlayerProfiles.Local.FindFavorite(_selectedSpell, _socketedRunes);
+
+                Inscription.DescriptionLabel.Text = existing != null
+                    ? $"Already saved as \"{existing.Name}\"."
+                    : $"Saved as \"{PlayerProfiles.Local.AddFavorite(FavoriteLoadout.DefaultName(_selectedSpell, _socketedRunes), _selectedSpell, _socketedRunes)}\".";
                 break;
 
             case ClearAllSlot:
@@ -604,9 +680,25 @@ public partial class BuildMenu : Control
     {
         switch (_screen)
         {
-            // The pinned favorites wheel arrives with favorites; until then its wedge can't be committed.
-            case Screen.ElementRing when slot != FavoritesSlot:
+            case Screen.ElementRing when slot == FavoritesSlot:
+                ShowPinnedWheel();
+                break;
+
+            case Screen.ElementRing:
                 ShowSpellRing(GroupAt(slot));
+                break;
+
+            case Screen.PinnedWheel:
+            case Screen.FavoritesRing when slot != NewBuildSlot:
+                PlaceFavorite(_ringFavorites[slot]);
+                break;
+
+            case Screen.FavoritesRing:
+                OnSpellChosen(_favoritesRingSpell);
+                break;
+
+            case Screen.SpellRing when FavoritesOf(_ringSpells[slot]).Any():
+                ShowFavoritesRing(_ringSpells[slot]);
                 break;
 
             case Screen.SpellRing:
@@ -729,6 +821,19 @@ public partial class BuildMenu : Control
 
             case Screen.SpellRing:
                 ShowElementRing(SlotOf(_openGroup));
+                break;
+
+            case Screen.PinnedWheel:
+                ShowElementRing(FavoritesSlot);
+                break;
+
+            case Screen.FavoritesRing:
+                ShowSpellRing(SpellWheelGroups.Of(_favoritesRingSpell), _favoritesRingSpell);
+                break;
+
+            // Back to the favorites ring on New build if the spell has one, otherwise the spell ring.
+            case Screen.Inscription when FavoritesOf(_selectedSpell).Any():
+                ShowFavoritesRing(_selectedSpell, NewBuildSlot);
                 break;
 
             case Screen.Inscription:

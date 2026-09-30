@@ -191,9 +191,36 @@ public class PlayerProfile
             Runes = new Godot.Collections.Array<Rune>(runes)
         });
 
+        Data.AutoPinFavorite(uniqueName);
         Save();
         return uniqueName;
     }
+
+    // The favorite already holding exactly this build, if any: same spell, same runes at the same
+    // tiers, in any sockets, since socket order doesn't change what a ritual does.
+    public FavoriteLoadout FindFavorite(Spell spell, IEnumerable<Rune> runes)
+    {
+        List<Rune> wanted = runes.Where(rune => rune != null).ToList();
+        return Data.Favorites.FirstOrDefault(favorite => favorite.Spell == spell && HoldsExactly(favorite.Runes, wanted));
+    }
+
+    private static bool HoldsExactly(IEnumerable<Rune> saved, List<Rune> wanted)
+    {
+        List<Rune> remaining = new List<Rune>(wanted);
+
+        foreach (Rune rune in saved)
+        {
+            if (rune != null && !remaining.Remove(rune))
+            {
+                return false;
+            }
+        }
+
+        return remaining.Count == 0;
+    }
+
+    public FavoriteLoadout FavoriteNamed(string name) =>
+        string.IsNullOrEmpty(name) ? null : Data.Favorites.FirstOrDefault(favorite => favorite.Name == name);
 
     private string UniqueFavoriteName(string name)
     {

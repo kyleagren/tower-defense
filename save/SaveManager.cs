@@ -347,6 +347,7 @@ public partial class SaveManager : Node
 
         EnsureInventorySize(data);
         EnsureTokenSlots(data);
+        EnsurePinnedFavorites(data);
         EnsureStash(data);
 
         foreach (string path in ListResourceFiles(SpellsDirectory))
@@ -390,6 +391,22 @@ public partial class SaveManager : Node
         while (data.Tokens.Count < GameRules.MaxTokens)
         {
             data.Tokens.Add(null);
+        }
+    }
+
+    // Fixed-size like Tokens, since a pin's slot is its direction on the wheel. Until the player
+    // arranges the wheel themselves, favorites not yet pinned fill free slots in saved order - which
+    // also picks up favorites saved before the wheel existed.
+    private static void EnsurePinnedFavorites(PlayerSaveData data)
+    {
+        while (data.PinnedFavorites.Count < GameRules.PinnedFavoriteSlots)
+        {
+            data.PinnedFavorites.Add("");
+        }
+
+        foreach (FavoriteLoadout favorite in data.Favorites)
+        {
+            data.AutoPinFavorite(favorite.Name);
         }
     }
 

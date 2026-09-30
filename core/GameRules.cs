@@ -2,6 +2,7 @@ public static class GameRules
 {
     public const int MaxRuneSlots = 4;
     public const int MaxTokens = 3;
+    public const int PinnedFavoriteSlots = 8;
     public const float RitualReach = 4f;
     public const float ItemPickupReach = 3f;
     public const int MaxPrefixAffixes = 3;

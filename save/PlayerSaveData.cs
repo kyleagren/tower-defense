@@ -13,6 +13,15 @@ public partial class PlayerSaveData : Resource
     [Export] public Godot.Collections.Array<FavoriteLoadout> Favorites { get; set; } = new();
     [Export] public Godot.Collections.Array<RuneLoadout> Tokens { get; set; } = new();
 
+    // The pinned favorites wheel's slots, by favorite name - a name rather than the favorite itself,
+    // since a favorite is written out in full wherever it appears and a second copy would load as a
+    // separate object. An empty string is an empty slot.
+    [Export] public Godot.Collections.Array<string> PinnedFavorites { get; set; } = new();
+
+    // Set once the player places or removes a pin by hand; from then on new favorites no longer land
+    // on the pinned wheel on their own.
+    [Export] public bool PinnedWheelCustomized { get; set; }
+
     // The hub stash's tabs, in order. Every profile has at least one, which is free.
     [Export] public Godot.Collections.Array<StashTab> Stash { get; set; } = new();
 
@@ -42,5 +51,22 @@ public partial class PlayerSaveData : Resource
         }
 
         return loadout;
+    }
+
+    // Pins a favorite to the first empty slot - unless it's already pinned, the wheel is full, or the
+    // player has taken charge of the wheel.
+    public void AutoPinFavorite(string name)
+    {
+        if (PinnedWheelCustomized || PinnedFavorites.Contains(name))
+        {
+            return;
+        }
+
+        int empty = PinnedFavorites.IndexOf("");
+
+        if (empty >= 0)
+        {
+            PinnedFavorites[empty] = name;
+        }
     }
 }
