@@ -6,7 +6,9 @@ using Godot;
 // since 1/2/3 map to tokens only then and AbilityBar (its sibling under AbilityHud) shows its own
 // badges the rest of the time - each row decides independently off the same TokenPickModeChanged
 // signal, with no shared state between them. On a controller the d-pad never collides with
-// abilities, so the badges always show.
+// abilities, so the badges always show. The Architect has no abilities and 1/2/3 always reach its
+// tokens, so while it's active the badges always show and the keyboard chip hides - Q opens its
+// build menu, not pick mode.
 public partial class TokenBar : Control
 {
     private static readonly Color _emptyColor = new Color(0.15f, 0.15f, 0.15f, 0.6f);
@@ -19,6 +21,9 @@ public partial class TokenBar : Control
     private PromptBadge _chip;
 
     private bool _pickModeActive;
+    private bool _architectActive;
+
+    private static bool ArchitectActive => LevelContext.Current?.LocalActiveCharacter is Architect;
 
     public override void _Ready()
     {
@@ -63,6 +68,16 @@ public partial class TokenBar : Control
         InputDevice.Changed -= Refresh;
     }
 
+    // Nothing signals a switch between the Architect and a Sentinel, so it's watched here.
+    public override void _Process(double delta)
+    {
+        if (ArchitectActive != _architectActive)
+        {
+            _architectActive = ArchitectActive;
+            Refresh();
+        }
+    }
+
     private void OnPickModeChanged(bool active)
     {
         _pickModeActive = active;
@@ -72,9 +87,10 @@ public partial class TokenBar : Control
     private void Refresh()
     {
         Godot.Collections.Array<RuneLoadout> tokens = SaveManager.Instance.Data.Tokens;
-        bool showBadges = InputDevice.UsingController || _pickModeActive;
+        bool showBadges = InputDevice.UsingController || _pickModeActive || _architectActive;
 
         _chip.ShowAction(InputDevice.UsingController ? "token_modifier" : "toggle_token_mode");
+        _chip.Visible = InputDevice.UsingController || !_architectActive;
 
         for (int i = 0; i < GameRules.MaxTokens; i++)
         {

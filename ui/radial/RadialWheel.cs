@@ -27,6 +27,9 @@ public partial class RadialWheel : Control
     private const int ArcSegmentsPerWedge = 16;
     private const float PointerDotRadius = 6f;
     private const int LabelOutlineSize = 6;
+    private const float OutlineWidth = 5f;
+    private const float OutlineGap = 6f;
+    private const int OutlineSegments = 96;
 
     private static readonly Color _emptySlotColor = new Color(0f, 0f, 0f, 0.35f);
     private static readonly Color _labelColor = Colors.White;
@@ -36,6 +39,7 @@ public partial class RadialWheel : Control
     private int _highlighted = -1;
     private Vector2 _virtualStick;
     private Vector2 _pointer;
+    private Color? _outlineColor;
 
     // How much of the wheel's radius is the empty center, where the host shows its info.
     [Export(PropertyHint.Range, "0.1,0.9")] public float InnerRadiusFraction { get; set; } = 0.55f;
@@ -54,6 +58,18 @@ public partial class RadialWheel : Control
 
     // Where the stick or mouse points, up to length 1 - for a host drawing its own indicator.
     public Vector2 Pointer => _pointer;
+
+    // A ring just outside the wedges, clear of a highlighted wedge's growth, when set - for a host
+    // marking the wheel as being in some mode.
+    public Color? OutlineColor
+    {
+        get => _outlineColor;
+        set
+        {
+            _outlineColor = value;
+            QueueRedraw();
+        }
+    }
 
     private float SlotSpacing => Mathf.Tau / _items.Count;
 
@@ -216,6 +232,12 @@ public partial class RadialWheel : Control
         }
 
         DrawCircle(center + _pointer * innerRadius, PointerDotRadius, _labelColor);
+
+        if (_outlineColor.HasValue)
+        {
+            float outlineRadius = outerRadius * (1f + HighlightGrowFraction) + OutlineGap;
+            DrawArc(center, outlineRadius, 0f, Mathf.Tau, OutlineSegments, _outlineColor.Value, OutlineWidth);
+        }
     }
 
     private static Color WedgeColor(RadialWheelItem item, bool highlighted)

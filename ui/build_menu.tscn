@@ -3,6 +3,18 @@
 [ext_resource type="Script" uid="uid://cuia4k1x6b746" path="res://ui/BuildMenu.cs" id="1_cd770"]
 [ext_resource type="Script" path="res://ui/radial/RadialWheel.cs" id="2_radialwheel"]
 [ext_resource type="Script" path="res://ui/radial/RitualInscription.cs" id="3_inscription"]
+[ext_resource type="Script" path="res://ui/radial/TokenWheel.cs" id="4_tokenwheel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tokenmode"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.85, 0.75, 0.15, 1)
+corner_radius_top_left = 999
+corner_radius_top_right = 999
+corner_radius_bottom_right = 999
+corner_radius_bottom_left = 999
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_description"]
 content_margin_left = 16.0
@@ -15,7 +27,7 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[node name="BuildMenu" type="Control" unique_id=2049028399 node_paths=PackedStringArray("Wheel", "CenterInfo", "TitleLabel", "CostLabel", "DescriptionLabel", "DescriptionPanel", "Inscription", "RuneWheel", "RuneInfoPanel", "RuneTitleLabel", "RuneCostLabel", "RuneDescriptionLabel")]
+[node name="BuildMenu" type="Control" unique_id=2049028399 node_paths=PackedStringArray("Wheel", "CenterInfo", "TitleLabel", "CostLabel", "DescriptionLabel", "DescriptionPanel", "Inscription", "RuneWheel", "RuneInfoPanel", "RuneTitleLabel", "RuneCostLabel", "RuneDescriptionLabel", "Tokens", "TokenModeTag", "TokenModeLabel")]
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -38,6 +50,9 @@ RuneInfoPanel = NodePath("RuneInfoPanel")
 RuneTitleLabel = NodePath("RuneInfoPanel/RuneInfo/RuneHeader/RuneTitleLabel")
 RuneCostLabel = NodePath("RuneInfoPanel/RuneInfo/RuneHeader/RuneCostLabel")
 RuneDescriptionLabel = NodePath("RuneInfoPanel/RuneInfo/RuneDescriptionLabel")
+Tokens = NodePath("Tokens")
+TokenModeTag = NodePath("TokenModeTag")
+TokenModeLabel = NodePath("TokenModeTag/TokenModeLabel")
 
 [node name="Wheel" type="Control" parent="."]
 layout_mode = 1
@@ -168,3 +183,37 @@ horizontal_alignment = 2
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 autowrap_mode = 3
+
+[node name="Tokens" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_tokenwheel")
+
+[node name="TokenModeTag" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.46
+anchor_right = 0.5
+anchor_bottom = 0.46
+offset_left = -780.0
+offset_top = -26.0
+offset_right = -570.0
+offset_bottom = 26.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tokenmode")
+
+[node name="TokenModeLabel" type="Label" parent="TokenModeTag"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.1, 0.1, 1)
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1

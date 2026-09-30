@@ -5,8 +5,9 @@ using Godot;
 // continuous quantities with no "changed" signal of their own, the same reason
 // ItemDragController's cursor icon and CharacterSheetPanel's live Shield row also poll per frame.
 // On keyboard, the slot badges only show outside pick mode, deciding that independently off the
-// same TokenPickModeChanged signal TokenBar reacts to. On a controller the row's L1 chip shows and
-// the badges always do, since the face buttons never collide with tokens.
+// same TokenPickModeChanged signal TokenBar reacts to, and not while the Architect is active, since
+// 1/2/3 reach its tokens. On a controller the row's L1 chip shows and the badges always do, since
+// the face buttons never collide with tokens.
 public partial class AbilityBar : Control
 {
     private const int SlotCount = 4;
@@ -25,6 +26,9 @@ public partial class AbilityBar : Control
     private PromptBadge _chip;
 
     private bool _pickModeActive;
+    private bool _architectActive;
+
+    private static bool ArchitectActive => LevelContext.Current?.LocalActiveCharacter is Architect;
 
     public override void _Ready()
     {
@@ -71,6 +75,13 @@ public partial class AbilityBar : Control
     public override void _Process(double delta)
     {
         UpdateRow();
+
+        // Nothing signals a switch between the Architect and a Sentinel, so it's watched here.
+        if (ArchitectActive != _architectActive)
+        {
+            _architectActive = ArchitectActive;
+            UpdateBadges();
+        }
     }
 
     private void OnPickModeChanged(bool active)
@@ -85,7 +96,7 @@ public partial class AbilityBar : Control
         _chip.ShowAction("ability_modifier");
         _chip.Visible = InputDevice.UsingController;
 
-        bool showBadges = InputDevice.UsingController || !_pickModeActive;
+        bool showBadges = InputDevice.UsingController || (!_pickModeActive && !_architectActive);
 
         for (int i = 0; i < SlotCount; i++)
         {

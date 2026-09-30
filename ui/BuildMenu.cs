@@ -5,7 +5,8 @@ using System.Linq;
 
 // The Architect's construction menu, radial throughout: an element ring, that element's spells, then
 // the Ritual Inscription, where runes come from a bucket ring, a rune ring and a tier wheel opened
-// around the socket being filled, before the finished ritual is placed.
+// around the socket being filled, before the finished ritual is placed. The same flow authors
+// tokens: the token wheel picks a slot, and saving writes the build there instead of placing it.
 public partial class BuildMenu : Control
 {
     [Signal] public delegate void ClosedEventHandler();
@@ -23,6 +24,9 @@ public partial class BuildMenu : Control
     [Export] public Label RuneTitleLabel { get; private set; }
     [Export] public Label RuneCostLabel { get; private set; }
     [Export] public Label RuneDescriptionLabel { get; private set; }
+    [Export] public TokenWheel Tokens { get; private set; }
+    [Export] public Control TokenModeTag { get; private set; }
+    [Export] public Label TokenModeLabel { get; private set; }
 
     private enum Screen
     {
@@ -33,7 +37,8 @@ public partial class BuildMenu : Control
         Inscription,
         BucketRing,
         RuneRing,
-        TierWheel
+        TierWheel,
+        TokenWheel
     }
 
     // A ring always has at least this many slots, so gaining an item fills a gap instead of
@@ -61,6 +66,11 @@ public partial class BuildMenu : Control
     // the tier wheel.
     private const float TierHoldSeconds = GameRules.AbilityHoldThreshold;
 
+    // Tokens are free to recraft but not free to rebuild, so replacing or emptying one is held to
+    // confirm.
+    private const float ReplaceTokenHoldSeconds = 1f;
+    private const float ClearTokenHoldSeconds = 1f;
+
     // The tier wheel: Swap at the top, the tiers rising clockwise from the top-right, Clear on the left.
     private const int TierWheelSlots = 8;
     private const int SwapSlot = 0;
@@ -79,6 +89,7 @@ public partial class BuildMenu : Control
 
     private static readonly SpellWheelGroup[] _groups = Enum.GetValues<SpellWheelGroup>();
     private static readonly Rarity[] _runeTiers = { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic, Rarity.Legendary };
+    private static readonly string[] _tokenSlotActions = { "token_slot_1", "token_slot_2", "token_slot_3" };
 
     private static readonly Color _favoritesColor = new Color(1f, 0.8f, 0.3f);
     private static readonly Color _unaffordableColor = new Color(1f, 0.35f, 0.35f);
@@ -87,6 +98,9 @@ public partial class BuildMenu : Control
     private static readonly Color _clearColor = new Color(0.65f, 0.15f, 0.15f);
     private static readonly Color _emptySocketColor = new Color(0.15f, 0.15f, 0.15f);
     private static readonly Color _bucketColor = new Color(0.3f, 0.3f, 0.35f);
+
+    // Rings every wheel while a token is being authored, matching the token-mode tag.
+    private static readonly Color _tokenModeColor = new Color(0.85f, 0.75f, 0.15f);
 
     private Screen _screen;
     private SpellWheelGroup _openGroup;
@@ -104,11 +118,20 @@ public partial class BuildMenu : Control
     private readonly List<Rune> _ringRunes = new();
     private readonly Rune[] _tierRunes = new Rune[5];
 
+    // The token being authored, or -1 while building an ordinary ritual.
+    private int _authoringToken = -1;
+
+    // Whether the token wheel is choosing where to save the current build, rather than which token
+    // to author.
+    private bool _tokenWheelSavesBuild;
+
     private EconomyManager _economy;
 
     private static IEnumerable<Spell> KnownSpells => SaveManager.Instance.Data.KnownSpells;
 
     private static IEnumerable<Rune> KnownRunes => SaveManager.Instance.Data.KnownRunes.Select(entry => entry.Rune);
+
+    private static Godot.Collections.Array<RuneLoadout> SavedTokens => SaveManager.Instance.Data.Tokens;
 
     // One per rune type, at the highest tier owned - the tier wheel is what picks a lower one.
     private static IEnumerable<Rune> OwnedRunes => KnownRunes
@@ -117,6 +140,7 @@ public partial class BuildMenu : Control
 
     private bool IsSpellScreen => _screen is Screen.ElementRing or Screen.PinnedWheel or Screen.SpellRing or Screen.FavoritesRing;
     private bool IsRuneScreen => _screen is Screen.BucketRing or Screen.RuneRing or Screen.TierWheel;
+    private bool IsAuthoringToken => _authoringToken >= 0;
 
     public override void _Ready()
     {
@@ -128,6 +152,9 @@ public partial class BuildMenu : Control
         Inscription.HighlightChanged += OnInscriptionHighlightChanged;
         Inscription.Tapped += OnInscriptionTapped;
         Inscription.Held += OnInscriptionHeld;
+        Tokens.HighlightChanged += ShowTokenInfo;
+        Tokens.Tapped += OnTokenWheelTapped;
+        Tokens.Held += OnTokenWheelHeld;
     }
 
     public override void _Process(double delta)
@@ -136,13 +163,24 @@ public partial class BuildMenu : Control
         Wheel.AcceptsInput = focused && IsSpellScreen;
         RuneWheel.AcceptsInput = focused && IsRuneScreen;
         Inscription.AcceptsInput = focused && _screen == Screen.Inscription;
+        Tokens.AcceptsInput = focused && _screen == Screen.TokenWheel;
     }
 
-    public void Open()
+    // With a token, opens straight into authoring it.
+    public void Open(int token = -1)
     {
         Visible = true;
         UiPanelStack.Push(this, Close, capturesMouse: true);
-        ShowElementRing();
+
+        if (token >= 0)
+        {
+            BeginTokenAuthoring(token);
+        }
+        else
+        {
+            EndTokenAuthoring();
+            ShowElementRing();
+        }
     }
 
     private void SetScreen(Screen screen)
@@ -151,7 +189,8 @@ public partial class BuildMenu : Control
 
         Wheel.Visible = IsSpellScreen;
         CenterInfo.Visible = IsSpellScreen;
-        Inscription.Visible = !IsSpellScreen;
+        Tokens.Visible = screen == Screen.TokenWheel;
+        Inscription.Visible = !IsSpellScreen && screen != Screen.TokenWheel;
         RuneWheel.Visible = IsRuneScreen;
 
         if (!IsSpellScreen)
@@ -164,7 +203,7 @@ public partial class BuildMenu : Control
             RuneInfoPanel.Visible = false;
         }
 
-        Inscription.SetFocusSocket(IsRuneScreen ? SocketSlot(_socketBeingAssigned) : -1);
+        Inscription.FadeAllExcept(IsRuneScreen ? SocketSlot(_socketBeingAssigned) : -1);
     }
 
     // --- Element and spell rings ---
@@ -222,14 +261,17 @@ public partial class BuildMenu : Control
     private static IEnumerable<FavoriteLoadout> FavoritesOf(Spell spell) =>
         SaveManager.Instance.Data.Favorites.Where(favorite => favorite.Spell == spell);
 
-    private static bool IsAvailable(FavoriteLoadout favorite) =>
-        favorite.Runes.Where(rune => rune != null).All(RuneCatalog.IsAvailable);
+    // A favorite with a rune that's out of copies can't be placed; one with a limited rune can't go
+    // into a token at all.
+    private bool IsUsable(FavoriteLoadout favorite) => favorite.Runes
+        .Where(rune => rune != null)
+        .All(rune => RuneCatalog.IsAvailable(rune) && !(IsAuthoringToken && IsLimited(rune)));
 
-    private static RadialWheelItem FavoriteItem(FavoriteLoadout favorite) => new RadialWheelItem
+    private RadialWheelItem FavoriteItem(FavoriteLoadout favorite) => new RadialWheelItem
     {
         Label = favorite.Name,
         Color = DamageTypeColors.GetForSpell(favorite.Spell),
-        Enabled = IsAvailable(favorite)
+        Enabled = IsUsable(favorite)
     };
 
     private void ShowPinnedWheel()
@@ -261,8 +303,20 @@ public partial class BuildMenu : Control
         ShowSpellScreenInfo(highlighted);
     }
 
-    private void PlaceFavorite(FavoriteLoadout favorite)
+    // Straight to placement - or, while authoring a token, into the token under the favorite's name.
+    private void UseFavorite(FavoriteLoadout favorite)
     {
+        if (IsAuthoringToken)
+        {
+            FinishToken(new RuneLoadout
+            {
+                Spell = favorite.Spell,
+                Runes = new Godot.Collections.Array<Rune>(favorite.Runes),
+                Name = favorite.Name
+            });
+            return;
+        }
+
         EmitSignal(SignalName.Confirmed, favorite.Spell, new Godot.Collections.Array<Rune>(favorite.Runes.Where(rune => rune != null)));
         Close();
     }
@@ -372,8 +426,10 @@ public partial class BuildMenu : Control
             Color = _actionColor,
             Enabled = _socketedRunes.Any(rune => rune != null)
         };
-        items[PlaceSlot] = new RadialWheelItem { Label = "Place", Color = _placeColor };
-        items[SaveTokenSlot] = new RadialWheelItem { Label = "Save as Token", Color = _actionColor, Enabled = false };
+        items[PlaceSlot] = new RadialWheelItem { Label = IsAuthoringToken ? "Save Token" : "Place", Color = _placeColor };
+        items[SaveTokenSlot] = IsAuthoringToken
+            ? new RadialWheelItem { Label = "Clear Token", Color = _clearColor, Enabled = SavedTokens[_authoringToken] != null }
+            : new RadialWheelItem { Label = "Save as Token", Color = _actionColor };
 
         for (int socket = 0; socket < _socketedRunes.Length; socket++)
         {
@@ -381,8 +437,7 @@ public partial class BuildMenu : Control
             items[SocketSlot(socket)] = new RadialWheelItem
             {
                 Label = rune?.Name ?? "Empty",
-                Color = rune != null ? RarityColors.Get(rune.Rarity) : _emptySocketColor,
-                Weight = RitualInscription.SocketWeight
+                Color = rune != null ? RarityColors.Get(rune.Rarity) : _emptySocketColor
             };
         }
 
@@ -393,6 +448,7 @@ public partial class BuildMenu : Control
     {
         float[] holdSeconds = new float[InscriptionSlots];
         holdSeconds[ClearAllSlot] = ClearAllHoldSeconds;
+        holdSeconds[SaveTokenSlot] = IsAuthoringToken ? ClearTokenHoldSeconds : 0f;
 
         for (int socket = 0; socket < _socketedRunes.Length; socket++)
         {
@@ -420,7 +476,9 @@ public partial class BuildMenu : Control
             {
                 SaveFavoriteSlot => "Save this build as a favorite.",
                 ClearAllSlot => "Hold to remove every socketed rune.",
+                PlaceSlot when IsAuthoringToken => $"Save this build to token {_authoringToken + 1}.",
                 PlaceSlot => "Place this ritual.",
+                SaveTokenSlot when IsAuthoringToken => "Hold to empty this token.",
                 SaveTokenSlot => "Save this build as a token.",
                 _ => ""
             };
@@ -445,6 +503,10 @@ public partial class BuildMenu : Control
 
         switch (slot)
         {
+            case PlaceSlot when IsAuthoringToken:
+                FinishToken(TokenFrom(_selectedSpell, _socketedRunes));
+                break;
+
             case PlaceSlot:
                 EmitSignal(SignalName.Confirmed, _selectedSpell, new Godot.Collections.Array<Rune>(_socketedRunes.Where(rune => rune != null)));
                 Close();
@@ -460,6 +522,14 @@ public partial class BuildMenu : Control
 
             case ClearAllSlot:
                 Inscription.DescriptionLabel.Text = "Hold to clear every rune.";
+                break;
+
+            case SaveTokenSlot when IsAuthoringToken:
+                Inscription.DescriptionLabel.Text = "Hold to empty this token.";
+                break;
+
+            case SaveTokenSlot:
+                ShowTokenWheel(savesBuild: true);
                 break;
         }
     }
@@ -480,6 +550,10 @@ public partial class BuildMenu : Control
             Array.Clear(_socketedRunes);
             Inscription.ReplaceItems(BuildInscriptionItems(), BuildHoldSeconds());
             ShowInscriptionInfo(slot);
+        }
+        else if (slot == SaveTokenSlot && IsAuthoringToken)
+        {
+            FinishToken(null);
         }
     }
 
@@ -544,7 +618,9 @@ public partial class BuildMenu : Control
         {
             Label = rune.Name,
             Color = RarityColors.Get(rune.Rarity),
-            Enabled = !ConflictsWithOtherSocket(rune, _socketBeingAssigned) && RuneCatalog.IsAvailable(rune)
+            Enabled = !ConflictsWithOtherSocket(rune, _socketBeingAssigned)
+                && RuneCatalog.IsAvailable(rune)
+                && !(IsAuthoringToken && IsLimited(rune))
         })), highlighted);
 
         ShowRuneScreenInfo(highlighted);
@@ -670,9 +746,157 @@ public partial class BuildMenu : Control
     private void PreviewSocket(Rune candidate)
     {
         Rune shown = candidate ?? _socketedRunes[_socketBeingAssigned];
-        Inscription.PreviewSocketLabel(SocketSlot(_socketBeingAssigned), shown?.Name ?? "Empty");
+        Inscription.SetSlotLabel(SocketSlot(_socketBeingAssigned), shown?.Name ?? "Empty");
         ShowInscriptionCost(candidate != null ? WithSocket(_socketBeingAssigned, candidate) : _socketedRunes);
     }
+
+    // --- Tokens ---
+
+    private void ShowTokenWheel(bool savesBuild, int highlightToken = -1)
+    {
+        if (!savesBuild)
+        {
+            EndTokenAuthoring();
+        }
+
+        _tokenWheelSavesBuild = savesBuild;
+        SetScreen(Screen.TokenWheel);
+
+        RadialWheelItem[] items = new RadialWheelItem[4];
+        float[] holdSeconds = new float[4];
+
+        for (int token = 0; token < GameRules.MaxTokens; token++)
+        {
+            RuneLoadout saved = SavedTokens[token];
+            int slot = TokenWheel.SlotOf(token);
+
+            items[slot] = new RadialWheelItem
+            {
+                Label = saved == null ? "Empty" : TokenName(saved),
+                Color = saved == null ? _emptySocketColor : DamageTypeColors.GetForSpell(saved.Spell)
+            };
+            holdSeconds[slot] = savesBuild && saved != null ? ReplaceTokenHoldSeconds : 0f;
+        }
+
+        int highlighted = highlightToken >= 0 ? TokenWheel.SlotOf(highlightToken) : -1;
+        Tokens.SetItems(items, holdSeconds, highlighted);
+        ShowTokenInfo(highlighted);
+    }
+
+    // A token reads as the favorite holding exactly its build, if there is one, and otherwise as its
+    // spell - so a token edited away from its favorite doesn't keep a name that no longer fits.
+    private static RuneLoadout TokenFrom(Spell spell, IEnumerable<Rune> runes) => new RuneLoadout
+    {
+        Spell = spell,
+        Runes = new Godot.Collections.Array<Rune>(runes),
+        Name = PlayerProfiles.Local.FindFavorite(spell, runes)?.Name ?? ""
+    };
+
+    private static string TokenName(RuneLoadout token) =>
+        string.IsNullOrEmpty(token.Name) ? token.Spell?.Name ?? "" : token.Name;
+
+    private void ShowTokenInfo(int slot)
+    {
+        int token = slot >= 0 ? TokenWheel.TokenAt(slot) : -1;
+        RuneLoadout saved = token >= 0 ? SavedTokens[token] : null;
+
+        Tokens.TitleLabel.Text = token >= 0 ? $"Token {token + 1}" : _tokenWheelSavesBuild ? "Save to which token?" : "Tokens";
+        Tokens.CostLabel.Text = "";
+
+        if (saved == null)
+        {
+            Tokens.DescriptionLabel.Text = token >= 0 ? "Empty" : "";
+            return;
+        }
+
+        Tokens.CostLabel.Text = $"Deploys for {ComputeManaCost(saved.Spell, saved.Runes)} mana";
+        Tokens.DescriptionLabel.Text = string.Join(", ", saved.Runes.Where(rune => rune != null).Select(rune => rune.Name));
+    }
+
+    private void OnTokenWheelTapped(int slot)
+    {
+        int token = TokenWheel.TokenAt(slot);
+
+        if (!_tokenWheelSavesBuild)
+        {
+            BeginTokenAuthoring(token);
+        }
+        else if (SavedTokens[token] == null)
+        {
+            SaveBuildToToken(token);
+        }
+        else
+        {
+            Tokens.DescriptionLabel.Text = "Hold to replace this token.";
+        }
+    }
+
+    private void OnTokenWheelHeld(int slot)
+    {
+        SaveBuildToToken(TokenWheel.TokenAt(slot));
+    }
+
+    // From an ordinary build: saves it into a token and goes back to the inscription, which can still
+    // place it.
+    private void SaveBuildToToken(int token)
+    {
+        PlayerProfiles.Local.SetToken(token, TokenFrom(_selectedSpell, _socketedRunes));
+
+        ShowInscription(SaveTokenSlot);
+        Inscription.DescriptionLabel.Text = $"Saved to token {token + 1}.";
+    }
+
+    private void BeginTokenAuthoring(int token)
+    {
+        _authoringToken = token;
+        TokenModeLabel.Text = $"Token {token + 1}";
+        ShowTokenMode(true);
+        RuneLoadout saved = SavedTokens[token];
+
+        if (saved == null)
+        {
+            ShowElementRing();
+            return;
+        }
+
+        _selectedSpell = saved.Spell;
+
+        for (int socket = 0; socket < _socketedRunes.Length; socket++)
+        {
+            _socketedRunes[socket] = socket < saved.Runes.Count ? saved.Runes[socket] : null;
+        }
+
+        ShowInscription(PlaceSlot);
+    }
+
+    private void EndTokenAuthoring()
+    {
+        _authoringToken = -1;
+        ShowTokenMode(false);
+    }
+
+    // A gold ring around whichever wheel is up says something's different; the tag says what.
+    private void ShowTokenMode(bool shown)
+    {
+        Color? ring = shown ? _tokenModeColor : null;
+        Wheel.OutlineColor = ring;
+        RuneWheel.OutlineColor = ring;
+        Inscription.BackdropOutlineColor = ring;
+        TokenModeTag.Visible = shown;
+    }
+
+    // Saving or emptying a token ends authoring back on the token wheel, with that slot showing.
+    private void FinishToken(RuneLoadout saved)
+    {
+        int token = _authoringToken;
+        PlayerProfiles.Local.SetToken(token, saved);
+        ShowTokenWheel(savesBuild: false, token);
+    }
+
+    // Tokens lock in during the unpressured Planning phase, exactly when a scarce rune belongs on a
+    // real tower instead, so a limited rune can never go into one.
+    private static bool IsLimited(Rune rune) =>
+        SaveManager.Instance.Data.KnownRunes.Any(entry => entry.Rune == rune && !entry.Unlimited);
 
     // --- Shared wheel handling ---
 
@@ -690,7 +914,7 @@ public partial class BuildMenu : Control
 
             case Screen.PinnedWheel:
             case Screen.FavoritesRing when slot != NewBuildSlot:
-                PlaceFavorite(_ringFavorites[slot]);
+                UseFavorite(_ringFavorites[slot]);
                 break;
 
             case Screen.FavoritesRing:
@@ -784,7 +1008,7 @@ public partial class BuildMenu : Control
         return false;
     }
 
-    // --- Backing out and closing ---
+    // --- Input, backing out and closing ---
 
     public override void _UnhandledInput(InputEvent @event)
     {
@@ -801,6 +1025,24 @@ public partial class BuildMenu : Control
             return;
         }
 
+        // R1 switches to the token wheel; 1/2/3, or the d-pad with R1 held, go straight to a token.
+        if (@event.IsActionPressed("token_modifier") && _screen != Screen.TokenWheel)
+        {
+            ShowTokenWheel(savesBuild: false);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        for (int token = 0; token < _tokenSlotActions.Length; token++)
+        {
+            if (@event.IsActionPressed(_tokenSlotActions[token]) && (@event is not InputEventJoypadButton || InputChords.TokenModifierHeld))
+            {
+                BeginTokenAuthoring(token);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+        }
+
         bool backPressed = @event.IsActionPressed("ui_cancel")
             || @event is InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true };
 
@@ -815,6 +1057,10 @@ public partial class BuildMenu : Control
     {
         switch (_screen)
         {
+            case Screen.ElementRing when IsAuthoringToken:
+                ShowTokenWheel(savesBuild: false, _authoringToken);
+                break;
+
             case Screen.ElementRing:
                 Close();
                 break;
@@ -848,6 +1094,14 @@ public partial class BuildMenu : Control
             case Screen.RuneRing:
                 ShowBucketRing(RuneTags.Buckets.ToList().IndexOf(_openBucket));
                 break;
+
+            case Screen.TokenWheel when _tokenWheelSavesBuild:
+                ShowInscription(SaveTokenSlot);
+                break;
+
+            case Screen.TokenWheel:
+                ShowElementRing();
+                break;
         }
     }
 
@@ -863,6 +1117,7 @@ public partial class BuildMenu : Control
 
     private void Close()
     {
+        EndTokenAuthoring();
         Visible = false;
         UiPanelStack.Pop(this);
         EmitSignal(SignalName.Closed);

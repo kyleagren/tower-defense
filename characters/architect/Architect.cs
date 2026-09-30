@@ -5,6 +5,8 @@ public partial class Architect : PlayerCharacter
     [Export] public BuildMenu BuildMenu { get; private set; }
     [Export] public RitualPlacer RitualPlacer { get; private set; }
 
+    private static readonly string[] _tokenSlotActions = { "token_slot_1", "token_slot_2", "token_slot_3" };
+
     private bool _buildMenuOpen;
 
     public override void _Ready()
@@ -34,6 +36,19 @@ public partial class Architect : PlayerCharacter
             return;
         }
 
+        // The Architect has no abilities, so 1/2/3 - or the d-pad with R1 held, as when deploying -
+        // open the build menu straight into authoring that token.
+        for (int token = 0; token < _tokenSlotActions.Length; token++)
+        {
+            if (@event.IsActionPressed(_tokenSlotActions[token]) && !RitualPlacer.IsPlacing
+                && (@event is not InputEventJoypadButton || InputChords.TokenModifierHeld))
+            {
+                OpenBuildMenu(token);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+        }
+
         if (@event is InputEventMouseMotion mouseMotion)
         {
             HandleLook(mouseMotion);
@@ -47,10 +62,11 @@ public partial class Architect : PlayerCharacter
         }
     }
 
-    private void OpenBuildMenu()
+    // With a token, opens straight into authoring it.
+    private void OpenBuildMenu(int token = -1)
     {
         _buildMenuOpen = true;
-        BuildMenu.Open();
+        BuildMenu.Open(token);
     }
 
     private void OnBuildMenuClosed()
