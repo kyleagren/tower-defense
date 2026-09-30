@@ -297,12 +297,24 @@ Replaces the construction menu's tile grids — spell grid, Favorites tab, rune 
 
 - A spell's slot is fixed, not packed alphabetically — learning a new spell never shifts the others.
 - **Unlearned spells show as locked slots** in their fixed position. Undecided against the alternative of the pie gaining slices as spells are learned; the fixed 8-position geometry below keeps positions stable either way.
-- The element ring is built with its **Physical** wedge from the start, dimmed until a Physical spell exists, so the first one arriving doesn't rotate every element's angle. If Physical never gets a spell, the ring is 5 wedges.
+- The element ring is built with its **Physical** and **multi-element** wedges from the start, dimmed until a spell exists for them, so the first one arriving doesn't rotate every element's angle.
 
 **Structure.**
 
-- **Spell wheel.** Ring 1 is the element: Fire, Lightning, Cold, Water, Wind, Physical. Ring 2 is that element's spells in their slots. Ice Wall is Cold.
+- **Spell wheel.** Ring 1 is the element: Fire, Lightning, Cold, Water, Wind, Physical, and a rainbow **multi-element** wedge. Ring 2 is that element's spells in their slots. Ice Wall is Cold.
+    - **A spell's wedge is worked out from its tags**, not authored: one element tag puts it under that element, none puts it under Physical, and more than one (Cataclysm) puts it under multi-element. Each spell has exactly one home, which keeps custom ordering simple. Listing a multi-element spell at the end of each of its elements instead is the alternative if players expect to find it there.
+    - **Default order is an authored number on each `Spell`**, currently the order spells were added in development, to be revisited once there's a real unlock order. The Acquired sort needs nothing new: `KnownSpells` is appended to as spells are learned, so it's already in acquisition order.
 - **Favorites are nested under their spell**, not in a separate wheel: element → spell → [New build | Favorite A | Favorite B …]. A favorite is a spell plus runes, so it lives with its spell; the ring under any one spell stays small; and "my Fireball chain build" becomes a three-flick incantation starting with the same motion as plain Fireball. A separate Favorites wheel filtered by element was considered and dropped — it bunches every Fire favorite into one ring, which overflows fast.
+- **Pinned favorites wheel.** One static 8-slot wheel of favorites, for truly fast access to the towers a player uses most. It never spirals, and every favorite on it is still reachable under its own spell too — pinning only adds a shortcut.
+    - **It fills itself automatically:** the player's first 8 favorites land in its slots as they're created. From there the player customizes it — pinning, unpinning and choosing which slot each pin sits in, since the direction is the whole point. There's no sorting on this wheel, and an empty slot stays empty rather than collapsing. Deleting a favorite clears its pin.
+    - **Auto-fill stops for good once the player takes charge of the wheel** — one flag per profile. Taking charge means deciding what a slot holds: pinning a favorite into an empty slot, or unpinning one. Once a player has said "I want to be in charge of where things go," the wheel is theirs and new favorites no longer land on it on their own. Swapping filled slots doesn't count, so rearranging auto-filled favorites keeps auto-fill running; neither does deleting a favorite, which empties its slot for the next new favorite to fill. Tracking this as a single flag was chosen over marking individual slots as claimed, since it's simpler to explain to players.
+    - **The spell wheel opens by default**, with a button to switch to the pinned wheel. A setting makes the pinned wheel open first instead. The default is a fixed rule or the setting, never dependent on whether anything is pinned.
+    - Selecting a pin behaves like any favorite: straight to placement, or stamping the token slot while authoring a token. Affordability shows the same way as everywhere else.
+    - **Saved as a fixed 8-entry list of favorite names**, not the favorites themselves. A favorite is a tagged class written out in full wherever it appears, so a pin holding one would save a second copy that loads as a separate object and drifts from the original. Names are already unique (collisions are auto-suffixed). Empty slots are real gaps, so the list joins Inventory and Tokens as a slot-based list whose gaps survive loading (`SaveManager.EnsureDefaultContent`, and quarantine restore in `SaveFile`).
+
+**Save data.** Sort mode, custom orders, the pinned wheel, its taken-charge flag and the which-wheel-opens-first setting are all new `[Export]` fields on the profile. Adding fields needs no schema version or migration — old saves load them at their defaults (Section 7, Save format) — so none of this waits on save work.
+
+**Replaces `BuildMenu` outright.** The grid menu is deleted rather than kept alongside, at the point the spell wheel is wired into the Architect in its place. Rune socketing and token authoring are unavailable until the radial reaches them, which is accepted during development.
 - **Socket hub.** Picking a spell (or New build) opens a hub with the spell at the center and the 4 sockets on the diagonals. The stick picks a socket. After a rune is socketed, focus moves on to the next empty socket, so filling a build is one continuous chain.
 - **Rune wheel.** Ring 1 is a rune grouping, ring 2 the runes in it. **The grouping is open** (below).
 - **Tier wheel.** Pressing a filled socket opens a small wheel instead of today's vertical popup: every owned tier at a fixed position, an **X** to clear the socket and a **Swap** to open the rune wheel. At most 7 wedges. A bumper shortcut for stepping tiers inside the rune wheel was considered; the keyboard-and-mouse equivalent would collide with the scroll wheel (used for spiral laps, below), so it's left out unless picking a lower tier proves slow in play.
@@ -313,7 +325,7 @@ Replaces the construction menu's tile grids — spell grid, Favorites tab, rune 
 **Input.**
 
 - **The stick picks the wedge, Cross commits.** The highlight stays on the last wedge when the stick returns to center, so the player can let go and then press. **Circle backs out** one level, and out of the menu from the top.
-- **The mouse acts as a virtual stick:** mouse movement accumulates into a direction clamped to the wheel's radius, so it's the same gesture as the controller.
+- **The mouse acts as a virtual stick:** mouse movement accumulates into a direction clamped to the wheel's radius, so it's the same gesture as the controller. That needs raw mouse movement, so **the mouse stays captured while a wheel is open** — a deliberate exception to the rule that the mouse is released while a panel is open (Section 3, Controls).
 - **Flick-and-return** (a flick past a threshold commits as the stick springs back, no button press) is deferred until the wheel exists to try it on.
 - Bindings in general aren't settled.
 
@@ -342,7 +354,7 @@ Replaces the construction menu's tile grids — spell grid, Favorites tab, rune 
     - **A — by what a rune does**, e.g. stats, delivery/shape, ailment, reaction, Ritual/targeting. Every rune has exactly one home; groups are uneven, and a delivery group dominated by Projectile runes is mostly dim for a non-projectile spell.
     - **C — A, with an element ring** inside the element-keyed groups (ailments, reactions), reusing the spell wheel's element positions.
 - **Greying.** Under B, compatibility is already handled by which wedges appear. Within a wedge, a rune that conflicts with one already socketed (same type, or a second reaction rune) or is unavailable is greyed and sorted to the back, as the grid does today. Whether unlearned runes show greyed or hidden is open.
-- **Where sort mode is changed**, and the token wheel's binding.
+- **Where sort mode is changed**, and the bindings for switching to the token and pinned wheels.
 
 ## 5. Enemies
 
