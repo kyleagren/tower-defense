@@ -10,5 +10,10 @@ public enum Tag
     Cold,
     Lightning,
     Wind,
-    Wall
+    Wall,
+    Trajectory,
+    Cooldown,
+    Reaction,
+    Tradeoff,
+    Utility
 }

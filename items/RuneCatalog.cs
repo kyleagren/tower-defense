@@ -80,6 +80,8 @@ public static class RuneCatalog
                 continue;
             }
 
+            RuneTags.Validate(rune);
+
             if (!_byRarity.TryGetValue(rune.Rarity, out List<Rune> list))
             {
                 list = new List<Rune>();

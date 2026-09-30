@@ -11,6 +11,10 @@ public partial class CastSpeedRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => Array.Empty<Tag>();
 
+    private static readonly Tag[] _tags = { Tag.Cooldown };
+
+    public override IReadOnlyList<Tag> Tags => _tags;
+
     public override string Description => "Reduces cast time, letting this ritual act more often.";
 
     public override void Apply(SpellCastContext context)

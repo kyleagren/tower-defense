@@ -10,6 +10,10 @@ public partial class ProjectileSpeedRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Projectile };
 
+    private static readonly Tag[] _tags = { Tag.Trajectory };
+
+    public override IReadOnlyList<Tag> Tags => _tags;
+
     public override string Description => "Increases projectile speed by 30%.";
 
     public override void Apply(SpellCastContext context)

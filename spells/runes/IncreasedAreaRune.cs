@@ -10,6 +10,10 @@ public partial class IncreasedAreaRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.AoE };
 
+    private static readonly Tag[] _tags = { Tag.AoE };
+
+    public override IReadOnlyList<Tag> Tags => _tags;
+
     public override string Description => "Increases the area of effect by 30%.";
 
     public override void Apply(SpellCastContext context)

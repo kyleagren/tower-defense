@@ -11,6 +11,10 @@ public partial class RangeRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => Array.Empty<Tag>();
 
+    private static readonly Tag[] _tags = { Tag.Utility };
+
+    public override IReadOnlyList<Tag> Tags => _tags;
+
     public override string Description => "Increases this ritual's range by 30%.";
 
     public override void Apply(SpellCastContext context)

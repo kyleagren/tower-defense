@@ -10,6 +10,10 @@ public partial class PierceRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Projectile };
 
+    private static readonly Tag[] _tags = { Tag.Trajectory };
+
+    public override IReadOnlyList<Tag> Tags => _tags;
+
     public override string Description => "Projectiles pass through additional enemies before stopping.";
 
     public override void Apply(SpellCastContext context)

@@ -179,16 +179,20 @@ public class PlayerProfile
     }
 
     // A name already in use gets a numeric suffix rather than being refused or overwriting the old one.
-    public void AddFavorite(string name, Spell spell, IEnumerable<Rune> runes)
+    // Returns the name it was actually saved under.
+    public string AddFavorite(string name, Spell spell, IEnumerable<Rune> runes)
     {
+        string uniqueName = UniqueFavoriteName(name);
+
         Data.Favorites.Add(new FavoriteLoadout
         {
-            Name = UniqueFavoriteName(name),
+            Name = uniqueName,
             Spell = spell,
             Runes = new Godot.Collections.Array<Rune>(runes)
         });
 
         Save();
+        return uniqueName;
     }
 
     private string UniqueFavoriteName(string name)
@@ -203,7 +207,7 @@ public class PlayerProfile
 
         do
         {
-            candidate = $"{name}({suffix})";
+            candidate = $"{name} ({suffix})";
             suffix++;
         } while (Data.Favorites.Any(favorite => favorite.Name == candidate));
 

@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cuia4k1x6b746" path="res://ui/BuildMenu.cs" id="1_cd770"]
 [ext_resource type="Script" path="res://ui/radial/RadialWheel.cs" id="2_radialwheel"]
+[ext_resource type="Script" path="res://ui/radial/RitualInscription.cs" id="3_inscription"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_description"]
 content_margin_left = 16.0
@@ -14,7 +15,7 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[node name="BuildMenu" type="Control" unique_id=2049028399 node_paths=PackedStringArray("Wheel", "TitleLabel", "CostLabel", "DescriptionLabel", "DescriptionPanel")]
+[node name="BuildMenu" type="Control" unique_id=2049028399 node_paths=PackedStringArray("Wheel", "CenterInfo", "TitleLabel", "CostLabel", "DescriptionLabel", "DescriptionPanel", "Inscription", "RuneWheel", "RuneInfoPanel", "RuneTitleLabel", "RuneCostLabel", "RuneDescriptionLabel")]
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -26,10 +27,17 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_cd770")
 Wheel = NodePath("Wheel")
+CenterInfo = NodePath("CenterInfo")
 TitleLabel = NodePath("CenterInfo/TitleLabel")
 CostLabel = NodePath("CenterInfo/CostLabel")
 DescriptionLabel = NodePath("DescriptionPanel/DescriptionLabel")
 DescriptionPanel = NodePath("DescriptionPanel")
+Inscription = NodePath("Inscription")
+RuneWheel = NodePath("RuneWheel")
+RuneInfoPanel = NodePath("RuneInfoPanel")
+RuneTitleLabel = NodePath("RuneInfoPanel/RuneInfo/RuneHeader/RuneTitleLabel")
+RuneCostLabel = NodePath("RuneInfoPanel/RuneInfo/RuneHeader/RuneCostLabel")
+RuneDescriptionLabel = NodePath("RuneInfoPanel/RuneInfo/RuneDescriptionLabel")
 
 [node name="Wheel" type="Control" parent="."]
 layout_mode = 1
@@ -95,4 +103,68 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_description")
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Inscription" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_inscription")
+
+[node name="RuneWheel" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_radialwheel")
+
+[node name="RuneInfoPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -685.0
+offset_right = 400.0
+offset_bottom = -545.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_description")
+
+[node name="RuneInfo" type="VBoxContainer" parent="RuneInfoPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="RuneHeader" type="HBoxContainer" parent="RuneInfoPanel/RuneInfo"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="RuneTitleLabel" type="Label" parent="RuneInfoPanel/RuneInfo/RuneHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 26
+
+[node name="RuneCostLabel" type="Label" parent="RuneInfoPanel/RuneInfo/RuneHeader"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 2
+
+[node name="RuneDescriptionLabel" type="Label" parent="RuneInfoPanel/RuneInfo"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
 autowrap_mode = 3

@@ -11,6 +11,10 @@ public partial class MultiProjectileRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Projectile };
 
+    private static readonly Tag[] _tags = { Tag.Trajectory };
+
+    public override IReadOnlyList<Tag> Tags => _tags;
+
     public override string Description =>
         "Fires additional projectiles in a forward cone, trading a small amount of damage for extra hits.";
 

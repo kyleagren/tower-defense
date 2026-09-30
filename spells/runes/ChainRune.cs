@@ -13,6 +13,10 @@ public partial class ChainRune : Rune
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag>();
     public override IReadOnlyList<Tag> RequiredAnyTags => new List<Tag> { Tag.Chaining, Tag.Projectile };
 
+    private static readonly Tag[] _tags = { Tag.Trajectory };
+
+    public override IReadOnlyList<Tag> Tags => _tags;
+
     public override string Description => "Adds additional chain jumps to nearby enemies.";
 
     public override void Apply(SpellCastContext context)

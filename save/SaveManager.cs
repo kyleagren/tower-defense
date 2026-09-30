@@ -420,6 +420,11 @@ public partial class SaveManager : Node
     {
         Spell spell = GD.Load<Spell>(path);
 
+        if (spell != null)
+        {
+            RuneTags.Validate(spell);
+        }
+
         if (spell != null && !data.KnownSpells.Any(known => known == spell))
         {
             data.KnownSpells.Add(spell);

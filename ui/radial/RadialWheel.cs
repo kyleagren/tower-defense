@@ -2,9 +2,10 @@ using Godot;
 using System.Collections.Generic;
 
 // A ring of wedges picked by direction: the radial_* stick actions or the mouse point, and ui_accept
-// or a left click commits. Slot 0 is at the top and slots run clockwise. Positions are fixed and an
-// empty slot stays a gap, since a player learns an item by its direction. Knows nothing about what
-// its items mean - whatever hosts it reacts to Committed and handles backing out.
+// or a left click commits. Slot 0 is at the top and slots run clockwise, each centered on its own
+// evenly spaced direction; a slot's weight only moves the boundaries with its neighbors. Positions
+// are fixed and an empty slot stays a gap, since a player learns an item by its direction. Knows
+// nothing about what its items mean - whatever hosts it reacts to Committed and handles backing out.
 //
 // Reads mouse motion in _Input without consuming it, so InputDevice still sees the mouse. Anything
 // full-screen the host draws around it should use MouseFilter.Ignore, or a click can be taken by the
@@ -39,11 +40,22 @@ public partial class RadialWheel : Control
     // How much of the wheel's radius is the empty center, where the host shows its info.
     [Export(PropertyHint.Range, "0.1,0.9")] public float InnerRadiusFraction { get; set; } = 0.55f;
 
+    // Off for a host that draws its own controls for each slot and only wants the pointing.
+    [Export] public bool DrawWedges { get; set; } = true;
+
+    // Off for a host that reads presses itself, like one that tells a tap from a hold.
+    [Export] public bool HandlesCommit { get; set; } = true;
+
     // Set by the host: only one wheel reads input at a time, and not while a dialog sits over it.
     public bool AcceptsInput { get; set; }
 
     public int SlotCount => _items.Count;
     public int Highlighted => _highlighted;
+
+    // Where the stick or mouse points, up to length 1 - for a host drawing its own indicator.
+    public Vector2 Pointer => _pointer;
+
+    private float SlotSpacing => Mathf.Tau / _items.Count;
 
     public override void _Ready()
     {
@@ -60,6 +72,21 @@ public partial class RadialWheel : Control
         // A new ring starts from neutral, not from wherever the mouse pointed into the last one.
         _virtualStick = Vector2.Zero;
         _pointer = Vector2.Zero;
+        QueueRedraw();
+    }
+
+    // Swaps in new items for the same slots without resetting where the stick or mouse points - for
+    // an item that changes mid-gesture.
+    public void ReplaceItems(IReadOnlyList<RadialWheelItem> items)
+    {
+        _items.Clear();
+        _items.AddRange(items);
+
+        if (_highlighted >= _items.Count)
+        {
+            _highlighted = -1;
+        }
+
         QueueRedraw();
     }
 
@@ -82,7 +109,7 @@ public partial class RadialWheel : Control
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!IsReadingInput())
+        if (!IsReadingInput() || !HandlesCommit)
         {
             return;
         }
@@ -118,12 +145,35 @@ public partial class RadialWheel : Control
         }
     }
 
-    // Measured clockwise from straight up, with each wedge centered on its own direction.
+    private static float WeightOf(RadialWheelItem item) => item?.Weight ?? 1f;
+
+    // Measured clockwise from straight up. The boundary between two neighbors sits between their
+    // directions in proportion to their weights.
+    private float BoundaryAfter(int slot)
+    {
+        float here = WeightOf(_items[slot]);
+        float next = WeightOf(_items[(slot + 1) % _items.Count]);
+        return (slot + here / (here + next)) * SlotSpacing;
+    }
+
+    private float BoundaryBefore(int slot) =>
+        slot == 0 ? BoundaryAfter(_items.Count - 1) - Mathf.Tau : BoundaryAfter(slot - 1);
+
     private int SlotAt(Vector2 direction)
     {
-        float slotWidth = Mathf.Tau / _items.Count;
-        float fromTop = Mathf.PosMod(Mathf.Atan2(direction.X, -direction.Y), Mathf.Tau);
-        return Mathf.FloorToInt((fromTop + slotWidth / 2f) / slotWidth) % _items.Count;
+        float fromTop = Mathf.Atan2(direction.X, -direction.Y);
+
+        for (int slot = 0; slot < _items.Count; slot++)
+        {
+            float start = BoundaryBefore(slot);
+
+            if (Mathf.PosMod(fromTop - start, Mathf.Tau) < BoundaryAfter(slot) - start)
+            {
+                return slot;
+            }
+        }
+
+        return 0;
     }
 
     private void TryCommit()
@@ -136,7 +186,7 @@ public partial class RadialWheel : Control
 
     public override void _Draw()
     {
-        if (_items.Count == 0)
+        if (_items.Count == 0 || !DrawWedges)
         {
             return;
         }
@@ -144,7 +194,6 @@ public partial class RadialWheel : Control
         Vector2 center = Size / 2f;
         float outerRadius = Mathf.Min(Size.X, Size.Y) / 2f;
         float innerRadius = outerRadius * InnerRadiusFraction;
-        float slotWidth = Mathf.Tau / _items.Count;
 
         for (int slot = 0; slot < _items.Count; slot++)
         {
@@ -153,9 +202,9 @@ public partial class RadialWheel : Control
             float slotOuterRadius = highlighted ? outerRadius * (1f + HighlightGrowFraction) : outerRadius;
 
             // Screen angles: 0 is +X and angles run clockwise, so straight up is -Pi/2.
-            float middle = -Mathf.Pi / 2f + slot * slotWidth;
-            float from = middle - slotWidth / 2f + WedgeGapRadians;
-            float to = middle + slotWidth / 2f - WedgeGapRadians;
+            float middle = -Mathf.Pi / 2f + slot * SlotSpacing;
+            float from = -Mathf.Pi / 2f + BoundaryBefore(slot) + WedgeGapRadians;
+            float to = -Mathf.Pi / 2f + BoundaryAfter(slot) - WedgeGapRadians;
 
             DrawColoredPolygon(BuildWedge(center, innerRadius, slotOuterRadius, from, to), WedgeColor(item, highlighted));
 

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 // Which Tag values are elements. Tag also holds spell shapes and rune categories, so anything that
@@ -13,6 +12,4 @@ public static class ElementTags
 
     public static IReadOnlyList<Tag> All => _all;
     public static IReadOnlyList<Tag> StatusCapable => _statusCapable;
-
-    public static bool IsElement(Tag tag) => Array.IndexOf(_all, tag) >= 0;
 }

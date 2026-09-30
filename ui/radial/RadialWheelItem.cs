@@ -9,4 +9,9 @@ public class RadialWheelItem
 
     // Drawn dimmed and can't be committed - unaffordable, conflicting, or not yet available.
     public bool Enabled { get; init; } = true;
+
+    // This slot's share of the ring's angle relative to its neighbors. The slot stays centered on
+    // its own direction either way; weight only moves the boundaries, changing how much pointing
+    // reaches it.
+    public float Weight { get; init; } = 1f;
 }

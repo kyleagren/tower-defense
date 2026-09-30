@@ -10,6 +10,10 @@ public partial class ReturnRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Projectile };
 
+    private static readonly Tag[] _tags = { Tag.Trajectory };
+
+    public override IReadOnlyList<Tag> Tags => _tags;
+
     public override string Description => "Projectiles fly back toward their origin instead of expiring.";
 
     public override void Apply(SpellCastContext context)

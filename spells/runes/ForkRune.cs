@@ -11,6 +11,10 @@ public partial class ForkRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Chaining };
 
+    private static readonly Tag[] _tags = { Tag.Trajectory };
+
+    public override IReadOnlyList<Tag> Tags => _tags;
+
     public override string Description => "Strikes an additional nearby enemy at the same time, each starting its own chain.";
 
     public override void Apply(SpellCastContext context)

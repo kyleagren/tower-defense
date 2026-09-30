@@ -10,6 +10,10 @@ public abstract partial class Rune : Resource
     public abstract string Name { get; }
     public abstract IReadOnlyList<Tag> RequiredTags { get; }
     public virtual IReadOnlyList<Tag> RequiredAnyTags => Array.Empty<Tag>();
+
+    // What kind of rune this is, as opposed to what it requires of a spell. Decides which rune wheel
+    // buckets show it (RuneTags.Buckets), and gives items something to name a family of runes by.
+    public abstract IReadOnlyList<Tag> Tags { get; }
     public abstract string Description { get; }
     public virtual float ManaCostMultiplier { get; protected set; } = 1.2f;
 
