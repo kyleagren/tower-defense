@@ -31,6 +31,10 @@ public partial class RitualPlacer : Node
     private PlacementFlow _flow;
     private bool _isValidPlacement;
 
+    // Set when placement starts with confirm_placement already held - the click that picked what's
+    // being placed. That press can't also confirm it; confirming needs a fresh one.
+    private bool _confirmHeldSinceStart;
+
     // Invoked once the Ritual has actually been placed (not on cancel, or a placement the host turns
     // down) - lets a caller like TokenDeployer know it should consume the token that was just spent.
     private Action _onConfirmed;
@@ -79,6 +83,7 @@ public partial class RitualPlacer : Node
         _pendingContext = SpellInstance.ResolvePreview(spell, runes, _ownerSheet);
         _flow = spell.CreatePlacementFlow(this, _pendingContext);
         _onConfirmed = onConfirmed;
+        _confirmHeldSinceStart = Input.IsActionPressed("confirm_placement");
 
         IsPlacing = true;
         LevelContext.Current.RitualRoster.BeginGhost();
@@ -118,7 +123,7 @@ public partial class RitualPlacer : Node
     // finishes, resolved against what was picked so its cost and range already include it.
     private void ProcessFlowPoints()
     {
-        _flow.UpdatePoints(_cursorPosition, Input.IsActionJustPressed("confirm_placement"));
+        _flow.UpdatePoints(_cursorPosition, ConfirmJustPressed());
 
         if (_flow.IsPickingPoints)
         {
@@ -156,10 +161,21 @@ public partial class RitualPlacer : Node
         UpdateGhostValidity();
         LevelContext.Current.RitualRoster.MoveGhost(_ghost.GlobalPosition);
 
-        if (Input.IsActionJustPressed("confirm_placement") && _isValidPlacement)
+        if (ConfirmJustPressed() && _isValidPlacement)
         {
             ConfirmPlacement();
         }
+    }
+
+    private bool ConfirmJustPressed()
+    {
+        if (_confirmHeldSinceStart)
+        {
+            _confirmHeldSinceStart = Input.IsActionPressed("confirm_placement");
+            return false;
+        }
+
+        return Input.IsActionJustPressed("confirm_placement");
     }
 
     private void BeginRitualGhost()

@@ -5,5 +5,6 @@
 
 [resource]
 script = ExtResource("1_icewallspell")
+WheelOrder = 3
 SegmentScene = ExtResource("2_segment")
 metadata/_custom_type_script = "uid://d3tcsiow71g6n"

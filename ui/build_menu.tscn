@@ -1,10 +1,20 @@
 [gd_scene format=3 uid="uid://d2otykwv31mch"]
 
 [ext_resource type="Script" uid="uid://cuia4k1x6b746" path="res://ui/BuildMenu.cs" id="1_cd770"]
-[ext_resource type="Script" uid="uid://ts88p5kp3hvy" path="res://ui/TileGrid.cs" id="2_n5wqu"]
-[ext_resource type="Theme" path="res://ui/build_menu_theme.tres" id="3_buildmenutheme"]
+[ext_resource type="Script" path="res://ui/radial/RadialWheel.cs" id="2_radialwheel"]
 
-[node name="BuildMenu" type="Control" unique_id=2049028399 node_paths=PackedStringArray("Grid", "MenuRegion", "DescriptionTitleLabel", "DescriptionBodyLabel")]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_description"]
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+bg_color = Color(0, 0, 0, 0.6)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="BuildMenu" type="Control" unique_id=2049028399 node_paths=PackedStringArray("Wheel", "TitleLabel", "CostLabel", "DescriptionLabel", "DescriptionPanel")]
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -13,71 +23,76 @@ anchor_bottom = 1.0
 offset_top = 56.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("3_buildmenutheme")
+mouse_filter = 2
 script = ExtResource("1_cd770")
-Grid = NodePath("MenuRegion/GridContainer")
-MenuRegion = NodePath("MenuRegion")
-DescriptionTitleLabel = NodePath("DescriptionPanel/MarginContainer/VBoxContainer/TitleLabel")
-DescriptionBodyLabel = NodePath("DescriptionPanel/MarginContainer/VBoxContainer/BodyLabel")
+Wheel = NodePath("Wheel")
+TitleLabel = NodePath("CenterInfo/TitleLabel")
+CostLabel = NodePath("CenterInfo/CostLabel")
+DescriptionLabel = NodePath("DescriptionPanel/DescriptionLabel")
+DescriptionPanel = NodePath("DescriptionPanel")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=849732157]
+[node name="Wheel" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_left = 0.4
+anchor_top = 0.42
+anchor_right = 0.4
+anchor_bottom = 0.42
+offset_left = -250.0
+offset_top = -250.0
+offset_right = 250.0
+offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.70000005)
+mouse_filter = 2
+script = ExtResource("2_radialwheel")
 
-[node name="MenuRegion" type="Control" parent="." unique_id=3001]
+[node name="CenterInfo" type="VBoxContainer" parent="."]
 layout_mode = 1
-anchor_right = 0.75
-anchor_bottom = 1.0
+anchor_left = 0.4
+anchor_top = 0.42
+anchor_right = 0.4
+anchor_bottom = 0.42
+offset_left = -115.0
+offset_top = -70.0
+offset_right = 115.0
+offset_bottom = 70.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+alignment = 1
 
-[node name="GridContainer" type="GridContainer" parent="MenuRegion" unique_id=1423556746]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
-columns = 4
-script = ExtResource("2_n5wqu")
-
-[node name="DescriptionPanel" type="Panel" parent="." unique_id=3002]
-layout_mode = 1
-anchor_left = 0.75
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="DescriptionPanel" unique_id=3003]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
-
-[node name="VBoxContainer" type="VBoxContainer" parent="DescriptionPanel/MarginContainer" unique_id=3004]
+[node name="TitleLabel" type="Label" parent="CenterInfo"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="TitleLabel" type="Label" parent="DescriptionPanel/MarginContainer/VBoxContainer" unique_id=3005]
+[node name="CostLabel" type="Label" parent="CenterInfo"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
-autowrap_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="BodyLabel" type="Label" parent="DescriptionPanel/MarginContainer/VBoxContainer" unique_id=3006]
+[node name="DescriptionPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.4
+anchor_top = 0.42
+anchor_right = 0.4
+anchor_bottom = 0.42
+offset_left = -300.0
+offset_top = 275.0
+offset_right = 300.0
+offset_bottom = 325.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_description")
+
+[node name="DescriptionLabel" type="Label" parent="DescriptionPanel"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
 autowrap_mode = 3

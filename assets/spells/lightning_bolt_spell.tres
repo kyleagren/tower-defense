@@ -10,5 +10,6 @@ MoreDamagePerRemainingChain = 0.15
 
 [resource]
 script = ExtResource("1_lightning")
+WheelOrder = 2
 DamageModifier = SubResource("Resource_lightning_chainmod")
 ArcVisualScene = ExtResource("3_arcvisual")

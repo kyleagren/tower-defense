@@ -204,7 +204,9 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     protected void HandleLook(InputEventMouseMotion mouseMotion)
     {
-        if (Input.MouseMode != Input.MouseModeEnum.Captured)
+        // A panel can keep the mouse captured (a radial wheel reading it as a stick), so being
+        // captured alone doesn't mean the mouse belongs to the camera.
+        if (Input.MouseMode != Input.MouseModeEnum.Captured || UiPanelStack.AnyOpen)
         {
             return;
         }

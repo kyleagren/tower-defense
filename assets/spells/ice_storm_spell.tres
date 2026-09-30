@@ -6,5 +6,6 @@
 
 [resource]
 script = ExtResource("1_icestorm")
+WheelOrder = 4
 BombardmentScene = ExtResource("2_bombardment")
 GroundEffectScene = ExtResource("3_chilledground")

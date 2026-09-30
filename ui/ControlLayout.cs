@@ -1,8 +1,7 @@
 using Godot;
 
-// Layout helpers shared by the hand-built Control screens (BuildMenu's socket ring,
-// InventoryPanel's equipment silhouette), which position children at fractional points in their
-// parent rather than through a container.
+// Layout helpers for hand-built Control screens (InventoryPanel's equipment silhouette), which
+// position children at fractional points in their parent rather than through a container.
 public static class ControlLayout
 {
     // Pins a control to a single fractional point in its parent and gives it a fixed pixel size

@@ -4,11 +4,13 @@ using System.Collections.Generic;
 
 // Tracks which modal UI panels (build menu, inventory, ...) are open so they can stack -
 // most-recently-opened draws on top and is the only one that responds to ui_cancel. Mouse mode is
-// centralized here too: captured during play, released while anything is open.
+// centralized here too: captured during play, released while anything is open - unless the top
+// panel asked to keep it captured, as a radial wheel does to read raw mouse movement.
 public static class UiPanelStack
 {
     private static readonly List<Control> _open = new();
     private static readonly Dictionary<Control, Action> _closers = new();
+    private static readonly HashSet<Control> _capturingMouse = new();
 
     // Holds for the whole session: InputDevice outlives every scene.
     static UiPanelStack()
@@ -16,11 +18,21 @@ public static class UiPanelStack
         InputDevice.Changed += ApplyMouseMode;
     }
 
-    public static void Push(Control panel, Action close)
+    public static void Push(Control panel, Action close, bool capturesMouse = false)
     {
         _open.Remove(panel);
         _open.Add(panel);
         _closers[panel] = close;
+
+        if (capturesMouse)
+        {
+            _capturingMouse.Add(panel);
+        }
+        else
+        {
+            _capturingMouse.Remove(panel);
+        }
+
         ReassignZIndices();
         ApplyMouseMode();
     }
@@ -29,6 +41,7 @@ public static class UiPanelStack
     {
         _open.Remove(panel);
         _closers.Remove(panel);
+        _capturingMouse.Remove(panel);
         ReassignZIndices();
         ApplyMouseMode();
     }
@@ -51,14 +64,15 @@ public static class UiPanelStack
     {
         _open.Clear();
         _closers.Clear();
+        _capturingMouse.Clear();
         ApplyMouseMode();
     }
 
-    // Captured for play; free while a panel is open, but hidden on a controller, where a cursor
-    // parked wherever the mouse was last left is just clutter.
+    // Captured for play and for a panel that asked for it; free while any other panel is open, but
+    // hidden on a controller, where a cursor parked wherever the mouse was last left is just clutter.
     private static void ApplyMouseMode()
     {
-        Input.MouseMode = _open.Count == 0 ? Input.MouseModeEnum.Captured
+        Input.MouseMode = _open.Count == 0 || _capturingMouse.Contains(_open[^1]) ? Input.MouseModeEnum.Captured
             : InputDevice.UsingController ? Input.MouseModeEnum.Hidden
             : Input.MouseModeEnum.Visible;
     }

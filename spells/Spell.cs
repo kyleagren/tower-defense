@@ -7,6 +7,10 @@ public abstract partial class Spell : Resource
     public abstract IReadOnlyList<Tag> Tags { get; }
     public abstract string Description { get; }
 
+    // Where the spell sits in its element's ring under the Default sort - currently the order spells
+    // were added to the game, until there's a real unlock order.
+    [Export] public int WheelOrder { get; private set; }
+
     public virtual float BaseRange { get; protected set; } = 8f;
     public virtual float BaseCastTime { get; protected set; } = 1f;
     public virtual float BaseCooldown { get; protected set; } = 0f;
