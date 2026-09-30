@@ -82,8 +82,31 @@ public partial class Enemy : CharacterBody3D, IDamageable
     public float SyncedHealth
     {
         get => CurrentHealth;
-        set => CurrentHealth = value;
+        set
+        {
+            // Health only rises through something the local guess can't know about (a heal, a
+            // dummy's reset), so the guess is stale.
+            if (value > CurrentHealth)
+            {
+                _predictionExpiresAt = 0.0;
+            }
+
+            CurrentHealth = value;
+        }
     }
+
+    // Long enough to cover a round trip through Steam's relay, so the host's result arrives before
+    // the guess lapses; short enough that a hit the host rejected doesn't linger on the bar.
+    private const double HitPredictionSeconds = 0.5;
+
+    private float _predictedHealth;
+    private double _predictionExpiresAt;
+
+    private static double Now => Time.GetTicksMsec() / 1000.0;
+
+    // A copy's bar shows its own player's hits before the host confirms them. The lower value wins,
+    // since the host's number drops below the guess once it includes the hit plus anyone else's.
+    private float DisplayedHealth => Now < _predictionExpiresAt ? Mathf.Min(CurrentHealth, _predictedHealth) : CurrentHealth;
 
     // -1 for no Status.
     public int SyncedStatus
@@ -260,7 +283,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         }
         else
         {
-            HealthBar.SetFraction(CurrentHealth / MaxHealth);
+            HealthBar.SetFraction(DisplayedHealth / MaxHealth);
         }
 
         UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
@@ -273,11 +296,13 @@ public partial class Enemy : CharacterBody3D, IDamageable
             return;
         }
 
-        // A copy can't resolve a hit. The dealer sees their number straight away; the host applies
-        // the damage and the result syncs back.
+        // A copy can't resolve a hit. The dealer sees their number and their bar drop straight away;
+        // the host applies the damage and the result syncs back. Death waits for the host.
         if (!IsSimulatedHere)
         {
             ShowDamageNumber(hit.Damage);
+            _predictedHealth = Mathf.Max(DisplayedHealth - hit.Damage.Total, 0f);
+            _predictionExpiresAt = Now + HitPredictionSeconds;
             RpcId(1, MethodName.ReceiveForwardedHit, hit.Damage.ToNetwork(), (int)hit.Type, hit.RagdollImpulse);
             return;
         }

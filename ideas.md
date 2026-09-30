@@ -80,6 +80,7 @@ Concentrated effect-style runes that give a good chunk of damage but come at oth
 - Similar one that shrinks the range of the tower.
 - Similar one for duration.
 - Similar one for cooldown recovery
+- Shatter - if this tower kills a frozen enemy, that enemy explodes in a burst of AoE
 
 ## Reaction Runes
 
