@@ -337,11 +337,11 @@ Replaces the construction menu's tile grids — spell grid, Favorites tab, rune 
 
 **Open.**
 
-- **Rune grouping.** The current roster is too small to judge, so it's waiting on a larger draft of rune ideas (`ideas.md`). Candidates:
+- **Rune grouping — leaning B, by the chosen spell's tags.** The current roster is too small to settle it, so it's waiting on a larger draft of rune ideas (`ideas.md`). Candidates:
+    - **B — by the chosen spell's own tags (the lean)**, plus a group for runes that fit any spell: only the tags the spell has appear (Fireball: Projectile, Fire, AoE, Any). Incompatible tags rule out whole swaths of runes up front, so the wheel never shows anything that can't be socketed. **The rune wheel always opens with its spell already chosen**, so muscle memory forms per spell — Fireball's rune wheel is always the same, even though a rune's position differs between spells. That answers the usual objection to B. Costs: a rune requiring any of two tags appears in both wedges, and the any-spell group will be the largest, likely needing to split into more than one wedge — **how to split it is open** (e.g. by what the runes are for; not settled).
     - **A — by what a rune does**, e.g. stats, delivery/shape, ailment, reaction, Ritual/targeting. Every rune has exactly one home; groups are uneven, and a delivery group dominated by Projectile runes is mostly dim for a non-projectile spell.
-    - **B — by the chosen spell's own tags**, plus an "Any" group: only the tags the spell has appear (Fireball: Projectile, Fire, AoE, Any). Never shows anything incompatible, but a rune's position differs per spell, a rune requiring any of two tags appears twice, and "Any" is the largest group.
     - **C — A, with an element ring** inside the element-keyed groups (ailments, reactions), reusing the spell wheel's element positions.
-- **Incompatible or unlearned runes inside a group: dimmed or hidden?** Dimming keeps every rune's position identical across every spell but leaves dead slots; hiding is compact but moves runes around per spell. Likely decides between A/C and B as much as anything.
+- **Greying.** Under B, compatibility is already handled by which wedges appear. Within a wedge, a rune that conflicts with one already socketed (same type, or a second reaction rune) or is unavailable is greyed and sorted to the back, as the grid does today. Whether unlearned runes show greyed or hidden is open.
 - **Where sort mode is changed**, and the token wheel's binding.
 
 ## 5. Enemies
@@ -757,9 +757,19 @@ Towers fire constantly, so an unlimited hard-CC reaction permanently locks whate
 Every rune should hook a _tag_, not a spell class, so it applies to any future spell sharing that tag. Worth checking each idea against that explicitly. Speculative spell, rune and character drafts live in `ideas.md`, not here.
 
 - **Prime** — a "Primed" debuff; the next `Tag.Lightning` hit on a Primed enemy sparks a random _nearby_ enemy, evaluated fresh off the struck enemy's position so no group tracking is needed. **Must be capped to once per cast** — without that it compounds with `ChainRune` worse than Fireball's Chain+Explode ceiling, which is already bounded to one shot.
-- **Targeting rune** — overriding a spell's default priority. Unblocked; `TargetPriority` already exists as one field.
+- **Targeting runes** — overriding a spell's default priority. Unblocked; `TargetPriority` already exists as one field. **Targeting costs a socket**, not a free per-Ritual toggle — the default (`ClosestToGoal`) should be good enough most of the time. To make that socket a real trade rather than a tax, a targeting rune also carries a damage bonus. Candidates in `ideas.md`: highest health (current or max), lowest health / killing blow, flying, closest to or furthest from the Ritual, furthest from the objective, enemies carrying a Status, and firing in a fixed direction.
 
 **Do Reaction Runes participate in rarity tiers at all?** Their identity is enabling an interaction — a tradeoff over which socket to spend, not a number to chase — and since Common is always unlocked, including them wouldn't gate the mechanic behind RNG, only a magnitude bonus. Current lean: each tier makes the reaction ~5% stronger. Not committed, and cheap to change once built.
+
+### Parked topics
+
+Raised and deliberately set aside for their own conversations, so they aren't lost:
+
+- **Enemy collision.** Solid enemies make CC spill: freezing the front three enemies of a column effectively freezes everyone queued behind them. Letting players build a kill box is fine — tower defense encourages it — so this reopens the rejected idea of disabling enemy-vs-enemy collision (Section 4, Ice Wall). Shapes on the table: no enemy collision, with AoE damage scaling down past some number of targets (square-root scaling, as WoW does); soft separation, where enemies push apart for spacing but can squeeze past each other; a hybrid where frozen, stunned or rooted enemies stop being solid so the queue flows around them; or a mix. Touches movement, AoE balance and the packed-enemy jitter at walls.
+- **Triggers.** Part of the original concept (`TriggerBinding`, Section 7; Trigger-tagged spells) but never designed: on kill, on cast, when the Ritual is damaged, when a wall breaks, and how a trigger pairs with what it fires.
+- **Rune colors**, in the spirit of PoE's gem colors. Colors already carry two meanings in this UI — element (`DamageTypeColors`, on spells, tokens and the Harvest gauge) and rarity (`RarityColors`, on rune tiles) — so a third system needs its own visual channel (e.g. rarity on the border, category on the fill). Also open: whether a color is only a signal, or a socketing rule the way PoE's are.
+- **Growing the tag vocabulary.** Today's tags (Projectile, AoE, Duration, Trigger, Chaining, Wall) can't tell a line from a cone from a field, so a rune can't target those shapes. The drafted spells suggest Line, Cone, Field, Pulse, Traveling and Support. It also feeds rune grouping, if runes end up filtered by tag.
+- **Damage-over-time hits set no Status** (`HitType.DamageOverTime`). A ground effect meant to keep re-applying a Status (a Magma Floes feeding a delayed double-hit like Hydro Blade), or a zero-damage Status-setter like Rain, needs another way to set one.
 
 ### Undecided design
 
