@@ -26,9 +26,6 @@ public partial class DebugToggle : Node
         }
     }
 
-    // The elements a Status can be, and so what Harvest can be fed.
-    private static readonly Tag[] _harvestElements = { Tag.Fire, Tag.Water, Tag.Cold, Tag.Lightning };
-
     // Fills the local Soldier's Harvest gauge from one random element, for testing Overdrive without
     // harvesting a wave's worth of Statuses.
     private static void FillLocalHarvestGauge()
@@ -42,7 +39,7 @@ public partial class DebugToggle : Node
         {
             if (ability is HarvestAbility harvest)
             {
-                harvest.FillGauge(_harvestElements[GD.RandRange(0, _harvestElements.Length - 1)]);
+                harvest.FillGauge(ElementTags.StatusCapable[GD.RandRange(0, ElementTags.StatusCapable.Count - 1)]);
             }
         }
     }

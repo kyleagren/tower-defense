@@ -27,10 +27,6 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public HealthBar3D HealthBar { get; private set; }
     [Export] public PackedScene FloatingTextScene { get; private set; }
 
-    // The elements that can actually be a Status - the same four DamagePacket.DominantElement
-    // considers, since Wind is consumer-only and never becomes one.
-    private static readonly Tag[] _statusElements = { Tag.Fire, Tag.Water, Tag.Cold, Tag.Lightning };
-
     // TODO placeholder: remove once there's a real way to display an enemy's element/ailments.
     // Colors come from DamageTypeColors rather than a second hardcoded palette here, so the tint an
     // enemy shows and the color its damage numbers use can't drift apart.
@@ -43,7 +39,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     {
         Dictionary<Tag, StandardMaterial3D> materials = new Dictionary<Tag, StandardMaterial3D>();
 
-        foreach (Tag element in _statusElements)
+        foreach (Tag element in ElementTags.StatusCapable)
         {
             materials[element] = CreateTintMaterial(DamageTypeColors.GetStatusOverlay(element));
         }
