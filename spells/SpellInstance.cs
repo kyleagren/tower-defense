@@ -89,7 +89,7 @@ public class SpellInstance
     public bool TryAttachRune(Rune rune)
     {
         if (_attachedRunes.Count >= GameRules.MaxRuneSlots) return false;
-        if (!rune.IsCompatibleWith(_definition.Tags)) return false;
+        if (!rune.IsCompatibleWith(_definition)) return false;
 
         if (_attachedRunes.Any(rune.ConflictsWith)) return false;
 

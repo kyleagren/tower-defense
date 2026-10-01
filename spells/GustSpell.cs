@@ -12,7 +12,7 @@ public partial class GustSpell : Spell
     [Export] public float BaseInfusionShare { get; private set; } = 0.4f;
 
     // Per enemy it passes through.
-    [Export] public override float BaseWindDamage { get; protected set; } = 12f;
+    [Export] public override float BaseWindDamage { get; protected set; } = 25f;
     [Export] public override float BaseCastTime { get; protected set; } = 1.2f;
     [Export] public override float BaseCooldown { get; protected set; } = 3f;
     [Export] public override int BaseManaCost { get; protected set; } = 12;

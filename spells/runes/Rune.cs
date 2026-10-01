@@ -23,10 +23,12 @@ public abstract partial class Rune : Resource
 
     public abstract void Apply(SpellCastContext context);
 
-    public bool IsCompatibleWith(IReadOnlyList<Tag> spellTags)
+    // Whether this rune fits the spell at all - one that doesn't is left off the rune wheel. Tags
+    // decide it unless a rune needs a rule tags can't express.
+    public virtual bool IsCompatibleWith(Spell spell)
     {
-        bool hasRequiredTags = RequiredTags.All(tag => spellTags.Contains(tag));
-        bool hasRequiredAnyTag = RequiredAnyTags.Count == 0 || RequiredAnyTags.Any(tag => spellTags.Contains(tag));
+        bool hasRequiredTags = RequiredTags.All(tag => spell.Tags.Contains(tag));
+        bool hasRequiredAnyTag = RequiredAnyTags.Count == 0 || RequiredAnyTags.Any(tag => spell.Tags.Contains(tag));
         return hasRequiredTags && hasRequiredAnyTag;
     }
 

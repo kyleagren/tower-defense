@@ -33,7 +33,8 @@ public partial class Enemy : CharacterBody3D, IDamageable
     private static readonly Dictionary<Tag, StandardMaterial3D> _statusMaterials = BuildStatusMaterials();
 
     private static readonly StandardMaterial3D _burnFlashMaterial = CreateTintMaterial(new Color(0.5f, 0f, 0f));
-    private const float BurnFlashDuration = 0.1f;
+    private static readonly StandardMaterial3D _frostburnFlashMaterial = CreateTintMaterial(new Color(0.04f, 0.07f, 0.28f));
+    private const float AilmentFlashDuration = 0.1f;
 
     private static Dictionary<Tag, StandardMaterial3D> BuildStatusMaterials()
     {
@@ -56,10 +57,14 @@ public partial class Enemy : CharacterBody3D, IDamageable
     private readonly List<Debuff> _debuffs = new List<Debuff>();
     private Material _appliedTint;
     private Material _statusMeshRestMaterial;
-    private float _burnFlashTimer;
+    private float _ailmentFlashTimer;
 
     public bool IsDead => _isDead;
     public bool IsDestroyed => _isDead;
+
+    // The host's own health as a share of the maximum - read by things that run on the host, like an
+    // execute's threshold.
+    public float HealthFraction => CurrentHealth / MaxHealth;
     public Tag? Status { get; private set; }
     public IReadOnlyList<Debuff> Debuffs => _debuffs;
 
@@ -431,6 +436,15 @@ public partial class Enemy : CharacterBody3D, IDamageable
         ShowDamageNumber(DamagePacket.FromNetwork(damage));
     }
 
+    // Kills outright with an ordinary hit for whatever health is left, so death, kill credit and the
+    // damage number all go the usual way. Host only. Unmarked, so it sets no Status of its own.
+    public void Execute(Attribution attribution, Tag element)
+    {
+        DamagePacket damage = new DamagePacket { IsTrueDamage = true };
+        damage.AddElement(element, CurrentHealth);
+        TakeDamage(new Hit { Damage = damage, Attribution = attribution, Type = HitType.Unmarked });
+    }
+
     // Takes this enemy's Status outright, for something that spends it without landing a hit.
     public Tag? RemoveStatus()
     {
@@ -735,26 +749,29 @@ public partial class Enemy : CharacterBody3D, IDamageable
     private void UpdateElementalVisual(float delta)
     {
         bool isBurning = HasDebuff(DebuffType.Burn | DebuffType.Immolation);
+        bool isFrostburning = HasDebuff(DebuffType.Frostburn);
 
-        if (isBurning)
+        if (isBurning || isFrostburning)
         {
-            _burnFlashTimer += delta;
-            if (_burnFlashTimer >= 1f)
+            _ailmentFlashTimer += delta;
+            if (_ailmentFlashTimer >= 1f)
             {
-                _burnFlashTimer -= 1f;
+                _ailmentFlashTimer -= 1f;
             }
         }
         else
         {
-            _burnFlashTimer = 0f;
+            _ailmentFlashTimer = 0f;
         }
 
-        bool isFlashing = isBurning && _burnFlashTimer < BurnFlashDuration;
+        bool isFlashing = (isBurning || isFrostburning) && _ailmentFlashTimer < AilmentFlashDuration;
 
         Material tint = null;
         if (isFlashing)
         {
-            tint = _burnFlashMaterial;
+            // An enemy both burning and frostburning flashes red; the two rarely overlap, since one
+            // consumes the Fire Status the other is set off by.
+            tint = isBurning ? _burnFlashMaterial : _frostburnFlashMaterial;
         }
         else if (Status.HasValue && _statusMaterials.TryGetValue(Status.Value, out StandardMaterial3D statusMaterial))
         {

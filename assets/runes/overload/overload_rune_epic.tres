@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="OverloadRune" format=3]
+
+[ext_resource type="Script" path="res://spells/runes/reaction_runes/OverloadRune.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://visual_effects/spells/overload_burst.tscn" id="2_burst"]
+
+[resource]
+script = ExtResource("1_script")
+BurstDamagePercent = 0.46
+BurstScene = ExtResource("2_burst")
+Rarity = 3

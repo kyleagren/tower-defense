@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="FrostburnRune" format=3]
+
+[ext_resource type="Script" path="res://spells/runes/reaction_runes/FrostburnRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+DamagePercent = 0.3675
+Rarity = 1

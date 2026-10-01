@@ -17,6 +17,10 @@ public partial class CastSpeedRune : Rune
 
     public override string Description => "Reduces cast time, letting this ritual act more often.";
 
+    // A spell's own cooldown dwarfs its cast time, so Haste only fits one without. A cooldown a rune
+    // adds (Manual activation) doesn't change that.
+    public override bool IsCompatibleWith(Spell spell) => spell.BaseCooldown <= 0f && base.IsCompatibleWith(spell);
+
     public override void Apply(SpellCastContext context)
     {
         context.CastSpeed.Increased += IncreasedCastSpeedPercent;

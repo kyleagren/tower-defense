@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://visual_effects/ExplosionVisual.cs" id="1_explosion"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_overload"]
+radius = 1.0
+height = 2.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_overload"]
+shading_mode = 0
+albedo_color = Color(1, 0.9, 0.1, 0.2)
+emission_enabled = true
+emission = Color(1, 0.85, 0.1, 1)
+emission_energy_multiplier = 1.0
+transparency = 1
+cull_mode = 2
+
+[node name="OverloadBurst" type="Node3D" node_paths=PackedStringArray("Sphere")]
+script = ExtResource("1_explosion")
+Sphere = NodePath("Sphere")
+
+[node name="Sphere" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("SphereMesh_overload")
+material_override = SubResource("StandardMaterial3D_overload")

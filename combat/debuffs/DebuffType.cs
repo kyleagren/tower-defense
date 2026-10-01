@@ -12,5 +12,8 @@ public enum DebuffType
     ChilledGround = 1 << 3,
     Converged = 1 << 4,
     Taunted = 1 << 5,
-    HealthLink = 1 << 6
+    HealthLink = 1 << 6,
+    Frostburn = 1 << 7,
+    Melted = 1 << 8,
+    Overloaded = 1 << 9
 }

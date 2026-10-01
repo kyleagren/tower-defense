@@ -592,8 +592,14 @@ public partial class BuildMenu : Control
     private static string BucketName(Tag bucket) => bucket == Tag.AoE ? "Area" : bucket.ToString();
 
     private IEnumerable<Rune> CompatibleRunesIn(Tag bucket) => OwnedRunes
-        .Where(rune => rune.Tags.Contains(bucket) && rune.IsCompatibleWith(_selectedSpell.Tags))
+        .Where(rune => rune.Tags.Contains(bucket) && rune.IsCompatibleWith(_selectedSpell))
         .OrderBy(rune => rune.Name);
+
+    // Whether a rune can go in the socket being filled, beside what the other sockets hold.
+    private bool IsPickable(Rune rune) =>
+        !ConflictsWithOtherSocket(rune, _socketBeingAssigned)
+        && RuneCatalog.IsAvailable(rune)
+        && !(IsAuthoringToken && IsLimited(rune));
 
     private void ShowBucketRing(int highlighted = -1)
     {
@@ -604,7 +610,7 @@ public partial class BuildMenu : Control
         {
             Label = BucketName(bucket),
             Color = _bucketColor,
-            Enabled = CompatibleRunesIn(bucket).Any()
+            Enabled = CompatibleRunesIn(bucket).Any(IsPickable)
         }).ToList(), highlighted);
 
         ShowRuneScreenInfo(highlighted);
@@ -625,9 +631,7 @@ public partial class BuildMenu : Control
         {
             Label = rune.Name,
             Color = RarityColors.Get(rune.Rarity),
-            Enabled = !ConflictsWithOtherSocket(rune, _socketBeingAssigned)
-                && RuneCatalog.IsAvailable(rune)
-                && !(IsAuthoringToken && IsLimited(rune))
+            Enabled = IsPickable(rune)
         })), highlighted);
 
         ShowRuneScreenInfo(highlighted);

@@ -12,7 +12,7 @@ public partial class WaterCannonSpell : Spell
     [Export] public float BasePushImpulse { get; private set; } = 250f;
 
     // Per tick.
-    [Export] public override float BaseWaterDamage { get; protected set; } = 15f;
+    [Export] public override float BaseWaterDamage { get; protected set; } = 20f;
     [Export] public override float BaseRange { get; protected set; } = 10f;
     [Export] public override float BaseCastTime { get; protected set; } = 1f;
     [Export] public override float BaseCooldown { get; protected set; } = 3f;
