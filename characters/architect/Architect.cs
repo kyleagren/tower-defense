@@ -25,6 +25,8 @@ public partial class Architect : PlayerCharacter
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        base._UnhandledInput(@event);
+
         if (_buildMenuOpen || !IsActive)
         {
             return;

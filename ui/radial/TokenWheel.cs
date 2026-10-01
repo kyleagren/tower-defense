@@ -29,5 +29,6 @@ public partial class TokenWheel : ButtonWheel
     protected override bool IsRound(int slot) => true;
     protected override float WeightOf(int slot) => slot == UpSlot ? 2f : TokenAt(slot) >= 0 ? 1f : 0f;
     protected override float BackdropRadius => 420f;
+    protected override float WedgeInnerRadius => 140f;
     protected override float PointerTravel => 120f;
 }

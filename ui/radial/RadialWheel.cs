@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 // A ring of wedges picked by direction: the radial_* stick actions or the mouse point, and ui_accept
@@ -6,6 +7,12 @@ using System.Collections.Generic;
 // evenly spaced direction; a slot's weight only moves the boundaries with its neighbors. Positions
 // are fixed and an empty slot stays a gap, since a player learns an item by its direction. Knows
 // nothing about what its items mean - whatever hosts it reacts to Committed and handles backing out.
+//
+// Past SpiralWedges items it becomes a spiral: still that many wedges, with item n always at wedge
+// n mod SpiralWedges. Turning the stick past the end of a lap moves onto the next one, the wedges
+// swapping what they show rather than rotating, with the seam between laps opposite the stick. It
+// stops at either end rather than wrapping, and the scroll wheel jumps a whole lap. Highlighted,
+// HighlightChanged and Committed are item indexes, which are only wedges on a ring that fits.
 //
 // Reads mouse motion in _Input without consuming it, so InputDevice still sees the mouse. Anything
 // full-screen the host draws around it should use MouseFilter.Ignore, or a click can be taken by the
@@ -15,12 +22,18 @@ public partial class RadialWheel : Control
     [Signal] public delegate void HighlightChangedEventHandler(int slot);
     [Signal] public delegate void CommittedEventHandler(int slot);
 
+    // A ring with more items than this becomes a spiral of this many wedges.
+    public const int SpiralWedges = 8;
+
     // How far the stick, or the mouse's virtual stick, must point before it picks a wedge. Anything
     // less keeps the last highlight, so letting go of the stick doesn't lose it.
     private const float SelectThreshold = 0.5f;
 
     // Mouse travel in pixels that counts as a fully deflected virtual stick.
     private const float VirtualStickRadius = 80f;
+
+    // How many wedges behind the highlight a spiral shows passed items; the rest show upcoming ones.
+    private const int SpiralWedgesBehind = SpiralWedges / 2 - 1;
 
     private const float HighlightGrowFraction = 0.06f;
     private const float WedgeGapRadians = 0.02f;
@@ -31,6 +44,9 @@ public partial class RadialWheel : Control
     private const float OutlineGap = 6f;
     private const int OutlineSegments = 96;
 
+    // Where the lap counter sits in the hole, as a fraction of the inner radius below center.
+    private const float LapCounterDrop = 0.75f;
+
     private static readonly Color _emptySlotColor = new Color(0f, 0f, 0f, 0.35f);
     private static readonly Color _labelColor = Colors.White;
     private static readonly Color _labelOutlineColor = Colors.Black;
@@ -40,6 +56,10 @@ public partial class RadialWheel : Control
     private Vector2 _virtualStick;
     private Vector2 _pointer;
     private Color? _outlineColor;
+
+    // Whether the stick has stayed deflected since it last picked something. While it has, turning
+    // it steps along a spiral, stopping at the ends; a fresh flick lands on whatever a wedge shows.
+    private bool _turning;
 
     // How much of the wheel's radius is the empty center, where the host shows its info.
     [Export(PropertyHint.Range, "0.1,0.9")] public float InnerRadiusFraction { get; set; } = 0.55f;
@@ -71,7 +91,9 @@ public partial class RadialWheel : Control
         }
     }
 
-    private float SlotSpacing => Mathf.Tau / _items.Count;
+    private bool IsSpiral => _items.Count > SpiralWedges;
+    private int WedgeCount => IsSpiral ? SpiralWedges : _items.Count;
+    private float SlotSpacing => Mathf.Tau / WedgeCount;
 
     public override void _Ready()
     {
@@ -88,6 +110,7 @@ public partial class RadialWheel : Control
         // A new ring starts from neutral, not from wherever the mouse pointed into the last one.
         _virtualStick = Vector2.Zero;
         _pointer = Vector2.Zero;
+        _turning = false;
         QueueRedraw();
     }
 
@@ -125,7 +148,20 @@ public partial class RadialWheel : Control
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!IsReadingInput() || !HandlesCommit)
+        if (!IsReadingInput())
+        {
+            return;
+        }
+
+        if (IsSpiral && @event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown } scroll)
+        {
+            int lap = scroll.ButtonIndex == MouseButton.WheelDown ? SpiralWedges : -SpiralWedges;
+            SetHighlighted(Mathf.Clamp(Math.Max(_highlighted, 0) + lap, 0, _items.Count - 1));
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        if (!HandlesCommit)
         {
             return;
         }
@@ -149,43 +185,88 @@ public partial class RadialWheel : Control
 
         if (direction.Length() < SelectThreshold)
         {
+            _turning = false;
             return;
         }
 
-        int slot = SlotAt(direction);
+        int item = ItemAt(WedgeAt(direction), nearestOnly: _turning);
+        _turning = true;
 
-        if (slot != _highlighted)
+        if (item >= 0)
         {
-            _highlighted = slot;
-            EmitSignal(SignalName.HighlightChanged, slot);
+            SetHighlighted(item);
         }
     }
 
-    private static float WeightOf(RadialWheelItem item) => item?.Weight ?? 1f;
+    private void SetHighlighted(int item)
+    {
+        if (item == _highlighted)
+        {
+            return;
+        }
+
+        _highlighted = item;
+        QueueRedraw();
+        EmitSignal(SignalName.HighlightChanged, item);
+    }
+
+    // The item a wedge shows. On a spiral that's the one belonging there nearest the highlight, so
+    // the seam between laps sits opposite it. Near either end of the list that item may not exist,
+    // and the wedge shows the lap on the other side of the seam instead - or nothing, with
+    // nearestOnly, which is what keeps turning past an end from jumping back a lap.
+    private int ItemAt(int wedge, bool nearestOnly = false)
+    {
+        if (!IsSpiral)
+        {
+            return wedge;
+        }
+
+        int anchor = Math.Max(_highlighted, 0);
+        int item = anchor + Mathf.PosMod(wedge - anchor + SpiralWedgesBehind, SpiralWedges) - SpiralWedgesBehind;
+
+        if (item >= 0 && item < _items.Count)
+        {
+            return item;
+        }
+
+        if (nearestOnly)
+        {
+            return -1;
+        }
+
+        return item < 0 ? item + SpiralWedges : item - SpiralWedges;
+    }
+
+    private float WeightOf(int wedge) => IsSpiral ? 1f : _items[wedge]?.Weight ?? 1f;
 
     // Measured clockwise from straight up. The boundary between two neighbors sits between their
     // directions in proportion to their weights.
-    private float BoundaryAfter(int slot)
+    private float BoundaryAfter(int wedge)
     {
-        float here = WeightOf(_items[slot]);
-        float next = WeightOf(_items[(slot + 1) % _items.Count]);
-        return (slot + here / (here + next)) * SlotSpacing;
+        float here = WeightOf(wedge);
+        float next = WeightOf((wedge + 1) % WedgeCount);
+        return (wedge + here / (here + next)) * SlotSpacing;
     }
 
-    private float BoundaryBefore(int slot) =>
-        slot == 0 ? BoundaryAfter(_items.Count - 1) - Mathf.Tau : BoundaryAfter(slot - 1);
+    private float BoundaryBefore(int wedge) =>
+        wedge == 0 ? BoundaryAfter(WedgeCount - 1) - Mathf.Tau : BoundaryAfter(wedge - 1);
 
-    private int SlotAt(Vector2 direction)
+    // Where a wedge starts and ends, in screen angles (0 is +X, running clockwise) - for a host
+    // drawing its own wedges.
+    public (float From, float To) WedgeAngles(int wedge) =>
+        (-Mathf.Pi / 2f + BoundaryBefore(wedge), -Mathf.Pi / 2f + BoundaryAfter(wedge));
+
+    private int WedgeAt(Vector2 direction)
     {
         float fromTop = Mathf.Atan2(direction.X, -direction.Y);
 
-        for (int slot = 0; slot < _items.Count; slot++)
+        for (int wedge = 0; wedge < WedgeCount; wedge++)
         {
-            float start = BoundaryBefore(slot);
+            float start = BoundaryBefore(wedge);
 
-            if (Mathf.PosMod(fromTop - start, Mathf.Tau) < BoundaryAfter(slot) - start)
+            if (Mathf.PosMod(fromTop - start, Mathf.Tau) < BoundaryAfter(wedge) - start)
             {
-                return slot;
+                return wedge;
             }
         }
 
@@ -210,28 +291,35 @@ public partial class RadialWheel : Control
         Vector2 center = Size / 2f;
         float outerRadius = Mathf.Min(Size.X, Size.Y) / 2f;
         float innerRadius = outerRadius * InnerRadiusFraction;
+        int highlightedWedge = _highlighted < 0 ? -1 : _highlighted % WedgeCount;
 
-        for (int slot = 0; slot < _items.Count; slot++)
+        for (int wedge = 0; wedge < WedgeCount; wedge++)
         {
-            RadialWheelItem item = _items[slot];
-            bool highlighted = slot == _highlighted;
-            float slotOuterRadius = highlighted ? outerRadius * (1f + HighlightGrowFraction) : outerRadius;
+            RadialWheelItem item = _items[ItemAt(wedge)];
+            bool highlighted = wedge == highlightedWedge;
+            float wedgeOuterRadius = highlighted ? outerRadius * (1f + HighlightGrowFraction) : outerRadius;
 
             // Screen angles: 0 is +X and angles run clockwise, so straight up is -Pi/2.
-            float middle = -Mathf.Pi / 2f + slot * SlotSpacing;
-            float from = -Mathf.Pi / 2f + BoundaryBefore(slot) + WedgeGapRadians;
-            float to = -Mathf.Pi / 2f + BoundaryAfter(slot) - WedgeGapRadians;
+            float middle = -Mathf.Pi / 2f + wedge * SlotSpacing;
+            (float from, float to) = WedgeAngles(wedge);
 
-            DrawColoredPolygon(BuildWedge(center, innerRadius, slotOuterRadius, from, to), WedgeColor(item, highlighted));
+            DrawColoredPolygon(BuildWedge(center, innerRadius, wedgeOuterRadius, from + WedgeGapRadians, to - WedgeGapRadians), WedgeColor(item, highlighted));
 
             if (item != null)
             {
-                Vector2 labelCenter = center + Vector2.FromAngle(middle) * (innerRadius + slotOuterRadius) / 2f;
-                DrawLabel(item.Label, labelCenter, (slotOuterRadius - innerRadius) * 1.2f);
+                Vector2 labelCenter = center + Vector2.FromAngle(middle) * (innerRadius + wedgeOuterRadius) / 2f;
+                DrawLabel(item.Label, labelCenter, (wedgeOuterRadius - innerRadius) * 1.2f);
             }
         }
 
         DrawCircle(center + _pointer * innerRadius, PointerDotRadius, _labelColor);
+
+        if (IsSpiral)
+        {
+            int laps = (_items.Count + SpiralWedges - 1) / SpiralWedges;
+            int lap = Math.Max(_highlighted, 0) / SpiralWedges + 1;
+            DrawLabel($"{lap} / {laps}", center + Vector2.Down * innerRadius * LapCounterDrop, innerRadius);
+        }
 
         if (_outlineColor.HasValue)
         {
@@ -251,7 +339,7 @@ public partial class RadialWheel : Control
         return highlighted ? color.Lightened(0.3f) : color;
     }
 
-    private static Vector2[] BuildWedge(Vector2 center, float innerRadius, float outerRadius, float from, float to)
+    public static Vector2[] BuildWedge(Vector2 center, float innerRadius, float outerRadius, float from, float to)
     {
         Vector2[] points = new Vector2[(ArcSegmentsPerWedge + 1) * 2];
 

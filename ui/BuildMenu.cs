@@ -42,7 +42,7 @@ public partial class BuildMenu : Control
     }
 
     // A ring always has at least this many slots, so gaining an item fills a gap instead of
-    // reshaping the ring. One with more than this grows until the spiral exists.
+    // reshaping the ring. One with more becomes a spiral.
     private const int MinRingSlots = 8;
 
     // The element ring's top wedge; the element groups follow it clockwise.
@@ -120,6 +120,13 @@ public partial class BuildMenu : Control
 
     // The token being authored, or -1 while building an ordinary ritual.
     private int _authoringToken = -1;
+
+    // Whether the token being authored was picked on the token wheel, which finishing it returns to.
+    // One reached straight from 1/2/3 closes the menu instead.
+    private bool _authoringFromTokenWheel;
+
+    // The screen a token reached straight from 1/2/3 opened on; backing out of it closes the menu.
+    private Screen? _closesOnBack;
 
     // Whether the token wheel is choosing where to save the current build, rather than which token
     // to author.
@@ -819,7 +826,7 @@ public partial class BuildMenu : Control
 
         if (!_tokenWheelSavesBuild)
         {
-            BeginTokenAuthoring(token);
+            BeginTokenAuthoring(token, fromTokenWheel: true);
         }
         else if (SavedTokens[token] == null)
         {
@@ -846,12 +853,14 @@ public partial class BuildMenu : Control
         Inscription.DescriptionLabel.Text = $"Saved to token {token + 1}.";
     }
 
-    private void BeginTokenAuthoring(int token)
+    private void BeginTokenAuthoring(int token, bool fromTokenWheel = false)
     {
         _authoringToken = token;
+        _authoringFromTokenWheel = fromTokenWheel;
         TokenModeLabel.Text = $"Token {token + 1}";
         ShowTokenMode(true);
         RuneLoadout saved = SavedTokens[token];
+        _closesOnBack = fromTokenWheel ? null : saved == null ? Screen.ElementRing : Screen.Inscription;
 
         if (saved == null)
         {
@@ -872,6 +881,7 @@ public partial class BuildMenu : Control
     private void EndTokenAuthoring()
     {
         _authoringToken = -1;
+        _closesOnBack = null;
         ShowTokenMode(false);
     }
 
@@ -885,12 +895,21 @@ public partial class BuildMenu : Control
         TokenModeTag.Visible = shown;
     }
 
-    // Saving or emptying a token ends authoring back on the token wheel, with that slot showing.
+    // Saving or emptying a token returns to the token wheel it was picked on, with that slot showing,
+    // or closes the menu if it was reached straight from 1/2/3.
     private void FinishToken(RuneLoadout saved)
     {
         int token = _authoringToken;
         PlayerProfiles.Local.SetToken(token, saved);
-        ShowTokenWheel(savesBuild: false, token);
+
+        if (_authoringFromTokenWheel)
+        {
+            ShowTokenWheel(savesBuild: false, token);
+        }
+        else
+        {
+            Close();
+        }
     }
 
     // Tokens lock in during the unpressured Planning phase, exactly when a scarce rune belongs on a
@@ -1055,6 +1074,12 @@ public partial class BuildMenu : Control
 
     private void GoBack()
     {
+        if (_screen == _closesOnBack)
+        {
+            Close();
+            return;
+        }
+
         switch (_screen)
         {
             case Screen.ElementRing when IsAuthoringToken:

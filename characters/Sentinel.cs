@@ -249,6 +249,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        base._UnhandledInput(@event);
+
         if (InputPress.Began(@event, "attack"))
         {
             _weaponOwnsAttackPress = true;

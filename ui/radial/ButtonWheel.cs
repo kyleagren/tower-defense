@@ -22,6 +22,10 @@ public abstract partial class ButtonWheel : Control
     private const int HoldRingSegments = 48;
     private const float BackdropOutlineWidth = 5f;
     private const int BackdropOutlineSegments = 128;
+    private const float WedgeOutlineWidth = 3f;
+    private const float WedgeHighlightOutlineWidth = 5f;
+    private const float WedgeGapRadians = 0.03f;
+    private const float WedgeEdgeGap = 12f;
 
     private static readonly Color _highlightBorderColor = Colors.White;
     private static readonly Color _backdropColor = new Color(0f, 0f, 0f, 0.6f);
@@ -29,6 +33,9 @@ public abstract partial class ButtonWheel : Control
     private static readonly Color _holdRingColor = new Color(1f, 1f, 1f, 0.8f);
     private static readonly Color _pointerColor = new Color(1f, 1f, 1f, 0.3f);
     private static readonly Color _fadedModulate = new Color(1f, 1f, 1f, 0.35f);
+    private static readonly Color _wedgeColor = new Color(1f, 1f, 1f, 0.05f);
+    private static readonly Color _wedgeHighlightColor = new Color(1f, 1f, 1f, 0.18f);
+    private static readonly Color _wedgeOutlineColor = new Color(1f, 1f, 1f, 0.35f);
 
     private RadialWheel _wheel;
     private Panel[] _slotPanels;
@@ -67,6 +74,12 @@ public abstract partial class ButtonWheel : Control
 
     // 0 draws no backdrop.
     protected virtual float BackdropRadius => 0f;
+
+    // Above 0, and with a backdrop, each slot's share of the pointing is drawn as a wedge from this
+    // radius out to just inside the backdrop, and the pointed-at wedge lights up instead of its button.
+    protected virtual float WedgeInnerRadius => 0f;
+
+    private bool DrawsWedges => WedgeInnerRadius > 0f && BackdropRadius > 0f;
     protected virtual float PointerTravel => 110f;
     protected virtual float PointerDotRadius => 14f;
     protected virtual Vector2 CenterInfoSize => new Vector2(260f, 140f);
@@ -250,6 +263,11 @@ public abstract partial class ButtonWheel : Control
             }
         }
 
+        if (DrawsWedges)
+        {
+            DrawWedges(center);
+        }
+
         if (AcceptsInput)
         {
             DrawCircle(center + _wheel.Pointer * PointerTravel, PointerDotRadius, _pointerColor);
@@ -260,6 +278,30 @@ public abstract partial class ButtonWheel : Control
             float radius = SizeOf(_pressedSlot).X / 2f + HoldRingGap;
             float start = -Mathf.Pi / 2f;
             DrawArc(center + OffsetOf(_pressedSlot), radius, start, start + HoldProgress * Mathf.Tau, HoldRingSegments, _holdRingColor, HoldRingWidth);
+        }
+    }
+
+    private void DrawWedges(Vector2 center)
+    {
+        float outerRadius = BackdropRadius - WedgeEdgeGap;
+
+        for (int slot = 0; slot < _items.Count; slot++)
+        {
+            (float from, float to) = _wheel.WedgeAngles(slot);
+
+            if (_items[slot] == null || to - from <= 2f * WedgeGapRadians)
+            {
+                continue;
+            }
+
+            Vector2[] wedge = RadialWheel.BuildWedge(center, WedgeInnerRadius, outerRadius, from + WedgeGapRadians, to - WedgeGapRadians);
+            Vector2[] outline = new Vector2[wedge.Length + 1];
+            wedge.CopyTo(outline, 0);
+            outline[^1] = wedge[0];
+
+            bool highlighted = slot == _wheel.Highlighted;
+            DrawColoredPolygon(wedge, highlighted ? _wedgeHighlightColor : _wedgeColor);
+            DrawPolyline(outline, highlighted ? _highlightBorderColor : _wedgeOutlineColor, highlighted ? WedgeHighlightOutlineWidth : WedgeOutlineWidth, true);
         }
     }
 
@@ -337,7 +379,7 @@ public abstract partial class ButtonWheel : Control
                 continue;
             }
 
-            bool highlighted = slot == _wheel.Highlighted;
+            bool highlighted = !DrawsWedges && slot == _wheel.Highlighted;
             Color fill = item.Enabled ? item.Color : item.Color.Darkened(0.6f);
             StyleBoxFlat style = new StyleBoxFlat { BgColor = highlighted ? fill.Lightened(0.2f) : fill };
             style.SetCornerRadiusAll(IsRound(slot) ? 999 : 8);

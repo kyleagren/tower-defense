@@ -68,6 +68,11 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     private bool _active;
     private bool _sprintLatched;
 
+    // A jump press that reached gameplay input, spent by the next ground-movement tick. Read from
+    // events rather than polled, so the press a UI panel handled - the one that closed it - can't
+    // also jump.
+    private bool _jumpQueued;
+
     public override void _Ready()
     {
         Level = LevelContext.Current;
@@ -105,6 +110,14 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         // Squared deflection: small tilts stay precise for aiming, full tilt still turns at full speed.
         float speed = Mathf.DegToRad(StickLookSpeedDegrees) * LookSensitivity * (float)delta;
         ApplyLook(stick * stick.Length() * speed);
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (IsActive && !UiPanelStack.AnyOpen && @event.IsActionPressed("jump"))
+        {
+            _jumpQueued = true;
+        }
     }
 
     public Vector3 GetCameraAimPoint(float distance)
@@ -151,6 +164,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     {
         _active = value;
         _sprintLatched = false;
+        _jumpQueued = false;
         BodyMesh.Visible = _active;
 
         if (_active)
@@ -228,6 +242,9 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     protected void ApplyGroundMovement(double delta, Vector2 inputDir, bool allowJump = true)
     {
+        bool jumpPressed = _jumpQueued;
+        _jumpQueued = false;
+
         // A controller's sticks drive an open panel's focus instead of the character, and a keyboard
         // typing into a text field isn't walking.
         if (!CanMove || (UiPanelStack.AnyOpen && InputDevice.UsingController) || UiPanelStack.IsTyping)
@@ -243,7 +260,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         {
             velocity.Y -= _gravity * (float)delta;
         }
-        else if (allowJump && forced == null && Input.IsActionJustPressed("jump") && !InputChords.AbilityModifierHeld)
+        else if (allowJump && forced == null && jumpPressed &&!InputChords.AbilityModifierHeld)
         {
             velocity.Y = JumpVelocity;
         }

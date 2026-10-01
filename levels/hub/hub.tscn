@@ -26,7 +26,7 @@
 [ext_resource type="Script" uid="uid://5i5lb0jck28f" path="res://spells/SpellEffects.cs" id="31_spelleffects"]
 [ext_resource type="Script" uid="uid://jprj1123b4b6" path="res://world_items/WorldItemRoster.cs" id="32_worlditemroster"]
 [ext_resource type="PackedScene" path="res://world_items/world_item.tscn" id="33_worlditem"]
-[ext_resource type="Script" path="res://levels/hub/StashStation.cs" id="34_stashstation"]
+[ext_resource type="Script" uid="uid://wduvyq1kdqd5" path="res://levels/hub/StashStation.cs" id="34_stashstation"]
 [ext_resource type="PackedScene" path="res://ui/hub/stash_panel.tscn" id="35_stashpanel"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
@@ -567,17 +567,17 @@ shape = SubResource("CylinderShape3D_vendor")
 
 [node name="VendorPanel" parent="." unique_id=333437870 instance=ExtResource("16_vendorpanel")]
 
-[node name="StashStation" type="StaticBody3D" parent="."]
+[node name="StashStation" type="StaticBody3D" parent="." unique_id=1425159556]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0, 0)
 collision_layer = 17
 script = ExtResource("34_stashstation")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="StashStation"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StashStation" unique_id=431272589]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 mesh = SubResource("BoxMesh_stash")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StashStation"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StashStation" unique_id=493508110]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 shape = SubResource("BoxShape3D_stash")
 
-[node name="StashPanel" parent="." instance=ExtResource("35_stashpanel")]
+[node name="StashPanel" parent="." unique_id=1555812636 instance=ExtResource("35_stashpanel")]
