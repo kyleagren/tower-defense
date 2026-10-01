@@ -19,7 +19,7 @@ public static class DamageTypeColors
         [Tag.Water] = new Color(0.3f, 0.55f, 1f),
         [Tag.Cold] = new Color(0.6f, 0.85f, 1f),
         [Tag.Lightning] = new Color(1f, 0.9f, 0.1f),
-        [Tag.Wind] = new Color(0.75f, 1f, 0.85f)
+        [Tag.Wind] = new Color(0.55f, 0.92f, 0.59f)
     };
 
     private static readonly Dictionary<Tag, Color> _statusOverlayOverrides = new()

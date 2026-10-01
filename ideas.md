@@ -122,3 +122,5 @@ Notes:
 ## Monk / Martial artist
 
 - Right click could enter a "projectile catching state" and a certain number of those projectiles could float around him and then holding right click and left clicking would throw one of those projectiles back at an enemy. or it could function almost like a parry where you have a short window to actually throw it back. if we did that we'd probably want a short window where it would cool down between uses.
+- Something like genshin heizous charge up punch, or the elden ring fist weapon thing.
+-

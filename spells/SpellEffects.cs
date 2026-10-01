@@ -14,6 +14,12 @@ public partial class SpellEffects : Node
     // The copies of the host's projectiles, by the number it gave them.
     private readonly Dictionary<int, Projectile> _projectileCopies = new();
 
+    // Host only: numbers each sweep sent out, so an infusion finds the right copy.
+    private int _sweepCount;
+
+    // The copies of the host's sweeps, by the number it gave them.
+    private readonly Dictionary<int, GroundSweep> _sweepCopies = new();
+
     // The copies of the host's standing walls, by the name of the Ritual that raised each.
     private readonly Dictionary<string, IceWall> _wallCopies = new();
 
@@ -136,18 +142,36 @@ public partial class SpellEffects : Node
         copy.InitializeCopy(origin, direction, length, halfWidth, duration);
     }
 
-    // Host only, once the sweep is in place.
-    public void ShowSweep(PackedScene scene, Vector3 start, Vector3 direction, float speed, float radius, float duration)
+    // Host only, before the sweep's first hit.
+    public void ShowSweep(GroundSweep sweep, PackedScene scene, Vector3 start, Vector3 direction, float speed, float radius, float duration)
     {
-        Rpc(MethodName.ReceiveSweep, scene.ResourcePath, start, direction, speed, radius, duration);
+        _sweepCount++;
+        sweep.ReplicaId = _sweepCount;
+        Rpc(MethodName.ReceiveSweep, _sweepCount, scene.ResourcePath, start, direction, speed, radius, duration);
+    }
+
+    public void InfuseSweep(GroundSweep sweep, Tag element)
+    {
+        Rpc(MethodName.ReceiveSweepInfused, sweep.ReplicaId, (int)element);
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceiveSweep(string scenePath, Vector3 start, Vector3 direction, float speed, float radius, float duration)
+    private void ReceiveSweep(int id, string scenePath, Vector3 start, Vector3 direction, float speed, float radius, float duration)
     {
         GroundSweep copy = GD.Load<PackedScene>(scenePath).Instantiate<GroundSweep>();
         _level.LevelRoot.AddChild(copy);
         copy.InitializeCopy(start, direction, speed, radius, duration);
+        _sweepCopies[id] = copy;
+        copy.TreeExiting += () => _sweepCopies.Remove(id);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveSweepInfused(int id, int element)
+    {
+        if (_sweepCopies.TryGetValue(id, out GroundSweep copy))
+        {
+            copy.Infuse((Tag)element);
+        }
     }
 
     // Host only. Each machine's copy of the Ritual already holds the wall's placement.

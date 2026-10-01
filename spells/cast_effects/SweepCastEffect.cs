@@ -28,7 +28,10 @@ public class SweepCastEffect : CastEffect
 
         GroundSweep sweep = data.Scene.Instantiate<GroundSweep>();
         LevelContext.Current.LevelRoot.AddChild(sweep);
-        sweep.Initialize(start, direction, data.Speed.Value, radius, data.Duration.Value, context.Damage, context.RagdollForce.Value, context.SpellHit);
-        LevelContext.Current.SpellEffects.ShowSweep(data.Scene, start, direction, data.Speed.Value, radius, data.Duration.Value);
+
+        // Announced before its first hit, which can already infuse it, so every copy exists before
+        // any infusion reaches it.
+        LevelContext.Current.SpellEffects.ShowSweep(sweep, data.Scene, start, direction, data.Speed.Value, radius, data.Duration.Value);
+        sweep.Initialize(start, direction, data.Speed.Value, radius, data.Duration.Value, context.Damage, context.RagdollForce.Value, data.InfusionShare, context.SpellHit);
     }
 }

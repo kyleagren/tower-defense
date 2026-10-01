@@ -673,11 +673,50 @@ public partial class Enemy : CharacterBody3D, IDamageable
             return;
         }
 
+        // An infused Wind hit - Wind plus exactly one other element - shows each part in its own
+        // color. Every other mix stays one number, so many-element hits don't bury the screen.
+        if (TrySplitInfusedWind(amount, out DamagePacket wind, out DamagePacket infusion))
+        {
+            SpawnDamageNumber(wind);
+            SpawnDamageNumber(infusion);
+            return;
+        }
+
+        SpawnDamageNumber(amount);
+    }
+
+    private void SpawnDamageNumber(DamagePacket amount)
+    {
         (Color fill, Color outline) = DamageTypeColors.GetForDamage(amount);
 
         FloatingCombatText text = FloatingTextScene.Instantiate<FloatingCombatText>();
         Level.LevelRoot.AddChild(text);
         text.Show(GetJitteredCenterMass(0.2f), amount.Total, fill, outline, amount.IsCrit);
+    }
+
+    private static bool TrySplitInfusedWind(DamagePacket amount, out DamagePacket wind, out DamagePacket infusion)
+    {
+        wind = default;
+        infusion = default;
+        Tag? element = amount.DominantElement;
+
+        if (amount.WindDamage <= 0f || amount.PhysicalDamage > 0f || element == null)
+        {
+            return false;
+        }
+
+        // Exactly one other element: everything that isn't Wind is that one.
+        float rest = amount.Total - amount.WindDamage;
+
+        if (!Mathf.IsEqualApprox(amount.Get(element.Value), rest))
+        {
+            return false;
+        }
+
+        wind = new DamagePacket { Origin = amount.Origin, Source = amount.Source, IsCrit = amount.IsCrit, WindDamage = amount.WindDamage };
+        infusion = new DamagePacket { Origin = amount.Origin, Source = amount.Source, IsCrit = amount.IsCrit };
+        infusion.AddElement(element.Value, rest);
+        return true;
     }
 
     private void TickDebuffs(float delta)

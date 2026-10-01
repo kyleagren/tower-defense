@@ -82,6 +82,16 @@ public struct DamagePacket
         }
     }
 
+    public readonly float Get(Tag element) => element switch
+    {
+        Tag.Fire => FireDamage,
+        Tag.Water => WaterDamage,
+        Tag.Cold => ColdDamage,
+        Tag.Lightning => LightningDamage,
+        Tag.Wind => WindDamage,
+        _ => throw new System.ArgumentException($"{element} is not a damage element.", nameof(element))
+    };
+
     public static DamagePacket operator *(DamagePacket packet, float scalar)
     {
         return new DamagePacket

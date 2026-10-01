@@ -8,6 +8,8 @@ public partial class GustSpell : Spell
     [Export] public float BaseSweepRadius { get; private set; } = 0.6f;
     [Export] public float BaseSweepSpeed { get; private set; } = 6f;
     [Export] public float BaseSweepDuration { get; private set; } = 2f;
+    // Of its Wind, moved into the first Status it picks up - 60/40 Wind to that element.
+    [Export] public float BaseInfusionShare { get; private set; } = 0.4f;
 
     // Per enemy it passes through.
     [Export] public override float BaseWindDamage { get; protected set; } = 12f;
@@ -28,7 +30,8 @@ public partial class GustSpell : Spell
             Scene = SweepScene,
             Radius = BaseSweepRadius,
             Speed = BaseSweepSpeed,
-            Duration = BaseSweepDuration
+            Duration = BaseSweepDuration,
+            InfusionShare = BaseInfusionShare
         };
     }
 }
