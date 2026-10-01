@@ -82,6 +82,11 @@ public partial class LevelContext : Node
         Current = this;
     }
 
+    public override void _Ready()
+    {
+        VideoSettings.Apply(this);
+    }
+
     public override void _ExitTree()
     {
         if (Current == this)
