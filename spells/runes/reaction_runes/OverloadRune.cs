@@ -2,15 +2,18 @@ using Godot;
 using System.Collections.Generic;
 
 // Lightning consuming Fire, one way - the alternative to Ignition for the same pairing. A burst that
-// throws enemies back is too disruptive to fire every attack cycle, so it triggers at most once per
-// enemy per Cooldown.
+// launches enemies is too disruptive to fire every attack cycle, so it triggers at most once per
+// enemy per Cooldown, and everything it launches shares that cooldown.
 [GlobalClass]
 public partial class OverloadRune : ReactionRune
 {
     [Export] public float BurstDamagePercent { get; private set; } = 0.4f;
     [Export] public float Radius { get; private set; } = 3f;
-    // kg·m/s, like any knockback - Repel's strength.
-    [Export] public float KnockbackImpulse { get; private set; } = 1600f;
+    // kg·m/s, like any knockback - with launched enemies' lowered gravity, about a 1.5m, 2.2s hop on
+    // an 80kg Grunt, barely a lift on a Brute.
+    [Export] public float LaunchImpulse { get; private set; } = 215f;
+    // How far off straight up a launch tips, away from the centre.
+    [Export] public float LaunchOutwardDegrees { get; private set; } = 5f;
     [Export] public float Cooldown { get; private set; } = 5f;
     [Export] public PackedScene BurstScene { get; private set; }
 
@@ -19,7 +22,7 @@ public partial class OverloadRune : ReactionRune
     public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Lightning };
 
     public override string Description =>
-        $"When Lightning meets a Fire Status, consumes it to overload: a burst dealing {BurstDamagePercent * 100f:0.#}% of the hit as Lightning to everything within {Radius:0.#}m, throwing them back. Once per enemy every {Cooldown:0.#}s.";
+        $"When Lightning meets a Fire Status, consumes it to overload: a burst dealing {BurstDamagePercent * 100f:0.#}% of the hit as Lightning to everything within {Radius:0.#}m, launching them into the air. Once per enemy every {Cooldown:0.#}s.";
 
     // Spends the Status even while the enemy is still Overloaded, like Melt.
     public override bool OnHit(OnHitContext hit)
@@ -33,7 +36,7 @@ public partial class OverloadRune : ReactionRune
 
         if (!target.HasDebuff(DebuffType.Overloaded))
         {
-            target.ApplyDebuff(new OverloadedDebuff(hit.Damage.Total * BurstDamagePercent, Radius, KnockbackImpulse, Cooldown, BurstScene, hit.Attribution));
+            target.ApplyDebuff(new OverloadedDebuff(hit.Damage.Total * BurstDamagePercent, Radius, LaunchImpulse, LaunchOutwardDegrees, Cooldown, BurstScene, hit.Attribution));
         }
 
         return true;

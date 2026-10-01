@@ -33,7 +33,7 @@ public partial class WalkingEnemy : Enemy
     // slowed value.
     public float Speed => BaseSpeed * DebuffSpeedMultiplier;
 
-    public bool IsKnockedBack => _knockbackVelocity != Vector3.Zero;
+    public bool IsKnockedBack => _knockbackVelocity != Vector3.Zero || _launched;
 
     // True while a subclass is mid-attack and must neither turn nor walk - a committed attack has to
     // stay dodgeable, so it can't track its target once it's begun.
@@ -42,6 +42,10 @@ public partial class WalkingEnemy : Enemy
     [Export] public float WalkCycleFrequency = 6.0f;
     [Export] public float LegSwingAmplitude = 0.5f;
     [Export] public float ArmSwingAmplitude = 0.2f;
+
+    // While launched, gravity is scaled by this - a floatier arc that stays up longer for the same
+    // peak, provided the launch is lowered to match.
+    [Export] public float LaunchGravityScale = 0.25f;
 
     private enum MovementMode { FollowingLane, ChasingPlayer, AttackingWall, AttackingRitual, RejoiningLane, ApproachingObjective }
 
@@ -58,6 +62,8 @@ public partial class WalkingEnemy : Enemy
     private float _attackCooldown;
     private bool _hasFacedInitialDirection;
     private Vector3 _knockbackVelocity;
+    // Set by an upward push until the enemy lands - it isn't steering while airborne.
+    private bool _launched;
     private bool _rejoinPending;
     private float _gravity;
     private float _fallSpeed;
@@ -171,7 +177,8 @@ public partial class WalkingEnemy : Enemy
         }
     }
 
-    // Horizontal only: a real launch would need a stand-up animation per enemy type.
+    // A sideways push slides it; an upward part launches it, a stiff hop that lands upright, since a
+    // real tumble would need a stand-up animation per enemy type. Gravity brings it back down.
     protected override void ResolveKnockback(Vector3 impulse)
     {
         if (IsDead)
@@ -180,6 +187,12 @@ public partial class WalkingEnemy : Enemy
         }
 
         _knockbackVelocity += new Vector3(impulse.X, 0f, impulse.Z) / Mass;
+
+        if (impulse.Y > 0f)
+        {
+            _fallSpeed = Mathf.Min(_fallSpeed, -impulse.Y / Mass);
+            _launched = true;
+        }
     }
 
     // A shoved enemy isn't steering: it slides with the shove and can't attack. Once the shove is
@@ -194,7 +207,13 @@ public partial class WalkingEnemy : Enemy
 
         _knockbackVelocity *= Mathf.Exp(-KnockbackDrag * (float)delta);
 
-        if (_knockbackVelocity.Length() > KnockbackRecoverySpeed)
+        // Landed once it's back on the floor and no longer rising.
+        if (_launched && IsOnFloor() && _fallSpeed >= 0f)
+        {
+            _launched = false;
+        }
+
+        if (_launched || _knockbackVelocity.Length() > KnockbackRecoverySpeed)
         {
             return;
         }
@@ -661,10 +680,13 @@ public partial class WalkingEnemy : Enemy
     }
 
     // Steering is horizontal only, so this is what keeps a walking enemy on the real floor - the
-    // navmesh its lanes and paths come from sits a little above it.
+    // navmesh its lanes and paths come from sits a little above it. A rising enemy (negative fall
+    // speed) keeps rising even while still touching the floor, so a launch isn't cancelled on the
+    // frame it starts.
     private float UpdateFallSpeed(float delta)
     {
-        _fallSpeed = IsOnFloor() ? 0f : _fallSpeed + _gravity * delta;
+        float gravity = _launched ? _gravity * LaunchGravityScale : _gravity;
+        _fallSpeed = IsOnFloor() && _fallSpeed >= 0f ? 0f : _fallSpeed + gravity * delta;
         return _fallSpeed;
     }
 
