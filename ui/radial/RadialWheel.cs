@@ -47,9 +47,17 @@ public partial class RadialWheel : Control
     // Where the lap counter sits in the hole, as a fraction of the inner radius below center.
     private const float LapCounterDrop = 0.75f;
 
+    // A spiral's wedges fade with their distance along it from the highlight, down to this.
+    private const float SpiralFarAlpha = 0.45f;
+    private const float SwapFadeSeconds = 0.12f;
+    private const float SeamWidth = 4f;
+    private const float SeamGlowWidth = 12f;
+
     private static readonly Color _emptySlotColor = new Color(0f, 0f, 0f, 0.35f);
     private static readonly Color _labelColor = Colors.White;
     private static readonly Color _labelOutlineColor = Colors.Black;
+    private static readonly Color _seamColor = new Color(1f, 0.95f, 0.8f);
+    private static readonly Color _seamGlowColor = new Color(1f, 0.9f, 0.6f, 0.3f);
 
     private readonly List<RadialWheelItem> _items = new();
     private int _highlighted = -1;
@@ -60,6 +68,12 @@ public partial class RadialWheel : Control
     // Whether the stick has stayed deflected since it last picked something. While it has, turning
     // it steps along a spiral, stopping at the ends; a fresh flick lands on whatever a wedge shows.
     private bool _turning;
+
+    // What each wedge of a spiral shows, and what it showed before its last swap, fading from one to
+    // the other.
+    private readonly int[] _shownItems = new int[SpiralWedges];
+    private readonly int[] _swappedFromItems = new int[SpiralWedges];
+    private readonly float[] _swapProgress = new float[SpiralWedges];
 
     // How much of the wheel's radius is the empty center, where the host shows its info.
     [Export(PropertyHint.Range, "0.1,0.9")] public float InnerRadiusFraction { get; set; } = 0.55f;
@@ -111,6 +125,7 @@ public partial class RadialWheel : Control
         _virtualStick = Vector2.Zero;
         _pointer = Vector2.Zero;
         _turning = false;
+        UpdateShownItems(fade: false);
         QueueRedraw();
     }
 
@@ -126,6 +141,7 @@ public partial class RadialWheel : Control
             _highlighted = -1;
         }
 
+        UpdateShownItems(fade: false);
         QueueRedraw();
     }
 
@@ -134,6 +150,15 @@ public partial class RadialWheel : Control
         if (IsReadingInput() && InputDevice.UsingController)
         {
             Point(Input.GetVector("radial_left", "radial_right", "radial_up", "radial_down"));
+        }
+
+        for (int wedge = 0; wedge < SpiralWedges; wedge++)
+        {
+            if (_swapProgress[wedge] < 1f)
+            {
+                _swapProgress[wedge] = Mathf.Min(_swapProgress[wedge] + (float)delta / SwapFadeSeconds, 1f);
+                QueueRedraw();
+            }
         }
     }
 
@@ -206,8 +231,35 @@ public partial class RadialWheel : Control
         }
 
         _highlighted = item;
+        UpdateShownItems(fade: true);
         QueueRedraw();
         EmitSignal(SignalName.HighlightChanged, item);
+    }
+
+    // A wedge whose item changes fades from the old one to the new; a new set of items snaps.
+    private void UpdateShownItems(bool fade)
+    {
+        if (!IsSpiral)
+        {
+            return;
+        }
+
+        for (int wedge = 0; wedge < SpiralWedges; wedge++)
+        {
+            int item = ItemAt(wedge);
+
+            if (!fade)
+            {
+                _swapProgress[wedge] = 1f;
+            }
+            else if (item != _shownItems[wedge])
+            {
+                _swappedFromItems[wedge] = _shownItems[wedge];
+                _swapProgress[wedge] = 0f;
+            }
+
+            _shownItems[wedge] = item;
+        }
     }
 
     // The item a wedge shows. On a spiral that's the one belonging there nearest the highlight, so
@@ -235,6 +287,18 @@ public partial class RadialWheel : Control
         }
 
         return item < 0 ? item + SpiralWedges : item - SpiralWedges;
+    }
+
+    // Full at the highlight, fading to SpiralFarAlpha half a ring away.
+    private float SpiralAlpha(int item)
+    {
+        if (!IsSpiral || _highlighted < 0)
+        {
+            return 1f;
+        }
+
+        int halfRing = SpiralWedges / 2;
+        return Mathf.Lerp(1f, SpiralFarAlpha, Mathf.Min(Math.Abs(item - _highlighted), halfRing) / (float)halfRing);
     }
 
     private float WeightOf(int wedge) => IsSpiral ? 1f : _items[wedge]?.Weight ?? 1f;
@@ -295,20 +359,40 @@ public partial class RadialWheel : Control
 
         for (int wedge = 0; wedge < WedgeCount; wedge++)
         {
-            RadialWheelItem item = _items[ItemAt(wedge)];
+            int shown = ItemAt(wedge);
+            RadialWheelItem item = _items[shown];
             bool highlighted = wedge == highlightedWedge;
             float wedgeOuterRadius = highlighted ? outerRadius * (1f + HighlightGrowFraction) : outerRadius;
+            float alpha = SpiralAlpha(shown);
+            float swap = IsSpiral ? _swapProgress[wedge] : 1f;
+            RadialWheelItem swappedFrom = swap < 1f ? _items[_swappedFromItems[wedge]] : null;
+
+            Color color = WedgeColor(item, highlighted);
+
+            if (swap < 1f)
+            {
+                color = WedgeColor(swappedFrom, highlighted).Lerp(color, swap);
+            }
+
+            color.A *= alpha;
 
             // Screen angles: 0 is +X and angles run clockwise, so straight up is -Pi/2.
             float middle = -Mathf.Pi / 2f + wedge * SlotSpacing;
             (float from, float to) = WedgeAngles(wedge);
 
-            DrawColoredPolygon(BuildWedge(center, innerRadius, wedgeOuterRadius, from + WedgeGapRadians, to - WedgeGapRadians), WedgeColor(item, highlighted));
+            DrawColoredPolygon(BuildWedge(center, innerRadius, wedgeOuterRadius, from + WedgeGapRadians, to - WedgeGapRadians), color);
+
+            Vector2 labelCenter = center + Vector2.FromAngle(middle) * (innerRadius + wedgeOuterRadius) / 2f;
+            float labelWidth = (wedgeOuterRadius - innerRadius) * 1.2f;
+
+            if (swappedFrom != null)
+            {
+                DrawLabel(swappedFrom.Label, labelCenter, labelWidth, alpha * (1f - swap));
+            }
 
             if (item != null)
             {
-                Vector2 labelCenter = center + Vector2.FromAngle(middle) * (innerRadius + wedgeOuterRadius) / 2f;
-                DrawLabel(item.Label, labelCenter, (wedgeOuterRadius - innerRadius) * 1.2f);
+                DrawLabel(item.Label, labelCenter, labelWidth, alpha * swap);
             }
         }
 
@@ -316,6 +400,8 @@ public partial class RadialWheel : Control
 
         if (IsSpiral)
         {
+            DrawSeams(center, innerRadius, outerRadius * (1f + HighlightGrowFraction));
+
             int laps = (_items.Count + SpiralWedges - 1) / SpiralWedges;
             int lap = Math.Max(_highlighted, 0) / SpiralWedges + 1;
             DrawLabel($"{lap} / {laps}", center + Vector2.Down * innerRadius * LapCounterDrop, innerRadius);
@@ -325,6 +411,25 @@ public partial class RadialWheel : Control
         {
             float outlineRadius = outerRadius * (1f + HighlightGrowFraction) + OutlineGap;
             DrawArc(center, outlineRadius, 0f, Mathf.Tau, OutlineSegments, _outlineColor.Value, OutlineWidth);
+        }
+    }
+
+    // A glowing line wherever neighboring wedges aren't consecutive items: between laps, and after
+    // the last item.
+    private void DrawSeams(Vector2 center, float innerRadius, float outerRadius)
+    {
+        for (int wedge = 0; wedge < SpiralWedges; wedge++)
+        {
+            if (ItemAt((wedge + 1) % SpiralWedges) == ItemAt(wedge) + 1)
+            {
+                continue;
+            }
+
+            Vector2 direction = Vector2.FromAngle(WedgeAngles(wedge).To);
+            Vector2 from = center + direction * innerRadius;
+            Vector2 to = center + direction * outerRadius;
+            DrawLine(from, to, _seamGlowColor, SeamGlowWidth, true);
+            DrawLine(from, to, _seamColor, SeamWidth, true);
         }
     }
 
@@ -354,7 +459,7 @@ public partial class RadialWheel : Control
         return points;
     }
 
-    private void DrawLabel(string text, Vector2 labelCenter, float width)
+    private void DrawLabel(string text, Vector2 labelCenter, float width, float alpha = 1f)
     {
         Font font = GetThemeDefaultFont();
         int fontSize = GetThemeDefaultFontSize();
@@ -362,7 +467,7 @@ public partial class RadialWheel : Control
         Vector2 position = new Vector2(labelCenter.X - width / 2f, labelCenter.Y + baselineOffset);
 
         // Wedge colors run from dark to near-white, so the outline is what keeps the text readable.
-        DrawStringOutline(font, position, text, HorizontalAlignment.Center, width, fontSize, LabelOutlineSize, _labelOutlineColor);
-        DrawString(font, position, text, HorizontalAlignment.Center, width, fontSize, _labelColor);
+        DrawStringOutline(font, position, text, HorizontalAlignment.Center, width, fontSize, LabelOutlineSize, _labelOutlineColor with { A = alpha });
+        DrawString(font, position, text, HorizontalAlignment.Center, width, fontSize, _labelColor with { A = alpha });
     }
 }
