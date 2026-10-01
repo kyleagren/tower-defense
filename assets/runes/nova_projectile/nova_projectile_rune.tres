@@ -4,4 +4,5 @@
 
 [resource]
 script = ExtResource("1_fnvl0")
+DamageMultiplier = 0.35
 metadata/_custom_type_script = "uid://b44tjtredoyr7"

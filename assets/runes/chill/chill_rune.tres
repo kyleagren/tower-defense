@@ -4,3 +4,4 @@
 
 [resource]
 script = ExtResource("1_chill")
+SlowPercent = 0.25

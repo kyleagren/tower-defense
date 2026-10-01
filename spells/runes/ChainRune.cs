@@ -6,7 +6,7 @@ public partial class ChainRune : Rune
 {
     [Export] public int ExtraChains { get; private set; } = 3;
     [Export] public float FallbackChainRange { get; private set; } = 6f;
-    [Export] public override float DamageMultiplier { get; protected set; } = 0.8f;
+    [Export] public override float DamageMultiplier { get; protected set; } = 0.75f;
 
     public override string Name => "Chain";
 

@@ -5,4 +5,5 @@
 [resource]
 script = ExtResource("1_prnpo")
 ExtraProjectiles = 4
+DamageMultiplier = 0.75
 metadata/_custom_type_script = "uid://78qm0x0wdcm7"

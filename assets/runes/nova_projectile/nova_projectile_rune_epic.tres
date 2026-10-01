@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="NovaProjectileRune" format=3]
+
+[ext_resource type="Script" uid="uid://b44tjtredoyr7" path="res://spells/runes/NovaProjectileRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+DamageMultiplier = 0.5
+Rarity = 3
+metadata/_custom_type_script = "uid://b44tjtredoyr7"

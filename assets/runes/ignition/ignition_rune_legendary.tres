@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="IgnitionRune" format=3]
+
+[ext_resource type="Script" uid="uid://tvd3n7jhl8xe" path="res://spells/runes/reaction_runes/IgnitionRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+BurnDamagePercent = 0.6
+Rarity = 4
+metadata/_custom_type_script = "uid://tvd3n7jhl8xe"

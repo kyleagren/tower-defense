@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public partial class ForkRune : Rune
 {
     [Export] public int ExtraForks { get; private set; } = 1;
-    [Export] public override float DamageMultiplier { get; protected set; } = 0.6f;
+    [Export] public override float DamageMultiplier { get; protected set; } = 0.55f;
 
     public override string Name => "Fork";
 

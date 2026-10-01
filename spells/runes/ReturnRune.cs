@@ -4,7 +4,7 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class ReturnRune : Rune
 {
-    [Export] public override float DamageMultiplier { get; protected set; } = 0.6f;
+    [Export] public override float DamageMultiplier { get; protected set; } = 0.55f;
 
     public override string Name => "Return";
 

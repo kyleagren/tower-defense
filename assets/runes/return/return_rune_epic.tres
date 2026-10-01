@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ReturnRune" format=3]
+
+[ext_resource type="Script" uid="uid://biqr4qsa8lkgv" path="res://spells/runes/ReturnRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+DamageMultiplier = 0.7
+Rarity = 3
+metadata/_custom_type_script = "uid://biqr4qsa8lkgv"

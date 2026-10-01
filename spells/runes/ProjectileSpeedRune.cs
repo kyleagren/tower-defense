@@ -4,7 +4,7 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class ProjectileSpeedRune : Rune
 {
-    [Export] public float IncreasedSpeedPercent { get; private set; } = 0.3f;
+    [Export] public float IncreasedSpeedPercent { get; private set; } = 0.25f;
 
     public override string Name => "Velocity";
 
@@ -14,7 +14,7 @@ public partial class ProjectileSpeedRune : Rune
 
     public override IReadOnlyList<Tag> Tags => _tags;
 
-    public override string Description => "Increases projectile speed by 30%.";
+    public override string Description => $"Increases projectile speed by {Mathf.RoundToInt(IncreasedSpeedPercent * 100f)}%.";
 
     public override void Apply(SpellCastContext context)
     {

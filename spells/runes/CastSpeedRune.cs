@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class CastSpeedRune : Rune
 {
-    [Export] public float IncreasedCastSpeedPercent { get; private set; } = 0.2f;
+    [Export] public float IncreasedCastSpeedPercent { get; private set; } = 0.15f;
 
     public override string Name => "Haste";
 

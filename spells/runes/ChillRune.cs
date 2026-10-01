@@ -4,7 +4,7 @@ using System.Collections.Generic;
 [GlobalClass]
 public partial class ChillRune : OnHitRune
 {
-    [Export] public float SlowPercent { get; private set; } = 0.3f;
+    [Export] public float SlowPercent { get; private set; } = 0.25f;
     [Export] public float Duration { get; private set; } = 3f;
 
     public override string Name => "Chill";

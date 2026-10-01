@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RangeRune" format=3]
+
+[ext_resource type="Script" uid="uid://ce7whssju2x44" path="res://spells/runes/RangeRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+IncreasedRangePercent = 0.3
+Rarity = 1
+metadata/_custom_type_script = "uid://ce7whssju2x44"

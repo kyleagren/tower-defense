@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ChillRune" format=3]
+
+[ext_resource type="Script" uid="uid://b2m32qloedbf6" path="res://spells/runes/ChillRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+SlowPercent = 0.28
+Rarity = 1
+metadata/_custom_type_script = "uid://b2m32qloedbf6"

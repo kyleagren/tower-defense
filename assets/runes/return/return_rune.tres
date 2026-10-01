@@ -4,3 +4,4 @@
 
 [resource]
 script = ExtResource("1_return")
+DamageMultiplier = 0.55

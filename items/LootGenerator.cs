@@ -43,6 +43,16 @@ public static class LootGenerator
         (Rarity.Legendary, 1)
     };
 
+    // Rune Tomes only. No Common, which every profile already knows, and steeper than gear, since a
+    // tier is a permanent unlock rather than one item that might roll badly.
+    private static readonly (Rarity Rarity, int Weight)[] _runeRarityWeights =
+    {
+        (Rarity.Uncommon, 100),
+        (Rarity.Rare, 30),
+        (Rarity.Epic, 8),
+        (Rarity.Legendary, 1)
+    };
+
     // How good the best tier a given Rarity can roll is - each step up keeps every weaker tier
     // available too (Rare can still roll a T1, it's just not capped there anymore). Tier 1 is the
     // weakest and ascending numbers are stronger (see AffixTierRange.Tier), so this is each
@@ -152,7 +162,7 @@ public static class LootGenerator
     // falls back to a gear roll in the rare case every rarity is fully known.
     private static Item GenerateRuneTomeDrop()
     {
-        List<(Rarity Rarity, int Weight)> availableRarities = _rarityWeights
+        List<(Rarity Rarity, int Weight)> availableRarities = _runeRarityWeights
             .Where(entry => RuneCatalog.AllOfRarity(entry.Rarity).Any(rune => !IsRuneKnown(rune)))
             .ToList();
 

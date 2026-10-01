@@ -4,3 +4,4 @@
 
 [resource]
 script = ExtResource("1_ignition")
+BurnDamagePercent = 0.5

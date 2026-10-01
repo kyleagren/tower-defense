@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ProjectileSpeedRune" format=3]
+
+[ext_resource type="Script" uid="uid://cr2obdpjbejc6" path="res://spells/runes/ProjectileSpeedRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+IncreasedSpeedPercent = 0.35
+Rarity = 2
+metadata/_custom_type_script = "uid://cr2obdpjbejc6"

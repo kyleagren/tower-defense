@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="PierceRune" format=3]
+
+[ext_resource type="Script" uid="uid://dv3uy7iehdsm5" path="res://spells/runes/PierceRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+ExtraPierce = 3
+Rarity = 1
+metadata/_custom_type_script = "uid://dv3uy7iehdsm5"

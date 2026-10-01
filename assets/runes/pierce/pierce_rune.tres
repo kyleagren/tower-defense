@@ -4,3 +4,4 @@
 
 [resource]
 script = ExtResource("1_pierce")
+ExtraPierce = 2

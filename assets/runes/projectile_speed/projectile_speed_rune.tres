@@ -4,3 +4,4 @@
 
 [resource]
 script = ExtResource("1_projectilespeed")
+IncreasedSpeedPercent = 0.25
