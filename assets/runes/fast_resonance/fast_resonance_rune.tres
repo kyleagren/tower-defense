@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="FastResonanceRune" format=3]
+
+[ext_resource type="Script" path="res://spells/runes/trigger_runes/FastResonanceRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+DamageMultiplier = 1.08

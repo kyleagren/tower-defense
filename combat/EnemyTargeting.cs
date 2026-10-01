@@ -35,6 +35,16 @@ public static class EnemyTargeting
         return FindBest(DistanceSquared, range, DistanceSquared, exclude, null, alsoExclude, sightFrom);
     }
 
+    // An enemy within range of fromPosition, chosen by how close it is to point - a Resonant Ritual
+    // reaching for whatever is nearest its source's target.
+    public static Enemy FindNearestTo(Vector3 point, Vector3 fromPosition, float range, Vector3? sightFrom = null)
+    {
+        float RangeSquared(Enemy enemy) => fromPosition.DistanceSquaredTo(enemy.GlobalPosition);
+        float Closeness(Enemy enemy) => point.DistanceSquaredTo(enemy.GlobalPosition);
+
+        return FindBest(RangeSquared, range, Closeness, null, null, sightFrom: sightFrom);
+    }
+
     public static Enemy FindNearestToSegment(Vector3 segmentStart, Vector3 segmentEnd, float range, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null)
     {
         float DistanceSquared(Enemy enemy) => GeometryUtils.DistanceSquaredToSegment(enemy.GlobalPosition, segmentStart, segmentEnd);

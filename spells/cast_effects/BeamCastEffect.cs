@@ -6,7 +6,8 @@ public class BeamCastEffect : CastEffect
     {
         BeamCastData data = context.Beam;
 
-        if (data?.Scene == null || caster.CurrentTarget == null)
+        // A Resonant cast with nothing in range still fires, along the line its spawn point was aimed.
+        if (data?.Scene == null || (caster.CurrentTarget == null && caster.CastPoint == null))
         {
             return;
         }

@@ -6,12 +6,16 @@ public class BombardmentCastEffect : CastEffect
     {
         BombardmentCastData data = context.Bombardment;
 
-        if (data?.Scene == null || caster.CurrentTarget == null)
+        // On the target enemy, or - for a Resonant cast with nothing in range - the ground point it
+        // reaches toward.
+        Vector3? point = caster.CurrentTarget?.GlobalPosition ?? caster.CastPoint;
+
+        if (data?.Scene == null || point == null)
         {
             return;
         }
 
-        Vector3 target = caster.CurrentTarget.GlobalPosition;
+        Vector3 target = point.Value;
         float areaMultiplier = context.Area?.Multiplier.Value ?? 1f;
 
         Bombardment bombardment = data.Scene.Instantiate<Bombardment>();

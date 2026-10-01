@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="StandardResonanceRune" format=3]
+
+[ext_resource type="Script" path="res://spells/runes/trigger_runes/StandardResonanceRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+DamageMultiplier = 1.345
+CooldownAdded = 2.0
+Rarity = 3

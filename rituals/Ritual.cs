@@ -38,6 +38,23 @@ public partial class Ritual : Node3D, IDamageable
     private float _recoveryRemaining;
     private bool _effectOngoing;
     private MeshInstance3D _rangeIndicator;
+    private ResonanceOverlay _resonanceOverlay;
+    // Seconds until a received pulse casts, below 0 for none waiting; and the target of the Ritual
+    // whose cast sent it.
+    private float _pendingPulse = -1f;
+    private Enemy _pulseSource;
+    // Where the source's target was when a pulse arrived, for aiming at it if it has since died.
+    private Vector3 _pulseSourcePoint;
+    // Set only for a pulsed cast with nothing in range to hit: what the spawn point aims at.
+    private Vector3? _pulseAim;
+
+    // How far above and below a pulled-in point the ground is looked for.
+    private const float GroundProbeHeight = 5f;
+    private const float GroundProbeDepth = 10f;
+
+    // Where a ground spell lands when the cast has no target enemy - a Resonant cast reaching toward
+    // its source's target. Null outside such a cast.
+    public Vector3? CastPoint { get; private set; }
 
     public bool IsDisabled => _disabled;
 
@@ -340,6 +357,13 @@ public partial class Ritual : Node3D, IDamageable
             _currentTarget = EnemyTargeting.FindTarget(GlobalPosition, context.Range.Value, context.TargetPriority, sightFrom: SpawnPoint.GlobalPosition);
         }
 
+        // A trigger rune's Ritual never casts on its own - only when pulsed.
+        if (context.Trigger != null)
+        {
+            TickPendingPulse(context, (float)delta);
+            return;
+        }
+
         if (_spellInstance.CanCast && CanCastNow(context))
         {
             CastAtTarget(context);
@@ -370,6 +394,10 @@ public partial class Ritual : Node3D, IDamageable
         {
             AimSpawnPointAt(_currentTarget.AimPoint);
         }
+        else if (_pulseAim.HasValue)
+        {
+            AimSpawnPointAt(_pulseAim.Value);
+        }
 
         effect.Cast(context, SpawnPoint, this);
 
@@ -384,6 +412,155 @@ public partial class Ritual : Node3D, IDamageable
             _spellInstance.StartCast(context.ResolvedCastTime, context.ResolvedCooldown);
             BroadcastRecovery(context.ResolvedCastTime + context.ResolvedCooldown, ongoing: false);
         }
+
+        PulseResonantNeighbours();
+    }
+
+    // A short beat between a cast and the Resonant casts it sets off, so a chain reads as a ripple.
+    private const float ResonanceStagger = 0.1f;
+
+    public bool IsManual => _spellInstance != null && ResolveWithOwner().Trigger?.Manual == true;
+
+    // Every machine, off the readiness timer: what the Activate prompt reads.
+    public bool IsReadyToCast => !_disabled && !_effectOngoing && _recoveryRemaining <= 0f;
+
+    // Manual activation. Any player; a copy asks the host. Pressed while not ready, nothing happens,
+    // and pressed with nothing in range, the cast goes off anyway - and is wasted.
+    public void Activate()
+    {
+        if (!IsMultiplayerAuthority())
+        {
+            RpcId(1, MethodName.RequestActivate);
+            return;
+        }
+
+        if (!IsManual || _disabled || !_spellInstance.CanCast)
+        {
+            return;
+        }
+
+        if (_currentTarget != null && (!IsInstanceValid(_currentTarget) || _currentTarget.IsDead))
+        {
+            _currentTarget = null;
+        }
+
+        CastAtTarget(ResolveWithOwner());
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void RequestActivate()
+    {
+        if (NetworkSession.Instance.SenderSeat != default)
+        {
+            Activate();
+        }
+    }
+
+    // Host only. Every other Resonant Ritual within its own resonance radius of this one hears the cast.
+    private void PulseResonantNeighbours()
+    {
+        foreach (Ritual ritual in _level.Rituals.Active)
+        {
+            if (ritual != this && ritual.HearsCastAt(GlobalPosition))
+            {
+                ritual.ReceivePulse(_currentTarget);
+            }
+        }
+    }
+
+    private bool HearsCastAt(Vector3 position)
+    {
+        if (_spellInstance == null || _disabled)
+        {
+            return false;
+        }
+
+        SpellCastContext context = ResolveWithOwner();
+        return context.Trigger?.Resonant == true && GlobalPosition.DistanceTo(position) <= context.ResonanceRadius;
+    }
+
+    // Dropped while the Ritual can't cast or already has one waiting - never queued.
+    private void ReceivePulse(Enemy sourceTarget)
+    {
+        if (_disabled || !_spellInstance.CanCast || _pendingPulse >= 0f)
+        {
+            return;
+        }
+
+        _pendingPulse = ResonanceStagger;
+        _pulseSource = sourceTarget;
+        _pulseSourcePoint = sourceTarget != null ? sourceTarget.AimPoint : GlobalPosition;
+    }
+
+    private void TickPendingPulse(SpellCastContext context, float delta)
+    {
+        if (_pendingPulse < 0f)
+        {
+            return;
+        }
+
+        _pendingPulse -= delta;
+
+        if (_pendingPulse >= 0f)
+        {
+            return;
+        }
+
+        if (_spellInstance.CanCast)
+        {
+            _currentTarget = PulseTarget(context);
+
+            // Nothing in range to hit: still reach toward the source's target - a projectile or beam
+            // along that line, a ground spell onto the nearest ground in range of it.
+            if (_currentTarget == null && _pulseSource != null)
+            {
+                Vector3 toward = IsInstanceValid(_pulseSource) && !_pulseSource.IsDead ? _pulseSource.AimPoint : _pulseSourcePoint;
+                _pulseAim = toward;
+                CastPoint = GroundPointToward(toward, context.Range.Value);
+            }
+
+            CastAtTarget(context);
+            _pulseAim = null;
+            CastPoint = null;
+        }
+
+        _pulseSource = null;
+    }
+
+    // The point pulled in to the edge of this Ritual's range if it's beyond it, then dropped onto the
+    // terrain beneath. Null where there's no ground under it.
+    private Vector3? GroundPointToward(Vector3 point, float range)
+    {
+        Vector3 offset = point - GlobalPosition;
+        offset.Y = 0f;
+
+        if (offset.Length() > range)
+        {
+            offset = offset.Normalized() * range;
+        }
+
+        Vector3 above = new Vector3(GlobalPosition.X + offset.X, point.Y + GroundProbeHeight, GlobalPosition.Z + offset.Z);
+        PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(above, above + Vector3.Down * (GroundProbeHeight + GroundProbeDepth), PhysicsLayers.World);
+        Godot.Collections.Dictionary hit = GetWorld3D().DirectSpaceState.IntersectRay(query);
+
+        return hit.Count == 0 ? null : (Vector3)hit["position"];
+    }
+
+    // The source's target if this Ritual can reach and see it, otherwise the enemy in its own range
+    // nearest that target. With neither, the cast still goes off - and is wasted.
+    private Enemy PulseTarget(SpellCastContext context)
+    {
+        Enemy source = _pulseSource != null && IsInstanceValid(_pulseSource) && !_pulseSource.IsDead ? _pulseSource : null;
+
+        if (source != null
+            && GlobalPosition.DistanceTo(source.GlobalPosition) <= context.Range.Value
+            && LineOfSight.IsClear(this, SpawnPoint.GlobalPosition, source.AimPoint))
+        {
+            return source;
+        }
+
+        Vector3 near = source?.GlobalPosition ?? GlobalPosition;
+        return EnemyTargeting.FindNearestTo(near, GlobalPosition, context.Range.Value, SpawnPoint.GlobalPosition);
     }
 
     // Host only. Every copy, this one included, then counts the time down on its own. A hidden ring
@@ -441,6 +618,8 @@ public partial class Ritual : Node3D, IDamageable
         {
             _rangeIndicator?.QueueFree();
             _rangeIndicator = null;
+            _resonanceOverlay?.QueueFree();
+            _resonanceOverlay = null;
             return;
         }
 
@@ -449,8 +628,16 @@ public partial class Ritual : Node3D, IDamageable
             return;
         }
 
-        _rangeIndicator = RitualPlacer.BuildRangeIndicator(ResolveWithOwner().Range.Value);
+        SpellCastContext context = ResolveWithOwner();
+        _rangeIndicator = RitualPlacer.BuildRangeIndicator(context.Range.Value);
         AddChild(_rangeIndicator);
+
+        if (context.Trigger?.Resonant == true)
+        {
+            _resonanceOverlay = new ResonanceOverlay();
+            AddChild(_resonanceOverlay);
+            _resonanceOverlay.Draw(context.ResonanceRadius, context.Range.Value, this);
+        }
     }
 
     // Straight at the target's center mass, so a projectile arrives where it's meant to hit. A

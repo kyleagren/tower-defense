@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FarResonanceRune" format=3]
+
+[ext_resource type="Script" path="res://spells/runes/trigger_runes/FarResonanceRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+DamageMultiplier = 1.2625
+CooldownAdded = 2.0
+SpellRangeBonus = 0.2
+Rarity = 1

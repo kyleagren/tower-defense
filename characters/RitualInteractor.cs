@@ -84,6 +84,16 @@ public partial class RitualInteractor : LookInteractor
         return ($"Repair: {cost} Mana", color);
     }
 
+    // Manual activation: a press, not a hold, since firing it is the whole point of walking over.
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (Target is Ritual ritual && ritual.IsManual && InputChords.IsPressedWithoutAbilityModifier(@event, "interact"))
+        {
+            ritual.Activate();
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
     protected override string BuildPromptText(Node3D target)
     {
         if (_destroyHoldTime > 0f)
@@ -98,7 +108,13 @@ public partial class RitualInteractor : LookInteractor
             return $"Repairing... {percent}%";
         }
 
-        return $"Hold {InputPromptHelper.GetPrompt("repair_ritual")} to Repair\n"
+        Ritual ritual = (Ritual)target;
+        string activate = !ritual.IsManual ? ""
+            : ritual.IsReadyToCast ? $"Press {InputPromptHelper.GetPrompt("interact")} to Activate\n"
+            : "Recharging\n";
+
+        return activate
+            + $"Hold {InputPromptHelper.GetPrompt("repair_ritual")} to Repair\n"
             + $"Hold {InputPromptHelper.GetPrompt("destroy_ritual")} to Destroy";
     }
 }

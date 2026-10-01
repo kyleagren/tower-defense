@@ -6,15 +6,19 @@ public class SweepCastEffect : CastEffect
     {
         SweepCastData data = context.Sweep;
 
-        if (data?.Scene == null || caster.CurrentTarget == null)
+        // Toward the target enemy, or - for a Resonant cast with nothing in range - the ground point
+        // it reaches toward.
+        Vector3? goal = caster.CurrentTarget?.GlobalPosition ?? caster.CastPoint;
+
+        if (data?.Scene == null || goal == null)
         {
             return;
         }
 
-        // From the Ritual's base, flat toward the target - or along the Ritual's aim, for an enemy
-        // standing right on top of it.
+        // From the Ritual's base, flat toward the goal - or along the Ritual's aim, for one right on
+        // top of it.
         Vector3 start = caster.GlobalPosition;
-        Vector3 toward = caster.CurrentTarget.GlobalPosition - start;
+        Vector3 toward = goal.Value - start;
         toward.Y = 0f;
 
         if (toward.LengthSquared() < 0.0001f)

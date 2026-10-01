@@ -53,7 +53,26 @@ public class SpellCastContext
     // Cooldown recovery rate works the same way cast speed does (and the same way PoE's own
     // "increased cooldown recovery rate" stat works) - it divides into cooldown time rather than
     // subtracting from it, so stacking it can never push the cooldown to zero or negative.
-    public float ResolvedCooldown => Cooldown.Value / CooldownRecoveryRate.Value;
+    // A trigger rune's added cooldown sits after the rest of cooldown resolution and before recovery
+    // gear, which then speeds the added time up like any other.
+    public float ResolvedCooldown
+    {
+        get
+        {
+            float cooldown = Cooldown.Value;
+
+            if (Trigger != null)
+            {
+                cooldown = Mathf.Max(cooldown * Trigger.CooldownMultiplier, cooldown + Trigger.CooldownAdded);
+            }
+
+            return cooldown / CooldownRecoveryRate.Value;
+        }
+    }
+
+    // How far a Resonant Ritual hears others cast: its range, gear and runes included, less the bonus
+    // Far Resonance gives only the spell.
+    public float ResonanceRadius => Range.Base * (1f + Range.Increased - (Trigger?.RangeNotResonating ?? 0f)) * Range.More;
 
     // Mana/capacity cost reduction is ordinary linear "Increased" (unlike cooldown), so it needs
     // an explicit floor instead - PoE's own rule that nothing can ever cost less than 1.
@@ -75,6 +94,7 @@ public class SpellCastContext
     public BombardmentCastData Bombardment;
     public BeamCastData Beam;
     public SweepCastData Sweep;
+    public TriggerCastData Trigger;
     public GroundEffectCastData GroundEffect;
     public CastTrigger CastTrigger;
     public CastEffect CastEffect;

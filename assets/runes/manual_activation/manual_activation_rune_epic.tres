@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ManualActivationRune" format=3]
+
+[ext_resource type="Script" path="res://spells/runes/trigger_runes/ManualActivationRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+DamageMultiplier = 2.15
+Rarity = 3

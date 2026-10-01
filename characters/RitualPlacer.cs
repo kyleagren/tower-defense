@@ -24,6 +24,7 @@ public partial class RitualPlacer : Node
     private Ritual _ghost;
     private MeshInstance3D _ghostMesh;
     private CollisionShape3D _ghostCollisionShape;
+    private ResonanceOverlay _resonanceOverlay;
     private Spell _pendingSpell;
     private Godot.Collections.Array<Rune> _pendingRunes;
     private CharacterSheet _ownerSheet;
@@ -158,6 +159,7 @@ public partial class RitualPlacer : Node
     private void ProcessRitualStage()
     {
         _ghost.GlobalPosition = _flow.ConstrainRitualPosition(_cursorPosition);
+        _resonanceOverlay?.Draw(_pendingContext.ResonanceRadius, _pendingContext.Range.Value, null);
         UpdateGhostValidity();
         LevelContext.Current.RitualRoster.MoveGhost(_ghost.GlobalPosition);
 
@@ -191,6 +193,12 @@ public partial class RitualPlacer : Node
         if (_flow.ShowsRangeIndicator)
         {
             _ghost.AddChild(BuildRangeIndicator(_pendingContext.Range.Value));
+        }
+
+        if (_flow.ShowsRangeIndicator && _pendingContext.Trigger?.Resonant == true)
+        {
+            _resonanceOverlay = new ResonanceOverlay();
+            _ghost.AddChild(_resonanceOverlay);
         }
 
         LevelContext.Current.RitualRoster.ShowGhost(_flow.ShowsRangeIndicator ? _pendingContext.Range.Value : 0f, _flow.ConstrainRitualPosition(_cursorPosition));
@@ -240,6 +248,8 @@ public partial class RitualPlacer : Node
             _ghost.QueueFree();
             _ghost = null;
         }
+
+        _resonanceOverlay = null;
 
         _onConfirmed = null;
         IsPlacing = false;
