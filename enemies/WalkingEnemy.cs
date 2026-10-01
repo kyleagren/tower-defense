@@ -78,6 +78,26 @@ public partial class WalkingEnemy : Enemy
     // How close a ranged enemy without a clear shot walks toward its target before stopping.
     private const float BlockedShotApproachDistance = 1f;
 
+    private static readonly StandardMaterial3D _iceMaterial = new()
+    {
+        AlbedoColor = new Color(0.7f, 0.9f, 1f, 0.3f),
+        Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+        ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+        CullMode = BaseMaterial3D.CullModeEnum.Disabled
+    };
+
+    private static readonly ShaderMaterial _shellMaterial = new()
+    {
+        Shader = GD.Load<Shader>("res://enemies/electrocuted_shell.gdshader")
+    };
+
+    // How far an electrocuted enemy's model is nudged each frame.
+    private const float JitterDistance = 0.02f;
+
+    private MeshInstance3D _iceBlock;
+    private MeshInstance3D _electricShell;
+    private Vector3 _skeletonRestPosition;
+
     public override void _Ready()
     {
         base._Ready();
@@ -95,6 +115,58 @@ public partial class WalkingEnemy : Enemy
         NavAgent.VelocityComputed += OnVelocityComputed;
 
         SetPhysicalBonesCollision(0, 0);
+        BuildCrowdControlVisuals();
+    }
+
+    // Built per enemy, since each body is its own size: an ice block a little inside the body
+    // capsule, and an open shell just outside it for the electrocuted lines.
+    private void BuildCrowdControlVisuals()
+    {
+        _skeletonRestPosition = Skeleton.Position;
+
+        float radius = 0.4f;
+        float height = 1.8f;
+
+        if (BodyCollision.Shape is CapsuleShape3D capsule)
+        {
+            radius = capsule.Radius;
+            height = capsule.Height;
+        }
+
+        Vector3 center = BodyCollision.Position;
+
+        _iceBlock = new MeshInstance3D
+        {
+            Mesh = new BoxMesh { Size = new Vector3(radius * 1.8f, height * 0.9f, radius * 1.8f) },
+            MaterialOverride = _iceMaterial,
+            Position = center,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Visible = false
+        };
+
+        _electricShell = new MeshInstance3D
+        {
+            Mesh = new CylinderMesh { TopRadius = radius * 1.1f, BottomRadius = radius * 1.1f, Height = height, CapTop = false, CapBottom = false },
+            MaterialOverride = _shellMaterial,
+            Position = center,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Visible = false
+        };
+
+        AddChild(_iceBlock);
+        AddChild(_electricShell);
+    }
+
+    // Every machine, every physics frame, off the synced debuff types - so a recovering CC never shows.
+    private void UpdateCrowdControlVisuals()
+    {
+        bool electrocuted = HasDebuff(DebuffType.Electrocuted);
+        _iceBlock.Visible = HasDebuff(DebuffType.Frozen);
+        _electricShell.Visible = electrocuted;
+
+        Skeleton.Position = electrocuted
+            ? _skeletonRestPosition + new Vector3((float)GD.RandRange(-1.0, 1.0), (float)GD.RandRange(-1.0, 1.0), (float)GD.RandRange(-1.0, 1.0)) * JitterDistance
+            : _skeletonRestPosition;
     }
 
     public void SetLane(Lane lane, DefendableObjective objective)
@@ -113,6 +185,7 @@ public partial class WalkingEnemy : Enemy
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
+        UpdateCrowdControlVisuals();
 
         if (!IsSimulatedHere)
         {
@@ -125,6 +198,13 @@ public partial class WalkingEnemy : Enemy
         if (IsKnockedBack)
         {
             ProcessKnockback(delta);
+            return;
+        }
+
+        // Frozen or electrocuted: it holds still, and its attack timer waits with it.
+        if (IsActionPrevented)
+        {
+            Stop(delta);
             return;
         }
 
@@ -742,6 +822,11 @@ public partial class WalkingEnemy : Enemy
         }
 
         base.Die(ragdollImpulse);
+
+        // Physics processing stops with death, so nothing else would clear these off the ragdoll.
+        _iceBlock.Visible = false;
+        _electricShell.Visible = false;
+        Skeleton.Position = _skeletonRestPosition;
 
         NavAgent.AvoidanceEnabled = false;
         SetPhysicalBonesCollision(PhysicsLayers.Ragdoll, PhysicsLayers.World);

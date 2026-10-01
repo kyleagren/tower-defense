@@ -133,7 +133,10 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
             foreach (Debuff debuff in _debuffs)
             {
-                types |= debuff.Type;
+                if (!debuff.IsRecovering)
+                {
+                    types |= debuff.Type;
+                }
             }
 
             return types;
@@ -148,6 +151,12 @@ public partial class Enemy : CharacterBody3D, IDamageable
     }
 
     public bool HasDebuff(DebuffType types) => (DebuffTypes & types) != 0;
+
+    // Frozen or electrocuted: no steering, turning or attacking. Checked against the debuff types
+    // rather than the list, so a copy - which only has the synced types - agrees with the host.
+    private const DebuffType ActionPreventing = DebuffType.Frozen | DebuffType.Electrocuted;
+
+    public bool IsActionPrevented => HasDebuff(ActionPreventing);
 
     public Vector3 CenterMass => GlobalPosition + Vector3.Up * CenterMassHeight;
     public Vector3 AimPoint => CenterMass;
@@ -586,7 +595,10 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
             foreach (Debuff debuff in _debuffs)
             {
-                multiplier *= debuff.SpeedMultiplier;
+                if (!debuff.IsRecovering)
+                {
+                    multiplier *= debuff.SpeedMultiplier;
+                }
             }
 
             return multiplier;

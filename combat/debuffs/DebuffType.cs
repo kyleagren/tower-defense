@@ -15,5 +15,7 @@ public enum DebuffType
     HealthLink = 1 << 6,
     Frostburn = 1 << 7,
     Melted = 1 << 8,
-    Overloaded = 1 << 9
+    Overloaded = 1 << 9,
+    Frozen = 1 << 10,
+    Electrocuted = 1 << 11
 }

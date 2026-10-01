@@ -16,7 +16,11 @@ public abstract class Debuff
     // of its elements evenly. Subclasses return a cached array, since this is read per check.
     public virtual Tag[] Elements => Array.Empty<Tag>();
 
-    public bool IsAilment => Elements.Length > 0;
+    // A hard-CC ailment's window after its effect ends: it still holds its slot, so the same CC can't
+    // land again yet, but it does nothing, isn't drawn, and doesn't count as present.
+    public virtual bool IsRecovering => false;
+
+    public bool IsAilment => Elements.Length > 0 && !IsRecovering;
 
     public abstract DebuffType Type { get; }
 

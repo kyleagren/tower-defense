@@ -37,12 +37,13 @@ public partial class Brute : WalkingEnemy
         _clubArmBoneIdx = Skeleton.FindBone("Arm.R");
     }
 
-    // After base, so the swing's arm pose overwrites the walk cycle's on the same frame.
+    // After base, so the swing's arm pose overwrites the walk cycle's on the same frame. A frozen or
+    // electrocuted Brute's swing pauses mid-arc and picks up where it left off.
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
 
-        if (IsSwinging)
+        if (IsSwinging && !IsActionPrevented)
         {
             AdvanceSwing((float)delta);
         }

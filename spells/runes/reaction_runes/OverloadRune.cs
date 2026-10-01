@@ -13,7 +13,7 @@ public partial class OverloadRune : ReactionRune
     // an 80kg Grunt, barely a lift on a Brute.
     [Export] public float LaunchImpulse { get; private set; } = 215f;
     // How far off straight up a launch tips, away from the centre.
-    [Export] public float LaunchOutwardDegrees { get; private set; } = 5f;
+    [Export] public float LaunchOutwardDegrees { get; private set; } = 1f;
     [Export] public float Cooldown { get; private set; } = 5f;
     [Export] public PackedScene BurstScene { get; private set; }
 
