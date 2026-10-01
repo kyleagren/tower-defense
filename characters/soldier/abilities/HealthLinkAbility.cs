@@ -11,7 +11,7 @@ public partial class HealthLinkAbility : Ability
 {
     [Export] public override float BaseCooldown { get; protected set; } = 12f;
     [Export] public float Duration { get; private set; } = 7f;
-    [Export] public float ArmingTimeout { get; private set; } = 5f;
+    [Export] public float ArmingTimeout { get; private set; } = 10f;
     [Export] public float DudDuration { get; private set; } = 1.5f;
     [Export] public float SpikeRange { get; private set; } = 30f;
     [Export] public float MirrorPercent { get; private set; } = 1f;
@@ -32,6 +32,8 @@ public partial class HealthLinkAbility : Ability
     // Where bolts launch and the armed beam starts. A plain Node3D export, which is safe against the
     // inherited-base hazard that bites custom-typed ones - Soldier.MuzzlePoint is exported the same way.
     [Export] public Node3D BeamOrigin { get; private set; }
+    // Matches the armed beam's color.
+    [Export] public Color CueColor { get; private set; } = new Color(0.85f, 0.2f, 0.35f);
 
     private const int ShotsPerCast = 2;
 
@@ -41,7 +43,6 @@ public partial class HealthLinkAbility : Ability
     public override bool CanToggleOff => _phase == Phase.Arming;
     public override bool CapturesAttackInput => _phase == Phase.Arming;
 
-    // Placeholder for an armed-state cue - the crosshair is the right home for that, not the ability bar.
     public override float ActiveFraction => _phase switch
     {
         Phase.Arming => ArmingTimeout <= 0f ? 0f : _armingRemaining / ArmingTimeout,
@@ -49,6 +50,14 @@ public partial class HealthLinkAbility : Ability
         Phase.Dud => DudDuration <= 0f ? 0f : _dudRemaining / DudDuration,
         _ => 0f
     };
+
+    public override CrosshairShots? CrosshairShots => _phase == Phase.Arming
+        ? new CrosshairShots(CrosshairShotStyle.FlankingArcs, ShotsPerCast - _shotsFired, ShotsPerCast)
+        : null;
+
+    public override bool HasCrosshairTimer => true;
+    public override float? CrosshairTimerFraction => _phase == Phase.Arming ? ActiveFraction : null;
+    public override Color CrosshairCueColor => CueColor;
 
     private enum Phase { Idle, Arming, Linked, Dud }
 

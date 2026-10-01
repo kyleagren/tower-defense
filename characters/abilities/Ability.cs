@@ -69,6 +69,16 @@ public abstract partial class Ability : Node
     // What the gauge's fill is tinted by - null for no element.
     public virtual Tag? GaugeElement => null;
 
+    // What the crosshair shows for this ability, polled each frame by CrosshairCue: the shots left
+    // while it holds the attack binding, and the fraction left on a timer. Null shows nothing.
+    public virtual CrosshairShots? CrosshairShots => null;
+    public virtual float? CrosshairTimerFraction => null;
+
+    // An ability that ever shows a crosshair timer keeps its own row for it, so a bar's position
+    // says which ability it belongs to even while the others are idle.
+    public virtual bool HasCrosshairTimer => false;
+    public virtual Color CrosshairCueColor => Colors.White;
+
     // Called when the wielding Sentinel dies, after any capture has been cancelled.
     public virtual void OnCharacterDied()
     {

@@ -9,8 +9,6 @@ public partial class AbilityGauge : TextureProgressBar
     [Export] public float BorderThickness = 4f;
     [Export] public Color BorderColor = new Color(0.1f, 0.1f, 0.12f);
     [Export] public Color EmptyColor = new Color(0.16f, 0.16f, 0.18f);
-    // Placeholder cue for a gauge being spent, until the crosshair carries that.
-    [Export] public Color ActiveColor = Colors.White;
     [Export] public Label GaugeLabel { get; private set; }
 
     public override void _Ready()
@@ -44,7 +42,7 @@ public partial class AbilityGauge : TextureProgressBar
         float fraction = gaugeAbility.GaugeFraction.Value;
         Value = fraction;
         GaugeLabel.Text = $"{Mathf.RoundToInt(fraction * 100f)}/100";
-        TintProgress = gaugeAbility.IsActive ? ActiveColor : DamageTypeColors.Get(gaugeAbility.GaugeElement);
+        TintProgress = DamageTypeColors.Get(gaugeAbility.GaugeElement);
     }
 
     // An ability spending its gauge wins over one filling it, so Overdrive's draining shots show in

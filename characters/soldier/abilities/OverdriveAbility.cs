@@ -31,12 +31,22 @@ public partial class OverdriveAbility : Ability
 
     public override bool CapturesAttackInput => IsActive;
     public override bool CanCancelCapture => false;
-    public override float ActiveFraction => OverdriveShots <= 0 ? 0f : (float)_shotsRemaining / OverdriveShots;
-
     // Only while spending - the gauge itself is Harvest's.
-    public override float? GaugeFraction => IsActive ? ActiveFraction : null;
+    public override float? GaugeFraction => IsActive ? ShotsFraction : null;
+    public override Tag? GaugeElement => _ailmentElement;
+
+    public override CrosshairShots? CrosshairShots => IsActive
+        ? new CrosshairShots(CrosshairShotStyle.Row, _shotsRemaining, OverdriveShots)
+        : null;
+
+    public override bool HasCrosshairTimer => true;
+    public override float? CrosshairTimerFraction => IsActive && _expiryDuration > 0f ? _expiryRemaining / _expiryDuration : null;
+    public override Color CrosshairCueColor => DamageTypeColors.Get(_ailmentElement);
+
+    private float ShotsFraction => OverdriveShots <= 0 ? 0f : (float)_shotsRemaining / OverdriveShots;
 
     private int _shotsRemaining;
+    private float _expiryDuration;
     private float _expiryRemaining;
     private float _shotCooldown;
     private int _pierceCount;
@@ -56,7 +66,8 @@ public partial class OverdriveAbility : Ability
 
         IsActive = true;
         _shotsRemaining = OverdriveShots;
-        _expiryRemaining = ScaledDuration(Expiry);
+        _expiryDuration = ScaledDuration(Expiry);
+        _expiryRemaining = _expiryDuration;
         _pierceCount = PierceCount + Mathf.FloorToInt(EffectiveBonus(AbilityStatKind.Area) / AreaPerExtraPierce);
         _shotCooldown = 0f;
         Wielder.SetWeaponTint(DamageTypeColors.Get(_ailmentElement));

@@ -13,12 +13,16 @@ public partial class WeakPointVisorAbility : Ability
     [Export] public float Duration { get; private set; } = 8f;
     [Export] public int WeakPointCount { get; private set; } = 3;
     [Export] public float WeakPointDamageMultiplier { get; private set; } = 1.3f;
+    [Export] public Color CueColor { get; private set; } = new Color(1f, 0.8f, 0.2f);
 
     public override string DisplayName => "Weak-Point Visor";
     public override string Description => "Exposes weak points on every enemy.";
     public override bool CanToggleOff => true;
 
     public override float ActiveFraction => _activeDuration <= 0f ? 0f : _durationRemaining / _activeDuration;
+    public override bool HasCrosshairTimer => true;
+    public override float? CrosshairTimerFraction => IsActive ? ActiveFraction : null;
+    public override Color CrosshairCueColor => CueColor;
 
     // Ability damage scales only the bonus part - scaling the whole multiplier would compound far
     // too hard on top of headshot crits. Read per shot, so re-gearing mid-Visor applies at once.
