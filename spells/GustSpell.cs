@@ -6,7 +6,7 @@ public partial class GustSpell : Spell
 {
     [Export] public PackedScene SweepScene { get; private set; }
     [Export] public float BaseSweepRadius { get; private set; } = 0.6f;
-    [Export] public float BaseSweepSpeed { get; private set; } = 6f;
+    [Export] public float BaseSweepSpeed { get; private set; } = 8f;
     [Export] public float BaseSweepDuration { get; private set; } = 2f;
     // Of its Wind, moved into the first Status it picks up - 60/40 Wind to that element.
     [Export] public float BaseInfusionShare { get; private set; } = 0.4f;

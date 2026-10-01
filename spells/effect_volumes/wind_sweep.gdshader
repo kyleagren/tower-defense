@@ -34,7 +34,9 @@ void fragment() {
     bool on_top = top_face > 0.5;
     float along = on_top ? length(local_position.xz) * top_twist : local_position.y * twist;
     float count = on_top ? top_stripe_count : stripe_count;
-    float band = fract((angle + along - TIME * spin) * count);
+    // The top turns against the sides.
+    float turn = TIME * spin * (on_top ? -1.0 : 1.0);
+    float band = fract((angle + along - turn) * count);
     vec4 stripe = infused > 0.5 ? vec4(infusion_color.rgb, stripe_color.a) : stripe_color;
     vec4 color = band < stripe_width ? stripe : wind_color;
     ALBEDO = color.rgb;
