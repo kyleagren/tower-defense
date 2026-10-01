@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://characters/ItemInteractor.cs" id="7_iteminteractor"]
 [ext_resource type="Script" path="res://characters/StationInteractor.cs" id="8_stationinteractor"]
 [ext_resource type="Script" path="res://core/MotionPlayback.cs" id="9_motion"]
+[ext_resource type="Script" path="res://characters/RitualRangeViewer.cs" id="10_rangeviewer"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_s42qg"]
 radius = 0.4
@@ -65,6 +66,9 @@ RitualScene = ExtResource("4_ritualscene")
 [node name="RitualInteractor" type="Node" parent="." unique_id=1141137759]
 script = ExtResource("5_k6jo8")
 PromptScene = ExtResource("6_8tgsg")
+
+[node name="RitualRangeViewer" type="Node" parent="."]
+script = ExtResource("10_rangeviewer")
 
 [node name="ItemInteractor" type="Node" parent="."]
 script = ExtResource("7_iteminteractor")

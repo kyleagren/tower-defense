@@ -12,6 +12,9 @@ public partial class Ritual : Node3D, IDamageable
     [Export] public HealthBar3D HealthBar { get; private set; }
     [Export] public MeshInstance3D CoreMesh { get; private set; }
     [Export] public float ShroudedTransparency { get; private set; } = 0.6f;
+    [Export] public MeshInstance3D ReadinessRing { get; private set; }
+    // How much darker the ring is while the next cast is still coming.
+    [Export] public float RecoveringDarken { get; private set; } = 0.55f;
 
     private static readonly StandardMaterial3D _disabledMaterial = new StandardMaterial3D
     {
@@ -30,6 +33,11 @@ public partial class Ritual : Node3D, IDamageable
     private float _currentHealth;
     private bool _disabled;
     private Material _activeMaterial;
+    private Color _elementColor = Colors.White;
+    private float _recoveryTotal;
+    private float _recoveryRemaining;
+    private bool _effectOngoing;
+    private MeshInstance3D _rangeIndicator;
 
     public bool IsDisabled => _disabled;
 
@@ -54,6 +62,9 @@ public partial class Ritual : Node3D, IDamageable
         _activeMaterial = CoreMesh.MaterialOverride;
         HealthBar.SetFraction(1f);
         HealthBar.Visible = false;
+
+        // Shown by Configure, and only for a spell with a cooldown worth watching.
+        ReadinessRing.Visible = false;
 
         if (IsPreview)
         {
@@ -117,7 +128,9 @@ public partial class Ritual : Node3D, IDamageable
     // Called by an ongoing CastEffect when whatever it left behind is gone - the cooldown starts now.
     public void ConcludeOngoingEffect()
     {
-        _spellInstance.EndOngoingEffect(ResolveWithOwner().ResolvedCooldown);
+        float cooldown = ResolveWithOwner().ResolvedCooldown;
+        _spellInstance.EndOngoingEffect(cooldown);
+        BroadcastRecovery(cooldown, ongoing: false);
     }
 
     public void TakeDamage(Hit hit)
@@ -254,11 +267,16 @@ public partial class Ritual : Node3D, IDamageable
         // overlays already use. GetForSpell (not the raw Get) so a damage-less elemental spell like
         // Ice Wall still resolves to its Tag.Cold color instead of falling through to white/grey.
         Color elementColor = DamageTypeColors.GetForSpell(spell);
+        _elementColor = elementColor;
         _activeMaterial = new StandardMaterial3D { AlbedoColor = elementColor };
         CoreMesh.MaterialOverride = _activeMaterial;
 
         ApplyShroud();
         placement?.AttachTo(this, ResolveWithOwner());
+
+        // Rituals firing on cast time alone would just flicker it. Runes are fixed for the Ritual's
+        // lifetime, so one that adds a cooldown is already counted here.
+        ReadinessRing.Visible = ResolveWithOwner().ResolvedCooldown > 0f;
     }
 
     // Resolved once here rather than per frame: a Ritual's rune loadout is fixed for its lifetime,
@@ -289,6 +307,8 @@ public partial class Ritual : Node3D, IDamageable
 
     public override void _Process(double delta)
     {
+        UpdateReadiness((float)delta);
+
         // Null until Configure runs — placement ghosts and scene-authored rituals with no Spell
         // assigned both sit in this state. Only the host runs a Ritual; everywhere else it's a copy.
         if (_spellInstance == null || _disabled || !IsMultiplayerAuthority())
@@ -353,11 +373,80 @@ public partial class Ritual : Node3D, IDamageable
         {
             _spellInstance.StartCast(context.ResolvedCastTime, 0f);
             _spellInstance.BeginOngoingEffect();
+            BroadcastRecovery(0f, ongoing: true);
         }
         else
         {
             _spellInstance.StartCast(context.ResolvedCastTime, context.ResolvedCooldown);
+            BroadcastRecovery(context.ResolvedCastTime + context.ResolvedCooldown, ongoing: false);
         }
+    }
+
+    // Host only. Every copy, this one included, then counts the time down on its own. A hidden ring
+    // is hidden on every copy, so there's nothing to tell them.
+    private void BroadcastRecovery(float duration, bool ongoing)
+    {
+        if (!ReadinessRing.Visible)
+        {
+            return;
+        }
+
+        ShowRecovery(duration, ongoing);
+        Rpc(MethodName.ReceiveRecovery, duration, ongoing);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveRecovery(float duration, bool ongoing)
+    {
+        ShowRecovery(duration, ongoing);
+    }
+
+    private void ShowRecovery(float duration, bool ongoing)
+    {
+        _recoveryTotal = duration;
+        _recoveryRemaining = duration;
+        _effectOngoing = ongoing;
+    }
+
+    // Empty while broken or while an ongoing effect stands; fills toward the next cast, then lights
+    // up full. A broken Ritual's timer is paused on the host, so the copy pauses too.
+    private void UpdateReadiness(float delta)
+    {
+        if (!ReadinessRing.Visible)
+        {
+            return;
+        }
+
+        if (!_disabled && _recoveryRemaining > 0f)
+        {
+            _recoveryRemaining = Mathf.Max(0f, _recoveryRemaining - delta);
+        }
+
+        bool empty = _disabled || _effectOngoing;
+        bool ready = !empty && _recoveryRemaining <= 0f;
+        float fill = empty ? 0f : _recoveryTotal <= 0f ? 1f : 1f - _recoveryRemaining / _recoveryTotal;
+
+        ReadinessRing.SetInstanceShaderParameter("fill", fill);
+        ReadinessRing.SetInstanceShaderParameter("lit_color", ready ? _elementColor : _elementColor.Darkened(RecoveringDarken));
+    }
+
+    // Built fresh each time it's shown, so the circle matches the owner's current gear.
+    public void SetRangeShown(bool shown)
+    {
+        if (!shown)
+        {
+            _rangeIndicator?.QueueFree();
+            _rangeIndicator = null;
+            return;
+        }
+
+        if (_rangeIndicator != null || _spellInstance == null)
+        {
+            return;
+        }
+
+        _rangeIndicator = RitualPlacer.BuildRangeIndicator(ResolveWithOwner().Range.Value);
+        AddChild(_rangeIndicator);
     }
 
     // Straight at the target's center mass, so a projectile arrives where it's meant to hit. A

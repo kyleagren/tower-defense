@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://characters/RitualInteractor.cs" id="1_ritualinteractor"]
+[ext_resource type="Script" path="res://characters/RitualRangeViewer.cs" id="20_rangeviewer"]
 [ext_resource type="PackedScene" path="res://ui/interaction_prompt.tscn" id="2_prompt"]
 [ext_resource type="Script" path="res://characters/ItemInteractor.cs" id="3_iteminteractor"]
 [ext_resource type="Script" path="res://characters/StationInteractor.cs" id="4_stationinteractor"]
@@ -56,6 +57,9 @@ spring_length = 5.0
 [node name="RitualInteractor" type="Node" parent="."]
 script = ExtResource("1_ritualinteractor")
 PromptScene = ExtResource("2_prompt")
+
+[node name="RitualRangeViewer" type="Node" parent="."]
+script = ExtResource("20_rangeviewer")
 
 [node name="ItemInteractor" type="Node" parent="."]
 script = ExtResource("3_iteminteractor")
