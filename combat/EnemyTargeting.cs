@@ -6,7 +6,8 @@ public static class EnemyTargeting
 {
     // Picks a ritual's cast target. Range is always measured from the ritual; only which of the
     // in-range enemies wins depends on the priority.
-    public static Enemy FindTarget(Vector3 fromPosition, float range, TargetPriority priority, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null)
+    // sightFrom, when given, also requires a clear line from there to the enemy (LineOfSight).
+    public static Enemy FindTarget(Vector3 fromPosition, float range, TargetPriority priority, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null, Vector3? sightFrom = null)
     {
         float RangeSquared(Enemy enemy) => fromPosition.DistanceSquaredTo(enemy.GlobalPosition);
 
@@ -14,24 +15,24 @@ public static class EnemyTargeting
             ? enemy => enemy.DistanceToGoal
             : RangeSquared;
 
-        return FindBest(RangeSquared, range, score, exclude, predicate);
+        return FindBest(RangeSquared, range, score, exclude, predicate, sightFrom: sightFrom);
     }
 
-    public static Enemy FindNearest(Vector3 fromPosition, float range, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null)
+    public static Enemy FindNearest(Vector3 fromPosition, float range, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null, Vector3? sightFrom = null)
     {
         float DistanceSquared(Enemy enemy) => fromPosition.DistanceSquaredTo(enemy.GlobalPosition);
 
-        return FindBest(DistanceSquared, range, DistanceSquared, exclude, predicate);
+        return FindBest(DistanceSquared, range, DistanceSquared, exclude, predicate, sightFrom: sightFrom);
     }
 
     // Two exclusion sets instead of one merged set. A chaining projectile has both its own hit list
     // and the shared per-cast tracker to skip; merging them meant allocating a HashSet on every
     // single chain jump purely to ask a membership question.
-    public static Enemy FindNearest(Vector3 fromPosition, float range, ISet<Enemy> exclude, ISet<Enemy> alsoExclude)
+    public static Enemy FindNearest(Vector3 fromPosition, float range, ISet<Enemy> exclude, ISet<Enemy> alsoExclude, Vector3? sightFrom = null)
     {
         float DistanceSquared(Enemy enemy) => fromPosition.DistanceSquaredTo(enemy.GlobalPosition);
 
-        return FindBest(DistanceSquared, range, DistanceSquared, exclude, null, alsoExclude);
+        return FindBest(DistanceSquared, range, DistanceSquared, exclude, null, alsoExclude, sightFrom);
     }
 
     public static Enemy FindNearestToSegment(Vector3 segmentStart, Vector3 segmentEnd, float range, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null)
@@ -69,7 +70,7 @@ public static class EnemyTargeting
     // exclude is an ISet rather than an IEnumerable so the membership test is a hash lookup per
     // candidate. Passing a lazy sequence (a Concat or an OfType) would silently degrade this to a
     // full re-scan for every enemy considered.
-    private static Enemy FindBest(Func<Enemy, float> rangeSquaredTo, float range, Func<Enemy, float> score, ISet<Enemy> exclude, Func<Enemy, bool> predicate, ISet<Enemy> alsoExclude = null)
+    private static Enemy FindBest(Func<Enemy, float> rangeSquaredTo, float range, Func<Enemy, float> score, ISet<Enemy> exclude, Func<Enemy, bool> predicate, ISet<Enemy> alsoExclude = null, Vector3? sightFrom = null)
     {
         IReadOnlyList<Enemy> candidates = LevelContext.Current.Enemies.Active;
         float rangeSquared = range * range;
@@ -104,11 +105,20 @@ public static class EnemyTargeting
             }
 
             float candidateScore = score(enemy);
-            if (candidateScore < bestScore)
+
+            if (candidateScore >= bestScore)
             {
-                bestScore = candidateScore;
-                best = enemy;
+                continue;
             }
+
+            // Last, and only for a candidate that would win - it's the one check that costs a raycast.
+            if (sightFrom.HasValue && !LineOfSight.IsClear(enemy, sightFrom.Value, enemy.AimPoint))
+            {
+                continue;
+            }
+
+            bestScore = candidateScore;
+            best = enemy;
         }
 
         return best;

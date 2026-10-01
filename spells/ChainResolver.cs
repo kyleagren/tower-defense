@@ -21,13 +21,13 @@ public static class ChainResolver
 
         for (int i = 0; i < chainCount; i++)
         {
-            Enemy next = EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, allHits);
+            Enemy next = EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, allHits, sightFrom: currentPoint);
 
             // Nothing untouched in range — allow re-hitting something a sibling chain already
             // caught rather than dropping the remaining jumps entirely.
             if (next == null && sharedChainTracker != null)
             {
-                next = EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, ownHits);
+                next = EnemyTargeting.FindNearest(current.GlobalPosition, chainRange, ownHits, sightFrom: currentPoint);
             }
 
             if (next == null)

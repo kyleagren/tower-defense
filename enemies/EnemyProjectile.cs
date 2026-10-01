@@ -2,9 +2,10 @@ using Godot;
 
 // A simple, self-contained projectile fired by a ranged enemy - deliberately not the Ritual-side
 // Projectile class (tightly coupled to SpellCastContext/chain/pierce, only ever hits Enemy). Real
-// Area3D collision against whatever it actually hits first (Player | Obstacles covers every
-// target type plus plain obstacles like fences), not a pre-assigned target - so it can be blocked
-// by something else in the way, and correctly damages whatever was actually struck.
+// Area3D collision against whatever it actually hits first (Player | Obstacles | RitualHitbox
+// covers every target type plus plain obstacles like fences, and World stops it on terrain), not a
+// pre-assigned target - so it can be blocked by something else in the way, and correctly damages
+// whatever was actually struck.
 public partial class EnemyProjectile : Area3D
 {
     [Export] public float Speed = 12f;

@@ -135,7 +135,7 @@ public partial class OverdriveAbility : Ability
 
         PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
-        query.CollisionMask = PhysicsLayers.Enemies;
+        query.CollisionMask = PhysicsLayers.Enemies | PhysicsLayers.World;
 
         Godot.Collections.Array<Rid> pierced = new Godot.Collections.Array<Rid>();
         Vector3 tracerEnd = end;
@@ -143,12 +143,21 @@ public partial class OverdriveAbility : Ability
         for (int i = 0; i < _pierceCount; i++)
         {
             Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
-            if (result.Count == 0 || result["collider"].As<Node3D>() is not Enemy enemy)
+
+            if (result.Count == 0)
             {
                 break;
             }
 
             Vector3 hitPosition = (Vector3)result["position"];
+
+            // Terrain ends the shot, however much pierce is left.
+            if (result["collider"].As<Node3D>() is not Enemy enemy)
+            {
+                Wielder.ShowImpact(hitPosition);
+                tracerEnd = hitPosition;
+                break;
+            }
             Wielder.ShowImpact(hitPosition);
             HitEnemy(enemy, origin, end, baseDamage);
 

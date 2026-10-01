@@ -123,7 +123,7 @@ public partial class Soldier : Sentinel
     private const float MaxWeaponPitchDegrees = 80f;
 
     // Reused every tick, like LookInteractor's.
-    private readonly PhysicsRayQueryParameters3D _aimQuery = new() { CollisionMask = PhysicsLayers.Enemies | PhysicsLayers.World | PhysicsLayers.Obstacles };
+    private readonly PhysicsRayQueryParameters3D _aimQuery = new() { CollisionMask = PhysicsLayers.Enemies | PhysicsLayers.World };
 
     // The rifle points at whatever the crosshair is on - the same line a shot takes - so tracers
     // leave the muzzle toward where the shot actually goes. Set as a turn and a tilt in the body's
@@ -164,7 +164,7 @@ public partial class Soldier : Sentinel
 
         PhysicsDirectSpaceState3D spaceState = GetWorld3D().DirectSpaceState;
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(origin, end);
-        query.CollisionMask = PhysicsLayers.Enemies;
+        query.CollisionMask = PhysicsLayers.Enemies | PhysicsLayers.World;
 
         Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
         Vector3 tracerEnd = end;

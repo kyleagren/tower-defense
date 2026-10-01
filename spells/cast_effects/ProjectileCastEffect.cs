@@ -9,6 +9,7 @@ public class ProjectileCastEffect : CastEffect
         int count = projectileData.ProjectileCount;
         HashSet<Enemy> returnHitTracker = new HashSet<Enemy>();
         HashSet<Enemy> chainHitTracker = new HashSet<Enemy>();
+        Transform3D launch = projectileData.IsNova ? Leveled(spawnPoint.GlobalTransform) : spawnPoint.GlobalTransform;
 
         for (int i = 0; i < count; i++)
         {
@@ -20,11 +21,24 @@ public class ProjectileCastEffect : CastEffect
             projectile.Initialize(context, returnHitTracker, chainHitTracker);
             LevelContext.Current.LevelRoot.AddChild(projectile);
 
-            projectile.GlobalTransform = spawnPoint.GlobalTransform;
+            projectile.GlobalTransform = launch;
             projectile.RotateY(Mathf.DegToRad(angleOffset));
             projectile.SpawnPosition = projectile.GlobalPosition;
             LevelContext.Current.SpellEffects.LaunchProjectile(projectile, projectileData.ProjectileScene);
         }
+    }
+
+    // A Nova's ring stays horizontal however steeply the Ritual is aiming, rather than tilting
+    // into a cone that drives its forward half into the ground.
+    private static Transform3D Leveled(Transform3D transform)
+    {
+        Vector3 forward = -transform.Basis.Z;
+        forward.Y = 0f;
+
+        // The Ritual never aims straight up or down (AimSpawnPointAt refuses to), so a flat
+        // direction always remains.
+        transform.Basis = Basis.LookingAt(forward.Normalized(), Vector3.Up);
+        return transform;
     }
 
     private static float ComputeConeAngle(int index, int count, float spreadAngleDegrees)

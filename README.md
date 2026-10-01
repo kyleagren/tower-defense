@@ -213,7 +213,12 @@ Player-buff towers (a "Buff Totem") buff the player instead of attacking, range-
 
 **Reading a Ritual at a glance (planned).** The rune circle on the ground around every Ritual lights up around it toward its next cast, so readiness reads from a distance for fast and cooldown-heavy towers alike, and dulls while recovering — a plain ring until the art pass. Holding Alt (`advanced_tooltip`) while looking at a Ritual shows its range circle, the same one placement shows.
 
-**Not implemented:** line-of-sight raycasting. Towers currently use pure distance checks, so they can shoot through walls.
+**Line of sight.** Only terrain blocks it — Ice Walls, Rituals, players and enemies never do (`LineOfSight`, one ray against the World layer).
+
+- **Rituals** only target what they can see from their spawn point; range is still measured from the base. Sight is checked last, and only for a candidate that would win, so a search costs few raycasts. Every chain and fork jump needs sight from the enemy it leaves. Bombardments need it too — a targeting rune that picks a spot could lift that later.
+- **Soldier's rifle and Overdrive** stop at terrain and flash there; Overdrive's pierce ends at a wall.
+- **Ranged enemies** don't fire without a clear shot: they close in along their path until they have one, and their projectiles stop on terrain.
+- **Not covered:** melee and radius effects (explosions, Immolate, fields) still reach through terrain.
 
 **Visual direction.** Every tower is fundamentally magical, so the physical shape needn't change per spell. The base is a floating structure with a central energy core; the spell determines the energy color, the central rune's shape, the crystal geometry, the orbiting symbols, the rune circle's behavior and the particles. A fire spell gets angular rapidly-rotating fragments and a turbulent core; an ice spell gets crystalline structures and slow orbiting runes.
 
@@ -856,7 +861,6 @@ Raised and deliberately set aside for their own conversations, so they aren't lo
 
 - **Wave-end safety net** — a wave should auto-end after a timeout even if an enemy is stuck on the navmesh.
 - **Navmesh re-baking on tower placement.** Placed Rituals have solid collision, but the navmesh only bakes at level load, so enemies won't route around anything placed after. The idea is to re-bake once at the end of a build phase and once when a token deploys mid-wave — not per placement (expensive) and not never (broken pathing). Note this is distinct from the wall-rebaking dead end in Section 4.
-- **Ritual line of sight and non-horizontal projectile aiming** — both confirmed needed eventually.
 
 ### Rune and spell iconography
 

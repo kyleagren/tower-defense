@@ -252,13 +252,13 @@ public partial class Projectile : Area3D
         // Both exclusion sets are passed through as-is rather than merged into a new one: this runs
         // on every chain jump, and merging would cost two HashSet allocations per hit to answer a
         // membership question the targeting loop can ask of each set directly.
-        Enemy next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, _ownEnemyHits, ChainHitTracker);
+        Enemy next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, _ownEnemyHits, ChainHitTracker, GlobalPosition);
 
         // Nothing untouched in range — fall back to something a sibling chain already caught rather
         // than dropping the remaining jumps entirely.
         if (next == null && ChainHitTracker != null)
         {
-            next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, _ownEnemyHits);
+            next = EnemyTargeting.FindNearest(hitEnemy.GlobalPosition, ChainRange, _ownEnemyHits, sightFrom: GlobalPosition);
         }
 
         if (next == null)

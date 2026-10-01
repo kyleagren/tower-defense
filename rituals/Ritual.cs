@@ -68,7 +68,7 @@ public partial class Ritual : Node3D, IDamageable
 
         if (IsPreview)
         {
-            SetProcess(false);
+            SetPhysicsProcess(false);
             return;
         }
 
@@ -308,7 +308,11 @@ public partial class Ritual : Node3D, IDamageable
     public override void _Process(double delta)
     {
         UpdateReadiness((float)delta);
+    }
 
+    // On the physics step, since targeting raycasts for line of sight.
+    public override void _PhysicsProcess(double delta)
+    {
         // Null until Configure runs — placement ghosts and scene-authored rituals with no Spell
         // assigned both sit in this state. Only the host runs a Ritual; everywhere else it's a copy.
         if (_spellInstance == null || _disabled || !IsMultiplayerAuthority())
@@ -333,7 +337,7 @@ public partial class Ritual : Node3D, IDamageable
         if (_searchTimer <= 0f || justLostTarget)
         {
             _searchTimer = TargetSearchInterval;
-            _currentTarget = EnemyTargeting.FindTarget(GlobalPosition, context.Range.Value, context.TargetPriority);
+            _currentTarget = EnemyTargeting.FindTarget(GlobalPosition, context.Range.Value, context.TargetPriority, sightFrom: SpawnPoint.GlobalPosition);
         }
 
         if (_spellInstance.CanCast && CanCastNow(context))

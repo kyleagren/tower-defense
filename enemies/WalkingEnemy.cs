@@ -69,6 +69,9 @@ public partial class WalkingEnemy : Enemy
     private float _copyWalkRemaining;
     private const float CopyWalkHold = 0.2f;
 
+    // How close a ranged enemy without a clear shot walks toward its target before stopping.
+    private const float BlockedShotApproachDistance = 1f;
+
     public override void _Ready()
     {
         base._Ready();
@@ -552,6 +555,13 @@ public partial class WalkingEnemy : Enemy
     // engagement began.
     private void EngageTarget(IDamageable inReach, double delta)
     {
+        // A ranged enemy in reach but blocked by terrain closes in along its path until it can see.
+        if (inReach != null && ProjectileScene != null && !LineOfSight.IsClear(this, CenterMass, inReach.AimPoint))
+        {
+            inReach = null;
+            NavAgent.TargetDesiredDistance = Mathf.Min(NavAgent.TargetDesiredDistance, BlockedShotApproachDistance);
+        }
+
         if (inReach != null)
         {
             Stop(delta);
