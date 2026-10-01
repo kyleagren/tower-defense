@@ -41,6 +41,28 @@ public static class EnemyTargeting
         return FindBest(DistanceSquared, range, DistanceSquared, exclude, predicate);
     }
 
+    // Every live enemy within radius of origin, measured flat. A new list, collected up front: a kill
+    // unregisters from the list being walked, so a caller that deals damage can't walk that one.
+    public static List<Enemy> FindAllWithinFlat(Vector3 origin, float radius, Func<Enemy, bool> predicate = null)
+    {
+        IReadOnlyList<Enemy> candidates = LevelContext.Current.Enemies.Active;
+        float radiusSquared = radius * radius;
+        List<Enemy> found = new List<Enemy>();
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            Enemy enemy = candidates[i];
+
+            if (GeometryUtils.FlatDistanceSquared(enemy.GlobalPosition, origin) <= radiusSquared
+                && (predicate == null || predicate(enemy)))
+            {
+                found.Add(enemy);
+            }
+        }
+
+        return found;
+    }
+
     // rangeSquaredTo gates who is eligible; score decides which eligible enemy wins (lowest). The
     // two are separate so a target priority can rank by something other than proximity.
     //

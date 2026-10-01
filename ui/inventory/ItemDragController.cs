@@ -23,9 +23,6 @@ public partial class ItemDragController : CanvasLayer
     }
 
     private const float DragThreshold = 8f;
-    private const float DropDistance = 1f;
-    private const float DropDistanceVariance = 0.2f;
-    private const float DropAngleSpread = 45f;
     private const float DropHoldDuration = 0.5f;
 
     public static ItemDragController Instance { get; private set; }
@@ -502,17 +499,10 @@ public partial class ItemDragController : CanvasLayer
         PlayerProfiles.Local.CommitChange();
         Changed?.Invoke();
 
-        if (item == null)
+        if (item != null)
         {
-            return;
+            LevelContext.Current.WorldItemRoster.DropNearLocalPlayer(item);
         }
-
-        PlayerCharacter player = LevelContext.Current?.LocalActiveCharacter;
-        Vector3 forward = -player.GlobalTransform.Basis.Z;
-        Vector3 direction = forward.Rotated(Vector3.Up, Mathf.DegToRad((float)GD.RandRange(-DropAngleSpread, DropAngleSpread)));
-        float distance = DropDistance + (float)GD.RandRange(-DropDistanceVariance, DropDistanceVariance);
-
-        LevelContext.Current.WorldItemRoster.Drop(item, player.GlobalPosition + direction * distance);
     }
 
     // Every mutating placement ends the same way: the profile persists it and tells the rest of the

@@ -70,15 +70,10 @@ public partial class ShieldSlamAbility : Ability
         List<(Enemy, Vector3)> targets = new List<(Enemy, Vector3)>();
         float halfAngle = Mathf.DegToRad(ConeDegrees / 2f);
 
-        foreach (Enemy enemy in LevelContext.Current.Enemies.Active)
+        foreach (Enemy enemy in EnemyTargeting.FindAllWithinFlat(origin, range))
         {
             Vector3 offset = enemy.GlobalPosition - origin;
             offset.Y = 0f;
-
-            if (offset.LengthSquared() > range * range)
-            {
-                continue;
-            }
 
             // An enemy right on top of the Tank has no direction to be in front of, so it counts
             // and goes straight forward.

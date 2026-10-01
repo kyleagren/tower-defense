@@ -7,13 +7,23 @@ public partial class EnemySpawner : Node3D
 
     public Lane Lane { get; private set; }
 
-    // This level's, kept from _Ready - during a level switch, LevelContext.Current is already the
+    // This level's, kept from _EnterTree - during a level switch, LevelContext.Current is already the
     // incoming level for a frame.
     private LevelContext _level;
 
-    public override async void _Ready()
+    public override void _EnterTree()
     {
         _level = LevelContext.Current;
+        _level.EnemySpawners[Id] = this;
+    }
+
+    public override void _ExitTree()
+    {
+        _level.EnemySpawners.Remove(Id);
+    }
+
+    public override async void _Ready()
+    {
         await NavigationReady.WaitFor(this, TryBuildLane, $"EnemySpawner '{Id}'");
     }
 

@@ -21,8 +21,14 @@ public partial class LevelContext : Node
     public Dictionary<PlayerId, PlayerSpawnPoint> SpawnPoints { get; } = new();
     public Dictionary<PlayerId, SentinelSpawner> SentinelSpawners { get; } = new();
 
+    // Every lane's spawner, by Id. Registered on _EnterTree, so it's complete before any _Ready.
+    public Dictionary<string, EnemySpawner> EnemySpawners { get; } = new();
+
     // The level's match - its phase and whether it's over. Null in a scene with no match (the hub).
     public MatchState Match { get; set; }
+
+    // The level's mana, capacity and gold earned. Unlimited in the hub.
+    public EconomyManager Economy { get; set; }
 
     // Where the host spawns enemies. Null in a scene with no match (the hub).
     public EnemyRoster EnemyRoster { get; set; }

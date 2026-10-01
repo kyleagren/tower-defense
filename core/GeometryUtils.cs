@@ -17,6 +17,14 @@ public static class GeometryUtils
         return point.DistanceSquaredTo(closestPoint);
     }
 
+    // Ignoring height, so a slope or a taller enemy doesn't change who counts as in range.
+    public static float FlatDistanceSquared(Vector3 a, Vector3 b)
+    {
+        Vector3 offset = a - b;
+        offset.Y = 0f;
+        return offset.LengthSquared();
+    }
+
     // LookAt throws when its up vector is parallel to the direction it's aiming - a shot taken
     // straight down at an enemy underfoot, or a beam between two points stacked vertically.
     public static Vector3 SafeUpFor(Vector3 direction)

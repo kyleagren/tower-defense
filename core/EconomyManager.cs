@@ -2,8 +2,6 @@ using Godot;
 
 public partial class EconomyManager : Node
 {
-    public static EconomyManager Instance { get; private set; }
-
     [Export] public int StartingMana = 120;
     [Export] public int MaxCapacity = 1000;
     [Export] public bool Unlimited = false;
@@ -18,12 +16,12 @@ public partial class EconomyManager : Node
     // mechanism — and so the multiplayer layer (README: Architecture) has an RPC-able hook.
     [Signal] public delegate void EconomyChangedEventHandler();
 
-    // Assigned in _EnterTree rather than _Ready: _EnterTree runs top-down across the whole tree
-    // before any node's _Ready, so consumers caching Instance in their own _Ready are safe
-    // regardless of where this node sits in the scene.
+    // Registered in _EnterTree rather than _Ready: _EnterTree runs top-down across the whole tree
+    // before any node's _Ready, so consumers reading it in their own _Ready are safe regardless of
+    // where this node sits in the scene.
     public override void _EnterTree()
     {
-        Instance = this;
+        LevelContext.Current.Economy = this;
     }
 
     public override void _Ready()

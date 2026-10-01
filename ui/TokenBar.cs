@@ -86,7 +86,7 @@ public partial class TokenBar : Control
 
     private void Refresh()
     {
-        Godot.Collections.Array<RuneLoadout> tokens = SaveManager.Instance.Data.Tokens;
+        Godot.Collections.Array<RuneLoadout> tokens = PlayerProfiles.Local.Data.Tokens;
         bool showBadges = InputDevice.UsingController || _pickModeActive || _architectActive;
 
         _chip.ShowAction(InputDevice.UsingController ? "token_modifier" : "toggle_token_mode");

@@ -15,9 +15,12 @@ public partial class RoutePreviewEffect : Node3D
 
     private readonly List<PathFollow3D[]> _routes = new List<PathFollow3D[]>();
     private Timer _pulseTimer;
+    private LevelContext _level;
 
     public override async void _Ready()
     {
+        // Before the await: by the time navigation is ready, Current may be a different level.
+        _level = LevelContext.Current;
         await NavigationReady.WaitFor(this, TryBuildRoutes, "RoutePreviewEffect");
 
         _pulseTimer = new Timer { WaitTime = PulseInterval };
@@ -25,7 +28,7 @@ public partial class RoutePreviewEffect : Node3D
         AddChild(_pulseTimer);
 
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        OnGamePhaseChanged(LevelContext.Current.Match.Phase);
+        OnGamePhaseChanged(_level.Match.Phase);
     }
 
     public override void _ExitTree()
@@ -69,9 +72,9 @@ public partial class RoutePreviewEffect : Node3D
 
     private void BuildRoutes()
     {
-        foreach (Node node in GetTree().GetNodesInGroup(Groups.EnemySpawners))
+        foreach (EnemySpawner spawner in _level.EnemySpawners.Values)
         {
-            if (node is not EnemySpawner spawner || spawner.Lane == null)
+            if (spawner.Lane == null)
             {
                 continue;
             }

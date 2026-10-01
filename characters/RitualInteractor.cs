@@ -80,7 +80,7 @@ public partial class RitualInteractor : LookInteractor
             return (null, Colors.White);
         }
 
-        Color color = EconomyManager.Instance.CanAffordMana(cost) ? Colors.White : _unaffordableColor;
+        Color color = LevelContext.Current.Economy.CanAffordMana(cost) ? Colors.White : _unaffordableColor;
         return ($"Repair: {cost} Mana", color);
     }
 

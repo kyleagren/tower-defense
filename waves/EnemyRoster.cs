@@ -11,9 +11,12 @@ public partial class EnemyRoster : Node
     // node paths are how sync updates and messages find it.
     private int _spawnCount;
 
+    private LevelContext _level;
+
     public override void _Ready()
     {
-        LevelContext.Current.EnemyRoster = this;
+        _level = LevelContext.Current;
+        _level.EnemyRoster = this;
         Spawner.SpawnFunction = new Callable(this, MethodName.BuildEnemy);
     }
 
@@ -50,12 +53,9 @@ public partial class EnemyRoster : Node
 
     private EnemySpawner FindLane(string id)
     {
-        foreach (Node node in GetTree().GetNodesInGroup(Groups.EnemySpawners))
+        if (_level.EnemySpawners.TryGetValue(id, out EnemySpawner spawner))
         {
-            if (node is EnemySpawner spawner && spawner.Id == id)
-            {
-                return spawner;
-            }
+            return spawner;
         }
 
         throw new System.ArgumentException($"EnemyRoster: no EnemySpawner with id \"{id}\".");

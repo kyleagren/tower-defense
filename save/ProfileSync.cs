@@ -56,7 +56,7 @@ public partial class ProfileSync : Node
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveSheet(Godot.Collections.Array payload)
     {
-        PlayerId sender = NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId());
+        PlayerId sender = NetworkSession.Instance.SenderSeat;
 
         if (sender == default)
         {

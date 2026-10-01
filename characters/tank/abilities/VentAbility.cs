@@ -109,17 +109,9 @@ public partial class VentAbility : Ability
     // Measured flat, like the rest of the kit.
     private void ApplyBurns()
     {
-        Vector3 origin = Character.GlobalPosition;
-
-        foreach (Enemy enemy in LevelContext.Current.Enemies.Active)
+        foreach (Enemy enemy in EnemyTargeting.FindAllWithinFlat(Character.GlobalPosition, _radius))
         {
-            Vector3 offset = enemy.GlobalPosition - origin;
-            offset.Y = 0f;
-
-            if (offset.LengthSquared() <= _radius * _radius)
-            {
-                enemy.ApplyDebuff(new BurnAilment(_burnDamage, BurnDuration, Character.HitAttribution));
-            }
+            enemy.ApplyDebuff(new BurnAilment(_burnDamage, BurnDuration, Character.HitAttribution));
         }
     }
 

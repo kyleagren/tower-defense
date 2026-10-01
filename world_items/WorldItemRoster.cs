@@ -12,10 +12,36 @@ public partial class WorldItemRoster : Node
     // Host only: numbers each spawn, so every item's name is unique and identical on every machine.
     private int _spawnCount;
 
+    // How far in front of the player a dropped item lands, and how much that scatters.
+    private const float DropDistance = 1f;
+    private const float DropDistanceVariance = 0.2f;
+    private const float DropAngleSpread = 45f;
+
+    private LevelContext _level;
+
     public override void _Ready()
     {
-        LevelContext.Current.WorldItemRoster = this;
+        _level = LevelContext.Current;
+        _level.WorldItemRoster = this;
         Spawner.SpawnFunction = new Callable(this, MethodName.BuildItem);
+    }
+
+    // A little in front of the local player, scattered so several drops don't stack.
+    public void DropNearLocalPlayer(Item item)
+    {
+        PlayerCharacter player = _level.LocalActiveCharacter;
+
+        if (player == null)
+        {
+            GD.PushError($"WorldItemRoster: no local character to drop {item.Name} near.");
+            return;
+        }
+
+        Vector3 forward = -player.GlobalTransform.Basis.Z;
+        Vector3 direction = forward.Rotated(Vector3.Up, Mathf.DegToRad((float)GD.RandRange(-DropAngleSpread, DropAngleSpread)));
+        float distance = DropDistance + (float)GD.RandRange(-DropDistanceVariance, DropDistanceVariance);
+
+        Drop(item, player.GlobalPosition + direction * distance);
     }
 
     public void Drop(Item item, Vector3 position)
@@ -35,7 +61,7 @@ public partial class WorldItemRoster : Node
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveDrop(string data, Vector3 position)
     {
-        if (NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default
+        if (NetworkSession.Instance.SenderSeat != default
             && SaveCodec.DecodeItem(data) != null)
         {
             Spawn(data, position);
@@ -107,7 +133,7 @@ public partial class WorldItemRoster : Node
 
         if (item != null && !PlayerProfiles.Local.PickUp(item))
         {
-            Drop(item, LevelContext.Current.LocalActiveCharacter.GlobalPosition);
+            DropNearLocalPlayer(item);
         }
     }
 }

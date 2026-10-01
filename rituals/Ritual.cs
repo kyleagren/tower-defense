@@ -158,7 +158,7 @@ public partial class Ritual : Node3D, IDamageable
             return;
         }
 
-        if (MissingHealthFraction <= 0f || !EconomyManager.Instance.TrySpendMana(RepairCost))
+        if (MissingHealthFraction <= 0f || !_level.Economy.TrySpendMana(RepairCost))
         {
             return;
         }
@@ -185,7 +185,7 @@ public partial class Ritual : Node3D, IDamageable
         }
 
         int manaRefund = Mathf.FloorToInt(_manaCost * (1f - GameRules.RepairCostFraction * MissingHealthFraction));
-        EconomyManager.Instance.RefundRitual(manaRefund, _capacityCost);
+        _level.Economy.RefundRitual(manaRefund, _capacityCost);
         QueueFree();
     }
 
@@ -193,7 +193,7 @@ public partial class Ritual : Node3D, IDamageable
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void RequestRepair()
     {
-        if (NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        if (NetworkSession.Instance.SenderSeat != default)
         {
             Repair();
         }
@@ -202,7 +202,7 @@ public partial class Ritual : Node3D, IDamageable
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void RequestDestroy()
     {
-        if (NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        if (NetworkSession.Instance.SenderSeat != default)
         {
             Destroy();
         }

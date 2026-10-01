@@ -311,7 +311,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveForwardedHit(float[] damage, int type, Vector3 ragdollImpulse)
     {
-        PlayerId dealer = NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId());
+        PlayerId dealer = NetworkSession.Instance.SenderSeat;
 
         if (_isDead || !IsSimulatedHere || dealer == default)
         {
@@ -421,7 +421,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveStatusRemoved()
     {
-        if (IsSimulatedHere && NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        if (IsSimulatedHere && NetworkSession.Instance.SenderSeat != default)
         {
             Status = null;
         }
@@ -480,7 +480,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveDebuff(Godot.Collections.Array data)
     {
-        PlayerId sender = NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId());
+        PlayerId sender = NetworkSession.Instance.SenderSeat;
 
         if (_isDead || !IsSimulatedHere || sender == default)
         {
@@ -503,7 +503,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveHealthLink(NodePath partnerPath, float duration, float mirrorPercent)
     {
-        if (IsSimulatedHere && NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        if (IsSimulatedHere && NetworkSession.Instance.SenderSeat != default)
         {
             HealthLinkDebuff.Link(this, GetNodeOrNull<Enemy>(partnerPath), duration, mirrorPercent);
         }
@@ -615,7 +615,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveKnockback(Vector3 impulse)
     {
-        if (IsSimulatedHere && NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) != default)
+        if (IsSimulatedHere && NetworkSession.Instance.SenderSeat != default)
         {
             ResolveKnockback(impulse);
         }
@@ -649,7 +649,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         (Color fill, Color outline) = DamageTypeColors.GetForDamage(amount);
 
         FloatingCombatText text = FloatingTextScene.Instantiate<FloatingCombatText>();
-        LevelContext.Current.LevelRoot.AddChild(text);
+        Level.LevelRoot.AddChild(text);
         text.Show(GetJitteredCenterMass(0.2f), amount.Total, fill, outline, amount.IsCrit);
     }
 

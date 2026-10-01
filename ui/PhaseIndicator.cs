@@ -12,8 +12,8 @@ public partial class PhaseIndicator : Control
     private static readonly Color NotReadyColor = new Color(0.9f, 0.35f, 0.35f);
 
     // This level's match and economy, kept from _Ready rather than read through LevelContext.Current
-    // or EconomyManager.Instance each time - for a frame during a level switch, both already point at
-    // the incoming level. Null in the hub.
+    // each time - for a frame during a level switch, Current already points at the incoming level.
+    // Null in the hub.
     private MatchState _match;
     private EconomyManager _economy;
 
@@ -27,7 +27,7 @@ public partial class PhaseIndicator : Control
             return;
         }
 
-        _economy = EconomyManager.Instance;
+        _economy = LevelContext.Current.Economy;
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         _economy.EconomyChanged += Refresh;
         Refresh();
@@ -102,7 +102,7 @@ public partial class PhaseIndicator : Control
 
         PhaseLabel.Text = $"{phaseText} — Mana: {_economy.Mana} | Build Capacity: {_economy.CapacityUsed}/{_economy.MaxCapacity}";
 
-        int totalGold = SaveManager.Instance.Data.Gold + _economy.GoldEarned;
+        int totalGold = PlayerProfiles.Local.Data.Gold + _economy.GoldEarned;
         GoldLabel.Text = $"Gold: {totalGold}";
     }
 }

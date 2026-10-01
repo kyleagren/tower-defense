@@ -11,6 +11,7 @@ public class WallPlacementFlow : PlacementFlow
     private readonly SpellCastContext _context;
     private readonly WallPlacementPreview _preview;
     private readonly RitualRoster _roster;
+    private readonly EconomyManager _economy;
 
     private Stage _stage = Stage.Start;
     private Vector3 _start;
@@ -29,6 +30,7 @@ public class WallPlacementFlow : PlacementFlow
         _preview = new WallPlacementPreview();
         LevelContext.Current.LevelRoot.AddChild(_preview);
         _roster = LevelContext.Current.RitualRoster;
+        _economy = LevelContext.Current.Economy;
     }
 
     public override bool IsPickingPoints => _stage != Stage.Done;
@@ -134,7 +136,7 @@ public class WallPlacementFlow : PlacementFlow
     // shortest possible wall - is out of reach.
     private int ComputeAffordableChargedSegments()
     {
-        EconomyManager economy = EconomyManager.Instance;
+        EconomyManager economy = _economy;
 
         if (economy.Unlimited)
         {

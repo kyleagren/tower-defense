@@ -213,25 +213,7 @@ public partial class RetaliationAbility : Ability
         StartCooldown();
     }
 
-    // Measured flat, and collected up front - a kill unregisters from the list being walked.
-    private List<Enemy> EnemiesInRadius()
-    {
-        List<Enemy> found = new List<Enemy>();
-        Vector3 origin = Character.GlobalPosition;
-
-        foreach (Enemy enemy in LevelContext.Current.Enemies.Active)
-        {
-            Vector3 offset = enemy.GlobalPosition - origin;
-            offset.Y = 0f;
-
-            if (offset.LengthSquared() <= _radius * _radius)
-            {
-                found.Add(enemy);
-            }
-        }
-
-        return found;
-    }
+    private List<Enemy> EnemiesInRadius() => EnemyTargeting.FindAllWithinFlat(Character.GlobalPosition, _radius);
 
     // On every machine, the Tank's own included.
     [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]

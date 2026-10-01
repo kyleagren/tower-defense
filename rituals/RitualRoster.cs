@@ -22,9 +22,12 @@ public partial class RitualRoster : Node
     // Where each other player is about to place, by seat.
     private readonly Dictionary<PlayerId, RemotePlacementGhost> _ghosts = new();
 
+    private LevelContext _level;
+
     public override void _Ready()
     {
-        LevelContext.Current.RitualRoster = this;
+        _level = LevelContext.Current;
+        _level.RitualRoster = this;
         Spawner.SpawnFunction = new Callable(this, MethodName.BuildRitual);
         NetworkSession.Instance.SeatsChanged += OnSeatsChanged;
     }
@@ -77,7 +80,7 @@ public partial class RitualRoster : Node
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceivePlacementResult(int requestId, bool placed)
     {
-        if (Multiplayer.GetRemoteSenderId() == 1 && _awaitingPlacement.Remove(requestId, out Action onPlaced) && placed)
+        if (NetworkSession.Instance.IsFromHost && _awaitingPlacement.Remove(requestId, out Action onPlaced) && placed)
         {
             onPlaced();
         }
@@ -94,7 +97,7 @@ public partial class RitualRoster : Node
         }
 
         SpellCastContext context = SpellInstance.ResolvePreview(spell, runes, PlayerProfiles.Get(owner).SelectedSheet, placement);
-        EconomyManager economy = EconomyManager.Instance;
+        EconomyManager economy = _level.Economy;
 
         if (!economy.CanAfford(context))
         {
@@ -188,7 +191,7 @@ public partial class RitualRoster : Node
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveGhostBegun()
     {
-        PlayerId owner = NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId());
+        PlayerId owner = NetworkSession.Instance.SenderSeat;
 
         if (owner == default)
         {
@@ -229,11 +232,11 @@ public partial class RitualRoster : Node
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveGhostHidden()
     {
-        RemoveGhost(NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()));
+        RemoveGhost(NetworkSession.Instance.SenderSeat);
     }
 
     private RemotePlacementGhost SenderGhost() =>
-        _ghosts.GetValueOrDefault(NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()));
+        _ghosts.GetValueOrDefault(NetworkSession.Instance.SenderSeat);
 
     private void OnSeatsChanged()
     {

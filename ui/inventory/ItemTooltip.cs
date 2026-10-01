@@ -320,7 +320,7 @@ public partial class ItemTooltip : CanvasLayer
     private static List<Item> GetComparisonItems(Item item)
     {
         CharacterId activeCharacter = PlayerProfiles.Local.SelectedCharacter;
-        EquippedLoadout loadout = SaveManager.Instance.Data.GetOrCreateLoadout(activeCharacter);
+        EquippedLoadout loadout = PlayerProfiles.Local.GetLoadout(activeCharacter);
 
         return loadout.GetEquipped(item.Slot).Where(equipped => equipped != item).ToList();
     }

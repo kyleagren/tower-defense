@@ -20,6 +20,9 @@ public partial class HealthBar3D : Node3D
     private QuadMesh _fillMesh;
     private QuadMesh _emptyMesh;
 
+    // Negative so the first SetFraction always writes - _Ready's sizes the freshly duplicated meshes.
+    private float _fraction = -1f;
+
     public override void _Ready()
     {
         _fillMesh = PrepareMesh(Fill, FillColor);
@@ -46,6 +49,15 @@ public partial class HealthBar3D : Node3D
     public void SetFraction(float fraction)
     {
         fraction = Mathf.Clamp(fraction, 0f, 1f);
+
+        // A copied enemy asks every frame, and each QuadMesh write regenerates the mesh even when
+        // the value is unchanged.
+        if (fraction == _fraction)
+        {
+            return;
+        }
+
+        _fraction = fraction;
 
         float fillWidth = BarWidth * fraction;
         float emptyWidth = BarWidth - fillWidth;

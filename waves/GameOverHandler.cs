@@ -5,8 +5,11 @@ public partial class GameOverHandler : Node
     [Export] public float ReloadDelay = 3f;
     [Export] public int GoldPerVictory = 100;
 
+    private EconomyManager _economy;
+
     public override void _Ready()
     {
+        _economy = LevelContext.Current.Economy;
         EventBus.Instance.GameEnded += OnGameEnded;
         EventBus.Instance.ReturnToHubRequested += ReturnToHub;
         LevelContext.Current.Match.ReadyCheckPassed += OnReadyCheckPassed;
@@ -42,7 +45,7 @@ public partial class GameOverHandler : Node
         // machine reading its mirrored copy, which could still be a kill behind.
         if (NetworkSession.Instance.IsHost)
         {
-            int gold = GoldPerVictory + EconomyManager.Instance.GoldEarned;
+            int gold = GoldPerVictory + _economy.GoldEarned;
             AwardGold(gold);
             Rpc(MethodName.ReceiveVictoryGold, gold);
         }

@@ -156,20 +156,10 @@ public partial class ImmolateAbility : Ability
         StartCooldown();
     }
 
-    // Measured flat, and collected up front - a kill unregisters from the list being walked.
+    // Each enemy is pushed away from the eruption, flat.
     private void HitAround(Vector3 origin, float radius, float damage)
     {
-        List<Enemy> targets = new List<Enemy>();
-
-        foreach (Enemy enemy in LevelContext.Current.Enemies.Active)
-        {
-            if (FlatDistanceSquared(enemy.GlobalPosition, origin) <= radius * radius)
-            {
-                targets.Add(enemy);
-            }
-        }
-
-        foreach (Enemy enemy in targets)
+        foreach (Enemy enemy in EnemyTargeting.FindAllWithinFlat(origin, radius))
         {
             Vector3 away = enemy.GlobalPosition - origin;
             away.Y = 0f;
@@ -185,29 +175,9 @@ public partial class ImmolateAbility : Ability
         }
     }
 
-    private List<Enemy> FindErupting()
-    {
-        List<Enemy> found = new List<Enemy>();
-        Vector3 origin = Character.GlobalPosition;
-
-        foreach (Enemy enemy in LevelContext.Current.Enemies.Active)
-        {
-            if (FlatDistanceSquared(enemy.GlobalPosition, origin) <= _radius * _radius
-                && (enemy.Status == Tag.Fire || enemy.HasDebuff(DebuffType.Burn)))
-            {
-                found.Add(enemy);
-            }
-        }
-
-        return found;
-    }
-
-    private static float FlatDistanceSquared(Vector3 a, Vector3 b)
-    {
-        Vector3 offset = a - b;
-        offset.Y = 0f;
-        return offset.LengthSquared();
-    }
+    private List<Enemy> FindErupting() =>
+        EnemyTargeting.FindAllWithinFlat(Character.GlobalPosition, _radius,
+            enemy => enemy.Status == Tag.Fire || enemy.HasDebuff(DebuffType.Burn));
 
     // On every machine, the Tank's own included.
     [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]

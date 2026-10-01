@@ -179,7 +179,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
 
 [node name="LaneA" type="Node3D" parent="Lanes" unique_id=385720669]
 
-[node name="Spawn" type="Marker3D" parent="Lanes/LaneA" unique_id=635544662 node_paths=PackedStringArray("Target") groups=["enemy_spawners"]]
+[node name="Spawn" type="Marker3D" parent="Lanes/LaneA" unique_id=635544662 node_paths=PackedStringArray("Target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.1, -14)
 script = ExtResource("1_enemyspawner")
 Id = "LaneA"
@@ -187,7 +187,7 @@ Target = NodePath("../../../Objective")
 
 [node name="LaneB" type="Node3D" parent="Lanes" unique_id=1808231694]
 
-[node name="Spawn" type="Marker3D" parent="Lanes/LaneB" unique_id=824124468 node_paths=PackedStringArray("Target") groups=["enemy_spawners"]]
+[node name="Spawn" type="Marker3D" parent="Lanes/LaneB" unique_id=824124468 node_paths=PackedStringArray("Target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.1, -14)
 script = ExtResource("1_enemyspawner")
 Id = "LaneB"

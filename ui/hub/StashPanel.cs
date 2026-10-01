@@ -21,7 +21,7 @@ public partial class StashPanel : Control
     private Button[] _slotButtons;
     private int _tabIndex;
 
-    private static Godot.Collections.Array<StashTab> Tabs => SaveManager.Instance.Data.Stash;
+    private static Godot.Collections.Array<StashTab> Tabs => PlayerProfiles.Local.Data.Stash;
     private StashTab CurrentTab => Tabs[_tabIndex];
 
     public override void _EnterTree()
@@ -160,12 +160,12 @@ public partial class StashPanel : Control
         Button buy = new Button
         {
             Text = $"+ Tab ({GameRules.StashTabGoldCost}g)",
-            Disabled = SaveManager.Instance.Data.Gold < GameRules.StashTabGoldCost
+            Disabled = PlayerProfiles.Local.Data.Gold < GameRules.StashTabGoldCost
         };
         buy.Pressed += BuyTab;
         TabRow.AddChild(buy);
 
-        GoldLabel.Text = $"Gold: {SaveManager.Instance.Data.Gold}";
+        GoldLabel.Text = $"Gold: {PlayerProfiles.Local.Data.Gold}";
         NameEdit.Text = CurrentTab.Name;
     }
 

@@ -118,7 +118,7 @@ public partial class VendorPanel : Control
         bool hadRowFocus = focusedList == ForSaleList || focusedList == BuybackList;
         int focusedIndex = hadRowFocus ? focused.GetIndex() : -1;
 
-        GoldLabel.Text = $"Gold: {SaveManager.Instance.Data.Gold}";
+        GoldLabel.Text = $"Gold: {PlayerProfiles.Local.Data.Gold}";
         RefreshForSale();
         RefreshBuyback();
 
@@ -177,7 +177,7 @@ public partial class VendorPanel : Control
         foreach (Item item in _stock)
         {
             Button button = BuildItemRow(item, () => Purchase(item, _stock));
-            button.Disabled = SaveManager.Instance.Data.Gold < item.SaleValue;
+            button.Disabled = PlayerProfiles.Local.Data.Gold < item.SaleValue;
             ForSaleList.AddChild(button);
         }
     }
@@ -189,7 +189,7 @@ public partial class VendorPanel : Control
         foreach (Item item in _buyback)
         {
             Button button = BuildItemRow(item, () => Purchase(item, _buyback));
-            button.Disabled = SaveManager.Instance.Data.Gold < item.SaleValue;
+            button.Disabled = PlayerProfiles.Local.Data.Gold < item.SaleValue;
             BuybackList.AddChild(button);
         }
     }

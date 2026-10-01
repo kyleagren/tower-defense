@@ -140,7 +140,7 @@ public partial class SentinelSpawner : Node
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveBodyRequest(int body)
     {
-        if (NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId()) == OwnerId)
+        if (NetworkSession.Instance.SenderSeat == OwnerId)
         {
             SpawnBody((Body)body);
         }

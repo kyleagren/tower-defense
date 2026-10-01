@@ -28,6 +28,6 @@ public partial class RespawnOverlay : Control
 
         CountdownLabel.Text = $"Respawning in {Mathf.CeilToInt(sentinel.RespawnRemaining)}";
         SkipLabel.Text = $"Press {InputPromptHelper.GetPrompt("interact")} to respawn now ({skipCost} mana)";
-        SkipLabel.Modulate = EconomyManager.Instance.CanAffordMana(skipCost) ? Colors.White : _unaffordableColor;
+        SkipLabel.Modulate = LevelContext.Current.Economy.CanAffordMana(skipCost) ? Colors.White : _unaffordableColor;
     }
 }

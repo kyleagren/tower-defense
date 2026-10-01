@@ -14,8 +14,6 @@ public partial class WaveController : Node
 
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public static WaveController Instance { get; private set; }
-
     // One lane's share of the current spawn step - what's left to spawn, trickled out on SpawnInterval.
     private class LaneQueue
     {
@@ -29,7 +27,6 @@ public partial class WaveController : Node
     // Current is already the incoming level for a frame.
     private LevelContext _level;
     private List<Wave> _waves = new();
-    private Dictionary<string, EnemySpawner> _spawnersById;
     private int _nextWaveIndex;
 
     private Wave _activeWave;
@@ -41,7 +38,6 @@ public partial class WaveController : Node
     // _EnterTree rather than _Ready, so the match exists before any node's _Ready reads it.
     public override void _EnterTree()
     {
-        Instance = this;
         _match = new MatchState();
         _level = LevelContext.Current;
         _level.Match = _match;
@@ -52,16 +48,6 @@ public partial class WaveController : Node
     public override void _Ready()
     {
         LoadWaves();
-
-        _spawnersById = new Dictionary<string, EnemySpawner>();
-
-        foreach (Node node in GetTree().GetNodesInGroup(Groups.EnemySpawners))
-        {
-            if (node is EnemySpawner spawner)
-            {
-                _spawnersById[spawner.Id] = spawner;
-            }
-        }
 
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         EventBus.Instance.GameEnded += OnGameEnded;
@@ -115,7 +101,7 @@ public partial class WaveController : Node
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void RequestToggleReady()
     {
-        PlayerId seat = NetworkSession.Instance.SeatOf(Multiplayer.GetRemoteSenderId());
+        PlayerId seat = NetworkSession.Instance.SenderSeat;
 
         if (NetworkSession.Instance.IsHost && seat != default)
         {
@@ -302,7 +288,7 @@ public partial class WaveController : Node
     {
         foreach (IGrouping<string, WaveSpawnGroup> laneGroups in groups.GroupBy(group => group.Lane))
         {
-            if (!_spawnersById.TryGetValue(laneGroups.Key, out EnemySpawner spawner))
+            if (!_level.EnemySpawners.TryGetValue(laneGroups.Key, out EnemySpawner spawner))
             {
                 GD.PushWarning($"WaveController: no spawner found with id \"{laneGroups.Key}\".");
                 continue;

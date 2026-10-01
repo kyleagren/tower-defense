@@ -134,11 +134,11 @@ public partial class BuildMenu : Control
 
     private EconomyManager _economy;
 
-    private static IEnumerable<Spell> KnownSpells => SaveManager.Instance.Data.KnownSpells;
+    private static IEnumerable<Spell> KnownSpells => PlayerProfiles.Local.Data.KnownSpells;
 
-    private static IEnumerable<Rune> KnownRunes => SaveManager.Instance.Data.KnownRunes.Select(entry => entry.Rune);
+    private static IEnumerable<Rune> KnownRunes => PlayerProfiles.Local.Data.KnownRunes.Select(entry => entry.Rune);
 
-    private static Godot.Collections.Array<RuneLoadout> SavedTokens => SaveManager.Instance.Data.Tokens;
+    private static Godot.Collections.Array<RuneLoadout> SavedTokens => PlayerProfiles.Local.Data.Tokens;
 
     // One per rune type, at the highest tier owned - the tier wheel is what picks a lower one.
     private static IEnumerable<Rune> OwnedRunes => KnownRunes
@@ -151,7 +151,7 @@ public partial class BuildMenu : Control
 
     public override void _Ready()
     {
-        _economy = EconomyManager.Instance;
+        _economy = LevelContext.Current.Economy;
         Wheel.HighlightChanged += OnWheelHighlightChanged;
         Wheel.Committed += OnWheelCommitted;
         RuneWheel.HighlightChanged += OnWheelHighlightChanged;
@@ -263,10 +263,10 @@ public partial class BuildMenu : Control
     // --- Favorites: the pinned wheel and each spell's favorites ring ---
 
     private static bool AnythingPinned =>
-        SaveManager.Instance.Data.PinnedFavorites.Any(name => PlayerProfiles.Local.FavoriteNamed(name) != null);
+        PlayerProfiles.Local.Data.PinnedFavorites.Any(name => PlayerProfiles.Local.FavoriteNamed(name) != null);
 
     private static IEnumerable<FavoriteLoadout> FavoritesOf(Spell spell) =>
-        SaveManager.Instance.Data.Favorites.Where(favorite => favorite.Spell == spell);
+        PlayerProfiles.Local.Data.Favorites.Where(favorite => favorite.Spell == spell);
 
     // A favorite with a rune that's out of copies can't be placed; one with a limited rune can't go
     // into a token at all.
@@ -285,7 +285,7 @@ public partial class BuildMenu : Control
     {
         SetScreen(Screen.PinnedWheel);
         _ringFavorites.Clear();
-        _ringFavorites.AddRange(SaveManager.Instance.Data.PinnedFavorites.Select(PlayerProfiles.Local.FavoriteNamed));
+        _ringFavorites.AddRange(PlayerProfiles.Local.Data.PinnedFavorites.Select(PlayerProfiles.Local.FavoriteNamed));
 
         Wheel.SetItems(_ringFavorites.Select(favorite => favorite == null ? null : FavoriteItem(favorite)).ToList());
         ShowSpellScreenInfo(-1);
@@ -915,7 +915,7 @@ public partial class BuildMenu : Control
     // Tokens lock in during the unpressured Planning phase, exactly when a scarce rune belongs on a
     // real tower instead, so a limited rune can never go into one.
     private static bool IsLimited(Rune rune) =>
-        SaveManager.Instance.Data.KnownRunes.Any(entry => entry.Rune == rune && !entry.Unlimited);
+        PlayerProfiles.Local.Data.KnownRunes.Any(entry => entry.Rune == rune && !entry.Unlimited);
 
     // --- Shared wheel handling ---
 

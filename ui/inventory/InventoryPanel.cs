@@ -59,9 +59,6 @@ public partial class InventoryPanel : Control
     [Export] public Control SlotArea { get; private set; }
     [Export] public TileGrid Grid { get; private set; }
     [Export] public Control PhaseIndicator { get; private set; }
-    [Export] public float DropDistance = 1f;
-    [Export] public float DropDistanceVariance = 0.2f;
-    [Export] public float DropAngleSpread = 45f;
 
     private EquipmentSlotView[] _equipmentSlots;
     private Button[] _gridButtons;
@@ -94,7 +91,7 @@ public partial class InventoryPanel : Control
         ItemDragController.Instance.RegisterPanelBounds(this);
         ItemDragController.Instance.RegisterInventoryFallback(item =>
         {
-            if (SaveManager.Instance.Data.Inventory.Contains(item))
+            if (PlayerProfiles.Local.Data.Inventory.Contains(item))
             {
                 return false;
             }
@@ -171,7 +168,7 @@ public partial class InventoryPanel : Control
     // contents do, which is what RefreshGrid updates.
     private void BuildGrid()
     {
-        Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
+        Godot.Collections.Array<Item> inventory = PlayerProfiles.Local.Data.Inventory;
         _gridButtons = new Button[inventory.Count];
 
         for (int i = 0; i < inventory.Count; i++)
@@ -332,7 +329,7 @@ public partial class InventoryPanel : Control
 
     private EquippedLoadout GetOrCreateLoadout()
     {
-        return SaveManager.Instance.Data.GetOrCreateLoadout(ActiveCharacter);
+        return PlayerProfiles.Local.GetLoadout(ActiveCharacter);
     }
 
     private void RefreshEquipmentSlots()
@@ -381,7 +378,7 @@ public partial class InventoryPanel : Control
     // all 40 nodes here would mean a full teardown/instantiate cycle per click.
     private void RefreshGrid()
     {
-        Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
+        Godot.Collections.Array<Item> inventory = PlayerProfiles.Local.Data.Inventory;
 
         for (int i = 0; i < _gridButtons.Length; i++)
         {
@@ -408,7 +405,7 @@ public partial class InventoryPanel : Control
         }
 
         bool quickEquip = ItemDragController.Instance.Held == null
-            && SaveManager.Instance.Data.Inventory[gridIndex] != null
+            && PlayerProfiles.Local.Data.Inventory[gridIndex] != null
             && Input.IsActionPressed("quick_equip");
 
         if (quickEquip)
@@ -431,7 +428,7 @@ public partial class InventoryPanel : Control
 
         GetViewport().SetInputAsHandled();
 
-        if (SaveManager.Instance.Data.Inventory[gridIndex] is RuneTome)
+        if (PlayerProfiles.Local.Data.Inventory[gridIndex] is RuneTome)
         {
             PlayerProfiles.Local.LearnRuneTome(gridIndex);
         }
@@ -456,7 +453,7 @@ public partial class InventoryPanel : Control
     // Whatever was already in the matching slot (if anything) swaps into the grid slot being vacated.
     private void QuickEquip(int gridIndex)
     {
-        Godot.Collections.Array<Item> inventory = SaveManager.Instance.Data.Inventory;
+        Godot.Collections.Array<Item> inventory = PlayerProfiles.Local.Data.Inventory;
         Item item = inventory[gridIndex];
 
         if (item == null || !IsCompatible(item))
@@ -514,8 +511,8 @@ public partial class InventoryPanel : Control
     private SlotHandle GridSlot(int index)
     {
         return new SlotHandle(
-            getItem: () => SaveManager.Instance.Data.Inventory[index],
-            placeItem: newItem => SaveManager.Instance.Data.Inventory[index] = newItem,
+            getItem: () => PlayerProfiles.Local.Data.Inventory[index],
+            placeItem: newItem => PlayerProfiles.Local.Data.Inventory[index] = newItem,
             canAccept: candidateItem => true);
     }
 
@@ -542,18 +539,8 @@ public partial class InventoryPanel : Control
 
         if (!PlayerProfiles.Local.TryAddToInventory(item))
         {
-            DropInWorld(item);
+            LevelContext.Current.WorldItemRoster.DropNearLocalPlayer(item);
         }
-    }
-
-    private void DropInWorld(Item item)
-    {
-        PlayerCharacter player = LevelContext.Current?.LocalActiveCharacter;
-        Vector3 forward = -player.GlobalTransform.Basis.Z;
-        Vector3 direction = forward.Rotated(Vector3.Up, Mathf.DegToRad((float)GD.RandRange(-DropAngleSpread, DropAngleSpread)));
-        float distance = DropDistance + (float)GD.RandRange(-DropDistanceVariance, DropDistanceVariance);
-
-        LevelContext.Current.WorldItemRoster.Drop(item, player.GlobalPosition + direction * distance);
     }
 
     // highlighted draws a green border on top of whatever background applies (rarity tint, or none)

@@ -531,7 +531,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveHit(float[] damage, int type)
     {
-        if (Multiplayer.GetRemoteSenderId() == 1 && IsLocallyControlled && !IsDead)
+        if (NetworkSession.Instance.IsFromHost && IsLocallyControlled && !IsDead)
         {
             ResolveHit(new Hit { Damage = DamagePacket.FromNetwork(damage), Type = (HitType)type });
         }
@@ -666,12 +666,12 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
         if (NetworkSession.Instance.IsHost)
         {
-            if (EconomyManager.Instance.TrySpendMana(RespawnSkipCost))
+            if (Level.Economy.TrySpendMana(RespawnSkipCost))
             {
                 Respawn();
             }
         }
-        else if (EconomyManager.Instance.CanAffordMana(RespawnSkipCost))
+        else if (Level.Economy.CanAffordMana(RespawnSkipCost))
         {
             RpcId(1, MethodName.RequestRespawnSkip, RespawnSkipCost);
         }
@@ -683,7 +683,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     {
         long sender = Multiplayer.GetRemoteSenderId();
 
-        if (NetworkSession.Instance.SeatOf(sender) == OwnerId && EconomyManager.Instance.TrySpendMana(cost))
+        if (NetworkSession.Instance.SeatOf(sender) == OwnerId && Level.Economy.TrySpendMana(cost))
         {
             RpcId(sender, MethodName.ReceiveRespawnSkip);
         }
@@ -692,7 +692,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void ReceiveRespawnSkip()
     {
-        if (Multiplayer.GetRemoteSenderId() == 1 && IsDead)
+        if (NetworkSession.Instance.IsFromHost && IsDead)
         {
             Respawn();
         }

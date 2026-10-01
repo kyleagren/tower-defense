@@ -29,7 +29,7 @@ public static class RuneCatalog
     // "remaining count" that's manually incremented back on destroy could.
     public static bool IsAvailable(Rune rune)
     {
-        RuneInventoryEntry entry = SaveManager.Instance.Data.KnownRunes.FirstOrDefault(e => e.Rune == rune);
+        RuneInventoryEntry entry = PlayerProfiles.Local.Data.KnownRunes.FirstOrDefault(e => e.Rune == rune);
 
         if (entry == null || entry.Unlimited)
         {

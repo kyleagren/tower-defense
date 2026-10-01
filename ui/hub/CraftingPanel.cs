@@ -89,7 +89,7 @@ public partial class CraftingPanel : Control
     public override void _Ready()
     {
         _slot = new ItemDragController.SlotHandle(
-            getItem: () => SaveManager.Instance.Data.CraftingSlotItem,
+            getItem: () => PlayerProfiles.Local.Data.CraftingSlotItem,
             placeItem: item => PlayerProfiles.Local.SetCraftingSlotItem(item),
             canAccept: item => true);
 
@@ -228,7 +228,7 @@ public partial class CraftingPanel : Control
 
     private void Refresh()
     {
-        Item item = SaveManager.Instance.Data.CraftingSlotItem;
+        Item item = PlayerProfiles.Local.Data.CraftingSlotItem;
 
         ItemSlotButton.Icon = item?.Icon;
         ItemSlotButton.Text = item == null ? "Empty" : "";
@@ -245,13 +245,13 @@ public partial class CraftingPanel : Control
         SetBars(_prefixBars, item, AffixType.Prefix);
         SetBars(_suffixBars, item, AffixType.Suffix);
 
-        bool canAfford = SaveManager.Instance.Data.Gold >= GameRules.CraftingActionGoldCost;
+        bool canAfford = PlayerProfiles.Local.Data.Gold >= GameRules.CraftingActionGoldCost;
         for (int i = 0; i < Actions.Length; i++)
         {
             _actionButtons[i].Disabled = item == null || !canAfford || !Actions[i].CanPerform(item);
         }
 
-        GoldLabel.Text = $"Gold: {SaveManager.Instance.Data.Gold}";
+        GoldLabel.Text = $"Gold: {PlayerProfiles.Local.Data.Gold}";
     }
 
     private static void SetBars(PanelContainer[] bars, Item item, AffixType type)

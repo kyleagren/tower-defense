@@ -119,6 +119,8 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
+        _attackCooldown -= (float)delta;
+
         // Deferred until the enemy can walk again, so one rooted in place doesn't re-path every time
         // a pull nudges it.
         if (_rejoinPending && Speed > 0f)
@@ -263,32 +265,8 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
-        if (GlobalPosition.DistanceTo(_objective.GlobalPosition) - _objective.ApproachRadius <= AttackRange)
-        {
-            AttackObjective(delta);
-            return;
-        }
-
-        if (NavAgent.IsNavigationFinished())
-        {
-            Stop(delta);
-            return;
-        }
-
-        Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
-    }
-
-    private void AttackObjective(double delta)
-    {
-        Stop(delta);
-
-        _attackCooldown -= (float)delta;
-
-        if (_attackCooldown <= 0f)
-        {
-            _attackCooldown = AttackInterval;
-            DealDamage(_objective);
-        }
+        bool inReach = GlobalPosition.DistanceTo(_objective.GlobalPosition) - _objective.ApproachRadius <= AttackRange;
+        EngageTarget(inReach ? _objective : null, delta);
     }
 
     // A taunt outranks everything - lane, leash, walls, Rituals and the objective, Sappers included.
@@ -386,9 +364,9 @@ public partial class WalkingEnemy : Enemy
         int bestIndex = -1;
         float bestDistance = float.MaxValue;
 
-        foreach (Node node in GetTree().GetNodesInGroup(Groups.EnemySpawners))
+        foreach (EnemySpawner spawner in Level.EnemySpawners.Values)
         {
-            if (node is not EnemySpawner spawner || spawner.Lane == null)
+            if (spawner.Lane == null)
             {
                 continue;
             }
@@ -487,30 +465,7 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
-        IceWallSegment target = FindNearestSegment(AttackRange, _targetWall);
-
-        if (target != null)
-        {
-            Stop(delta);
-            RotateTowardsMovement((target.GlobalPosition - GlobalPosition).Normalized(), delta);
-
-            _attackCooldown -= (float)delta;
-            if (_attackCooldown <= 0f)
-            {
-                _attackCooldown = AttackInterval;
-                DealDamage(target);
-            }
-
-            return;
-        }
-
-        if (NavAgent.IsNavigationFinished())
-        {
-            Stop(delta);
-            return;
-        }
-
-        Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
+        EngageTarget(FindNearestSegment(AttackRange, _targetWall), delta);
     }
 
     // Opt-in per enemy (CanAttackRituals) - most enemies never touch rituals at all. Sapper sets an
@@ -577,30 +532,8 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
-        float distance = GlobalPosition.DistanceTo(_targetRitual.GlobalPosition);
-
-        if (distance <= AttackRange)
-        {
-            Stop(delta);
-            RotateTowardsMovement((_targetRitual.GlobalPosition - GlobalPosition).Normalized(), delta);
-
-            _attackCooldown -= (float)delta;
-            if (_attackCooldown <= 0f)
-            {
-                _attackCooldown = AttackInterval;
-                DealDamage(_targetRitual);
-            }
-
-            return;
-        }
-
-        if (NavAgent.IsNavigationFinished())
-        {
-            Stop(delta);
-            return;
-        }
-
-        Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
+        bool inReach = GlobalPosition.DistanceTo(_targetRitual.GlobalPosition) <= AttackRange;
+        EngageTarget(inReach ? _targetRitual : null, delta);
     }
 
     private void ProcessChasingPlayer(double delta)
@@ -610,18 +543,24 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
-        float distanceToPlayer = GlobalPosition.DistanceTo(_targetSentinel.GlobalPosition);
-        _attackCooldown -= (float)delta;
+        bool inReach = GlobalPosition.DistanceTo(_targetSentinel.GlobalPosition) <= AttackRange;
+        EngageTarget(inReach ? _targetSentinel : null, delta);
+    }
 
-        if (distanceToPlayer <= AttackRange)
+    // The shared end of every engagement. Given a target in reach, stand, face it and strike whenever
+    // the attack is off cooldown; given null, keep pathing wherever the nav agent was pointed when the
+    // engagement began.
+    private void EngageTarget(IDamageable inReach, double delta)
+    {
+        if (inReach != null)
         {
             Stop(delta);
-            RotateTowardsMovement((_targetSentinel.GlobalPosition - GlobalPosition).Normalized(), delta);
+            RotateTowardsMovement((inReach.AimPoint - GlobalPosition).Normalized(), delta);
 
             if (_attackCooldown <= 0f)
             {
                 _attackCooldown = AttackInterval;
-                DealDamage(_targetSentinel);
+                DealDamage(inReach);
             }
 
             return;
@@ -664,7 +603,7 @@ public partial class WalkingEnemy : Enemy
     private EnemyProjectile LaunchProjectile()
     {
         EnemyProjectile projectile = ProjectileScene.Instantiate<EnemyProjectile>();
-        LevelContext.Current.LevelRoot.AddChild(projectile);
+        Level.LevelRoot.AddChild(projectile);
         projectile.GlobalPosition = CenterMass;
         return projectile;
     }

@@ -46,7 +46,7 @@ public partial class RitualPlacer : Node
     {
         Character = (PlayerCharacter)GetParent();
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
-        _economy = EconomyManager.Instance;
+        _economy = LevelContext.Current.Economy;
     }
 
     public override void _ExitTree()

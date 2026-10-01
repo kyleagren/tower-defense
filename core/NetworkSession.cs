@@ -29,6 +29,13 @@ public partial class NetworkSession : Node
 
     public PlayerId SeatOf(long peerId) => _seatsByPeer.GetValueOrDefault(peerId);
 
+    // For an RPC handler: the seat of whoever sent the message being handled, or unset for a peer
+    // with no seat.
+    public PlayerId SenderSeat => SeatOf(Multiplayer.GetRemoteSenderId());
+
+    // For an RPC handler: whether the message being handled came from the host.
+    public bool IsFromHost => Multiplayer.GetRemoteSenderId() == HostPeerId;
+
     public bool IsSeatFilled(PlayerId seat) => _seatsByPeer.ContainsValue(seat);
 
     public IEnumerable<PlayerId> FilledSeats => _seatsByPeer.Values;
