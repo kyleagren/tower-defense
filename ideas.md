@@ -34,6 +34,8 @@ The more I think about it the more I'm fairly confident that enemies will need t
 - **Rain** - A 0 damage spell that just applies water status periodically to enemies in its area.
 - **Hydro Blade** - two quick water slashes in an x-like shape that deal 2 instances of damage to a single target in medium range. If both of them consume a status, the damage is tripled or something maybe? don't need that piece but could be interesting.
 - **Drown** - Picks up an enemy off the ground and surrounds them in a bubble or cube of water locking them in place and causing them to take damage over time for the duration.
+- **Whirlpool** - pulls enemies towards its wide center and deals low damage every tick.
+- **Water Cannon** - Shoots a beam of water at a row of enemies. Slightly pushes them all back 3 times over the duration of the cast and deals damage 3 times. could be similarly tick based.
 
 ## Wind - I would like instances of these to be a specific air color, but be able to change color based on the first element they pick up and have their damage type change to that element they first encounter. Much like Anemo in Genshin.
 

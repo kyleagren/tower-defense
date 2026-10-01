@@ -122,6 +122,20 @@ public partial class SpellEffects : Node
         copy.InitializeCopy(position, radius, duration);
     }
 
+    // Host only, once the beam is in place.
+    public void ShowBeam(PackedScene scene, Vector3 origin, Vector3 direction, float length, float halfWidth, float duration)
+    {
+        Rpc(MethodName.ReceiveBeam, scene.ResourcePath, origin, direction, length, halfWidth, duration);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveBeam(string scenePath, Vector3 origin, Vector3 direction, float length, float halfWidth, float duration)
+    {
+        Beam copy = GD.Load<PackedScene>(scenePath).Instantiate<Beam>();
+        _level.LevelRoot.AddChild(copy);
+        copy.InitializeCopy(origin, direction, length, halfWidth, duration);
+    }
+
     // Host only. Each machine's copy of the Ritual already holds the wall's placement.
     public void RaiseWall(Ritual caster)
     {

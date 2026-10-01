@@ -73,6 +73,7 @@ public class SpellCastContext
     public List<OnHitRune> OnHitRunes = new();
     public WallCastData Wall;
     public BombardmentCastData Bombardment;
+    public BeamCastData Beam;
     public GroundEffectCastData GroundEffect;
     public CastTrigger CastTrigger;
     public CastEffect CastEffect;

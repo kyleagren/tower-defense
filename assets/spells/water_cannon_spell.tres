@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="WaterCannonSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/WaterCannonSpell.cs" id="1_watercannon"]
+[ext_resource type="PackedScene" path="res://spells/effect_volumes/water_cannon_beam.tscn" id="2_beam"]
+
+[resource]
+script = ExtResource("1_watercannon")
+WheelOrder = 5
+BeamScene = ExtResource("2_beam")
