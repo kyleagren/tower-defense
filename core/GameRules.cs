@@ -30,4 +30,7 @@ public static class GameRules
     public const int RespawnSkipManaCostPerExtraDeath = 5;
     // Each player past the first adds this much to an enemy's health: 150% for two, up to 250% for four.
     public const float EnemyHealthPerExtraPlayer = 0.5f;
+    // Swirl's burst: how far it reaches, and its damage as a share of the triggering hit's Wind.
+    public const float SwirlRadius = 3f;
+    public const float SwirlDamageFraction = 0.3f;
 }

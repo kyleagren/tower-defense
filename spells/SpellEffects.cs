@@ -136,6 +136,20 @@ public partial class SpellEffects : Node
         copy.InitializeCopy(origin, direction, length, halfWidth, duration);
     }
 
+    // Host only, once the sweep is in place.
+    public void ShowSweep(PackedScene scene, Vector3 start, Vector3 direction, float speed, float radius, float duration)
+    {
+        Rpc(MethodName.ReceiveSweep, scene.ResourcePath, start, direction, speed, radius, duration);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveSweep(string scenePath, Vector3 start, Vector3 direction, float speed, float radius, float duration)
+    {
+        GroundSweep copy = GD.Load<PackedScene>(scenePath).Instantiate<GroundSweep>();
+        _level.LevelRoot.AddChild(copy);
+        copy.InitializeCopy(start, direction, speed, radius, duration);
+    }
+
     // Host only. Each machine's copy of the Ritual already holds the wall's placement.
     public void RaiseWall(Ritual caster)
     {

@@ -74,6 +74,7 @@ public class SpellCastContext
     public WallCastData Wall;
     public BombardmentCastData Bombardment;
     public BeamCastData Beam;
+    public SweepCastData Sweep;
     public GroundEffectCastData GroundEffect;
     public CastTrigger CastTrigger;
     public CastEffect CastEffect;
@@ -124,6 +125,11 @@ public class SpellCastContext
         if (Wall != null)
         {
             Wall.WallDuration.Increased += durationBonus;
+        }
+
+        if (Sweep != null)
+        {
+            Sweep.Duration.Increased += durationBonus;
         }
 
         ElementalIncrease = new ElementalIncrease

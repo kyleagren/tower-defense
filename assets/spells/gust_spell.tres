@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="GustSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/GustSpell.cs" id="1_gust"]
+[ext_resource type="PackedScene" path="res://spells/effect_volumes/gust_sweep.tscn" id="2_sweep"]
+
+[resource]
+script = ExtResource("1_gust")
+WheelOrder = 6
+SweepScene = ExtResource("2_sweep")

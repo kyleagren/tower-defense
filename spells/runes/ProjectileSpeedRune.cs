@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 [GlobalClass]
@@ -8,19 +9,25 @@ public partial class ProjectileSpeedRune : Rune
 
     public override string Name => "Velocity";
 
-    public override IReadOnlyList<Tag> RequiredTags => new List<Tag> { Tag.Projectile };
+    public override IReadOnlyList<Tag> RequiredTags => Array.Empty<Tag>();
+    public override IReadOnlyList<Tag> RequiredAnyTags => new List<Tag> { Tag.Projectile, Tag.Traveling };
 
     private static readonly Tag[] _tags = { Tag.Trajectory };
 
     public override IReadOnlyList<Tag> Tags => _tags;
 
-    public override string Description => $"Increases projectile speed by {Mathf.RoundToInt(IncreasedSpeedPercent * 100f)}%.";
+    public override string Description => $"Projectiles and traveling spells move {Mathf.RoundToInt(IncreasedSpeedPercent * 100f)}% faster.";
 
     public override void Apply(SpellCastContext context)
     {
         if (context.Projectile != null)
         {
             context.Projectile.Speed.Increased += IncreasedSpeedPercent;
+        }
+
+        if (context.Sweep != null)
+        {
+            context.Sweep.Speed.Increased += IncreasedSpeedPercent;
         }
     }
 }

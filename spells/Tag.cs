@@ -15,5 +15,6 @@ public enum Tag
     Cooldown,
     Reaction,
     Tradeoff,
-    Utility
+    Utility,
+    Traveling
 }

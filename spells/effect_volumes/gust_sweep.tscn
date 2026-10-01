@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://spells/effect_volumes/GroundSweep.cs" id="1_sweep"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_gust"]
+top_radius = 1.0
+bottom_radius = 0.08
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gust"]
+transparency = 1
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(0.75, 1, 0.85, 0.45)
+
+[node name="GustSweep" type="Node3D" node_paths=PackedStringArray("Footprint")]
+script = ExtResource("1_sweep")
+Footprint = NodePath("Footprint")
+
+[node name="Footprint" type="Node3D" parent="."]
+
+[node name="Mesh" type="MeshInstance3D" parent="Footprint"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_gust")
+material_override = SubResource("StandardMaterial3D_gust")

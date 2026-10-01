@@ -331,6 +331,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     {
         DamagePacket amount = hit.Damage;
         bool statusConsumed = false;
+        Tag? statusBefore = Status;
 
         if (hit.Spell.OnHitRunes != null)
         {
@@ -379,6 +380,32 @@ public partial class Enemy : CharacterBody3D, IDamageable
         if (CurrentHealth <= 0f)
         {
             Die(hit.RagdollImpulse);
+        }
+
+        // Last, so anything these start - a swirl's burst, an after-hit rune's own hits, this enemy's
+        // included - lands on a finished hit rather than one still resolving.
+        if (hit.Spell.OnHitRunes != null)
+        {
+            AfterHitContext afterHit = new AfterHitContext
+            {
+                Target = this,
+                Damage = amount,
+                SpellTags = hit.Spell.SpellTags,
+                Attribution = hit.Attribution,
+                StatusBefore = statusBefore,
+                Killed = _isDead
+            };
+
+            foreach (OnHitRune rune in hit.Spell.OnHitRunes)
+            {
+                rune.AfterHit(afterHit);
+            }
+        }
+
+        // A Status a reaction rune already spent isn't there to swirl.
+        if (!statusConsumed)
+        {
+            Swirl.TryTrigger(this, hit, statusBefore);
         }
     }
 
