@@ -11,7 +11,7 @@ height = 1.0
 transparency = 1
 cull_mode = 2
 shading_mode = 0
-albedo_color = Color(1, 0.9, 0.3, 0.7)
+albedo_color = Color(0.75, 0.6, 1, 0.7)
 
 [node name="LightningRailBeam" type="Node3D" node_paths=PackedStringArray("Footprint")]
 script = ExtResource("1_beam")

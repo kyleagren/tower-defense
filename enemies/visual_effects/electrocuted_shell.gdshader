@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_never, shadows_disabled;
 
-uniform vec4 line_color : source_color = vec4(1.0, 0.9, 0.1, 0.9);
+uniform vec4 line_color : source_color = vec4(0.8, 0.65, 1.0, 0.9);
 // Lines around the body, how thin each is (a share of the gap between lines), how far they wander
 // sideways as they climb, and how fast the set crawls around.
 uniform float line_count = 6.0;

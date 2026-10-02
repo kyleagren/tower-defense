@@ -8,7 +8,7 @@ using System.Collections.Generic;
 // whole palette somewhere else.
 public static class DamageTypeColors
 {
-    private static readonly Color Physical = new Color(0.9f, 0.9f, 0.9f);
+    private static readonly Color Physical = new Color(0.75f, 0.6f, 0.42f);
     private static readonly Color TrueDamage = Colors.Black;
     private static readonly Color DefaultOutline = Colors.Black;
     private static readonly Color TrueDamageOutline = Colors.White;
@@ -18,7 +18,7 @@ public static class DamageTypeColors
         [Tag.Fire] = new Color(1f, 0.5f, 0f),
         [Tag.Water] = new Color(0.3f, 0.55f, 1f),
         [Tag.Cold] = new Color(0.6f, 0.85f, 1f),
-        [Tag.Lightning] = new Color(1f, 0.9f, 0.1f),
+        [Tag.Lightning] = new Color(0.72f, 0.55f, 1f),
         [Tag.Wind] = new Color(0.55f, 0.92f, 0.59f)
     };
 
@@ -28,7 +28,7 @@ public static class DamageTypeColors
     };
 
     // Physical (and, rarely, pure Wind - DominantElement doesn't candidate it either) both fall
-    // back to the neutral physical color, matching WoW's own convention of white physical numbers.
+    // back to the neutral physical color.
     public static Color Get(Tag? element)
     {
         return element.HasValue && _elementColors.TryGetValue(element.Value, out Color color) ? color : Physical;

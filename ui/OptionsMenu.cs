@@ -36,6 +36,8 @@ public partial class OptionsMenu : Control
             on => DebugSettings.ShowWeaponDamageNumbers = on, DebugSettings.Save);
         AddToggle(column, "Ritual damage numbers", DebugSettings.ShowRitualDamageNumbers,
             on => DebugSettings.ShowRitualDamageNumbers = on, DebugSettings.Save);
+        AddToggle(column, "Camera over left shoulder", DebugSettings.CameraOnLeftShoulder,
+            on => DebugSettings.CameraOnLeftShoulder = on, DebugSettings.Save);
 
         Label video = new Label { Text = "Video", HorizontalAlignment = HorizontalAlignment.Center };
         video.AddThemeFontSizeOverride("font_size", 20);

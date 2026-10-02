@@ -25,7 +25,7 @@ public static class SpellWheelGroups
     };
 
     // Placeholder until a wedge can draw a real rainbow.
-    private static readonly Color _multiElementColor = new Color(0.75f, 0.45f, 1f);
+    private static readonly Color _multiElementColor = new Color(1f, 0.85f, 0.2f);
 
     // Worked out from tags: one element tag puts a spell under that element, none under Physical,
     // and more than one under MultiElement.

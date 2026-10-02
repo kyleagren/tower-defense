@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://dhtwyt27whfd0" path="res://spells/visual_effects/ArcVisual.cs" id="1_arc"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_lightningstrike"]
+top_radius = 0.06
+bottom_radius = 0.06
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lightningstrike"]
+albedo_color = Color(0.8, 0.7, 1, 1)
+emission_enabled = true
+emission = Color(0.75, 0.6, 1, 1)
+emission_energy_multiplier = 3.0
+
+[node name="LightningStrikeArcVisual" type="Node3D"]
+script = ExtResource("1_arc")
+Lifetime = 0.2
+SegmentCount = 8
+JitterAmount = 0.4
+SegmentMesh = SubResource("CylinderMesh_lightningstrike")
+SegmentMaterial = SubResource("StandardMaterial3D_lightningstrike")

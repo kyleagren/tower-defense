@@ -57,6 +57,9 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     private float _defaultFov;
 
+    // How far the camera sits off-center, as authored; which side is the player's setting.
+    private float _shoulderOffset;
+
     // Subclasses read activity through IsActive and adjust look sensitivity through
     // LookSensitivity; nothing outside this class needs the backing fields.
     protected float LookSensitivity { get; set; } = 1f;
@@ -78,6 +81,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         Level = LevelContext.Current;
         _gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
         _defaultFov = Camera.Fov;
+        _shoulderOffset = Mathf.Abs(SpringArm.Position.X);
 
         // Another player's body is a puppet here: its owner's machine moves it and its
         // MultiplayerSynchronizer carries that across, so nothing on this side reads input or
@@ -95,6 +99,13 @@ public abstract partial class PlayerCharacter : CharacterBody3D
 
     public override void _Process(double delta)
     {
+        float shoulderX = DebugSettings.CameraOnLeftShoulder ? -_shoulderOffset : _shoulderOffset;
+
+        if (SpringArm.Position.X != shoulderX)
+        {
+            SpringArm.Position = SpringArm.Position with { X = shoulderX };
+        }
+
         if (!IsActive || UiPanelStack.AnyOpen)
         {
             return;

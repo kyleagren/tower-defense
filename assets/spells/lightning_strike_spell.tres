@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="LightningStrikeSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/LightningStrikeSpell.cs" id="1_lightningstrike"]
+[ext_resource type="PackedScene" path="res://spells/visual_effects/lightning_strike_arc_visual.tscn" id="2_arcvisual"]
+
+[resource]
+script = ExtResource("1_lightningstrike")
+WheelOrder = 13
+ArcVisualScene = ExtResource("2_arcvisual")
