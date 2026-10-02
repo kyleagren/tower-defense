@@ -353,7 +353,7 @@ public partial class Ritual : Node3D, IDamageable
         if (_searchTimer <= 0f || justLostTarget)
         {
             _searchTimer = TargetSearchInterval;
-            _currentTarget = EnemyTargeting.FindTarget(GlobalPosition, context.Range.Value, context.TargetPriority, sightFrom: SpawnPoint.GlobalPosition);
+            _currentTarget = EnemyTargeting.FindTarget(GlobalPosition, context, sightFrom: SpawnPoint.GlobalPosition);
         }
 
         // A trigger rune's Ritual never casts on its own - only when pulsed.
@@ -553,9 +553,15 @@ public partial class Ritual : Node3D, IDamageable
     }
 
     // The enemy that was hit if this Ritual can reach and see it, otherwise the enemy in its own range
-    // nearest it. With neither, the cast still goes off - and is wasted.
+    // nearest it - unless a targeting rune says what to aim at. With none, the cast still goes off -
+    // and is wasted.
     private Enemy PulseTarget(SpellCastContext context)
     {
+        if (context.TargetPriorityFromRune)
+        {
+            return EnemyTargeting.FindTarget(GlobalPosition, context, sightFrom: SpawnPoint.GlobalPosition);
+        }
+
         Enemy source = _pulseSource != null && IsInstanceValid(_pulseSource) && !_pulseSource.IsDead ? _pulseSource : null;
 
         if (source != null

@@ -38,7 +38,7 @@ public class InstantHitCastEffect : CastEffect
         // The primary strike follows the spell's target priority; the forks below deliberately
         // stay nearest-first, since a fork is "an additional nearby enemy at the same time".
         Vector3 sightFrom = spawnPoint.GlobalPosition;
-        Enemy primary = EnemyTargeting.FindTarget(spawnPoint.GlobalPosition, context.Range.Value, context.TargetPriority, initialTargets, sightFrom: sightFrom);
+        Enemy primary = EnemyTargeting.FindTarget(spawnPoint.GlobalPosition, context, initialTargets, sightFrom: sightFrom);
         if (primary == null)
         {
             return targets;

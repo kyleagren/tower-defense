@@ -81,6 +81,13 @@ public class SpellCastContext
 
     public TargetPriority TargetPriority;
 
+    // Which Status a HasStatus priority looks for; null takes any.
+    public Tag? TargetStatus;
+
+    // A Resonant Ritual with a targeting rune picks its own target when pulsed, rather than reaching
+    // for the enemy the pulse came from.
+    public bool TargetPriorityFromRune;
+
     // Read by the Ritual itself rather than by the cast pipeline: the one flag here that changes how
     // the Ritual is treated instead of what its spell does.
     public bool Shrouded;

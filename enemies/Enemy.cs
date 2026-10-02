@@ -73,7 +73,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // ever winning a ClosestToGoal targeting comparison.
     public float DistanceToGoal { get; protected set; } = float.MaxValue;
 
-    protected float CurrentHealth { get; set; }
+    public float CurrentHealth { get; protected set; }
 
     // Only the host simulates an enemy - AI, debuffs, death and what it pays out. Everywhere else it's
     // a copy its MultiplayerSynchronizer keeps in step.

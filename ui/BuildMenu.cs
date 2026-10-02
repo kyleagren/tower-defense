@@ -160,8 +160,12 @@ public partial class BuildMenu : Control
                 ShowRuneRing(RuneTags.Buckets[slot]);
                 break;
 
+            case Screen.RuneRing when slot < _ringSubBuckets.Count:
+                ShowRuneRing(_openBucket, _ringSubBuckets[slot]);
+                break;
+
             case Screen.RuneRing:
-                SocketRune(_ringRunes[slot]);
+                SocketRune(_ringRunes[slot - _ringSubBuckets.Count]);
                 break;
 
             case Screen.TierWheel:
@@ -295,6 +299,10 @@ public partial class BuildMenu : Control
             case Screen.BucketRing:
             case Screen.TierWheel:
                 ShowInscription(SocketSlot(_socketBeingAssigned));
+                break;
+
+            case Screen.RuneRing when _openSubBucket.HasValue:
+                ShowRuneRing(_openBucket, highlightedSubBucket: _openSubBucket);
                 break;
 
             case Screen.RuneRing:

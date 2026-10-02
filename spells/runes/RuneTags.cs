@@ -9,19 +9,34 @@ public static class RuneTags
     // of every one of these it carries among its own Tags.
     private static readonly Tag[] _buckets =
     {
-        Tag.Trajectory, Tag.AoE, Tag.Duration, Tag.Cooldown, Tag.Reaction, Tag.Trigger, Tag.Tradeoff, Tag.Utility
+        Tag.Trajectory, Tag.AoE, Tag.Targeting, Tag.Cooldown, Tag.Reaction, Tag.Trigger, Tag.Tradeoff, Tag.Utility
+    };
+
+    // A bucket's own buckets, shown first in its rune ring. A rune carrying one shows only inside it,
+    // not loose in the parent's ring.
+    private static readonly Dictionary<Tag, Tag[]> _subBuckets = new()
+    {
+        { Tag.Targeting, new[] { Tag.TargetStatus } }
     };
 
     // Describe what kind of rune something is. A spell carrying one, or a rune requiring one, would
     // make that rune incompatible with everything - silently absent from every wheel.
-    private static readonly Tag[] _runeOnly = { Tag.Trajectory, Tag.Cooldown, Tag.Reaction, Tag.Tradeoff, Tag.Utility };
+    private static readonly Tag[] _runeOnly = { Tag.Trajectory, Tag.Cooldown, Tag.Reaction, Tag.Tradeoff, Tag.Utility, Tag.Targeting, Tag.TargetStatus };
 
     public static IReadOnlyList<Tag> Buckets => _buckets;
 
     public static bool IsBucket(Tag tag) => Array.IndexOf(_buckets, tag) >= 0;
 
-    // The Area bucket reuses Tag.AoE rather than a near-duplicate tag, so it's named here.
-    public static string BucketName(Tag bucket) => bucket == Tag.AoE ? "Area" : bucket.ToString();
+    public static IReadOnlyList<Tag> SubBucketsOf(Tag bucket) => _subBuckets.TryGetValue(bucket, out Tag[] subBuckets) ? subBuckets : Array.Empty<Tag>();
+
+    // Tags whose wheel label isn't their own name: the Area bucket reuses Tag.AoE rather than a
+    // near-duplicate tag, and TargetStatus already sits inside Targeting.
+    public static string BucketName(Tag bucket) => bucket switch
+    {
+        Tag.AoE => "Area",
+        Tag.TargetStatus => "Status",
+        _ => bucket.ToString()
+    };
     public static bool IsRuneOnly(Tag tag) => Array.IndexOf(_runeOnly, tag) >= 0;
 
     public static void Validate(Rune rune)

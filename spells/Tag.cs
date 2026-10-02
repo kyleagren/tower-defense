@@ -16,5 +16,7 @@ public enum Tag
     Reaction,
     Tradeoff,
     Utility,
-    Traveling
+    Traveling,
+    Targeting,
+    TargetStatus
 }

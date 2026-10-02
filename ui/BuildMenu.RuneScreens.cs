@@ -29,6 +29,9 @@ public partial class BuildMenu
 
     private int _socketBeingAssigned = -1;
     private Tag _openBucket;
+    // Null while the bucket's own ring is open.
+    private Tag? _openSubBucket;
+    private readonly List<Tag> _ringSubBuckets = new();
     private readonly List<Rune> _ringRunes = new();
     private readonly Rune[] _tierRunes = new Rune[5];
 
@@ -82,25 +85,60 @@ public partial class BuildMenu
         ShowRuneScreenInfo(highlighted);
     }
 
-    private void ShowRuneRing(Tag bucket)
+    // A bucket's ring holds its sub-buckets first, then its runes that aren't in one; a sub-bucket's
+    // ring holds only its own runes.
+    private void ShowRuneRing(Tag bucket, Tag? subBucket = null, Tag? highlightedSubBucket = null)
     {
         SetScreen(Screen.RuneRing);
         PlaceRuneWheelAround(_socketBeingAssigned);
         _openBucket = bucket;
+        _openSubBucket = subBucket;
+        _ringSubBuckets.Clear();
         _ringRunes.Clear();
-        _ringRunes.AddRange(CompatibleRunesIn(bucket));
 
-        Rune current = _build.RuneIn(_socketBeingAssigned);
-        int highlighted = current == null ? -1 : _ringRunes.FindIndex(rune => rune.GetType() == current.GetType());
+        if (subBucket.HasValue)
+        {
+            _ringRunes.AddRange(CompatibleRunesIn(subBucket.Value));
+        }
+        else
+        {
+            IReadOnlyList<Tag> subBuckets = RuneTags.SubBucketsOf(bucket);
+            _ringSubBuckets.AddRange(subBuckets.Where(sub => CompatibleRunesIn(sub).Any()));
+            _ringRunes.AddRange(CompatibleRunesIn(bucket).Where(rune => !rune.Tags.Any(tag => subBuckets.Contains(tag))));
+        }
 
-        RuneWheel.SetItems(PadToRing(_ringRunes.Select(rune => new RadialWheelItem
+        int highlighted = highlightedSubBucket.HasValue ? _ringSubBuckets.IndexOf(highlightedSubBucket.Value) : HighlightForSocketedRune();
+
+        IEnumerable<RadialWheelItem> subBucketItems = _ringSubBuckets.Select(sub => new RadialWheelItem
+        {
+            Label = RuneTags.BucketName(sub),
+            Color = _bucketColor,
+            Enabled = CompatibleRunesIn(sub).Any(IsPickable)
+        });
+
+        IEnumerable<RadialWheelItem> runeItems = _ringRunes.Select(rune => new RadialWheelItem
         {
             Label = rune.Name,
             Color = RarityColors.Get(rune.Rarity),
             Enabled = IsPickable(rune)
-        })), highlighted);
+        });
 
+        RuneWheel.SetItems(PadToRing(subBucketItems.Concat(runeItems)), highlighted);
         ShowRuneScreenInfo(highlighted);
+    }
+
+    // The socketed rune if it's in this ring, otherwise the sub-bucket holding it.
+    private int HighlightForSocketedRune()
+    {
+        Rune current = _build.RuneIn(_socketBeingAssigned);
+
+        if (current == null)
+        {
+            return -1;
+        }
+
+        int runeIndex = _ringRunes.FindIndex(rune => rune.GetType() == current.GetType());
+        return runeIndex >= 0 ? _ringSubBuckets.Count + runeIndex : _ringSubBuckets.FindIndex(sub => current.Tags.Contains(sub));
     }
 
     private void SocketRune(Rune rune)
@@ -161,14 +199,15 @@ public partial class BuildMenu
         switch (_screen)
         {
             case Screen.BucketRing when slot >= 0:
-                Tag bucket = RuneTags.Buckets[slot];
-                int runeCount = CompatibleRunesIn(bucket).Count();
-                ShowRunePanel(RuneTags.BucketName(bucket), "", runeCount == 1 ? "1 rune" : $"{runeCount} runes");
-                PreviewSocket(null);
+                ShowBucketInfo(RuneTags.Buckets[slot]);
                 break;
 
-            case Screen.RuneRing when slot >= 0 && slot < _ringRunes.Count:
-                ShowRuneInfo(_ringRunes[slot]);
+            case Screen.RuneRing when slot >= 0 && slot < _ringSubBuckets.Count:
+                ShowBucketInfo(_ringSubBuckets[slot]);
+                break;
+
+            case Screen.RuneRing when slot >= _ringSubBuckets.Count && slot < _ringSubBuckets.Count + _ringRunes.Count:
+                ShowRuneInfo(_ringRunes[slot - _ringSubBuckets.Count]);
                 break;
 
             case Screen.TierWheel when slot == SwapSlot:
@@ -201,6 +240,13 @@ public partial class BuildMenu
                 PreviewSocket(null);
                 break;
         }
+    }
+
+    private void ShowBucketInfo(Tag bucket)
+    {
+        int runeCount = CompatibleRunesIn(bucket).Count();
+        ShowRunePanel(RuneTags.BucketName(bucket), "", runeCount == 1 ? "1 rune" : $"{runeCount} runes");
+        PreviewSocket(null);
     }
 
     private void ShowRuneInfo(Rune rune)

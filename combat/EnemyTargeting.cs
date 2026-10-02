@@ -4,18 +4,60 @@ using System.Collections.Generic;
 
 public static class EnemyTargeting
 {
+    // How far around a candidate MostEnemiesNearby counts its neighbours.
+    private const float ClusterRadius = 4f;
+
     // Picks a ritual's cast target. Range is always measured from the ritual; only which of the
-    // in-range enemies wins depends on the priority.
+    // in-range enemies wins depends on the context's priority.
     // sightFrom, when given, also requires a clear line from there to the enemy (LineOfSight).
-    public static Enemy FindTarget(Vector3 fromPosition, float range, TargetPriority priority, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null, Vector3? sightFrom = null)
+    public static Enemy FindTarget(Vector3 fromPosition, SpellCastContext context, ISet<Enemy> exclude = null, Vector3? sightFrom = null)
     {
         float RangeSquared(Enemy enemy) => fromPosition.DistanceSquaredTo(enemy.GlobalPosition);
+        float range = context.Range.Value;
 
-        Func<Enemy, float> score = priority == TargetPriority.ClosestToGoal
-            ? enemy => enemy.DistanceToGoal
-            : RangeSquared;
+        if (context.TargetPriority == TargetPriority.HasStatus)
+        {
+            Tag? wanted = context.TargetStatus;
+            bool Carries(Enemy enemy) => enemy.Status.HasValue && (wanted == null || enemy.Status == wanted);
 
-        return FindBest(RangeSquared, range, score, exclude, predicate, sightFrom: sightFrom);
+            // With nothing in range carrying it, the ritual targets as normal rather than idling.
+            return FindBest(RangeSquared, range, ClosestToGoal, exclude, Carries, sightFrom: sightFrom)
+                ?? FindBest(RangeSquared, range, ClosestToGoal, exclude, null, sightFrom: sightFrom);
+        }
+
+        Func<Enemy, float> score = context.TargetPriority switch
+        {
+            TargetPriority.ClosestToRitual => RangeSquared,
+            TargetPriority.FurthestFromRitual => enemy => -RangeSquared(enemy),
+            TargetPriority.HighestMaxHealth => enemy => -enemy.MaxHealth,
+            TargetPriority.LowestHealth => enemy => enemy.CurrentHealth,
+            TargetPriority.MostEnemiesNearby => enemy => -CountWithinFlat(enemy.GlobalPosition, ClusterRadius),
+            _ => ClosestToGoal
+        };
+
+        // Ties are common - same-type enemies at full health, packs of equal size - and go to the one
+        // furthest along.
+        return FindBest(RangeSquared, range, score, exclude, null, sightFrom: sightFrom, tiebreak: ClosestToGoal);
+    }
+
+    private static float ClosestToGoal(Enemy enemy) => enemy.DistanceToGoal;
+
+    // Counts the enemy at origin too, which every candidate does alike.
+    private static int CountWithinFlat(Vector3 origin, float radius)
+    {
+        IReadOnlyList<Enemy> enemies = LevelContext.Current.Enemies.Active;
+        float radiusSquared = radius * radius;
+        int count = 0;
+
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            if (GeometryUtils.FlatDistanceSquared(enemies[i].GlobalPosition, origin) <= radiusSquared)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     public static Enemy FindNearest(Vector3 fromPosition, float range, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null, Vector3? sightFrom = null)
@@ -80,13 +122,14 @@ public static class EnemyTargeting
     // exclude is an ISet rather than an IEnumerable so the membership test is a hash lookup per
     // candidate. Passing a lazy sequence (a Concat or an OfType) would silently degrade this to a
     // full re-scan for every enemy considered.
-    private static Enemy FindBest(Func<Enemy, float> rangeSquaredTo, float range, Func<Enemy, float> score, ISet<Enemy> exclude, Func<Enemy, bool> predicate, ISet<Enemy> alsoExclude = null, Vector3? sightFrom = null)
+    private static Enemy FindBest(Func<Enemy, float> rangeSquaredTo, float range, Func<Enemy, float> score, ISet<Enemy> exclude, Func<Enemy, bool> predicate, ISet<Enemy> alsoExclude = null, Vector3? sightFrom = null, Func<Enemy, float> tiebreak = null)
     {
         IReadOnlyList<Enemy> candidates = LevelContext.Current.Enemies.Active;
         float rangeSquared = range * range;
 
         Enemy best = null;
         float bestScore = float.PositiveInfinity;
+        float bestTiebreak = float.PositiveInfinity;
 
         // Indexed loop rather than foreach: iterating IReadOnlyList<T> with foreach boxes the
         // enumerator, and this runs per ritual per search interval plus once per chain jump.
@@ -116,7 +159,14 @@ public static class EnemyTargeting
 
             float candidateScore = score(enemy);
 
-            if (candidateScore >= bestScore)
+            if (candidateScore > bestScore)
+            {
+                continue;
+            }
+
+            float candidateTiebreak = tiebreak?.Invoke(enemy) ?? 0f;
+
+            if (candidateScore == bestScore && (tiebreak == null || candidateTiebreak >= bestTiebreak))
             {
                 continue;
             }
@@ -128,6 +178,7 @@ public static class EnemyTargeting
             }
 
             bestScore = candidateScore;
+            bestTiebreak = candidateTiebreak;
             best = enemy;
         }
 

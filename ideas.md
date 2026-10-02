@@ -74,6 +74,7 @@ The more I think about it the more I'm fairly confident that enemies will need t
 - A rune that causes a broken wall to explode on impact. Perhaps for a percentage of the health it has.
 - A rune that does more damage to enemies below half hp
 - A manual activation rune. Gives 100 more damage, 100 more cooldown, and stops the ritual from automatically triggering. A player can walk over to it and press E to cause it to automatically cast following it's standard (based on runes / targeting runes) behavior. Could let you put a big "cataclysm" ritual somewhere and not use its long cooldown until you really need it. the spirit carrier ritual could use the same "press e to activate" mechanism to spawn the spirit.
+- Splinter burst - if this tower kills a frozen enemy, that enemy explodes in a burst of AoE
 
 ## Tradeoff Runes
 
@@ -83,7 +84,6 @@ Concentrated effect-style runes that give a good chunk of damage but come at oth
 - Similar one that shrinks the range of the tower.
 - Similar one for duration.
 - Similar one for cooldown recovery
-- Splinter burst - if this tower kills a frozen enemy, that enemy explodes in a burst of AoE
 
 ## Reaction Runes
 
