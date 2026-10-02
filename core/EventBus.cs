@@ -14,6 +14,8 @@ public partial class EventBus : Node
     [Signal] public delegate void InventoryChangedEventHandler();
     [Signal] public delegate void TokensChangedEventHandler();
     [Signal] public delegate void TokenPickModeChangedEventHandler(bool isActive);
+    // The local player started or stopped Alt-looking at a Ritual - null when they stopped.
+    [Signal] public delegate void InspectedRitualChangedEventHandler(Ritual ritual);
 
     public override void _Ready()
     {

@@ -20,6 +20,8 @@ public partial class MeltRune : ReactionRune
     public override string Description =>
         $"When Fire meets a Cold Status, consumes it to melt away {MaxHealthPercent * 100f:0.#}% of the enemy's max health, less against heavier enemies. Once per enemy every {Cooldown:0.#}s.";
 
+    public override string EffectLabel => "Melts";
+
     // Spends the Status even while the enemy is still Melted - a blocked reaction still costs its
     // setup, like every cooldown-limited reaction.
     public override bool OnHit(OnHitContext hit)
@@ -35,6 +37,7 @@ public partial class MeltRune : ReactionRune
         {
             float massFactor = Mathf.Min(1f, Mathf.Pow(ReferenceMass / target.Mass, MassExponent));
             target.ApplyDebuff(new MeltedDebuff(target.MaxHealth * MaxHealthPercent * massFactor, Cooldown, hit.Attribution));
+            CountEffect(hit.Attribution);
         }
 
         return true;

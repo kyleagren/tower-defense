@@ -41,7 +41,6 @@ public class SpellInstance
         if (_cachedContext == null)
         {
             _cachedContext = _definition.CreateBaseContext();
-            _placement?.ApplyTo(_cachedContext);
 
             foreach (Rune rune in _attachedRunes)
             {
@@ -49,6 +48,10 @@ public class SpellInstance
                 _cachedContext.ManaCost.More *= rune.ManaCostMultiplier;
                 _cachedContext.DamageScale.More *= rune.DamageMultiplier;
             }
+
+            // After the runes, since a rune can add the component a placement fills in
+            // (FixedDirectionRune's aim).
+            _placement?.ApplyTo(_cachedContext);
 
             if (ownerSheet != null)
             {

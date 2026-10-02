@@ -17,6 +17,7 @@ public enum Tag
     Tradeoff,
     Utility,
     Traveling,
+    Line,
     Targeting,
     TargetStatus
 }

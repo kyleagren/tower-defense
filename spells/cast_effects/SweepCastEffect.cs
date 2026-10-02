@@ -6,9 +6,11 @@ public class SweepCastEffect : CastEffect
     {
         SweepCastData data = context.Sweep;
 
-        // Toward the target enemy, or - for a Resonant cast with nothing in range - the ground point
-        // it reaches toward.
-        Vector3? goal = caster.CurrentTarget?.GlobalPosition ?? caster.CastPoint;
+        // Along a fixed-direction Ritual's lane; otherwise toward the target enemy, or - for a
+        // Resonant cast with nothing in range - the ground point it reaches toward.
+        Vector3? goal = context.FixedAim != null
+            ? caster.GlobalPosition + context.FixedAim.Direction
+            : caster.CurrentTarget?.GlobalPosition ?? caster.CastPoint;
 
         if (data?.Scene == null || goal == null)
         {

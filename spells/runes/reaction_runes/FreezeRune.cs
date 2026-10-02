@@ -17,6 +17,8 @@ public partial class FreezeRune : ReactionRune
     public override string Description =>
         $"When Cold and Water meet on an enemy, consumes its Status to freeze it solid for {FrozenDuration:0.#}s. It can't be frozen again for {RecoveryDuration:0.#}s after.";
 
+    public override string EffectLabel => "Freezes";
+
     public override bool OnHit(OnHitContext hit)
     {
         Tag? status = hit.Target.Status;
@@ -27,7 +29,11 @@ public partial class FreezeRune : ReactionRune
             return false;
         }
 
-        hit.Target.ApplyDebuff(new FrozenAilment(FrozenDuration, RecoveryDuration));
+        if (hit.Target.ApplyDebuff(new FrozenAilment(FrozenDuration, RecoveryDuration)))
+        {
+            CountEffect(hit.Attribution);
+        }
+
         return true;
     }
 }

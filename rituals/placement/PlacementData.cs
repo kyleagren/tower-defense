@@ -13,6 +13,18 @@ public abstract class PlacementData
     // Sent as an array led by the kind of placement - an empty one for none.
     public abstract Godot.Collections.Array ToNetwork();
 
-    public static PlacementData FromNetwork(Godot.Collections.Array data) =>
-        data.Count > 0 && data[0].AsString() == WallPlacementData.NetworkKind ? WallPlacementData.Decode(data) : null;
+    public static PlacementData FromNetwork(Godot.Collections.Array data)
+    {
+        if (data.Count == 0)
+        {
+            return null;
+        }
+
+        return data[0].AsString() switch
+        {
+            WallPlacementData.NetworkKind => WallPlacementData.Decode(data),
+            AimPlacementData.NetworkKind => AimPlacementData.Decode(data),
+            _ => null
+        };
+    }
 }

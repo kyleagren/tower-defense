@@ -86,12 +86,21 @@ public partial class SpellEffects : Node
         visual.Show(center, radius);
     }
 
-    // Host only, once the projectile is in place.
-    public void LaunchProjectile(Projectile projectile, PackedScene scene)
+    // Host only, once the volley is in place. One message for the whole volley: each machine lays it
+    // out again through ProjectileCastEffect.Layout, numbering the copies in the same order.
+    public void LaunchVolley(List<Projectile> volley, PackedScene scene, Transform3D launch, ProjectileCastData data)
     {
-        _projectileCount++;
-        projectile.ReplicaId = _projectileCount;
-        Rpc(MethodName.ReceiveProjectileLaunched, _projectileCount, scene.ResourcePath, projectile.GlobalTransform, projectile.Speed, projectile.Radius, projectile.Length, projectile.Crosswise);
+        int firstId = _projectileCount + 1;
+
+        foreach (Projectile projectile in volley)
+        {
+            _projectileCount++;
+            projectile.ReplicaId = _projectileCount;
+        }
+
+        Projectile first = volley[0];
+        Rpc(MethodName.ReceiveVolleyLaunched, firstId, scene.ResourcePath, launch, data.ProjectileCount, data.Rows,
+            data.SpreadAngleDegrees, data.IsNova, first.Speed, first.Radius, first.Length, first.Crosswise);
     }
 
     public void TurnProjectile(Projectile projectile)
@@ -105,14 +114,22 @@ public partial class SpellEffects : Node
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceiveProjectileLaunched(int id, string scenePath, Transform3D transform, float speed, float radius, float length, bool crosswise)
+    private void ReceiveVolleyLaunched(int firstId, string scenePath, Transform3D launch, int count, int rows,
+        float spreadAngleDegrees, bool isNova, float speed, float radius, float length, bool crosswise)
     {
-        Projectile copy = GD.Load<PackedScene>(scenePath).Instantiate<Projectile>();
-        copy.InitializeCopy(speed, radius, length, crosswise);
-        _level.LevelRoot.AddChild(copy);
-        copy.GlobalTransform = transform;
-        _projectileCopies[id] = copy;
-        copy.TreeExiting += () => _projectileCopies.Remove(id);
+        PackedScene scene = GD.Load<PackedScene>(scenePath);
+        int id = firstId;
+
+        foreach (Transform3D start in ProjectileCastEffect.Layout(launch, count, rows, spreadAngleDegrees, isNova))
+        {
+            Projectile copy = scene.Instantiate<Projectile>();
+            copy.InitializeCopy(speed, radius, length, crosswise);
+            _level.LevelRoot.AddChild(copy);
+            copy.GlobalTransform = start;
+            int copyId = id++;
+            _projectileCopies[copyId] = copy;
+            copy.TreeExiting += () => _projectileCopies.Remove(copyId);
+        }
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]

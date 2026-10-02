@@ -17,13 +17,15 @@ public partial class ChillRune : OnHitRune
 
     public override string Description => "Cold damage also slows the enemies it hits.";
 
+    public override string EffectLabel => "Enemies chilled";
+
     // Never consumes a Status: it reads the incoming hit's own element, not anything already on the
     // enemy, which is what separates it from a reaction.
     public override bool OnHit(OnHitContext hit)
     {
-        if (hit.Damage.ColdDamage > 0f)
+        if (hit.Damage.ColdDamage > 0f && hit.Target.ApplyDebuff(new ChillAilment(SlowPercent, Duration)))
         {
-            hit.Target.ApplyDebuff(new ChillAilment(SlowPercent, Duration));
+            CountEffect(hit.Attribution);
         }
 
         return false;

@@ -15,6 +15,8 @@ public partial class FrostburnRune : ReactionRune
 
     public override string Description => "When Cold damage meets a Fire Status, consumes it to frostburn the enemy: Cold damage over time and a slight slow.";
 
+    public override string EffectLabel => "Frostburns";
+
     public override bool OnHit(OnHitContext hit)
     {
         if (hit.Target.Status != Tag.Fire || hit.Damage.DominantElement != Tag.Cold)
@@ -22,7 +24,11 @@ public partial class FrostburnRune : ReactionRune
             return false;
         }
 
-        hit.Target.ApplyDebuff(new FrostburnAilment(hit.Damage.Total * DamagePercent, SlowPercent, Duration, hit.Attribution));
+        if (hit.Target.ApplyDebuff(new FrostburnAilment(hit.Damage.Total * DamagePercent, SlowPercent, Duration, hit.Attribution)))
+        {
+            CountEffect(hit.Attribution);
+        }
+
         return true;
     }
 }

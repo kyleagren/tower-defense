@@ -6,26 +6,45 @@ public class ProjectileCastEffect : CastEffect
     public override void Cast(SpellCastContext context, Node3D spawnPoint, Ritual caster)
     {
         ProjectileCastData projectileData = context.Projectile;
-        int count = projectileData.ProjectileCount;
         HashSet<Enemy> returnHitTracker = new HashSet<Enemy>();
         HashSet<Enemy> chainHitTracker = new HashSet<Enemy>();
         Transform3D launch = projectileData.IsNova ? Leveled(spawnPoint.GlobalTransform) : spawnPoint.GlobalTransform;
+        List<Projectile> volley = new List<Projectile>();
 
-        for (int i = 0; i < count; i++)
+        foreach (Transform3D start in Layout(launch, projectileData.ProjectileCount, projectileData.Rows, projectileData.SpreadAngleDegrees, projectileData.IsNova))
         {
-            float angleOffset = projectileData.IsNova
-                ? 360f / count * i
-                : ComputeConeAngle(i, count, projectileData.SpreadAngleDegrees);
-
             Projectile projectile = projectileData.ProjectileScene.Instantiate<Projectile>();
             projectile.Initialize(context, returnHitTracker, chainHitTracker);
             LevelContext.Current.LevelRoot.AddChild(projectile);
-
-            projectile.GlobalTransform = launch;
-            projectile.RotateY(Mathf.DegToRad(angleOffset));
+            projectile.GlobalTransform = start;
             projectile.SpawnPosition = projectile.GlobalPosition;
-            LevelContext.Current.SpellEffects.LaunchProjectile(projectile, projectileData.ProjectileScene);
+            volley.Add(projectile);
         }
+
+        LevelContext.Current.SpellEffects.LaunchVolley(volley, projectileData.ProjectileScene, launch, projectileData);
+    }
+
+    // Where each projectile in a volley starts: count columns fanned across (ringed, for a Nova), each
+    // a column of rows stacked up. Every machine lays out a volley through here, so each copy lines
+    // up with its original from one message.
+    public static List<Transform3D> Layout(Transform3D launch, int count, int rows, float spreadAngleDegrees, bool isNova)
+    {
+        List<Transform3D> layout = new List<Transform3D>();
+
+        for (int i = 0; i < count; i++)
+        {
+            float yaw = isNova ? 360f / count * i : ComputeConeAngle(i, count, spreadAngleDegrees);
+
+            for (int row = 0; row < rows; row++)
+            {
+                float pitch = ComputeConeAngle(row, rows, spreadAngleDegrees);
+                Transform3D start = launch;
+                start.Basis = new Basis(Vector3.Up, Mathf.DegToRad(yaw)) * launch.Basis * new Basis(Vector3.Right, Mathf.DegToRad(pitch));
+                layout.Add(start);
+            }
+        }
+
+        return layout;
     }
 
     // A Nova's ring stays horizontal however steeply the Ritual is aiming, rather than tilting

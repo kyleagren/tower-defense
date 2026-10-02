@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://ui/PauseMenu.cs" id="12_pausemenu"]
 [ext_resource type="Script" path="res://ui/OptionsMenu.cs" id="13_optionsmenu"]
 [ext_resource type="Script" path="res://ui/organize/OrganizePanel.cs" id="14_organizepanel"]
+[ext_resource type="Script" path="res://ui/RitualDetailsPanel.cs" id="15_ritualdetails"]
 
 [node name="PlayerHud" type="Node"]
 
@@ -36,6 +37,14 @@ script = ExtResource("1_itemnameplate")
 [node name="RespawnOverlay" parent="." instance=ExtResource("6_respawnoverlay")]
 
 [node name="Crosshair" parent="." instance=ExtResource("7_crosshair")]
+
+[node name="RitualDetailsPanel" type="PanelContainer" parent="."]
+offset_left = 20.0
+offset_top = 70.0
+offset_right = 340.0
+offset_bottom = 110.0
+mouse_filter = 2
+script = ExtResource("15_ritualdetails")
 
 [node name="InventoryPanel" parent="." node_paths=PackedStringArray("PhaseIndicator") instance=ExtResource("8_inventorypanel")]
 anchors_preset = -1

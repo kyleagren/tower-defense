@@ -31,6 +31,8 @@ public partial class Projectile : Area3D
 
     private int _pierceRemaining;
     private float _speed;
+    // 0 when it flies until it hits something.
+    private float _maxDistance;
     private bool _hasExpired;
     private bool _isReturn;
     private bool _hasReturned;
@@ -70,6 +72,7 @@ public partial class Projectile : Area3D
         _pierceRemaining = context.Projectile.PierceCount;
         _isReturn = context.Projectile.IsReturn;
         _speed = context.Projectile.Speed.Value;
+        _maxDistance = context.Range.Value * context.Projectile.ExpiryRangeMultiplier;
     }
 
     // Another machine's view of a projectile the host fired: it only flies, turned and ended by the
@@ -121,6 +124,13 @@ public partial class Projectile : Area3D
         }
 
         Position -= Transform.Basis.Z * _speed * (float)delta;
+
+        if (_maxDistance > 0f && !_hasReturned
+            && GlobalPosition.DistanceSquaredTo(SpawnPosition) > _maxDistance * _maxDistance)
+        {
+            End();
+            return;
+        }
 
         if (_isReturn && !_hasReturned && _alreadyHit.Count == 0
             && GlobalPosition.DistanceSquaredTo(SpawnPosition) > MaxReturnDistance * MaxReturnDistance)

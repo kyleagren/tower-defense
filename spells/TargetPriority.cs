@@ -12,5 +12,7 @@ public enum TargetPriority
     // The enemy with the most others around it - the middle of a pack.
     MostEnemiesNearby,
     // Enemies carrying SpellCastContext.TargetStatus (any Status when that's null) first.
-    HasStatus
+    HasStatus,
+    // Any enemy in range, rolled fresh on every search.
+    Random
 }

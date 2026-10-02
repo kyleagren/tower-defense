@@ -32,12 +32,35 @@ public static class EnemyTargeting
             TargetPriority.HighestMaxHealth => enemy => -enemy.MaxHealth,
             TargetPriority.LowestHealth => enemy => enemy.CurrentHealth,
             TargetPriority.MostEnemiesNearby => enemy => -CountWithinFlat(enemy.GlobalPosition, ClusterRadius),
+            TargetPriority.Random => _ => GD.Randf(),
             _ => ClosestToGoal
         };
 
         // Ties are common - same-type enemies at full health, packs of equal size - and go to the one
         // furthest along.
         return FindBest(RangeSquared, range, score, exclude, null, sightFrom: sightFrom, tiebreak: ClosestToGoal);
+    }
+
+    // The count best targets by the context's priority, best first - fewer when fewer are in range.
+    public static List<Enemy> FindTargets(Vector3 fromPosition, SpellCastContext context, int count, Vector3? sightFrom = null)
+    {
+        HashSet<Enemy> chosen = new HashSet<Enemy>();
+        List<Enemy> targets = new List<Enemy>();
+
+        while (targets.Count < count)
+        {
+            Enemy next = FindTarget(fromPosition, context, chosen, sightFrom);
+
+            if (next == null)
+            {
+                break;
+            }
+
+            chosen.Add(next);
+            targets.Add(next);
+        }
+
+        return targets;
     }
 
     private static float ClosestToGoal(Enemy enemy) => enemy.DistanceToGoal;
@@ -87,11 +110,11 @@ public static class EnemyTargeting
         return FindBest(RangeSquared, range, Closeness, null, null, sightFrom: sightFrom);
     }
 
-    public static Enemy FindNearestToSegment(Vector3 segmentStart, Vector3 segmentEnd, float range, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null)
+    public static Enemy FindNearestToSegment(Vector3 segmentStart, Vector3 segmentEnd, float range, ISet<Enemy> exclude = null, Func<Enemy, bool> predicate = null, Vector3? sightFrom = null)
     {
         float DistanceSquared(Enemy enemy) => GeometryUtils.DistanceSquaredToSegment(enemy.GlobalPosition, segmentStart, segmentEnd);
 
-        return FindBest(DistanceSquared, range, DistanceSquared, exclude, predicate);
+        return FindBest(DistanceSquared, range, DistanceSquared, exclude, predicate, sightFrom: sightFrom);
     }
 
     // Every live enemy within radius of origin, measured flat. A new list, collected up front: a kill

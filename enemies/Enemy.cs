@@ -370,6 +370,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
             }
         }
 
+        float healthBefore = Mathf.Max(CurrentHealth, 0f);
         CurrentHealth -= amount.Total;
         HealthBar.SetFraction(CurrentHealth / MaxHealth);
         OnDamageTaken(amount);
@@ -401,6 +402,8 @@ public partial class Enemy : CharacterBody3D, IDamageable
             Die(hit.RagdollImpulse);
         }
 
+        CreditRitual(hit, Mathf.Min(amount.Total, healthBefore), _isDead);
+
         // Last, so anything these start - a swirl's burst, an after-hit rune's own hits, this enemy's
         // included - lands on a finished hit rather than one still resolving.
         if (hit.Spell.OnHitRunes != null)
@@ -430,6 +433,15 @@ public partial class Enemy : CharacterBody3D, IDamageable
         if (!statusConsumed)
         {
             Swirl.TryTrigger(this, hit, statusBefore);
+        }
+    }
+
+    // A Health Link copy is the Soldier's doing, not the Ritual's.
+    private static void CreditRitual(Hit hit, float effective, bool killed)
+    {
+        if (hit.Type != HitType.Mirrored && hit.Attribution.Source is Ritual ritual && IsInstanceValid(ritual))
+        {
+            ritual.Stats.RecordHit(effective, hit.Damage.Total - effective, killed);
         }
     }
 

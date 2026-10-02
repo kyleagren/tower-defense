@@ -197,15 +197,15 @@ Keyboard and mouse and a controller are both first-class; tested on a PS4 pad. E
 
 A base skill (**Spell**, e.g. Fireball) is an immutable data definition. Modifiers (**Runes**) transform that definition or hook into its events. Composition, not subclassing.
 
-**Tags** (Projectile, AoE, Duration, Trigger, Traveling, elemental types) let a Rune apply generically to "anything with tag X" rather than needing per-spell logic. Elemental tags exist for build-crafting depth only — enemies have no elemental resistances by design (Section 5).
+**Tags** (Projectile, AoE, Duration, Trigger, Traveling, Line, elemental types) let a Rune apply generically to "anything with tag X" rather than needing per-spell logic. Elemental tags exist for build-crafting depth only — enemies have no elemental resistances by design (Section 5).
 
 Elements so far: **Fire, Lightning, Cold, Wind, Water.** Runes socket into 4 slots per tower, one per corner. Towers don't level or scale within a match, and duplicate rune types on one Spell are rejected in code.
 
-**Rune roster and naming.** Every rune's display name is one evocative word rather than a mechanical description, the way ARPGs typically name modifiers: **Haste** (cast speed), **Tempo** (cooldown recovery), **Extend** (range), **Velocity** (projectile and traveling speed), **Salvo** (multi-projectile), **Expand** (increased area), plus **Chain**, **Fork**, **Pierce**, **Nova**, **Return**, and the **Ignition** reaction rune. Targeting runes follow suit — **Proximity**, **Giantslayer**, **Cull**, **Swarm**, **Embersight** — while their classes keep descriptive names (`ClosestEnemyTargetingRune`).
+**Rune roster and naming.** Every rune's display name is one evocative word rather than a mechanical description, the way ARPGs typically name modifiers: **Haste** (cast speed), **Tempo** (cooldown recovery), **Extend** (range), **Velocity** (projectile and traveling speed), **Salvo** (multi-projectile), **Expand** (increased area), plus **Chain**, **Fork**, **Pierce**, **Nova**, **Return**, and the **Ignition** reaction rune. Targeting runes follow suit — **Proximity**, **Giantslayer**, **Cull**, **Swarm**, **Embersight**, **Bearing** — while their classes keep descriptive names (`ClosestEnemyTargetingRune`).
 
 **Mana/capacity cost is multiplicative, PoE-support-style.** Every `Rune` has a `ManaCostMultiplier` applied automatically during resolve, multiplying the tower's resolved `ManaCost` in the same `base * (1 + increased) * more` shape as Damage/Range. Every rune currently uses a flat placeholder 1.2× for testing the mechanism; `MaxCapacity` is a placeholder 1000 to leave room to experiment before real numbers are chosen.
 
-**Targeting.** `TargetPriority` is a flat field on `SpellCastContext`, seeded from `Spell.BaseTargetPriority`, overridden by a targeting rune (Section 9) and read by `EnemyTargeting.FindTarget`. The default is `ClosestToGoal`, ranked by remaining nav-path length, which is comparable across lanes because every lane converges on the same objective. Range is always measured from the ritual; only the choice among in-range enemies varies. Chain jumps, forks and projectile redirects deliberately stay nearest-first, matching what those runes promise. **Player presence is never a targeting fallback** — multiple lanes mean the player can only be in one place.
+**Targeting.** `TargetPriority` is a flat field on `SpellCastContext`, seeded from `Spell.BaseTargetPriority`, overridden by a targeting rune (Section 9) and read by `EnemyTargeting.FindTarget`. The default is `ClosestToGoal`, ranked by remaining nav-path length, which is comparable across lanes because every lane converges on the same objective. A spell can set its own: Tesla Coil's is `Random`, any enemy in range, rolled fresh on every search. Range is always measured from the ritual; only the choice among in-range enemies varies. Chain jumps, forks and projectile redirects deliberately stay nearest-first, matching what those runes promise. **Player presence is never a targeting fallback** — multiple lanes mean the player can only be in one place.
 
 **Interaction model.** Placement and aiming use a center-screen reticle plus a raycast into the world, not a screen-space cursor. This keeps mouse and controller unified under one system; full controller support is a requirement, not an afterthought (Section 3, Controls).
 
@@ -282,57 +282,80 @@ Wind's first spell: a small twister that travels along the ground through every 
 - **Damage numbers split for infused Wind only** — a hit that's Wind plus exactly one other element shows one number per color. Every other mix stays one number; the number cap means many small mixed hits would bury the screen.
 - **Every machine runs the same movement against the same terrain**, so a copy follows the host's path from its starting point alone; only an infusion is sent on.
 
+### Thunderbolt
+
+A heavy single Lightning strike on a cooldown — enough to one-shot a Grunt. An instant hit whose arc comes down from high above the target (`InstantHitCastData.SkyStrikeHeight`) rather than out of the Ritual; the direction is purely visual. No `Chaining` tag, so Chain and Fork don't fit.
+
+### Lightning Rail
+
+A `Beam` with one instant tick and no push: a thin bar of lightning hitting everything along it once. Carries `Line`, like Water Cannon.
+
+### Hydro Blade
+
+Two Water hits on one target a short gap apart, drawn as an X.
+
+- **Its own delivery** (`SlashCastEffect`). Later hits wait on a physics-step timer that pauses with the game, and are dropped if the target is gone by then.
+- **Each slash is drawn in front of the body**, pushed out by its capsule radius, from its upper end down, tapered to a point at both ends (`slash.gdshader`). Every slash holds until the last has drawn, so the whole X clears at once.
+
+### Ice Spear
+
+A long projectile that pierces two enemies on its own, stacking with Pierce — the first non-round projectile (Section 7, Projectile shapes).
+
+### Fire Burst
+
+A tight 4×4 grid of small fire pellets at very short range, built to dump every pellet into one big target up close.
+
+- **The grid is `ProjectileCastData.Rows`:** each projectile direction fires a column of pellets. Salvo therefore adds columns, and Nova makes a ring of them.
+- **Pellets vanish at 3× the range from where they launched** (`ExpiryRangeMultiplier`) — room for a Chain jump, but no stray hits far down the lane.
+
+### Tesla Coil
+
+Arcs lightning from the Ritual to several enemies at once, in a few quick pulses, then a long cooldown.
+
+- **Its own delivery** (`PulseCastEffect`). Targets are re-picked every pulse through `EnemyTargeting.FindTargets` — `FindTarget` run N times, excluding each pick from the next — so a kill hands its share to the next in line. A destroyed Ritual's remaining pulses do nothing.
+- **It targets at random by default.** A targeting rune overrides that, and its damage bonus lands on every arc's target, since each was picked by the priority.
+- **The arcs bow upward** (`ArcVisual.ArcHeight`), thinner than Lightning Bolt's.
+
 ### Planned spells
 
 Grouped by the system they share, so each new system is paid for once. Worked roughly in this order.
 
-**1. Content on existing delivery.**
+**1. Several targets, filtered.**
 
-- **Thunderbolt** — a heavy single Lightning strike on a long cooldown, its arc coming down from the sky rather than out of the Ritual. No `Chaining` tag, so Chain and Fork don't fit.
-- **Lightning Rail** — a `Beam` with one instant tick and no push.
-- **Hydro Blade** — two Water hits on one target a short gap apart, with an X-slash visual.
-- **Ice Spear** — a projectile that pierces inherently, stacking with Pierce.
-- **Fire Burst** — a tight 4×4 grid of tiny pellets, short range. Built to dump every pellet into one big target, while a Grunt in the same spot only catches some. Salvo's flat +2 does little for it, which is accepted.
+- **Lightning Strike** — picks a point by target priority, then strikes every enemy with Lightning Status within a radius of it, through Tesla Coil's top-N query plus a filter. The bolt from above is visual only, and nothing is left on the ground. It re-sets Lightning Status, which changes nothing.
 
-**2. Picking several targets.** A query ranking the top N enemies by target priority, with an optional filter.
-
-- **Tesla Coil** — 5 pulses over 1.2s, each 1/5 of the damage to the top N enemies in range, re-picked per pulse; then a long cooldown. The arc is a thinner lightning arc bowed upward like an inverted parabola, from the Ritual down onto each enemy.
-- **Lightning Strike** — picks a point by target priority, then strikes every enemy with Lightning Status within a radius of it. The bolt from above is visual only, and nothing is left on the ground. It re-sets Lightning Status, which changes nothing.
-
-**3. Ground and telegraphed effects.** These introduce the **Field** tag.
+**2. Ground and telegraphed effects.** These introduce the **Field** tag.
 
 - **Meteor** — a ground marker, a delay, one big impact. Hard to land on purpose: other Rituals slowing or stopping the pack are what make it pay, and it's fine with hitting the third enemy in line instead.
 - **Rain** — 0 damage; sets Water Status on every enemy in its area on an interval. Sets Status directly rather than landing a hit, the counterpart to `Enemy.RemoveStatus`.
 - **Black Ice** — a ground patch where each enemy on it rolls on an interval to be knocked down for a couple of seconds. **No per-enemy cooldown** — the deliberate exception to Section 9's hard-CC rule — so one enemy might be knocked down repeatedly and another cross untouched. That variance is its identity next to Freeze and Electrocute. A knocked-down enemy doesn't roll.
 
-**4. Wind infusion.** Infusion moves out of `GroundSweep` so every Wind spell can carry it.
+**3. Wind infusion.** Infusion moves out of `GroundSweep` so every Wind spell can carry it.
 
 - **Wind Blade** — a wide projectile that pierces a few enemies.
 - **Wind Blast** — a burst pushing enemies away from it. Pushing some toward the objective with poor placement or targeting is accepted.
 
-**5. Forced movement.** Enemies whose position something else controls for a while — carried, held aloft, swept. Each may cap how many enemies it holds.
+**4. Forced movement.** Enemies whose position something else controls for a while — carried, held aloft, swept. Each may cap how many enemies it holds.
 
 - **Tornado** — a `GroundSweep` that picks enemies up and carries them to the end of its path.
 - **Tempest** — summoned in one spot, swirls everything there in the air, then drops it. Very long cooldown.
 - **Tsunami** — a `GroundSweep` that pushes back enemies below a mass threshold and damages them.
 
-**6. One-offs.**
+**5. One-offs.**
 
-- **Flamethrower** — a `Beam` that stays active and ticks longer than Water Cannon, with no push.
+- **Flamethrower** — a `Beam` that stays active and ticks longer than Water Cannon, with no push. A `Line` spell.
 - **Frozen Orb** — a slow traveler in the `GroundSweep` family rather than a projectile. It pulses damage at intervals, slows down once among enemies, and stops at walls like everything else.
 - **Force Field** — protects Rituals in an area; enemies that attack one are knocked back and take Lightning damage. The first spell that reacts to a Ritual being hit. Niche by design: one Force Field against Shroud on four Rituals.
-
-**Projectile shapes.** Projectiles become capsules: a radius (thickness), a length, and an axis along or across travel. Length 0 is a sphere, so Fireball keeps its defaults. Ice Spear is long, Wind Blade is wide. Area scales every dimension together.
 
 ### Damage & repair
 
 **A Ritual sits on two physics layers, and the split is load-bearing.** `Rituals` means _blocks movement_ — it's what enemies and the player collide with. `RitualHitbox` means _everything else a Ritual's body is for_: being shot by enemy projectiles, being raycast by repair and destroy, and blocking placement of another tower on the same spot. They were one layer until the **Shroud** rune needed a tower that enemies walk through but can still be hit and repaired, which is impossible with a single bit — clearing it takes the hits and the repairs with it. Shroud clears `Rituals` alone. Consequence to remember: a mask that wants "is there a tower here" wants `RitualHitbox`, and only movement collision should ever reference `Rituals`.
 
-A damaged tower is normally **disabled, not destroyed**, and the active Sentinel repairs it by funneling mana in. True destruction is rare and returns attached runes to inventory, never losing them. The **Sapper** is the enemy that meaningfully threatens towers — a visible, prioritizable threat rather than universal collateral risk. Disabled towers show on the minimap and their core mesh turns gray.
+A damaged tower is normally **disabled, not destroyed**, and is repaired by funneling mana in — free for the Architect, so between waves. True destruction is rare and returns attached runes to inventory, never losing them. The **Sapper** is the enemy that meaningfully threatens towers — a visible, prioritizable threat rather than universal collateral risk. Disabled towers show on the minimap and their core mesh turns gray.
 
 Repair and destroy both use the same reticle raycast as placement, capped to a similar interaction range, with a contextual world-space prompt near the tower. **Repair and destroy are both hold-to-confirm (~1s)**, each with a progress indicator on the same prompt, cancelling if released early or if the raycast loses the tower. Repair's cost shows on its own line under the prompt, tinted red when unaffordable, and only while the tower is actually damaged. Chosen over a persistent mode toggle specifically to avoid mode-confusion on the harder-to-reverse action.
 
-**Repair and refund pricing share one rule: the missing-health fraction times `GameRules.RepairCostFraction` (0.5).** A full repair of a broken tower costs half the tower's _own_ cost at its owner's current multipliers — placement extras like an Ice Wall's segments are left out, since the tower's health doesn't scale with them. Destroying refunds the mana actually paid, scaled down by the same fraction: everything back at full health, half back when broken, rounded down. So tearing down a broken tower to rebuild it is never a way around repairing it. Capacity always comes back in full — it's a ceiling on what can be built, not a currency, and shorting it would lose it for the rest of the match.
+**Repair and refund pricing share one rule: the missing-health fraction times `GameRules.RepairCostFraction` (0.5).** A full repair of a broken tower costs half the tower's _own_ cost at its owner's current multipliers — placement extras like an Ice Wall's segments are left out, since the tower's health doesn't scale with them. Destroying refunds the mana actually paid, scaled down by the same fraction: everything back at full health, half back when broken, rounded down. So a Sentinel tearing down a broken tower to rebuild it is never a way around repairing it. **The Architect is exempt from both:** it repairs for free and always gets the full refund, so between waves damage costs nothing to put right. The host decides who's repairing or destroying from the seat that sent the request, not from anything the request claims. Capacity always comes back in full — it's a ceiling on what can be built, not a currency, and shorting it would lose it for the rest of the match.
 
 ### Construction & deployment UI
 
@@ -635,13 +658,13 @@ It's **event-driven, not polled**: `Register(control, getItem)` wires the contro
 1. **`Spell`** (e.g. `FireballSpell`) — the immutable definition, shared by every tower using it. No mutable state lives here.
 2. **`SpellInstance`** — one per placed tower. A reference to the shared `Spell` plus that tower's attached `Rune` list and cast/cooldown state. This is the tower's loadout, not a projectile.
 3. **`SpellInstance.Resolve()`** — applies every attached Rune over the Spell's base values, producing a **`SpellCastContext`**: a transient data snapshot of final stats for one cast.
-4. **`CastEffect.Cast(context, spawnPoint, caster)`** — how the spell is delivered (projectile, instant strike, wall, bombardment, beam, ground sweep). The spell picks it in `AddComponents` and it rides on the context as `SpellCastContext.CastEffect`, so a rune could swap delivery like any other field; `Ritual` just calls whatever is there. Effects are plain stateless C# classes shared between Rituals — everything they need, including spell-specific visuals like Lightning's arc scene, arrives on the context. Placement-time choices (a wall's endpoints) arrive on the context itself via the Ritual's `PlacementData`, so no effect needs to reach back into the `Ritual` for them.
+4. **`CastEffect.Cast(context, spawnPoint, caster)`** — how the spell is delivered (projectile, instant strike, wall, bombardment, beam, ground sweep, slash, pulse). The spell picks it in `AddComponents` and it rides on the context as `SpellCastContext.CastEffect`, so a rune could swap delivery like any other field; `Ritual` just calls whatever is there. Effects are plain stateless C# classes shared between Rituals — everything they need, including spell-specific visuals like Lightning's arc scene, arrives on the context. Placement-time choices (a wall's endpoints, a Bearing Ritual's direction) arrive on the context itself via the Ritual's `PlacementData`, so no effect needs to reach back into the `Ritual` for them. Placement applies after the runes, so it can fill in a component a rune added.
 5. **`Projectile`** — the flying object, fully independent once spawned, with its own damage, radius, pierce count and hit tracking.
 6. **`ProjectileHitEffect`** (e.g. `ExplodeOnHitEffect`) — reacts on hit, and the right extension point for future on-hit behavior _authored on the spell_. On-hit behavior granted by a **rune** goes through `OnHitRune` instead, which reaches every damage path rather than just projectiles — `SpellCastContext.OnHitRunes` travels to `Enemy.TakeDamage` as a `SpellHit`, so a projectile, a hitscan strike, a chain jump and an explosion all run the same runes.
 
 Each arrow hands off to something new and independent; nothing downstream reaches back upstream.
 
-**`SpellCastContext` is one class with optional components, not a subclass tree.** It carries universal fields (`Range`, `Damage` as a `DamagePacket`, costs) plus nullable components — `Projectile`, `Chain`, `Area`, `InstantHit`, `Wall`, `Bombardment`, `Beam`, `Sweep`, `CastTrigger` — each null unless needed. A Spell's `AddComponents()` decides which it starts with, and a Rune can lazily create one it didn't (`ChainRune` grants chaining to a spell with no `Chain` component at all).
+**`SpellCastContext` is one class with optional components, not a subclass tree.** It carries universal fields (`Range`, `Damage` as a `DamagePacket`, costs) plus nullable components — `Projectile`, `Chain`, `Area`, `InstantHit`, `Wall`, `Bombardment`, `Beam`, `Sweep`, `Slash`, `Pulse`, `FixedAim`, `CastTrigger` — each null unless needed. A Spell's `AddComponents()` decides which it starts with, and a Rune can lazily create one it didn't (`ChainRune` grants chaining to a spell with no `Chain` component at all).
 
 The original subclass design broke as soon as a spell needed two capabilities with no is-a relationship between them: `FireballSpell` is both Projectile and AoE, neither specializes the other, and C# allows one inheritance path. Patching with `AoeProjectileCastContext`-style classes means a new class per _combination_, and silently assumes every spell sharing a base wants every capability it carries — untrue for a single-target Ice Spear with no use for `Area`. Independently-combinable capabilities live as nullable components checked with `!= null`, borrowing the ECS idea narrowly for this one class rather than adopting it project-wide.
 
@@ -653,7 +676,7 @@ The original subclass design broke as soon as a spell needed two capabilities wi
 - **`ChainDamageModifier`** (`GetMultiplier(remainingChains)`) replaced a raw `MoreDamagePerRemainingChain` float. `ChainCastData` is shared by every chaining spell, so a raw field there implied any spell could use it when it only ever described Lightning Bolt's finisher curve.
 - **`CastTrigger`** gates whether a cast happens at all. The base is generic so a future trigger-rune can supply its own; the one that exists today, `WallProximityCastTrigger`, is Ice Wall's.
 
-**`Projectile.Radius`** (physical size, unrelated to blast radius) _is_ threaded through the context, since scaling its own mesh and collision is core `Projectile` behavior. That scaling is uniform on all axes and assumes a roughly round mesh — a future elongated projectile would need its own formula for that one line.
+**Projectile shapes.** A projectile's physical size (unrelated to blast radius) _is_ threaded through the context, since sizing its own mesh and collision is core `Projectile` behavior. `Radius` alone is a sphere. A `Length` above 0 makes it a capsule lying along its flight or, `Crosswise`, across it; the mesh and capsule are authored along local Y and turned in code. Area scales every dimension together. Fireball is round, Ice Spear long, and Wind Blade will be wide.
 
 **`ChainableSpell` is reserved for spells where chaining is inherent to identity** (`LightningBoltSpell`), not for projectiles that merely _can_ chain if a `ChainRune` is socketed. `FireballSpell` extends `Spell` directly and declares nothing about chaining. `ChainRune` carries its own `FallbackChainRange` applied via `Mathf.Max`, so a rune-granted chain always has reach without ever shrinking a spell's inherent range.
 
@@ -753,7 +776,7 @@ Built on Godot's high-level multiplayer API: RPCs, `MultiplayerSpawner` and `Mul
 - **Rituals are placed by asking the host.** The placing machine shows the ghost and runs the usual checks, then `RitualRoster` asks the host, which prices the Ritual against its owner's gear, pays for it and spawns it everywhere. Spells and runes travel as resource paths; an Ice Wall's endpoints travel with the request. A token is spent only once its Ritual is actually placed. Only the host runs Rituals — everywhere else they're copies whose health the host keeps in step — and any player can repair or destroy any Ritual.
 - **Gear is shared as stat totals.** Rituals scale with their owner's gear, so `ProfileSync` sends each player's resolved stat totals and Sentinel pick to every machine whenever they change and whenever someone joins. The items themselves never leave their owner's save.
 - **Other players' placements are visible.** While someone places, everyone else sees a white ghost with their seat above it — the Ritual and its range, and an Ice Wall as it's dragged out.
-- **Ritual casts are replayed, not re-run.** `SpellEffects` carries everything a Ritual's cast puts in the world to the other machines: arcs, explosions, projectiles (launched, turned on each chain or return, and ended by the host), Bombardment and ground effects, and Ice Walls, which each machine's copy of the Ritual raises from its own placement data. The host decides every target and hit, so a chain jumps to the same enemies on every screen, and the copies never deal damage.
+- **Ritual casts are replayed, not re-run.** `SpellEffects` carries everything a Ritual's cast puts in the world to the other machines: arcs, explosions, slashes, projectiles (a whole volley launched in one message, laid out again on each machine through `ProjectileCastEffect.Layout`; then turned on each chain or return, and ended by the host, one by one), Bombardment and ground effects, and Ice Walls, which each machine's copy of the Ritual raises from its own placement data. The host decides every target and hit, so a chain jumps to the same enemies on every screen, and the copies never deal damage.
 - **Abilities work the same from any machine.** Anything that changes an enemy goes through the enemy's own methods — damage, knockback, debuffs, taking its Status, linking — and a copy forwards each to the host, so an ability needs no network code of its own. A debuff travels as its type plus its numbers (`Debuff.ToNetwork`); a taunt's target is the sender's own Sentinel on the host. Health Link sends the pair as one request, so both halves land or neither does.
 - **Other players' Sentinels look like what they're doing.** Continuous body state rides the body's synchronizer — the dodge roll, the Tank's sword and shield, the shield's block colors, the weapon being put away, the blade's heat glow (so another Tank's heat shows), the Soldier's Overdrive tint and the rifle's aim. One-shot effects (tracers, impacts, Shield Slam and Retaliation waves, Immolate explosions) are RPCs that run on the owner and everyone else at once. Lasting ones (Vent's aura, Immolate's ring, Retaliation's circle, Converge and Repel fields, Health Link's bolts, spikes and beam) are started and ended by the owner; the rings and circles run their own clocks, since a puppet body doesn't process.
 - **Each machine rolls its own player's loot.** The host announces every kill's drop chance and roll count, and each machine rolls, holds and sprays only its own player's drops — so instanced loot needs no owner tags, and loot never has to cross the network. At victory the objective vanishes on every screen, loot or not.
@@ -922,6 +945,7 @@ A **targeting rune** replaces its Ritual's target priority and deals more damage
 - **Embersight, Frostsight, Tidesight, Stormsight** — enemies carrying that Status first; **Omen** — any Status. With none in range the Ritual targets as normal rather than idling. Wind never becomes a Status, so there's no Wind one.
 - **Ties go to the enemy furthest along** — common for Giantslayer and Swarm, since same-type enemies share max health and pack sizes tie.
 - **The damage bonus** is 10% more at Common rising to 20% at Legendary, the same for every targeting rune for now (Cull's mostly overkills and may want its own number). It lands only on the cast's chosen target — chains, forks, extra projectiles and the rest of an area deal normal damage — and applies before on-hit runes, so the number shown includes it. A status rune's bonus needs the target to carry its Status before the hit, so a fallback target gets none. Each cast carries the rune and its `ChosenTarget` on its `SpellHit`.
+- **Bearing** — fires in one direction chosen at placement rather than at a target. Once the Ritual's spot is confirmed, an aim step swings its lane toward the reticle. Its range becomes a 3m-wide lane, which replaces the circle while placing and under Alt; it fires only when an enemy it can see is in the lane, always straight down it. Fits Projectile, Line and Traveling spells, so beams, projectiles and Gust. Its bonus is 10–20% more damage to everything, since there's no chosen target. The direction is `AimPlacementData`, filling the `FixedAim` component the rune adds.
 - **It overrides Resonance's aim.** A Resonant Ritual with a targeting rune fires at its own pick when pulsed, so a Manual Ritual can set off a cluster that each keep their own lane. With nothing in range it still reaches toward the enemy that was hit.
 - Swarm's search costs in-range × all enemies per search interval; worth watching in the many-enemies test.
 
@@ -930,7 +954,7 @@ A **targeting rune** replaces its Ritual's target priority and deals more damage
 Every rune should hook a _tag_, not a spell class, so it applies to any future spell sharing that tag. Worth checking each idea against that explicitly. Speculative spell, rune and character drafts live in `ideas.md`, not here.
 
 - **Prime** — a "Primed" debuff; the next `Tag.Lightning` hit on a Primed enemy sparks a random _nearby_ enemy, evaluated fresh off the struck enemy's position so no group tracking is needed. **Must be capped to once per cast** — without that it compounds with `ChainRune` worse than Fireball's Chain+Explode ceiling, which is already bounded to one shot.
-- **More targeting runes** — highest share of health remaining, flying enemies (none exist yet), furthest from the objective, and firing in a fixed direction (`ideas.md`).
+- **More targeting runes** — highest share of health remaining, flying enemies (none exist yet), furthest from the objective (`ideas.md`), and always firing at one chosen spot — Bearing's counterpart for bombardments.
   - **The flying rune should be stronger than its siblings** — a bigger damage bonus than the shared 10–20%. High flyers will rarely be the ones closest to the objective, and by the time one is, it's already a problem, so it fills a coverage gap rather than expressing a preference.
   - **Before flyers exist, the default has to see them.** Only `WalkingEnemy` updates `DistanceToGoal`; anything else stays at `float.MaxValue` and never wins `ClosestToGoal` while a walker is in range. A `FlyingEnemy` needs its own measure — likely straight-line distance to the objective, which reads shorter than a walker's path length for the same real threat.
 
@@ -940,7 +964,7 @@ Raised and deliberately set aside for their own conversations, so they aren't lo
 
 - **Enemy collision.** Solid enemies make CC spill: freezing the front three enemies of a column effectively freezes everyone queued behind them. Letting players build a kill box is fine — tower defense encourages it — so this reopens the rejected idea of disabling enemy-vs-enemy collision (Section 4, Ice Wall). Shapes on the table: no enemy collision, with AoE damage scaling down past some number of targets (square-root scaling, as WoW does); soft separation, where enemies push apart for spacing but can squeeze past each other; a hybrid where frozen, stunned or rooted enemies stop being solid so the queue flows around them; or a mix. Touches movement, AoE balance and the packed-enemy jitter at walls.
 - **Rune colors**, in the spirit of PoE's gem colors. Colors already carry two meanings in this UI — element (`DamageTypeColors`, on spells, tokens and the Harvest gauge) and rarity (`RarityColors`, on rune tiles) — so a third system needs its own visual channel (e.g. rarity on the border, category on the fill). Also open: whether a color is only a signal, or a socketing rule the way PoE's are.
-- **Growing the tag vocabulary.** Today's tags (Projectile, AoE, Duration, Trigger, Chaining, Wall, Traveling) can't tell a line from a cone from a field, so a rune can't target those shapes. The drafted spells suggest Line, Cone, Field, Pulse and Support; Water Cannon is the first spell that would want Line. It also feeds rune grouping, if runes end up filtered by tag.
+- **Growing the tag vocabulary.** **Line** exists (Water Cannon, Lightning Rail, and Flamethrower to come — a beam, not a cone), and Bearing hooks it. **Field** comes with Rain and Black Ice. Pulse and Support are still only suggested by the drafted spells. It also feeds rune grouping, if runes end up filtered by tag.
 - **Damage-over-time hits set no Status** (`HitType.DamageOverTime`). A ground effect meant to keep re-applying a Status (a Magma Floes feeding a delayed double-hit like Hydro Blade), or a zero-damage Status-setter like Rain, needs another way to set one.
 
 ### Undecided design

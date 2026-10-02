@@ -5,6 +5,8 @@ public partial class ArcVisual : Node3D
     [Export] public float Lifetime = 0.15f;
     [Export] public int SegmentCount = 5;
     [Export] public float JitterAmount = 0.3f;
+    // Bows the arc's middle this far above the straight line between its ends. 0 is straight.
+    [Export] public float ArcHeight = 0f;
     [Export] public Mesh SegmentMesh;
     [Export] public Material SegmentMaterial;
 
@@ -36,9 +38,12 @@ public partial class ArcVisual : Node3D
 
         for (int i = 1; i <= SegmentCount; i++)
         {
+            float t = (float)i / SegmentCount;
             Vector3 point = i == SegmentCount
                 ? to
-                : from.Lerp(to, (float)i / SegmentCount) + perpendicular * (float)GD.RandRange(-JitterAmount, JitterAmount);
+                : from.Lerp(to, t)
+                    + Vector3.Up * (4f * ArcHeight * t * (1f - t))
+                    + perpendicular * (float)GD.RandRange(-JitterAmount, JitterAmount);
 
             SpawnSegment(previousPoint, point);
             previousPoint = point;

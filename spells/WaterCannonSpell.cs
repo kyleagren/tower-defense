@@ -19,7 +19,7 @@ public partial class WaterCannonSpell : Spell
     [Export] public override int BaseManaCost { get; protected set; } = 15;
 
     public override string Name => "Water Cannon";
-    public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Water, Tag.AoE };
+    public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Water, Tag.AoE, Tag.Line };
     public override string Description => "Blasts a beam of water down a line of enemies, hitting each three times and pushing them back.";
 
     protected override void AddComponents(SpellCastContext context)

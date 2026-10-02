@@ -17,6 +17,8 @@ public partial class ShatterRune : ReactionRune
     public override string Description =>
         $"When Cold and Lightning meet on an enemy, consumes its Status and shatters it outright if left below {ExecuteThreshold * 100f:0.#}% health.";
 
+    public override string EffectLabel => "Shatters";
+
     public override bool OnHit(OnHitContext hit) => IsPair(hit.Target.Status, hit.Damage.DominantElement);
 
     // After the hit, so the hit that takes an enemy under the threshold is the one that executes it.
@@ -27,6 +29,7 @@ public partial class ShatterRune : ReactionRune
             return;
         }
 
+        CountEffect(hit.Attribution);
         hit.Target.Execute(hit.Attribution, hit.Damage.DominantElement.Value);
     }
 

@@ -19,6 +19,8 @@ public partial class ElectrocuteRune : ReactionRune
     public override string Description =>
         $"When Water and Lightning meet on an enemy, consumes its Status to electrocute it for {ElectrocutedDuration:0.#}s - along with every enemy within {SpreadRadius:0.#}m carrying the same Status. Each can't be electrocuted again for {RecoveryDuration:0.#}s after.";
 
+    public override string EffectLabel => "Electrocutions";
+
     public override bool OnHit(OnHitContext hit)
     {
         Tag? status = hit.Target.Status;
@@ -29,12 +31,19 @@ public partial class ElectrocuteRune : ReactionRune
             return false;
         }
 
-        hit.Target.ApplyDebuff(new ElectrocutedAilment(ElectrocutedDuration, RecoveryDuration));
+        if (hit.Target.ApplyDebuff(new ElectrocutedAilment(ElectrocutedDuration, RecoveryDuration)))
+        {
+            CountEffect(hit.Attribution);
+        }
 
         foreach (Enemy enemy in EnemyTargeting.FindAllWithinFlat(hit.Target.GlobalPosition, SpreadRadius,
             enemy => enemy != hit.Target && !enemy.IsDead && enemy.Status == status))
         {
-            enemy.ApplyDebuff(new ElectrocutedAilment(ElectrocutedDuration, RecoveryDuration));
+            if (enemy.ApplyDebuff(new ElectrocutedAilment(ElectrocutedDuration, RecoveryDuration)))
+            {
+                CountEffect(hit.Attribution);
+            }
+
             enemy.RemoveStatus();
         }
 

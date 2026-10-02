@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="TeslaCoilSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/TeslaCoilSpell.cs" id="1_teslacoil"]
+[ext_resource type="PackedScene" path="res://spells/visual_effects/tesla_arc_visual.tscn" id="2_arcvisual"]
+
+[resource]
+script = ExtResource("1_teslacoil")
+WheelOrder = 12
+ArcVisualScene = ExtResource("2_arcvisual")

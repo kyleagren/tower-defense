@@ -64,6 +64,14 @@ public partial class Ritual : Node3D, IDamageable
     // So a CastEffect can act on the target this Ritual already picked rather than searching again.
     public Enemy CurrentTarget => _currentTarget;
 
+    public RitualStats Stats { get; } = new RitualStats();
+
+    // What it's cost so far - its own price plus Sentinel repairs - for damage per mana.
+    public float ManaPaid => _manaCost + Stats.RepairManaPaid;
+
+    // The latest snapshot the host sent this copy - null until the first arrives.
+    public float[] ReceivedStats { get; private set; }
+
     public bool IsShrouded => _spellInstance != null && ResolveWithOwner().Shrouded;
 
     // A placement preview: shows the model and gives RitualPlacer a real collision shape to test,
@@ -92,6 +100,7 @@ public partial class Ritual : Node3D, IDamageable
         _level.Rituals.Register(this);
 
         EventBus.Instance.InventoryChanged += OnInventoryChanged;
+        EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
 
         // A Ritual the RitualRoster spawns is configured once it's ready, so only one authored into
         // a scene with a Spell already assigned configures itself here.
@@ -109,7 +118,63 @@ public partial class Ritual : Node3D, IDamageable
         }
 
         EventBus.Instance.InventoryChanged -= OnInventoryChanged;
+        EventBus.Instance.GamePhaseChanged -= OnGamePhaseChanged;
         _level.Rituals.Unregister(this);
+    }
+
+    private void OnGamePhaseChanged(GamePhase phase)
+    {
+        if (phase == GamePhase.Combat)
+        {
+            Stats.StartWave();
+        }
+    }
+
+    // Host only. What the Ritual details panel shows, in a fixed order: since placed, then this wave,
+    // each as damage, overkill, kills, casts and one count per rune slot (0 for an empty slot or a
+    // rune with nothing to count); then the mana it's cost. Every copy knows its own spell and runes,
+    // so only the numbers travel.
+    public float[] StatsSnapshot()
+    {
+        List<float> values = new List<float>();
+        AppendTally(values, Stats.SincePlaced);
+        AppendTally(values, Stats.Wave);
+        values.Add(ManaPaid);
+        return values.ToArray();
+    }
+
+    private void AppendTally(List<float> values, RitualStats.Tally tally)
+    {
+        values.Add(tally.Damage);
+        values.Add(tally.Overkill);
+        values.Add(tally.Kills);
+        values.Add(tally.Casts);
+
+        foreach (Rune rune in RuneSlots)
+        {
+            values.Add(rune is OnHitRune onHit ? tally.RuneEffects.GetValueOrDefault(onHit) : 0f);
+        }
+    }
+
+    // A copy asks the host for a fresh snapshot; it lands in ReceivedStats.
+    public void RequestStats()
+    {
+        RpcId(1, MethodName.ReceiveStatsRequest);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveStatsRequest()
+    {
+        if (NetworkSession.Instance.SenderSeat != default)
+        {
+            RpcId(Multiplayer.GetRemoteSenderId(), MethodName.ReceiveStats, StatsSnapshot());
+        }
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void ReceiveStats(float[] snapshot)
+    {
+        ReceivedStats = snapshot;
     }
 
     // Equipment changing anywhere drops both cached layers - the resolved context and the owner
@@ -179,7 +244,8 @@ public partial class Ritual : Node3D, IDamageable
         }
     }
 
-    public void Repair()
+    // Free for the Architect; a Sentinel pays RepairCost.
+    public void Repair(PlayerId repairer)
     {
         if (!IsMultiplayerAuthority())
         {
@@ -187,13 +253,29 @@ public partial class Ritual : Node3D, IDamageable
             return;
         }
 
-        if (MissingHealthFraction <= 0f || !_level.Economy.TrySpendMana(RepairCost))
+        if (MissingHealthFraction <= 0f)
         {
             return;
         }
 
+        if (!IsArchitect(repairer))
+        {
+            int cost = RepairCost;
+
+            if (!_level.Economy.TrySpendMana(cost))
+            {
+                return;
+            }
+
+            Stats.RecordRepair(cost);
+        }
+
         SetHealth(MaxHealth);
     }
+
+    // The seat's current body - the Architect and its Sentinels take turns in one seat.
+    public bool IsArchitect(PlayerId player) =>
+        _level.SentinelSpawners.TryGetValue(player, out SentinelSpawner spawner) && spawner.Current is Architect;
 
     public void SetCost(int manaCost, int capacityCost)
     {
@@ -201,11 +283,11 @@ public partial class Ritual : Node3D, IDamageable
         _capacityCost = capacityCost;
     }
 
-    // Mana back shrinks with damage by the same fraction repair charges, so a healthy Ritual
-    // refunds everything and a broken one only part - tearing a broken Ritual down and rebuilding
-    // it is never a way around repairing it. Capacity always returns in full: it's a ceiling on
-    // what can be built, not a currency, so shorting it would lose it for the rest of the match.
-    public void Destroy()
+    // Mana back shrinks with damage by the same fraction repair charges, so a Sentinel tearing a
+    // broken Ritual down and rebuilding it is never a way around repairing it. The Architect repairs
+    // for free, so it gets everything back. Capacity always returns in full: it's a ceiling on what
+    // can be built, not a currency, so shorting it would lose it for the rest of the match.
+    public void Destroy(PlayerId destroyer)
     {
         if (!IsMultiplayerAuthority())
         {
@@ -213,27 +295,32 @@ public partial class Ritual : Node3D, IDamageable
             return;
         }
 
-        int manaRefund = Mathf.FloorToInt(_manaCost * (1f - GameRules.RepairCostFraction * MissingHealthFraction));
-        _level.Economy.RefundRitual(manaRefund, _capacityCost);
+        float kept = IsArchitect(destroyer) ? 1f : 1f - GameRules.RepairCostFraction * MissingHealthFraction;
+        _level.Economy.RefundRitual(Mathf.FloorToInt(_manaCost * kept), _capacityCost);
         QueueFree();
     }
 
-    // Any player can repair or tear down any Ritual.
+    // Any player can repair or tear down any Ritual. The host goes by who sent it, not by anything
+    // the sender claims.
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void RequestRepair()
     {
-        if (NetworkSession.Instance.SenderSeat != default)
+        PlayerId seat = NetworkSession.Instance.SenderSeat;
+
+        if (seat != default)
         {
-            Repair();
+            Repair(seat);
         }
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void RequestDestroy()
     {
-        if (NetworkSession.Instance.SenderSeat != default)
+        PlayerId seat = NetworkSession.Instance.SenderSeat;
+
+        if (seat != default)
         {
-            Destroy();
+            Destroy(seat);
         }
     }
 
@@ -353,7 +440,9 @@ public partial class Ritual : Node3D, IDamageable
         if (_searchTimer <= 0f || justLostTarget)
         {
             _searchTimer = TargetSearchInterval;
-            _currentTarget = EnemyTargeting.FindTarget(GlobalPosition, context, sightFrom: SpawnPoint.GlobalPosition);
+            _currentTarget = context.FixedAim != null
+                ? FindInLane(context)
+                : EnemyTargeting.FindTarget(GlobalPosition, context, sightFrom: SpawnPoint.GlobalPosition);
         }
 
         // A trigger rune's Ritual never casts on its own - only when pulsed.
@@ -389,7 +478,11 @@ public partial class Ritual : Node3D, IDamageable
             return;
         }
 
-        if (_currentTarget != null)
+        if (context.FixedAim != null)
+        {
+            AimSpawnPointAt(SpawnPoint.GlobalPosition + context.FixedAim.Direction * context.Range.Value);
+        }
+        else if (_currentTarget != null)
         {
             AimSpawnPointAt(_currentTarget.AimPoint);
         }
@@ -400,6 +493,7 @@ public partial class Ritual : Node3D, IDamageable
 
         context.ResonancePulse = new ResonancePulse { Origin = GlobalPosition, Caster = this };
         context.ChosenTarget = _currentTarget;
+        Stats.RecordCast();
         effect.Cast(context, SpawnPoint, this);
 
         if (effect.IsOngoing)
@@ -558,6 +652,11 @@ public partial class Ritual : Node3D, IDamageable
     // and is wasted.
     private Enemy PulseTarget(SpellCastContext context)
     {
+        if (context.FixedAim != null)
+        {
+            return FindInLane(context);
+        }
+
         if (context.TargetingRune != null)
         {
             return EnemyTargeting.FindTarget(GlobalPosition, context, sightFrom: SpawnPoint.GlobalPosition);
@@ -642,7 +741,17 @@ public partial class Ritual : Node3D, IDamageable
         }
 
         SpellCastContext context = ResolveWithOwner();
-        _rangeIndicator = RitualPlacer.BuildRangeIndicator(context.Range.Value);
+
+        if (context.FixedAim != null)
+        {
+            _rangeIndicator = RitualPlacer.BuildLaneIndicator(context.Range.Value, context.FixedAim.LaneHalfWidth);
+            RitualPlacer.PointLaneIndicator(_rangeIndicator, context.FixedAim.Direction, context.Range.Value);
+        }
+        else
+        {
+            _rangeIndicator = RitualPlacer.BuildRangeIndicator(context.Range.Value);
+        }
+
         AddChild(_rangeIndicator);
 
         if (context.Trigger?.Resonant == true)
@@ -651,6 +760,14 @@ public partial class Ritual : Node3D, IDamageable
             AddChild(_resonanceOverlay);
             _resonanceOverlay.Draw(context.ResonanceRadius, context.Range.Value, this);
         }
+    }
+
+    // A Ritual that fires in a fixed direction only answers to an enemy it can see in its lane:
+    // within the lane's half-width of the line from its base out to its range.
+    private Enemy FindInLane(SpellCastContext context)
+    {
+        Vector3 end = GlobalPosition + context.FixedAim.Direction * context.Range.Value;
+        return EnemyTargeting.FindNearestToSegment(GlobalPosition, end, context.FixedAim.LaneHalfWidth, sightFrom: SpawnPoint.GlobalPosition);
     }
 
     // Straight at the target's center mass, so a projectile arrives where it's meant to hit. A

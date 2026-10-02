@@ -55,5 +55,10 @@ public partial class RitualRangeViewer : Node
 
         _shown = ritual;
         _shown?.SetRangeShown(true);
+
+        if (_character.IsLocallyControlled)
+        {
+            EventBus.Instance.EmitSignal(EventBus.SignalName.InspectedRitualChanged, _shown);
+        }
     }
 }

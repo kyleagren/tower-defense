@@ -32,9 +32,15 @@ public partial class RitualPlacer : Node
     private PlacementFlow _flow;
     private bool _isValidPlacement;
 
-    // Set when placement starts with confirm_placement already held - the click that picked what's
-    // being placed. That press can't also confirm it; confirming needs a fresh one.
+    // Set when a stage begins with confirm_placement already held - the press that started it can't
+    // also confirm it; confirming needs a fresh one.
     private bool _confirmHeldSinceStart;
+
+    // For a spell that fires in a fixed direction: once the Ritual's spot is confirmed, the next
+    // stage picks the direction from there. Its lane indicator stands in for the range circle.
+    private bool _isAiming;
+    private MeshInstance3D _laneIndicator;
+    private AimPlacementData _aim;
 
     // Invoked once the Ritual has actually been placed (not on cancel, or a placement the host turns
     // down) - lets a caller like TokenDeployer know it should consume the token that was just spent.
@@ -109,6 +115,10 @@ public partial class RitualPlacer : Node
         {
             ProcessFlowPoints();
         }
+        else if (_isAiming)
+        {
+            ProcessAimStage();
+        }
         else
         {
             ProcessRitualStage();
@@ -163,10 +173,50 @@ public partial class RitualPlacer : Node
         UpdateGhostValidity();
         LevelContext.Current.RitualRoster.MoveGhost(_ghost.GlobalPosition);
 
+        // Until it's aimed, the lane points away from the player.
+        if (_laneIndicator != null)
+        {
+            PointLaneIndicator(_laneIndicator, FlatDirection(Character.GlobalPosition, _ghost.GlobalPosition), _pendingContext.Range.Value);
+        }
+
         if (ConfirmJustPressed() && _isValidPlacement)
         {
+            if (_pendingContext.FixedAim != null)
+            {
+                _isAiming = true;
+                _confirmHeldSinceStart = true;
+            }
+            else
+            {
+                ConfirmPlacement();
+            }
+        }
+    }
+
+    private void ProcessAimStage()
+    {
+        Vector3 direction = FlatDirection(_ghost.GlobalPosition, _cursorPosition);
+
+        if (direction == Vector3.Zero)
+        {
+            return;
+        }
+
+        PointLaneIndicator(_laneIndicator, direction, _pendingContext.Range.Value);
+
+        if (ConfirmJustPressed())
+        {
+            _aim = new AimPlacementData(direction);
             ConfirmPlacement();
         }
+    }
+
+    // Zero when the two points are on top of each other.
+    private static Vector3 FlatDirection(Vector3 from, Vector3 to)
+    {
+        Vector3 offset = to - from;
+        offset.Y = 0f;
+        return offset.LengthSquared() < 0.01f ? Vector3.Zero : offset.Normalized();
     }
 
     private bool ConfirmJustPressed()
@@ -190,7 +240,14 @@ public partial class RitualPlacer : Node
         _ghostCollisionShape = _ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
         _ghostCollisionShape.Disabled = true;
 
-        if (_flow.ShowsRangeIndicator)
+        bool fixedAim = _pendingContext.FixedAim != null;
+
+        if (_flow.ShowsRangeIndicator && fixedAim)
+        {
+            _laneIndicator = BuildLaneIndicator(_pendingContext.Range.Value, _pendingContext.FixedAim.LaneHalfWidth);
+            _ghost.AddChild(_laneIndicator);
+        }
+        else if (_flow.ShowsRangeIndicator)
         {
             _ghost.AddChild(BuildRangeIndicator(_pendingContext.Range.Value));
         }
@@ -201,7 +258,8 @@ public partial class RitualPlacer : Node
             _ghost.AddChild(_resonanceOverlay);
         }
 
-        LevelContext.Current.RitualRoster.ShowGhost(_flow.ShowsRangeIndicator ? _pendingContext.Range.Value : 0f, _flow.ConstrainRitualPosition(_cursorPosition));
+        float sharedRange = _flow.ShowsRangeIndicator && !fixedAim ? _pendingContext.Range.Value : 0f;
+        LevelContext.Current.RitualRoster.ShowGhost(sharedRange, _flow.ConstrainRitualPosition(_cursorPosition));
     }
 
     private void UpdateGhostValidity()
@@ -228,7 +286,9 @@ public partial class RitualPlacer : Node
 
     private void ConfirmPlacement()
     {
-        LevelContext.Current.RitualRoster.RequestPlacement(_pendingSpell, _pendingRunes, _ghost.GlobalTransform, _flow.Data, _onConfirmed);
+        // A spell with placement picks of its own (Ice Wall) can't take a fixed direction, so at most
+        // one of these is set.
+        LevelContext.Current.RitualRoster.RequestPlacement(_pendingSpell, _pendingRunes, _ghost.GlobalTransform, _flow.Data ?? _aim, _onConfirmed);
         EndPlacement();
     }
 
@@ -250,6 +310,9 @@ public partial class RitualPlacer : Node
         }
 
         _resonanceOverlay = null;
+        _isAiming = false;
+        _laneIndicator = null;
+        _aim = null;
 
         _onConfirmed = null;
         IsPlacing = false;
@@ -264,5 +327,28 @@ public partial class RitualPlacer : Node
             MaterialOverride = PreviewMaterials.RangeFill,
             Position = new Vector3(0f, 0.03f, 0f)
         };
+    }
+
+    // A Ritual that fires in a fixed direction reaches along a lane rather than all around it.
+    public static MeshInstance3D BuildLaneIndicator(float range, float halfWidth)
+    {
+        return new MeshInstance3D
+        {
+            Mesh = new BoxMesh { Size = new Vector3(halfWidth * 2f, 0.05f, range) },
+            MaterialOverride = PreviewMaterials.RangeFill
+        };
+    }
+
+    // Lays the lane out from the Ritual along direction. Rituals are never rotated, so the Ritual's
+    // local space lines up with the world's.
+    public static void PointLaneIndicator(MeshInstance3D indicator, Vector3 direction, float range)
+    {
+        if (direction == Vector3.Zero)
+        {
+            return;
+        }
+
+        indicator.Basis = Basis.LookingAt(direction, Vector3.Up);
+        indicator.Position = direction * (range / 2f) + new Vector3(0f, 0.03f, 0f);
     }
 }

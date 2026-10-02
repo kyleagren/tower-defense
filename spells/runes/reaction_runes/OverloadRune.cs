@@ -24,6 +24,8 @@ public partial class OverloadRune : ReactionRune
     public override string Description =>
         $"When Lightning meets a Fire Status, consumes it to overload: a burst dealing {BurstDamagePercent * 100f:0.#}% of the hit as Lightning to everything within {Radius:0.#}m, launching them into the air. Once per enemy every {Cooldown:0.#}s.";
 
+    public override string EffectLabel => "Overloads";
+
     // Spends the Status even while the enemy is still Overloaded, like Melt.
     public override bool OnHit(OnHitContext hit)
     {
@@ -37,6 +39,7 @@ public partial class OverloadRune : ReactionRune
         if (!target.HasDebuff(DebuffType.Overloaded))
         {
             target.ApplyDebuff(new OverloadedDebuff(hit.Damage.Total * BurstDamagePercent, Radius, LaunchImpulse, LaunchOutwardDegrees, Cooldown, BurstScene, hit.Attribution));
+            CountEffect(hit.Attribution);
         }
 
         return true;

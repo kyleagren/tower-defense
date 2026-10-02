@@ -44,7 +44,7 @@ public partial class RitualInteractor : LookInteractor
             if (_destroyHoldTime >= DestroyHoldDuration)
             {
                 ClearTarget();
-                ritual.Destroy();
+                ritual.Destroy(Character.OwnerId);
             }
 
             return;
@@ -59,7 +59,7 @@ public partial class RitualInteractor : LookInteractor
             if (_repairHoldTime >= RepairHoldDuration)
             {
                 _repairHoldTime = 0f;
-                ritual.Repair();
+                ritual.Repair(Character.OwnerId);
             }
 
             return;
@@ -78,6 +78,11 @@ public partial class RitualInteractor : LookInteractor
         if (cost <= 0)
         {
             return (null, Colors.White);
+        }
+
+        if (Character is Architect)
+        {
+            return ("Repair: Free", Colors.White);
         }
 
         Color color = LevelContext.Current.Economy.CanAffordMana(cost) ? Colors.White : _unaffordableColor;

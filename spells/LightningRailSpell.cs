@@ -14,7 +14,7 @@ public partial class LightningRailSpell : Spell
     [Export] public override int BaseManaCost { get; protected set; } = 15;
 
     public override string Name => "Lightning Rail";
-    public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Lightning, Tag.AoE };
+    public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Lightning, Tag.AoE, Tag.Line };
     public override string Description => "Fires a bar of lightning that strikes every enemy along its path.";
 
     protected override void AddComponents(SpellCastContext context)

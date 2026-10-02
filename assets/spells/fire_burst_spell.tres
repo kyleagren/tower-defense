@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="FireBurstSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/FireBurstSpell.cs" id="1_fireburst"]
+[ext_resource type="PackedScene" uid="uid://o210wvy66vdy" path="res://projectiles/fireball_projectile.tscn" id="2_projectile"]
+
+[resource]
+script = ExtResource("1_fireburst")
+WheelOrder = 11
+ProjectileScene = ExtResource("2_projectile")
