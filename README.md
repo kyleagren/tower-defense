@@ -257,9 +257,8 @@ A rune that makes the wall explode on break is planned.
 Cold's first damage spell, and the one that makes Chill reachable. The Ritual calls hail down on its current target: damage lands across an area over a short window rather than in one instant, and a patch of `ChilledGround` is left behind that slows anything crossing it long after the hail stops.
 
 - **Two independent things, spawned side by side.** `BombardmentCastEffect` drops a `Bombardment` and a `GroundEffect` at the same point; neither knows the other exists. That's what lets a rune leave chilled ground off something that isn't a bombardment at all, and lets a bombardment exist without leaving anything.
-- **Meteor Shower is the same class with different data.** `Bombardment` applies no ailment of its own and carries no element, so a second spell of this shape costs a `Spell` subclass, a `.tres` and a visual scene — no systems code.
 - **Damage is per second, not per cast.** Ticks land on each `TickInterval` mark that falls inside the storm's duration (0.2, 0.4, 0.6 for a 0.75s storm — a partial interval at the end earns nothing), each dealing damage-per-second × interval. So a longer duration means more total damage, the way PoE treats duration on damage over time, while the tick cadence — authored on the bombardment's scene beside the visual it drives — changes the rhythm, never the damage per second.
-- **The storm slows nothing.** Being caught in it is worse than crossing the leftover ground because of the damage, not a bigger slow. An ailment on the bombardment would be Ice-Storm-specific and a meteor shower would want nothing to do with it.
+- **The storm slows nothing.** Being caught in it is worse than crossing the leftover ground because of the damage, not a bigger slow.
 - **`ChillRune` stacks with the ground rather than competing.** `ChillAilment` and `ChilledGroundAilment` are separate types, so they take separate slots and multiply: 30% and 25% resolve to a 47.5% slow inside a rune-socketed storm, decaying to 25% once only the frozen ground remains.
 - **Targeting is the spell default** (`ClosestToGoal`), which aims at the enemy furthest along the path — the front edge of a pack, and so the fewest enemies. Swarm, the "most enemies nearby" targeting rune, is the natural pairing for any bombardment.
 
@@ -283,6 +282,48 @@ Wind's first spell: a small twister that travels along the ground through every 
 - **Damage numbers split for infused Wind only** — a hit that's Wind plus exactly one other element shows one number per color. Every other mix stays one number; the number cap means many small mixed hits would bury the screen.
 - **Every machine runs the same movement against the same terrain**, so a copy follows the host's path from its starting point alone; only an infusion is sent on.
 
+### Planned spells
+
+Grouped by the system they share, so each new system is paid for once. Worked roughly in this order.
+
+**1. Content on existing delivery.**
+
+- **Thunderbolt** — a heavy single Lightning strike on a long cooldown, its arc coming down from the sky rather than out of the Ritual. No `Chaining` tag, so Chain and Fork don't fit.
+- **Lightning Rail** — a `Beam` with one instant tick and no push.
+- **Hydro Blade** — two Water hits on one target a short gap apart, with an X-slash visual.
+- **Ice Spear** — a projectile that pierces inherently, stacking with Pierce.
+- **Fire Burst** — a tight 4×4 grid of tiny pellets, short range. Built to dump every pellet into one big target, while a Grunt in the same spot only catches some. Salvo's flat +2 does little for it, which is accepted.
+
+**2. Picking several targets.** A query ranking the top N enemies by target priority, with an optional filter.
+
+- **Tesla Coil** — 5 pulses over 1.2s, each 1/5 of the damage to the top N enemies in range, re-picked per pulse; then a long cooldown. The arc is a thinner lightning arc bowed upward like an inverted parabola, from the Ritual down onto each enemy.
+- **Lightning Strike** — picks a point by target priority, then strikes every enemy with Lightning Status within a radius of it. The bolt from above is visual only, and nothing is left on the ground. It re-sets Lightning Status, which changes nothing.
+
+**3. Ground and telegraphed effects.** These introduce the **Field** tag.
+
+- **Meteor** — a ground marker, a delay, one big impact. Hard to land on purpose: other Rituals slowing or stopping the pack are what make it pay, and it's fine with hitting the third enemy in line instead.
+- **Rain** — 0 damage; sets Water Status on every enemy in its area on an interval. Sets Status directly rather than landing a hit, the counterpart to `Enemy.RemoveStatus`.
+- **Black Ice** — a ground patch where each enemy on it rolls on an interval to be knocked down for a couple of seconds. **No per-enemy cooldown** — the deliberate exception to Section 9's hard-CC rule — so one enemy might be knocked down repeatedly and another cross untouched. That variance is its identity next to Freeze and Electrocute. A knocked-down enemy doesn't roll.
+
+**4. Wind infusion.** Infusion moves out of `GroundSweep` so every Wind spell can carry it.
+
+- **Wind Blade** — a wide projectile that pierces a few enemies.
+- **Wind Blast** — a burst pushing enemies away from it. Pushing some toward the objective with poor placement or targeting is accepted.
+
+**5. Forced movement.** Enemies whose position something else controls for a while — carried, held aloft, swept. Each may cap how many enemies it holds.
+
+- **Tornado** — a `GroundSweep` that picks enemies up and carries them to the end of its path.
+- **Tempest** — summoned in one spot, swirls everything there in the air, then drops it. Very long cooldown.
+- **Tsunami** — a `GroundSweep` that pushes back enemies below a mass threshold and damages them.
+
+**6. One-offs.**
+
+- **Flamethrower** — a `Beam` that stays active and ticks longer than Water Cannon, with no push.
+- **Frozen Orb** — a slow traveler in the `GroundSweep` family rather than a projectile. It pulses damage at intervals, slows down once among enemies, and stops at walls like everything else.
+- **Force Field** — protects Rituals in an area; enemies that attack one are knocked back and take Lightning damage. The first spell that reacts to a Ritual being hit. Niche by design: one Force Field against Shroud on four Rituals.
+
+**Projectile shapes.** Projectiles become capsules: a radius (thickness), a length, and an axis along or across travel. Length 0 is a sphere, so Fireball keeps its defaults. Ice Spear is long, Wind Blade is wide. Area scales every dimension together.
+
 ### Damage & repair
 
 **A Ritual sits on two physics layers, and the split is load-bearing.** `Rituals` means _blocks movement_ — it's what enemies and the player collide with. `RitualHitbox` means _everything else a Ritual's body is for_: being shot by enemy projectiles, being raycast by repair and destroy, and blocking placement of another tower on the same spot. They were one layer until the **Shroud** rune needed a tower that enemies walk through but can still be hit and repaired, which is impossible with a single bit — clearing it takes the hits and the repairs with it. Shroud clears `Rituals` alone. Consequence to remember: a mask that wants "is there a tower here" wants `RitualHitbox`, and only movement collision should ever reference `Rituals`.
@@ -302,7 +343,7 @@ Repair and destroy both use the same reticle raycast as placement, capped to a s
 - **Built so far:** the element ring (Favorites at the top, then Fire, Lightning, Cold, Water, Wind, Physical and Multi-Element clockwise), each element's spell ring, each spell's favorites ring, the pinned favorites wheel, the Ritual Inscription with its rune bucket ring, rune ring and tier wheel, Save Favorite, token authoring through the token wheel, and the spiral for rings past 8 items. On the wheels the center shows the highlighted item's name and its cost against current mana, red when unaffordable; the description sits below the wheel on its own dark panel, hidden when empty.
 - **Layout.** No dimmed backdrop — the world stays visible. The wheel sits at a fixed anchor up and left of screen center (40% across, 42% down, to be tuned) for mouse and controller alike, keeping the reticle, and the spot about to be built on, uncovered. It can't open at the cursor, since the mouse is captured during play and has no position of its own. Text over the world or over wedge colors (which run from dark to near-white) carries a black outline. Circle, Escape or right-click steps back a ring, and closes the menu from the element ring; `Q` (Triangle), the key that opened it, closes it from any ring.
 - **Arranging by hand** — spell order, favorites (reorder, rename, delete, pin) and rune order — happens on the Organize panel, below.
-- **Not yet available:** sort modes and the which-wheel-opens-first setting.
+- **Deferred until there are many more spells and runes:** sort modes and the which-wheel-opens-first setting.
 - **Socketing rules:** socket state survives backing out and returning for the same spell, even across closing the menu, clearing only when a different spell is picked. A rune that conflicts with one already socketed on the same spell — the same type, or a second reaction rune — or that's unavailable shows dimmed in place and can't be picked, making the rule visible instead of silently rejecting it. Deliberate tier downgrades are intended, e.g. socketing a Common damage rune to land on an exact breakpoint another tower can finish. Clearing a whole near-finished build takes a held press, so a stray press can't wipe it. Rune description text lives on the `Rune` resource, not in UI code.
 - Renders as a blocking overlay over the opening player's view. Since co-op has both players building simultaneously, a true game pause won't work — the overlay needs per-player scoping, mechanism still open.
 
@@ -323,7 +364,7 @@ The field HUD (`AbilityHud`, holding `TokenBar` and `AbilityBar` as independent 
 
 **Navigation is gamepad-first**, not mouse-first-then-retrofit.
 
-### Radial construction menu (mostly built)
+### Radial construction menu
 
 **The wheel itself is built:** `RadialWheel` (`ui/radial/`) is a reusable Control that draws a ring of wedges, turns a direction into a highlighted slot and commits it, knowing nothing about what its items are. The left stick reaches it through the `radial_left`/`radial_right`/`radial_up`/`radial_down` actions — its own actions rather than `move_*`, which includes WASD and would walk a keyboard player's character — so rebinding it to the right stick later is only an Input Map change. The mouse can't be bound to an action, so it has its own path into the same pointing code. A panel pushed with `UiPanelStack.Push(..., capturesMouse: true)` keeps the mouse captured, and `PlayerCharacter.HandleLook` ignores mouse motion while any panel is open, so pointing at a wedge never turns the camera. Commit is on press: an empty or disabled wedge can be highlighted but not committed. Because a press can start placement, `RitualPlacer` won't let a `confirm_placement` press that was already held when placement began confirm it — it polls input rather than receiving events, so marking the click handled wouldn't stop it. Backing out belongs to the host, which knows whether that means the previous ring or closing. Two switches let a host take over parts of it: `DrawWedges` off leaves only the pointing (the host draws its own controls), and `HandlesCommit` off leaves presses to the host (for telling a tap from a hold). `ReplaceItems` swaps a wheel's items without resetting where it's pointing, for an item that changes mid-gesture. Given more than 8 items, a `RadialWheel` becomes a spiral (below) on its own, reporting item indexes rather than wedges, so hosts don't change. `BuildMenu` hosts all the wheels and `RitualInscription`; the rest of this section is the design they're being built toward.
 
@@ -796,7 +837,7 @@ A reaction rune with a disruptive component (knockback, stun) needs its own per-
 - **Overload** _(built)_ — Lightning consuming Fire, competing with Ignition for the same cell (the one-reaction-per-Ritual rule makes them a choice). A burst around the enemy: 40% of the hit as Lightning to everything within 3m, launching them into the air — straight up for the centre, tipped 1° outward for the rest (215 kg·m/s: about a 1.5m, 2.2s hop on a Grunt, barely a lift on a Brute). The burst is `Unmarked` — it sets no Status. A 5s `OverloadedDebuff` marker goes on the centre **and on everything the burst launched**, so a pack goes up once: a marked enemy can't set off its own burst, and another Overload's burst still damages it but won't launch it again — no juggling. A faint, oversized yellow sphere marks the burst.
   - **Launches are general.** Any knockback with an upward part launches a walking enemy: a stiff hop that lands upright (a real tumble would need a stand-up animation per enemy type), not steering or attacking until it lands. Gravity is scaled down while airborne (`WalkingEnemy.LaunchGravityScale`, 0.25), so a launch hangs longer than its height alone would give. Every other push today is flat, so nothing else launches.
 
-Freeze and Electrocute are both Water pairings, and should differ on an axis a player can plan around (Roadmap, Section 10) — Freeze trading damage for duration and Electrocute the reverse, or the spread-versus-duration trade above — or the second is strictly worse than the first.
+Freeze and Electrocute are both Water pairings, and should differ on an axis a player can plan around — Freeze trading damage for duration and Electrocute the reverse, or the spread-versus-duration trade above — or the second is strictly worse than the first.
 
 **Another idea for an electric effect, would be amped / electrified where it increases their movement speed. Undecided, and we would need some payoff for speeding them up**
 
@@ -837,7 +878,7 @@ Towers fire constantly, so an unlimited hard-CC reaction permanently locks whate
 - **No multiplayer timing problem.** Rune on-hits only ever run on the host (`Enemy.ReceiveForwardedHit`: only Rituals carry runes, and the host runs every Ritual), so every check reads the host's live state.
 - **Doesn't cover non-CC reactions.** Melt and Overload are rate-limited by marker debuffs instead (Elemental reactions, above), which have no active phase to switch off.
 
-**Layer 2 — tenacity (leaning, not decided).** A per-enemy CC-resistance value covering every CC source — reactions, spells and Sentinel abilities alike.
+**Layer 2 — tenacity (not built; not needed so far).** A per-enemy CC-resistance value covering every CC source — reactions, spells and Sentinel abilities alike. In play, Layer 1 alone has kept Freeze → Electrocute chains from locking enemies down too long, so this waits until a chain actually does.
 
 - **It builds from time actually spent under CC, not from applications.** A fast tower re-freezing an already-frozen enemy adds nothing; only the seconds spent locked down count. Building it per application was rejected, since a fast-firing tower would max it out within a second.
 - **It decays over time**, and **CC durations shrink as it rises**: the first freeze lands in full, a quick follow-up gets less, one after that barely registers. It shortens only the active part of a CC ailment; the recovering window after it stays as authored.
@@ -915,6 +956,7 @@ Raised and deliberately set aside for their own conversations, so they aren't lo
 - **Where the hub sits in time** — outside time entirely, or anchored to one era. Per-era content scope is entirely TBD and not a slice concern.
 - **Multiplayer transport, and what consoles do about it.** The intended shape is Steam peer-to-peer with one player hosting, which fits both the invite-a-friend model and the host-authoritative architecture in Section 7. Consoles have no equivalent of that path, and local split-screen is the obvious answer there — but it's a substantial piece of work rather than a small addition: a second viewport and camera, per-player scoping for every fullscreen panel (the build overlay especially), input routing per seat, and each local player picking their own save profile (Section 8). Likely to happen, not yet scheduled; worth its own conversation before anything commits to it.
 - **Low-poly art style and visual identity** — not urgent, but will matter for silhouette readability.
+- **Meta-progression — someday, not near-term.** Persistent Architect XP, tied to difficulty cleared rather than matches played, so grinding easy content can't outpace real progress. `PlayerSaveData` already carries `Level` and `Xp` fields and nothing reads them yet. The track would unlock new base Spells, and match rewards would scale with performance — objective health remaining, waves survived cleanly, time taken — instead of today's flat victory bonus. **Guardrail:** none of it may ever let player power outstrip the towers'; they stay the dominant source of defensive strength. It unlocks spells and progression only, never gear — the Architect has no equipment of his own (Section 3).
 
 ### Not implemented yet
 
@@ -937,21 +979,3 @@ Looked at and deliberately not done, recorded so they aren't re-discovered from 
 - **`Spell.Tags`/`Rune.RequiredTags` allocate a fresh `List<Tag>` on every read** (expression-bodied, and `IsCompatibleWith` reads both). Should be `static readonly Tag[]`. Mechanical, ~20 files, no behavior change — it's UI-time code, not per-frame.
 - **`EnemyTargeting`'s local functions capture `fromPosition`**, heap-allocating a closure and delegate per call. Roughly 150 tiny short-lived objects a second at ten rituals, which gen-0 absorbs without noticing. Removing it means an enum switch inside the loop, which reads worse for no measurable gain.
 - **`ArcVisual` spawns two nodes plus a timer per segment, per arc**, and a forked chained Lightning Bolt emits a dozen-plus arcs per cast continuously. Real churn, but the whole effect is placeholder VFX — the fix (a `MultiMeshInstance3D` or pooled line renderer) belongs with the art pass.
-
-## 10. Roadmap
-
-The vertical slice is complete: place towers, survive waves, win or lose, with gold, items, equipment mods, a working elemental reaction, tower disable/repair, tokens, a ranged enemy, and the hub's crafting table and vendor all real.
-
-**Current focus: the radial construction menu** (Section 4). Built: every wheel, the Ritual Inscription, favorites (per-spell rings and the pinned wheel), token authoring, the spiral, and the Organize panel for arranging spells, favorites and runes by hand. Left: **sort modes** and the **which-wheel-opens-first setting**. The temporary rune buckets wait on a larger draft of rune ideas (`ideas.md`).
-
-Next, in order:
-
-1. **Sentinel ability kits.** The `Ability` framework, four-slot array, tap/hold, input actions, cooldown resolution, the `AbilityBar` HUD row and the gauge pill all exist, and Soldier's whole kit is built on top. Tank's kit and the crosshair cues are built too.
-2. **New spells.** Ice Storm, Water Cannon and Gust are built (Section 4), so every element now has a spell and every reaction in the table is reachable. A second bombardment — a meteor shower — is pure content, since `Bombardment` carries no element of its own.
-3. **Hard CC follow-ups.** Freeze and Electrocute are built (Section 9). **Open:** a stopped enemy is an obstacle, and what nav-agent avoidance does when the ones behind it pile up is unknown until it's played; and tenacity (Section 9, Crowd-control limits) waits on seeing whether Freeze → Electrocute chains actually lock enemies down too long.
-4. **New runes**, each authored with its full set of tiers (Section 4, Rune acquisition).
-5. **New enemies** — a Flyer is the leading candidate, which is also when the "is movement style its own reusable axis" question (Section 5) needs a real answer.
-6. **A new level.**
-7. **Meta-progression — someday, not near-term.** Persistent Architect XP, tied to difficulty cleared rather than matches played, so grinding easy content can't outpace real progress. `PlayerSaveData` already carries `Level` and `Xp` fields and nothing reads them yet. The track would unlock new base Spells, and match rewards would scale with performance — objective health remaining, waves survived cleanly, time taken — instead of today's flat victory bonus. **Guardrail:** none of it may ever let player power outstrip the towers'; they stay the dominant source of defensive strength. Note this unlocks spells and progression only, never gear — the Architect has no equipment of his own (Section 3), so the old "XP unlocks an item slot for him" idea is dead.
-
-Worth doing alongside these rather than blocking them, since more enemies and levels make both more likely to get hit: the wave-end safety-net timeout, and navmesh re-baking on tower placement.

@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://spells/effect_volumes/Beam.cs" id="1_beam"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_beam"]
+top_radius = 1.0
+bottom_radius = 1.0
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_beam"]
+transparency = 1
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(1, 0.9, 0.3, 0.7)
+
+[node name="LightningRailBeam" type="Node3D" node_paths=PackedStringArray("Footprint")]
+script = ExtResource("1_beam")
+Footprint = NodePath("Footprint")
+Linger = 0.2
+
+[node name="Footprint" type="Node3D" parent="."]
+
+[node name="Mesh" type="MeshInstance3D" parent="Footprint"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -0.5)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_beam")
+material_override = SubResource("StandardMaterial3D_beam")

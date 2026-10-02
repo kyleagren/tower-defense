@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ThunderboltSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/ThunderboltSpell.cs" id="1_thunderbolt"]
+[ext_resource type="PackedScene" path="res://spells/visual_effects/thunderbolt_arc_visual.tscn" id="2_arcvisual"]
+
+[resource]
+script = ExtResource("1_thunderbolt")
+WheelOrder = 7
+ArcVisualScene = ExtResource("2_arcvisual")

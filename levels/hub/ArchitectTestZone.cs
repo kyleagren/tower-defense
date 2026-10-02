@@ -23,6 +23,12 @@ public partial class ArchitectTestZone : Area3D
 
     private void RespawnSentinel(Node body)
     {
+        // The Architect also "exits" when the hub is torn down around it, with no level left to swap in.
+        if (!IsInsideTree())
+        {
+            return;
+        }
+
         if (body is Architect architect && IsInstanceValid(architect))
         {
             SentinelSpawner spawner = LevelContext.Current.SentinelSpawners[architect.OwnerId];

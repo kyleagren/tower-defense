@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="LightningRailSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/LightningRailSpell.cs" id="1_lightningrail"]
+[ext_resource type="PackedScene" path="res://spells/effect_volumes/lightning_rail_beam.tscn" id="2_beam"]
+
+[resource]
+script = ExtResource("1_lightningrail")
+WheelOrder = 8
+BeamScene = ExtResource("2_beam")

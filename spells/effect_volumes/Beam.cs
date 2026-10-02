@@ -101,7 +101,7 @@ public partial class Beam : Node3D
 
             enemy.TakeDamage(_spellHit.CreateHit(_damage, forward * _ragdollForce));
 
-            if (!enemy.IsDead)
+            if (_pushImpulse > 0f && !enemy.IsDead)
             {
                 enemy.ApplyKnockback(push);
             }

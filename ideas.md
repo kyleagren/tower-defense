@@ -41,7 +41,7 @@ The more I think about it the more I'm fairly confident that enemies will need t
 
 - **Gust** - Shoots a twister in a line, small and doesn't pick any enemies up. Passes through enemies but causes them to flare up with the swirl-equivalent reaction.
 - **Tornado** - A stronger tornado that would travel a shorter distance but would pick enemies up and carry them with it to the end of its path. Genshin Traveler q has a similar vibe.
-- **Tempest** - A very strong tornado that gets summoned in one spot occasionally, picking up all the enemies in that spot and swirling them around in roughly the same spot, and then dumping them back on the ground. Genshin Venti has a similar functionality, but not visual.
+- **Tempest** - A very strong tornado that gets summoned in one spot occasionally, picking up all the enemies in that spot and swirling them around in roughly the same spot, and then dumping them back on the ground. Genshin Venti has a similar functionality, but not visual. Very long cooldown.
 - **Wind Blast** - A strong burst of wind that pushes enemies away from it.
 - **Wind Blade** - A line of wind that cuts through enemies. Probably a wide projectile that pierces a few enemies by default.
 - **Squall** - a field that slowly pushes against enemies in the area, slowing their movement speed. We'd have to figure out a way to set the "push" direction. maybe something similar to ice wall, just in the sense that there's an area placement and then a ritual placement. Would only actually swirl a couple times over its duration.
@@ -123,4 +123,4 @@ Notes:
 
 - Right click could enter a "projectile catching state" and a certain number of those projectiles could float around him and then holding right click and left clicking would throw one of those projectiles back at an enemy. or it could function almost like a parry where you have a short window to actually throw it back. if we did that we'd probably want a short window where it would cool down between uses.
 - Something like genshin heizous charge up punch, or the elden ring fist weapon thing.
--
+- Something like a Lee Sin kick that could launch even a bigger enemy through the ranks of little guys.
