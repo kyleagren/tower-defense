@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="HydroBladeSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/HydroBladeSpell.cs" id="1_hydroblade"]
+[ext_resource type="PackedScene" path="res://spells/visual_effects/hydro_blade_slash.tscn" id="2_slash"]
+
+[resource]
+script = ExtResource("1_hydroblade")
+WheelOrder = 9
+SlashScene = ExtResource("2_slash")

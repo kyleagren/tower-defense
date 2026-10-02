@@ -48,6 +48,25 @@ public partial class SpellEffects : Node
         visual.Show(from, to);
     }
 
+    public void ShowSlash(PackedScene scene, Vector3 center, Vector3 facing, float tilt, float extraHold)
+    {
+        SpawnSlash(scene, center, facing, tilt, extraHold);
+        Rpc(MethodName.ReceiveSlash, scene.ResourcePath, center, facing, tilt, extraHold);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void ReceiveSlash(string scenePath, Vector3 center, Vector3 facing, float tilt, float extraHold)
+    {
+        SpawnSlash(GD.Load<PackedScene>(scenePath), center, facing, tilt, extraHold);
+    }
+
+    private void SpawnSlash(PackedScene scene, Vector3 center, Vector3 facing, float tilt, float extraHold)
+    {
+        SlashVisual visual = scene.Instantiate<SlashVisual>();
+        _level.LevelRoot.AddChild(visual);
+        visual.Show(center, facing, tilt, extraHold);
+    }
+
     public void ShowExplosion(PackedScene scene, Vector3 center, float radius)
     {
         SpawnExplosion(scene, center, radius);

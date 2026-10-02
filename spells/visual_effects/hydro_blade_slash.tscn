@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://spells/visual_effects/SlashVisual.cs" id="1_slash"]
+[ext_resource type="Shader" path="res://spells/visual_effects/slash.gdshader" id="2_shader"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_slash"]
+size = Vector2(1.9, 0.12)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_slash"]
+shader = ExtResource("2_shader")
+shader_parameter/color = Color(0.3, 0.65, 1, 0.85)
+
+[node name="HydroBladeSlash" type="Node3D" node_paths=PackedStringArray("Blade")]
+script = ExtResource("1_slash")
+Blade = NodePath("Blade")
+
+[node name="Blade" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("QuadMesh_slash")
+material_override = SubResource("ShaderMaterial_slash")
