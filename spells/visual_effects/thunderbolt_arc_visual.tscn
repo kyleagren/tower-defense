@@ -3,8 +3,8 @@
 [ext_resource type="Script" uid="uid://dhtwyt27whfd0" path="res://spells/visual_effects/ArcVisual.cs" id="1_arc"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_thunderbolt"]
-top_radius = 0.12
-bottom_radius = 0.12
+top_radius = 0.16
+bottom_radius = 0.16
 height = 1.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_thunderbolt"]
@@ -16,7 +16,7 @@ emission_energy_multiplier = 3.0
 [node name="ThunderboltArcVisual" type="Node3D"]
 script = ExtResource("1_arc")
 Lifetime = 0.25
-SegmentCount = 8
-JitterAmount = 0.6
+SegmentCount = 12
+JitterAmount = 1.0
 SegmentMesh = SubResource("CylinderMesh_thunderbolt")
 SegmentMaterial = SubResource("StandardMaterial3D_thunderbolt")
