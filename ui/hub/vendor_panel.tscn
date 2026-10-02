@@ -5,7 +5,7 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel_bg"]
 bg_color = Color(0.12, 0.12, 0.12, 1)
 
-[node name="VendorPanel" type="Control" node_paths=PackedStringArray("GoldLabel", "ForSaleList", "BuybackList")]
+[node name="VendorPanel" type="Control" node_paths=PackedStringArray("GoldLabel", "RerollButton", "ForSaleList", "BuybackList")]
 visible = false
 layout_mode = 3
 anchors_preset = -1
@@ -15,6 +15,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_vendorpanel")
 GoldLabel = NodePath("Panel/MarginContainer/VBoxContainer/GoldLabel")
+RerollButton = NodePath("Panel/MarginContainer/RerollButton")
 ForSaleList = NodePath("Panel/MarginContainer/VBoxContainer/Tabs/For Sale/ForSaleList")
 BuybackList = NodePath("Panel/MarginContainer/VBoxContainer/Tabs/Buyback/BuybackList")
 
@@ -74,3 +75,9 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
+
+[node name="RerollButton" type="Button" parent="Panel/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+text = "Reroll (1g)"

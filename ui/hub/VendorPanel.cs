@@ -2,7 +2,8 @@ using Godot;
 using System;
 
 // The vendor. Two tabs - items currently for sale, and a buyback list of whatever's been sold
-// this hub visit - both regenerated fresh every time the hub loads. Nothing here persists across a
+// this hub visit - both regenerated fresh every time the hub loads, and the stock rerollable for
+// GameRules.VendorRerollGoldCost. Nothing here persists across a
 // hub departure/return, deliberately: the hub scene fully reloads each visit, so regenerating falls
 // out for free. The crafting slot is the opposite case and does persist, since losing an item
 // parked there to a crash would be real loss. Buying and buying back both spend
@@ -15,6 +16,7 @@ public partial class VendorPanel : Control
     private const int StockSize = 5;
 
     [Export] public Label GoldLabel { get; private set; }
+    [Export] public Button RerollButton { get; private set; }
     [Export] public VBoxContainer ForSaleList { get; private set; }
     [Export] public VBoxContainer BuybackList { get; private set; }
 
@@ -28,10 +30,9 @@ public partial class VendorPanel : Control
 
     public override void _Ready()
     {
-        for (int i = 0; i < StockSize; i++)
-        {
-            _stock.Add(LootGenerator.GenerateRandomDrop());
-        }
+        RollStock();
+        RerollButton.Text = $"Reroll ({GameRules.VendorRerollGoldCost}g)";
+        RerollButton.Pressed += Reroll;
 
         ItemDragController.Instance.RegisterSellTarget(this, Sell);
         ItemDragController.Instance.RegisterQuickMoveTarget(
@@ -100,6 +101,32 @@ public partial class VendorPanel : Control
         Refresh();
     }
 
+    // A full StockSize of new items, refilling any already bought.
+    private void RollStock()
+    {
+        _stock.Clear();
+
+        for (int i = 0; i < StockSize; i++)
+        {
+            _stock.Add(LootGenerator.GenerateRandomDrop());
+        }
+    }
+
+    // Saved at once, like any gold trade - though only the gold persists; the stock is per hub visit.
+    private void Reroll()
+    {
+        PlayerProfile profile = PlayerProfiles.Local;
+
+        if (!profile.TrySpendGold(GameRules.VendorRerollGoldCost))
+        {
+            return;
+        }
+
+        RollStock();
+        profile.CommitChange(saveNow: true);
+        Refresh();
+    }
+
     // Gold in, item into Buyback for the same price - no markup either way, same "keep it simple
     // for now" call as the crafting table's own gold costs.
     private void Sell(Item item)
@@ -119,6 +146,7 @@ public partial class VendorPanel : Control
         int focusedIndex = hadRowFocus ? focused.GetIndex() : -1;
 
         GoldLabel.Text = $"Gold: {PlayerProfiles.Local.Data.Gold}";
+        RerollButton.Disabled = PlayerProfiles.Local.Data.Gold < GameRules.VendorRerollGoldCost;
         RefreshForSale();
         RefreshBuyback();
 
