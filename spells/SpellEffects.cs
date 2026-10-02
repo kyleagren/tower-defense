@@ -91,7 +91,7 @@ public partial class SpellEffects : Node
     {
         _projectileCount++;
         projectile.ReplicaId = _projectileCount;
-        Rpc(MethodName.ReceiveProjectileLaunched, _projectileCount, scene.ResourcePath, projectile.GlobalTransform, projectile.Speed, projectile.Radius);
+        Rpc(MethodName.ReceiveProjectileLaunched, _projectileCount, scene.ResourcePath, projectile.GlobalTransform, projectile.Speed, projectile.Radius, projectile.Length, projectile.Crosswise);
     }
 
     public void TurnProjectile(Projectile projectile)
@@ -105,10 +105,10 @@ public partial class SpellEffects : Node
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceiveProjectileLaunched(int id, string scenePath, Transform3D transform, float speed, float radius)
+    private void ReceiveProjectileLaunched(int id, string scenePath, Transform3D transform, float speed, float radius, float length, bool crosswise)
     {
         Projectile copy = GD.Load<PackedScene>(scenePath).Instantiate<Projectile>();
-        copy.InitializeCopy(speed, radius);
+        copy.InitializeCopy(speed, radius, length, crosswise);
         _level.LevelRoot.AddChild(copy);
         copy.GlobalTransform = transform;
         _projectileCopies[id] = copy;

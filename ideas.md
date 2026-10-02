@@ -24,7 +24,7 @@ The more I think about it the more I'm fairly confident that enemies will need t
 - **Force Field** - protects any rituals in a set area, causing enemies that attack those rituals to be knocked back and take lightning damage.
 - **Thunderbolt** - a heavy damage strike from above targeting a single enemy.
 - **Tesla Coil** - Every so often, the ritual "activates" arcing damage out from itself to enemies in the vicinity. Long cooldown.
-- A spell that calls down a lightning strike on every enemy in an area that is already affected by an electric status.
+- **Lightning Strike** - A spell that calls down a lightning strike on every enemy in an area that is already affected by an electric status.
 
 ## Water
 

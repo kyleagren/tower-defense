@@ -8,6 +8,9 @@ public partial class Projectile : Area3D
 
     public DamagePacket Damage { get; private set; }
     public float Radius { get; private set; }
+    // 0 for a round projectile; see ProjectileCastData.
+    public float Length { get; private set; }
+    public bool Crosswise { get; private set; }
     public float AreaMultiplier { get; private set; }
     public float RagdollForce { get; private set; }
     public int ChainCount { get; private set; }
@@ -53,6 +56,8 @@ public partial class Projectile : Area3D
         Damage = context.Damage;
         AreaMultiplier = context.Area?.Multiplier.Value ?? 1f;
         Radius = context.Projectile.Radius * AreaMultiplier;
+        Length = context.Projectile.Length * AreaMultiplier;
+        Crosswise = context.Projectile.Crosswise;
         RagdollForce = context.RagdollForce.Value;
         ChainCount = context.Chain?.ChainCount ?? 0;
         ChainRange = context.Chain?.ChainRange ?? 0f;
@@ -69,11 +74,13 @@ public partial class Projectile : Area3D
 
     // Another machine's view of a projectile the host fired: it only flies, turned and ended by the
     // host, and never hits anything itself.
-    public void InitializeCopy(float speed, float radius)
+    public void InitializeCopy(float speed, float radius, float length, bool crosswise)
     {
         _isCopy = true;
         _speed = speed;
         Radius = radius;
+        Length = length;
+        Crosswise = crosswise;
         Monitoring = false;
     }
 
@@ -81,13 +88,25 @@ public partial class Projectile : Area3D
     {
         _effects = LevelContext.Current.SpellEffects;
         BodyEntered += OnBodyEntered;
-        BodyMesh.Scale = Vector3.One * Radius;
 
         // A fresh shape per projectile: the one in the projectile scene is shared across every
         // instance. Sizing the shape is preferred over scaling the CollisionShape3D node, which
-        // Godot advises against. Scaling is uniform on all axes, so a future non-round projectile (an
-        // elongated Ice Spear) needs its own formula here.
-        BodyCollision.Shape = new SphereShape3D { Radius = Radius };
+        // Godot advises against.
+        if (Length <= 0f)
+        {
+            BodyMesh.Scale = Vector3.One * Radius;
+            BodyCollision.Shape = new SphereShape3D { Radius = Radius };
+        }
+        else
+        {
+            // The mesh and capsule are both authored along local Y; this turns that axis onto the
+            // flight direction (-Z), or across it onto X.
+            Basis axis = Crosswise ? new Basis(Vector3.Back, Mathf.Pi / 2f) : new Basis(Vector3.Right, -Mathf.Pi / 2f);
+            BodyMesh.Basis = axis * Basis.FromScale(new Vector3(Radius, Length, Radius));
+            BodyCollision.Basis = axis;
+            // A capsule's height counts its rounded ends, so it can't be shorter than its width.
+            BodyCollision.Shape = new CapsuleShape3D { Radius = Radius, Height = Mathf.Max(Length, Radius * 2f) };
+        }
     }
 
     public override void _PhysicsProcess(double delta)

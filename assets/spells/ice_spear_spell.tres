@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="IceSpearSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/IceSpearSpell.cs" id="1_icespear"]
+[ext_resource type="PackedScene" path="res://projectiles/ice_spear_projectile.tscn" id="2_projectile"]
+
+[resource]
+script = ExtResource("1_icespear")
+WheelOrder = 10
+ProjectileScene = ExtResource("2_projectile")
