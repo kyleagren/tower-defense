@@ -39,8 +39,7 @@ public partial class Ritual : Node3D, IDamageable
     private bool _effectOngoing;
     private MeshInstance3D _rangeIndicator;
     private ResonanceOverlay _resonanceOverlay;
-    // Seconds until a received pulse casts, below 0 for none waiting; and the target of the Ritual
-    // whose cast sent it.
+    // Seconds until a received pulse casts, below 0 for none waiting; and the enemy whose hit sent it.
     private float _pendingPulse = -1f;
     private Enemy _pulseSource;
     // Where the source's target was when a pulse arrived, for aiming at it if it has since died.
@@ -399,6 +398,7 @@ public partial class Ritual : Node3D, IDamageable
             AimSpawnPointAt(_pulseAim.Value);
         }
 
+        context.ResonancePulse = new ResonancePulse { Origin = GlobalPosition, Caster = this };
         effect.Cast(context, SpawnPoint, this);
 
         if (effect.IsOngoing)
@@ -412,11 +412,9 @@ public partial class Ritual : Node3D, IDamageable
             _spellInstance.StartCast(context.ResolvedCastTime, context.ResolvedCooldown);
             BroadcastRecovery(context.ResolvedCastTime + context.ResolvedCooldown, ongoing: false);
         }
-
-        PulseResonantNeighbours();
     }
 
-    // A short beat between a cast and the Resonant casts it sets off, so a chain reads as a ripple.
+    // A short beat between a hit and the Resonant casts it sets off, so a chain reads as a ripple.
     private const float ResonanceStagger = 0.1f;
 
     public bool IsManual => _spellInstance != null && ResolveWithOwner().Trigger?.Manual == true;
@@ -456,14 +454,22 @@ public partial class Ritual : Node3D, IDamageable
         }
     }
 
-    // Host only. Every other Resonant Ritual within its own resonance radius of this one hears the cast.
-    private void PulseResonantNeighbours()
+    // Host only. The first hit a cast lands reaches every other Resonant Ritual within its own
+    // resonance radius of where the cast came from, aimed at the enemy that was hit.
+    public static void PulseResonantNeighbours(ResonancePulse pulse, Enemy hitEnemy)
     {
-        foreach (Ritual ritual in _level.Rituals.Active)
+        if (pulse.Sent)
         {
-            if (ritual != this && ritual.HearsCastAt(GlobalPosition))
+            return;
+        }
+
+        pulse.Sent = true;
+
+        foreach (Ritual ritual in LevelContext.Current.Rituals.Active)
+        {
+            if (ritual != pulse.Caster && ritual.HearsCastAt(pulse.Origin))
             {
-                ritual.ReceivePulse(_currentTarget);
+                ritual.ReceivePulse(hitEnemy);
             }
         }
     }
@@ -480,7 +486,7 @@ public partial class Ritual : Node3D, IDamageable
     }
 
     // Dropped while the Ritual can't cast or already has one waiting - never queued.
-    private void ReceivePulse(Enemy sourceTarget)
+    private void ReceivePulse(Enemy hitEnemy)
     {
         if (_disabled || !_spellInstance.CanCast || _pendingPulse >= 0f)
         {
@@ -488,8 +494,8 @@ public partial class Ritual : Node3D, IDamageable
         }
 
         _pendingPulse = ResonanceStagger;
-        _pulseSource = sourceTarget;
-        _pulseSourcePoint = sourceTarget != null ? sourceTarget.AimPoint : GlobalPosition;
+        _pulseSource = hitEnemy;
+        _pulseSourcePoint = hitEnemy.AimPoint;
     }
 
     private void TickPendingPulse(SpellCastContext context, float delta)
@@ -510,8 +516,8 @@ public partial class Ritual : Node3D, IDamageable
         {
             _currentTarget = PulseTarget(context);
 
-            // Nothing in range to hit: still reach toward the source's target - a projectile or beam
-            // along that line, a ground spell onto the nearest ground in range of it.
+            // Nothing in range to hit: still reach toward the enemy that was hit - a projectile or
+            // beam along that line, a ground spell onto the nearest ground in range of it.
             if (_currentTarget == null && _pulseSource != null)
             {
                 Vector3 toward = IsInstanceValid(_pulseSource) && !_pulseSource.IsDead ? _pulseSource.AimPoint : _pulseSourcePoint;
@@ -546,8 +552,8 @@ public partial class Ritual : Node3D, IDamageable
         return hit.Count == 0 ? null : (Vector3)hit["position"];
     }
 
-    // The source's target if this Ritual can reach and see it, otherwise the enemy in its own range
-    // nearest that target. With neither, the cast still goes off - and is wasted.
+    // The enemy that was hit if this Ritual can reach and see it, otherwise the enemy in its own range
+    // nearest it. With neither, the cast still goes off - and is wasted.
     private Enemy PulseTarget(SpellCastContext context)
     {
         Enemy source = _pulseSource != null && IsInstanceValid(_pulseSource) && !_pulseSource.IsDead ? _pulseSource : null;

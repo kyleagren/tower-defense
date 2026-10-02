@@ -9,6 +9,7 @@ public readonly struct SpellHit
     public IReadOnlyList<OnHitRune> OnHitRunes { get; init; }
     public IReadOnlyList<Tag> SpellTags { get; init; }
     public Attribution Attribution { get; init; }
+    public ResonancePulse ResonancePulse { get; init; }
 
     // How every spell damage site builds its hit, so none of them can drop the runes or the credit.
     public Hit CreateHit(DamagePacket damage, Vector3 ragdollImpulse) =>

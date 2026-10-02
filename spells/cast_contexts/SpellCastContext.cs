@@ -106,9 +106,12 @@ public class SpellCastContext
     // Whose cast this is - stamped by the Ritual that resolved it, and carried on every hit it deals.
     public Attribution Attribution;
 
+    // Stamped fresh by the Ritual for each cast.
+    public ResonancePulse ResonancePulse;
+
     // Bundled so a damage site passes one value instead of threading the runes, the tags and the
     // attribution separately through Projectile, ChainResolver and every cast effect.
-    public SpellHit SpellHit => new SpellHit { OnHitRunes = OnHitRunes, SpellTags = SpellTags, Attribution = Attribution };
+    public SpellHit SpellHit => new SpellHit { OnHitRunes = OnHitRunes, SpellTags = SpellTags, Attribution = Attribution, ResonancePulse = ResonancePulse };
 
     // Folds an owner's equipment bonuses into this context, once, during resolve. Simple stats go
     // into the same ScaledStat.Increased fields Runes use, which equipment and Runes legitimately

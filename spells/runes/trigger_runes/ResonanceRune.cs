@@ -1,8 +1,9 @@
 using Godot;
 
-// Never casts on its own: casts whenever another Ritual - any player's - casts within its resonance
-// radius, aimed at that Ritual's target. Its own cooldown still applies, so a pulse during it is
-// dropped, and each Ritual fires at most once per cooldown however a cluster cascades.
+// Never casts on its own: casts whenever another Ritual's cast - any player's - lands its first hit,
+// if that Ritual is within its resonance radius, aimed at the enemy hit. Its own cooldown still
+// applies, so a pulse during it is dropped, and each Ritual fires at most once per cooldown however
+// a cluster cascades.
 public abstract partial class ResonanceRune : TriggerRune
 {
     [Export] public float CooldownAdded { get; private set; }

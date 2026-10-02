@@ -1,6 +1,6 @@
 // Set by a trigger rune: the Ritual never casts on its own, only when pulsed - by a player pressing
-// interact on it (Manual activation), or by another Ritual casting within its resonance radius
-// (the Resonance runes).
+// interact on it (Manual activation), or by the first hit of a cast from another Ritual within its
+// resonance radius (the Resonance runes).
 public class TriggerCastData
 {
     public bool Manual;
