@@ -7,5 +7,5 @@ public partial class LowestHealthTargetingRune : TargetingRune
 
     protected override TargetPriority Priority => TargetPriority.LowestHealth;
 
-    public override string Description => "This ritual targets the enemy with the least health.";
+    protected override string TargetingDescription => "This ritual targets the enemy with the least health.";
 }

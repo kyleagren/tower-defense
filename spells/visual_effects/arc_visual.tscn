@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://1ph32tsvwkvn"]
 
-[ext_resource type="Script" uid="uid://dhtwyt27whfd0" path="res://visual_effects/spells/ArcVisual.cs" id="1_arc"]
+[ext_resource type="Script" uid="uid://dhtwyt27whfd0" path="res://spells/visual_effects/ArcVisual.cs" id="1_arc"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_arc"]
 top_radius = 0.05

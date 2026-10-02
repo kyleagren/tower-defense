@@ -84,9 +84,12 @@ public class SpellCastContext
     // Which Status a HasStatus priority looks for; null takes any.
     public Tag? TargetStatus;
 
-    // A Resonant Ritual with a targeting rune picks its own target when pulsed, rather than reaching
-    // for the enemy the pulse came from.
-    public bool TargetPriorityFromRune;
+    // A Resonant Ritual with one picks its own target when pulsed, rather than reaching for the enemy
+    // the pulse came from.
+    public TargetingRune TargetingRune;
+
+    // The enemy this cast was aimed at, set per cast by whatever picked it.
+    public Enemy ChosenTarget;
 
     // Read by the Ritual itself rather than by the cast pipeline: the one flag here that changes how
     // the Ritual is treated instead of what its spell does.
@@ -118,7 +121,15 @@ public class SpellCastContext
 
     // Bundled so a damage site passes one value instead of threading the runes, the tags and the
     // attribution separately through Projectile, ChainResolver and every cast effect.
-    public SpellHit SpellHit => new SpellHit { OnHitRunes = OnHitRunes, SpellTags = SpellTags, Attribution = Attribution, ResonancePulse = ResonancePulse };
+    public SpellHit SpellHit => new SpellHit
+    {
+        OnHitRunes = OnHitRunes,
+        SpellTags = SpellTags,
+        Attribution = Attribution,
+        ResonancePulse = ResonancePulse,
+        ChosenTarget = ChosenTarget,
+        TargetingRune = TargetingRune
+    };
 
     // Folds an owner's equipment bonuses into this context, once, during resolve. Simple stats go
     // into the same ScaledStat.Increased fields Runes use, which equipment and Runes legitimately

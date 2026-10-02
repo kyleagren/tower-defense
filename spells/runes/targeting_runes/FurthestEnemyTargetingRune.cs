@@ -7,5 +7,5 @@ public partial class FurthestEnemyTargetingRune : TargetingRune
 
     protected override TargetPriority Priority => TargetPriority.FurthestFromRitual;
 
-    public override string Description => "This ritual targets the enemy furthest from it, still in range.";
+    protected override string TargetingDescription => "This ritual targets the enemy furthest from it, still in range.";
 }

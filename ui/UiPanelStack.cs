@@ -11,6 +11,7 @@ public static class UiPanelStack
     private static readonly List<Control> _open = new();
     private static readonly Dictionary<Control, Action> _closers = new();
     private static readonly HashSet<Control> _capturingMouse = new();
+    private static readonly HashSet<Control> _blockingMovement = new();
 
     // Holds for the whole session: InputDevice outlives every scene.
     static UiPanelStack()
@@ -18,7 +19,7 @@ public static class UiPanelStack
         InputDevice.Changed += ApplyMouseMode;
     }
 
-    public static void Push(Control panel, Action close, bool capturesMouse = false)
+    public static void Push(Control panel, Action close, bool capturesMouse = false, bool blocksMovement = false)
     {
         _open.Remove(panel);
         _open.Add(panel);
@@ -33,6 +34,15 @@ public static class UiPanelStack
             _capturingMouse.Remove(panel);
         }
 
+        if (blocksMovement)
+        {
+            _blockingMovement.Add(panel);
+        }
+        else
+        {
+            _blockingMovement.Remove(panel);
+        }
+
         ReassignZIndices();
         ApplyMouseMode();
     }
@@ -42,6 +52,7 @@ public static class UiPanelStack
         _open.Remove(panel);
         _closers.Remove(panel);
         _capturingMouse.Remove(panel);
+        _blockingMovement.Remove(panel);
         ReassignZIndices();
         ApplyMouseMode();
     }
@@ -65,6 +76,7 @@ public static class UiPanelStack
         _open.Clear();
         _closers.Clear();
         _capturingMouse.Clear();
+        _blockingMovement.Clear();
         ApplyMouseMode();
     }
 
@@ -83,6 +95,10 @@ public static class UiPanelStack
     }
 
     public static bool AnyOpen => _open.Count > 0;
+
+    // A panel whose choice replaces the character or the level stands the character still, keyboard
+    // included - there's nowhere worth walking to mid-choice.
+    public static bool BlocksMovement => _blockingMovement.Count > 0;
 
     // A text field has focus, so the keyboard is typing rather than playing.
     public static bool IsTyping =>

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bacs6w4uhrpe1" path="res://rituals/Ritual.cs" id="1_ritual"]
 [ext_resource type="PackedScene" path="res://ui/health_bar_3d.tscn" id="9_healthbar"]
-[ext_resource type="Shader" path="res://rituals/readiness_ring.gdshader" id="10_readiness"]
+[ext_resource type="Shader" path="res://rituals/visual_effects/readiness_ring.gdshader" id="10_readiness"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_ritual"]
 top_radius = 0.35

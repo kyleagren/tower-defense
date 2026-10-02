@@ -343,6 +343,11 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     private void ResolveHit(Hit hit, bool dealerShowedNumber)
     {
+        if (hit.Spell.ChosenTarget == this && hit.Spell.TargetingRune?.BoostsHitOn(this) == true)
+        {
+            hit.Damage *= 1f + hit.Spell.TargetingRune.MoreDamageToTarget;
+        }
+
         DamagePacket amount = hit.Damage;
         bool statusConsumed = false;
         Tag? statusBefore = Status;

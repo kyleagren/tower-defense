@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" uid="uid://bwl23c7roh0b7" path="res://visual_effects/tank/RetaliationChargeCircle.cs" id="1_circle"]
-
-[node name="RetaliationChargeCircle" type="MeshInstance3D"]
-script = ExtResource("1_circle")

@@ -11,6 +11,10 @@ public readonly struct SpellHit
     public Attribution Attribution { get; init; }
     public ResonancePulse ResonancePulse { get; init; }
 
+    // Hits on ChosenTarget may land harder, if TargetingRune says so.
+    public Enemy ChosenTarget { get; init; }
+    public TargetingRune TargetingRune { get; init; }
+
     // How every spell damage site builds its hit, so none of them can drop the runes or the credit.
     public Hit CreateHit(DamagePacket damage, Vector3 ragdollImpulse) =>
         new Hit { Damage = damage, RagdollImpulse = ragdollImpulse, Attribution = Attribution, Spell = this };

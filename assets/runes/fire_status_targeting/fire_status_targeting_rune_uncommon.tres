@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="FireStatusTargetingRune" format=3]
+
+[ext_resource type="Script" path="res://spells/runes/targeting_runes/FireStatusTargetingRune.cs" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+MoreDamageToTarget = 0.125
+Rarity = 1

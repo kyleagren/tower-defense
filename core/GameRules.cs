@@ -5,6 +5,9 @@ public static class GameRules
     public const int PinnedFavoriteSlots = 8;
     public const float RitualReach = 4f;
     public const float ItemPickupReach = 3f;
+    // How far a character can walk from a station before its panel closes - past ItemPickupReach,
+    // so stepping back from the counter doesn't slam it shut.
+    public const float StationLeaveReach = 5f;
     public const int MaxPrefixAffixes = 3;
     public const int MaxSuffixAffixes = 3;
     public const int CraftingActionGoldCost = 1;

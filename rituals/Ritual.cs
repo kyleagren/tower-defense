@@ -399,6 +399,7 @@ public partial class Ritual : Node3D, IDamageable
         }
 
         context.ResonancePulse = new ResonancePulse { Origin = GlobalPosition, Caster = this };
+        context.ChosenTarget = _currentTarget;
         effect.Cast(context, SpawnPoint, this);
 
         if (effect.IsOngoing)
@@ -557,7 +558,7 @@ public partial class Ritual : Node3D, IDamageable
     // and is wasted.
     private Enemy PulseTarget(SpellCastContext context)
     {
-        if (context.TargetPriorityFromRune)
+        if (context.TargetingRune != null)
         {
             return EnemyTargeting.FindTarget(GlobalPosition, context, sightFrom: SpawnPoint.GlobalPosition);
         }

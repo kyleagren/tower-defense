@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" uid="uid://la0bxm2pelku" path="res://visual_effects/tank/VentAura.cs" id="1_aura"]
-
-[node name="VentAura" type="MeshInstance3D"]
-script = ExtResource("1_aura")

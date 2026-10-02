@@ -25,7 +25,7 @@ public partial class LevelSelectPanel : Control
         Button first = RefreshList();
         Visible = true;
         first?.GrabFocus();
-        UiPanelStack.Push(this, Close);
+        UiPanelStack.Push(this, Close, blocksMovement: true);
     }
 
     private Button RefreshList()

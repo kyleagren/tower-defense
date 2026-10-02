@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://br10xjkf1iim8"]
 
-[ext_resource type="Script" uid="uid://qjay3s1uqf2g" path="res://visual_effects/tank/ImmolateChannelVisual.cs" id="1_channel"]
+[ext_resource type="Script" uid="uid://qjay3s1uqf2g" path="res://characters/tank/visual_effects/ImmolateChannelVisual.cs" id="1_channel"]
 
 [node name="ImmolateChannelVisual" type="Node3D" unique_id=1857434129]
 script = ExtResource("1_channel")

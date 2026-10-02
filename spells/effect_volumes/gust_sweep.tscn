@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://spells/effect_volumes/GroundSweep.cs" id="1_sweep"]
-[ext_resource type="Shader" path="res://spells/effect_volumes/wind_sweep.gdshader" id="2_shader"]
+[ext_resource type="Shader" path="res://spells/visual_effects/wind_sweep.gdshader" id="2_shader"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_gust"]
 top_radius = 1.0

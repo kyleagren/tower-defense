@@ -7,5 +7,5 @@ public partial class HighestMaxHealthTargetingRune : TargetingRune
 
     protected override TargetPriority Priority => TargetPriority.HighestMaxHealth;
 
-    public override string Description => "This ritual targets the toughest enemy in range.";
+    protected override string TargetingDescription => "This ritual targets the toughest enemy in range.";
 }

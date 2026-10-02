@@ -18,7 +18,7 @@ public static class EnemyTargeting
         if (context.TargetPriority == TargetPriority.HasStatus)
         {
             Tag? wanted = context.TargetStatus;
-            bool Carries(Enemy enemy) => enemy.Status.HasValue && (wanted == null || enemy.Status == wanted);
+            bool Carries(Enemy enemy) => StatusTargetingRune.Carries(enemy, wanted);
 
             // With nothing in range carrying it, the ritual targets as normal rather than idling.
             return FindBest(RangeSquared, range, ClosestToGoal, exclude, Carries, sightFrom: sightFrom)

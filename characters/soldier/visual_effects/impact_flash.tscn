@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://cn526jlus6jer" path="res://visual_effects/soldier/ImpactFlash.cs" id="1_impact"]
+[ext_resource type="Script" uid="uid://cn526jlus6jer" path="res://characters/soldier/visual_effects/ImpactFlash.cs" id="1_impact"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_impact"]
 radius = 0.1

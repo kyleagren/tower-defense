@@ -245,9 +245,9 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         bool jumpPressed = _jumpQueued;
         _jumpQueued = false;
 
-        // A controller's sticks drive an open panel's focus instead of the character, and a keyboard
-        // typing into a text field isn't walking.
-        if (!CanMove || (UiPanelStack.AnyOpen && InputDevice.UsingController) || UiPanelStack.IsTyping)
+        // A controller's sticks drive an open panel's focus instead of the character, a keyboard
+        // typing into a text field isn't walking, and some panels stand the character still outright.
+        if (!CanMove || (UiPanelStack.AnyOpen && InputDevice.UsingController) || UiPanelStack.IsTyping || UiPanelStack.BlocksMovement)
         {
             inputDir = Vector2.Zero;
             allowJump = false;

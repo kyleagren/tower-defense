@@ -1,12 +1,11 @@
 using Godot;
 
 // Opens VendorPanel to buy, sell, and buy back items.
-public partial class VendorStation : StaticBody3D, IInteractable
+public partial class VendorStation : PanelStation
 {
-    public string GetPromptText(PlayerCharacter character) => $"Press {InputPromptHelper.GetPrompt("interact")} to shop";
+    protected override Control Panel => VendorPanel.Instance;
 
-    public void Interact(PlayerCharacter character)
-    {
-        VendorPanel.Instance.Open();
-    }
+    public override string GetPromptText(PlayerCharacter character) => $"Press {InputPromptHelper.GetPrompt("interact")} to shop";
+
+    protected override void OpenPanel(PlayerCharacter character) => VendorPanel.Instance.Open();
 }

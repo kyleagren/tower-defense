@@ -88,7 +88,7 @@ public partial class WalkingEnemy : Enemy
 
     private static readonly ShaderMaterial _shellMaterial = new()
     {
-        Shader = GD.Load<Shader>("res://enemies/electrocuted_shell.gdshader")
+        Shader = GD.Load<Shader>("uid://bg0t4d2pik7ow")
     };
 
     // How far an electrocuted enemy's model is nudged each frame.

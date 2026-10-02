@@ -7,5 +7,5 @@ public partial class MostEnemiesNearbyTargetingRune : TargetingRune
 
     protected override TargetPriority Priority => TargetPriority.MostEnemiesNearby;
 
-    public override string Description => "This ritual targets the enemy with the most others around it.";
+    protected override string TargetingDescription => "This ritual targets the enemy with the most others around it.";
 }

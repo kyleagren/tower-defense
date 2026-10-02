@@ -11,8 +11,15 @@ public abstract partial class StatusTargetingRune : TargetingRune
     // Null takes any Status.
     protected abstract Tag? Element { get; }
 
-    public override string Description =>
-        $"This ritual targets enemies with {(Element.HasValue ? $"the {Element} Status" : "any Status")} first. With none in range, it targets as normal.";
+    private string StatusName => Element.HasValue ? $"the {Element} Status" : "a Status";
+
+    protected override string TargetingDescription => $"This ritual targets enemies with {StatusName} first. With none in range, it targets as normal.";
+
+    public override string Description => $"{TargetingDescription} Deals {MoreDamageToTarget * 100f:0.#}% more damage to its target if it has {StatusName}.";
+
+    public static bool Carries(Enemy enemy, Tag? status) => enemy.Status.HasValue && (status == null || enemy.Status == status);
+
+    public override bool BoostsHitOn(Enemy target) => Carries(target, Element);
 
     public override void Apply(SpellCastContext context)
     {

@@ -46,6 +46,7 @@ public class InstantHitCastEffect : CastEffect
 
         initialTargets.Add(primary);
         targets.Add(primary);
+        context.ChosenTarget = primary;
 
         Vector3 referenceDir = primary.GlobalPosition - spawnPoint.GlobalPosition;
 

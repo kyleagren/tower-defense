@@ -7,5 +7,5 @@ public partial class ClosestEnemyTargetingRune : TargetingRune
 
     protected override TargetPriority Priority => TargetPriority.ClosestToRitual;
 
-    public override string Description => "This ritual targets the enemy closest to it.";
+    protected override string TargetingDescription => "This ritual targets the enemy closest to it.";
 }

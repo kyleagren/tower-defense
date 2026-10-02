@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cfgeac6xk7lpq" path="res://spells/LightningBoltSpell.cs" id="1_lightning"]
 [ext_resource type="Script" uid="uid://cvvsjurcqhanp" path="res://spells/effects/FrontLoadedChainDamageModifier.cs" id="2_frontloaded"]
-[ext_resource type="PackedScene" uid="uid://1ph32tsvwkvn" path="res://visual_effects/spells/arc_visual.tscn" id="3_arcvisual"]
+[ext_resource type="PackedScene" uid="uid://1ph32tsvwkvn" path="res://spells/visual_effects/arc_visual.tscn" id="3_arcvisual"]
 
 [sub_resource type="Resource" id="Resource_lightning_chainmod"]
 script = ExtResource("2_frontloaded")
