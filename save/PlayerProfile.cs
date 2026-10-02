@@ -222,6 +222,167 @@ public class PlayerProfile
     public FavoriteLoadout FavoriteNamed(string name) =>
         string.IsNullOrEmpty(name) ? null : Data.Favorites.FirstOrDefault(favorite => favorite.Name == name);
 
+    // An element's known spells in ring order: the ones the player arranged, as arranged, then the
+    // rest in authored order - so a newly learned spell lands at the end without moving the others.
+    public List<Spell> SpellRing(SpellWheelGroup group) => Data.KnownSpells
+        .Where(spell => SpellWheelGroups.Of(spell) == group)
+        .OrderBy(spell => Data.SpellOrder.IndexOf(spell) is int arranged and >= 0 ? arranged : int.MaxValue)
+        .ThenBy(spell => spell.WheelOrder)
+        .ThenBy(spell => spell.Name)
+        .ToList();
+
+    public void SetSpellRing(SpellWheelGroup group, IEnumerable<Spell> spells)
+    {
+        Data.SpellOrder = new Godot.Collections.Array<Spell>(Data.SpellOrder
+            .Where(spell => spell != null && SpellWheelGroups.Of(spell) != group)
+            .Concat(spells));
+        Save();
+    }
+
+    // One per rune known, at the highest tier owned.
+    public IEnumerable<Rune> HighestOwnedTiers => Data.KnownRunes
+        .Select(entry => entry.Rune)
+        .GroupBy(rune => rune.GetType())
+        .Select(group => group.OrderByDescending(rune => rune.Rarity).First());
+
+    // The ones the player arranged, as arranged, then the rest by name.
+    public IEnumerable<Rune> InRuneOrder(IEnumerable<Rune> runes) => runes
+        .OrderBy(RuneOrderIndex)
+        .ThenBy(rune => rune.Name);
+
+    private int RuneOrderIndex(Rune rune)
+    {
+        for (int i = 0; i < Data.RuneOrder.Count; i++)
+        {
+            if (Data.RuneOrder[i]?.GetType() == rune.GetType())
+            {
+                return i;
+            }
+        }
+
+        return int.MaxValue;
+    }
+
+    public void SetRuneOrder(IEnumerable<Rune> runes)
+    {
+        Data.RuneOrder = new Godot.Collections.Array<Rune>(runes);
+        Save();
+    }
+
+    // A spell's favorites in the order its favorites ring shows them.
+    public List<FavoriteLoadout> FavoritesOf(Spell spell) =>
+        Data.Favorites.Where(favorite => favorite.Spell == spell).ToList();
+
+    // Reorders one spell's favorites among the places they already hold in the full list, leaving
+    // every other spell's favorites where they are.
+    public void SetFavoriteOrder(Spell spell, IReadOnlyList<FavoriteLoadout> ordered)
+    {
+        int next = 0;
+
+        for (int i = 0; i < Data.Favorites.Count; i++)
+        {
+            if (Data.Favorites[i].Spell == spell)
+            {
+                Data.Favorites[i] = ordered[next++];
+            }
+        }
+
+        Save();
+    }
+
+    // False for an empty name or one another favorite already has. The pinned wheel and any token
+    // named after the favorite follow it to the new name.
+    public bool TryRenameFavorite(FavoriteLoadout favorite, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || (name != favorite.Name && FavoriteNamed(name) != null))
+        {
+            return false;
+        }
+
+        string oldName = favorite.Name;
+        favorite.Name = name;
+        RenameReferences(oldName, name);
+        Save();
+        return true;
+    }
+
+    // Its pin slot empties, and a token named after it falls back to its spell's name.
+    public void DeleteFavorite(FavoriteLoadout favorite)
+    {
+        Data.Favorites.Remove(favorite);
+        RenameReferences(favorite.Name, "");
+        Save();
+    }
+
+    private void RenameReferences(string from, string to)
+    {
+        for (int slot = 0; slot < Data.PinnedFavorites.Count; slot++)
+        {
+            if (Data.PinnedFavorites[slot] == from)
+            {
+                Data.PinnedFavorites[slot] = to;
+            }
+        }
+
+        bool tokensChanged = false;
+
+        foreach (RuneLoadout token in Data.Tokens)
+        {
+            if (token != null && token.Name == from)
+            {
+                token.Name = to;
+                tokensChanged = true;
+            }
+        }
+
+        if (tokensChanged)
+        {
+            EventBus.Instance.EmitSignal(EventBus.SignalName.TokensChanged);
+        }
+    }
+
+    // Into a slot, replacing whatever's there; a favorite already pinned elsewhere moves. Deciding
+    // what a slot holds takes charge of the wheel, so new favorites stop landing on it.
+    public void PinFavorite(FavoriteLoadout favorite, int slot)
+    {
+        int current = Data.PinnedFavorites.IndexOf(favorite.Name);
+
+        if (current == slot)
+        {
+            return;
+        }
+
+        if (current >= 0)
+        {
+            Data.PinnedFavorites[current] = "";
+        }
+
+        Data.PinnedFavorites[slot] = favorite.Name;
+        Data.PinnedWheelCustomized = true;
+        Save();
+    }
+
+    public void UnpinFavorite(FavoriteLoadout favorite)
+    {
+        int slot = Data.PinnedFavorites.IndexOf(favorite.Name);
+
+        if (slot < 0)
+        {
+            return;
+        }
+
+        Data.PinnedFavorites[slot] = "";
+        Data.PinnedWheelCustomized = true;
+        Save();
+    }
+
+    // Rearranging what's already pinned leaves auto-fill running.
+    public void SwapPins(int a, int b)
+    {
+        (Data.PinnedFavorites[a], Data.PinnedFavorites[b]) = (Data.PinnedFavorites[b], Data.PinnedFavorites[a]);
+        Save();
+    }
+
     private string UniqueFavoriteName(string name)
     {
         if (Data.Favorites.All(favorite => favorite.Name != name))

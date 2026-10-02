@@ -22,6 +22,14 @@ public partial class PlayerSaveData : Resource
     // on the pinned wheel on their own.
     [Export] public bool PinnedWheelCustomized { get; set; }
 
+    // Spells in the order the player arranged them on the Organize screen. Only the order within an
+    // element matters, since each spell has one; a spell missing from it hasn't been arranged.
+    [Export] public Godot.Collections.Array<Spell> SpellOrder { get; set; } = new();
+
+    // Runes in the order the player arranged them on the Organize screen, one per rune - whichever
+    // tier is stored, every tier of that rune takes its place.
+    [Export] public Godot.Collections.Array<Rune> RuneOrder { get; set; } = new();
+
     // The hub stash's tabs, in order. Every profile has at least one, which is free.
     [Export] public Godot.Collections.Array<StashTab> Stash { get; set; } = new();
 

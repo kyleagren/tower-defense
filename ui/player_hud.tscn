@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://ui/heat_gauge.tscn" id="11_heatgauge"]
 [ext_resource type="Script" path="res://ui/PauseMenu.cs" id="12_pausemenu"]
 [ext_resource type="Script" path="res://ui/OptionsMenu.cs" id="13_optionsmenu"]
+[ext_resource type="Script" path="res://ui/organize/OrganizePanel.cs" id="14_organizepanel"]
 
 [node name="PlayerHud" type="Node"]
 
@@ -40,8 +41,19 @@ script = ExtResource("1_itemnameplate")
 anchors_preset = -1
 PhaseIndicator = NodePath("../PhaseIndicator")
 
-[node name="CharacterSheetPanel" parent="." instance=ExtResource("9_charactersheetpanel")]
+[node name="CharacterSheetPanel" parent="." node_paths=PackedStringArray("Organize") instance=ExtResource("9_charactersheetpanel")]
 anchors_preset = -1
+Organize = NodePath("../OrganizePanel")
+
+[node name="OrganizePanel" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("14_organizepanel")
 
 [node name="PauseMenu" type="Control" parent="." node_paths=PackedStringArray("Options")]
 process_mode = 3

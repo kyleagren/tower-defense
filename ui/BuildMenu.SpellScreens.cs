@@ -55,10 +55,7 @@ public partial class BuildMenu
         SetScreen(Screen.SpellRing);
         _openGroup = group;
         _ringSpells.Clear();
-        _ringSpells.AddRange(KnownSpells
-            .Where(spell => SpellWheelGroups.Of(spell) == group)
-            .OrderBy(spell => spell.WheelOrder)
-            .ThenBy(spell => spell.Name));
+        _ringSpells.AddRange(PlayerProfiles.Local.SpellRing(group));
 
         int highlighted = _ringSpells.IndexOf(highlight);
 

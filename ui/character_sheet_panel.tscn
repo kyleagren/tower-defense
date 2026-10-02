@@ -5,7 +5,7 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel_bg"]
 bg_color = Color(0.12, 0.12, 0.12, 1)
 
-[node name="CharacterSheetPanel" type="Control" node_paths=PackedStringArray("NameLabel", "HealthLabel", "ArmorLabel", "ArmorReductionLabel", "ShieldLabel", "StatsList")]
+[node name="CharacterSheetPanel" type="Control" node_paths=PackedStringArray("NameLabel", "HealthLabel", "ArmorLabel", "ArmorReductionLabel", "ShieldLabel", "StatsList", "SpellWheelsButton", "FavoritesButton", "RunesButton")]
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -20,6 +20,9 @@ ArmorLabel = NodePath("MarginContainer/VBoxContainer/TopSection/StatsRow/ArmorCo
 ArmorReductionLabel = NodePath("MarginContainer/VBoxContainer/TopSection/StatsRow/ArmorColumn/ArmorReductionLabel")
 ShieldLabel = NodePath("MarginContainer/VBoxContainer/TopSection/StatsRow/ShieldColumn/ShieldLabel")
 StatsList = NodePath("MarginContainer/VBoxContainer/ScrollContainer/StatsList")
+SpellWheelsButton = NodePath("MarginContainer/VBoxContainer/OrganizeRow/SpellWheelsButton")
+FavoritesButton = NodePath("MarginContainer/VBoxContainer/OrganizeRow/FavoritesButton")
+RunesButton = NodePath("MarginContainer/VBoxContainer/OrganizeRow/RunesButton")
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
@@ -105,3 +108,29 @@ horizontal_scroll_mode = 0
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
+
+[node name="OrganizeSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="OrganizeLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Organize"
+
+[node name="OrganizeRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SpellWheelsButton" type="Button" parent="MarginContainer/VBoxContainer/OrganizeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Spell Wheels"
+
+[node name="FavoritesButton" type="Button" parent="MarginContainer/VBoxContainer/OrganizeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Favorites"
+
+[node name="RunesButton" type="Button" parent="MarginContainer/VBoxContainer/OrganizeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Runes"

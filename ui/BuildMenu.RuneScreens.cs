@@ -34,11 +34,6 @@ public partial class BuildMenu
 
     private static IEnumerable<Rune> KnownRunes => PlayerProfiles.Local.Data.KnownRunes.Select(entry => entry.Rune);
 
-    // One per rune type, at the highest tier owned - the tier wheel is what picks a lower one.
-    private static IEnumerable<Rune> OwnedRunes => KnownRunes
-        .GroupBy(rune => rune.GetType())
-        .Select(group => group.OrderByDescending(rune => rune.Rarity).First());
-
     private void PlaceRuneWheelAround(int socket)
     {
         Vector2 center = RitualInscription.SlotOffset(SocketSlot(socket));
@@ -62,11 +57,9 @@ public partial class BuildMenu
         RuneInfoPanel.GrowVertical = above ? GrowDirection.Begin : GrowDirection.End;
     }
 
-    private static string BucketName(Tag bucket) => bucket == Tag.AoE ? "Area" : bucket.ToString();
-
-    private IEnumerable<Rune> CompatibleRunesIn(Tag bucket) => OwnedRunes
-        .Where(rune => rune.Tags.Contains(bucket) && rune.IsCompatibleWith(_build.Spell))
-        .OrderBy(rune => rune.Name);
+    // At the highest tier owned - the tier wheel is what picks a lower one - in the player's rune order.
+    private IEnumerable<Rune> CompatibleRunesIn(Tag bucket) => PlayerProfiles.Local.InRuneOrder(PlayerProfiles.Local.HighestOwnedTiers
+        .Where(rune => rune.Tags.Contains(bucket) && rune.IsCompatibleWith(_build.Spell)));
 
     // Whether a rune can go in the socket being filled, beside what the other sockets hold.
     private bool IsPickable(Rune rune) =>
@@ -81,7 +74,7 @@ public partial class BuildMenu
 
         RuneWheel.SetItems(RuneTags.Buckets.Select(bucket => new RadialWheelItem
         {
-            Label = BucketName(bucket),
+            Label = RuneTags.BucketName(bucket),
             Color = _bucketColor,
             Enabled = CompatibleRunesIn(bucket).Any(IsPickable)
         }).ToList(), highlighted);
@@ -170,7 +163,7 @@ public partial class BuildMenu
             case Screen.BucketRing when slot >= 0:
                 Tag bucket = RuneTags.Buckets[slot];
                 int runeCount = CompatibleRunesIn(bucket).Count();
-                ShowRunePanel(BucketName(bucket), "", runeCount == 1 ? "1 rune" : $"{runeCount} runes");
+                ShowRunePanel(RuneTags.BucketName(bucket), "", runeCount == 1 ? "1 rune" : $"{runeCount} runes");
                 PreviewSocket(null);
                 break;
 

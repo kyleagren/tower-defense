@@ -14,15 +14,24 @@ public partial class CharacterSheetPanel : Control
     [Export] public Label ArmorReductionLabel { get; private set; }
     [Export] public Label ShieldLabel { get; private set; }
     [Export] public VBoxContainer StatsList { get; private set; }
+    [Export] public OrganizePanel Organize { get; private set; }
+    [Export] public Button SpellWheelsButton { get; private set; }
+    [Export] public Button FavoritesButton { get; private set; }
+    [Export] public Button RunesButton { get; private set; }
 
     public override void _Ready()
     {
         EventBus.Instance.InventoryChanged += RefreshStatsList;
+        SpellWheelsButton.Pressed += () => Organize.Open(OrganizePanel.Tab.SpellWheels);
+        FavoritesButton.Pressed += () => Organize.Open(OrganizePanel.Tab.Favorites);
+        RunesButton.Pressed += () => Organize.Open(OrganizePanel.Tab.Runes);
+        Organize.Closed += OnOrganizeClosed;
     }
 
     public override void _ExitTree()
     {
         EventBus.Instance.InventoryChanged -= RefreshStatsList;
+        Organize.Closed -= OnOrganizeClosed;
     }
 
     public override void _Process(double delta)
@@ -72,12 +81,23 @@ public partial class CharacterSheetPanel : Control
         RefreshTopSection();
         RefreshStatsList();
         UiPanelStack.Push(this, Close);
+        SpellWheelsButton.GrabFocus();
     }
 
+    // The Organize panel opens from here, so it closes with it.
     private void Close()
     {
         Visible = false;
         UiPanelStack.Pop(this);
+        Organize.Close();
+    }
+
+    private void OnOrganizeClosed()
+    {
+        if (Visible)
+        {
+            SpellWheelsButton.GrabFocus();
+        }
     }
 
     private void RefreshTopSection()

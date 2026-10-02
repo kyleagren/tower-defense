@@ -19,6 +19,9 @@ public static class RuneTags
     public static IReadOnlyList<Tag> Buckets => _buckets;
 
     public static bool IsBucket(Tag tag) => Array.IndexOf(_buckets, tag) >= 0;
+
+    // The Area bucket reuses Tag.AoE rather than a near-duplicate tag, so it's named here.
+    public static string BucketName(Tag bucket) => bucket == Tag.AoE ? "Area" : bucket.ToString();
     public static bool IsRuneOnly(Tag tag) => Array.IndexOf(_runeOnly, tag) >= 0;
 
     public static void Validate(Rune rune)
