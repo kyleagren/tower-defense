@@ -18,6 +18,20 @@ public abstract partial class Item : Resource
 
     public abstract EquipmentSlot Slot { get; }
 
+    public virtual Vector2I GridSize => GridSizeOf(Slot);
+
+    // The cells an item for this slot covers in Inventory and the stash, as columns by rows - also
+    // the size of that slot on the paper doll.
+    public static Vector2I GridSizeOf(EquipmentSlot slot) => slot switch
+    {
+        EquipmentSlot.Weapon => new Vector2I(2, 4),
+        EquipmentSlot.Chest or EquipmentSlot.Legplates => new Vector2I(2, 3),
+        EquipmentSlot.Helmet or EquipmentSlot.Gloves or EquipmentSlot.Boots or EquipmentSlot.Relic => new Vector2I(2, 2),
+        EquipmentSlot.Belt => new Vector2I(2, 1),
+        EquipmentSlot.RuneTome => new Vector2I(1, 2),
+        _ => Vector2I.One
+    };
+
     // The vendor's buy/sell/buyback price, for now just the number of mods rolled - simple stand-in
     // until pricing needs to account for rarity, tier, or anything else.
     public virtual int SaleValue => Affixes.Count;

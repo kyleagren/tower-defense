@@ -23,7 +23,6 @@ public partial class SaveManager : Node
     private const string OldExtension = ".tres";
     private const string LegacySavePath = "user://save_data.tres";
     private const string SpellsDirectory = "res://assets/spells/";
-    private const int InventorySize = 40;
     private const int MaxDailyBackups = 30;
     private const float SaveDebounceSeconds = 1f;
 
@@ -338,17 +337,17 @@ public partial class SaveManager : Node
 
     private static void EnsureDefaultContent(PlayerSaveData data)
     {
-        // A list entry that couldn't be loaded leaves a gap (SaveCodec); only the slot-based lists,
-        // Inventory and Tokens, have any use for one.
+        // A list entry that couldn't be loaded leaves a gap (SaveCodec); only Tokens, which is
+        // slot-based, has any use for one.
         RemoveGaps(data.KnownSpells);
         RemoveGaps(data.KnownRunes);
         RemoveGaps(data.Favorites);
         RemoveGaps(data.Stash);
 
-        EnsureInventorySize(data);
         EnsureTokenSlots(data);
         EnsurePinnedFavorites(data);
         EnsureStash(data);
+        SettleGrids(data);
 
         foreach (string path in ListResourceFiles(SpellsDirectory))
         {
@@ -374,18 +373,8 @@ public partial class SaveManager : Node
         }
     }
 
-    // Inventory is a fixed-size array so a player-chosen slot position is meaningful and stable -
-    // pad it out to InventorySize with empty slots rather than growing it as items are added.
-    private static void EnsureInventorySize(PlayerSaveData data)
-    {
-        while (data.Inventory.Count < InventorySize)
-        {
-            data.Inventory.Add(null);
-        }
-    }
-
-    // Fixed-size like Inventory, for the same reason - "slot 2" is a meaningful, stable position
-    // (the token bar UI), not just list membership.
+    // Fixed-size, since "slot 2" is a meaningful, stable position (the token bar UI), not just list
+    // membership.
     private static void EnsureTokenSlots(PlayerSaveData data)
     {
         while (data.Tokens.Count < GameRules.MaxTokens)
@@ -410,17 +399,37 @@ public partial class SaveManager : Node
         }
     }
 
-    // Every profile has one free tab, and every tab all its slots.
+    // Every profile has one free tab.
     private static void EnsureStash(PlayerSaveData data)
     {
         if (data.Stash.Count == 0)
         {
             data.Stash.Add(StashTab.CreateEmpty("Tab 1"));
         }
+    }
+
+    // Anything that can't stay where it's saved - an item recovered from quarantine, which comes back
+    // off the grid, or one a size change left overlapping - moves to the first space it fits:
+    // Inventory, then the stash. With no room anywhere it gets a new free tab rather than being lost.
+    private static void SettleGrids(PlayerSaveData data)
+    {
+        List<Item> unplaced = data.InventoryGrid.RemoveMisplaced();
 
         foreach (StashTab tab in data.Stash)
         {
-            tab.PadToSlotCount();
+            unplaced.AddRange(tab.Grid.RemoveMisplaced());
+        }
+
+        foreach (Item item in unplaced)
+        {
+            if (data.InventoryGrid.TryAdd(item) || data.Stash.Any(tab => tab.Grid.TryAdd(item)))
+            {
+                continue;
+            }
+
+            StashTab overflow = StashTab.CreateEmpty($"Tab {data.Stash.Count + 1}");
+            overflow.Grid.TryAdd(item);
+            data.Stash.Add(overflow);
         }
     }
 
@@ -469,16 +478,9 @@ public partial class SaveManager : Node
 
             Weapon weapon = LootGenerator.GenerateStarterWeapon(character);
 
-            if (!data.GetOrCreateLoadout(character).TryEquip(weapon))
+            if (!data.GetOrCreateLoadout(character).TryEquip(weapon) && !data.InventoryGrid.TryAdd(weapon))
             {
-                int emptySlot = data.Inventory.IndexOf(null);
-
-                if (emptySlot < 0)
-                {
-                    continue;
-                }
-
-                data.Inventory[emptySlot] = weapon;
+                continue;
             }
 
             data.StarterWeaponsGiven.Add(character);

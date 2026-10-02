@@ -60,14 +60,14 @@ public static class SaveFile
         return SaveCodec.DecodeProfile(profile, quarantine);
     }
 
-    // An item goes to the first empty Inventory slot, wherever it came from. Anything else goes back
-    // where it came from, never over something already there - except a plain field, whose saved
-    // value was only ever a stand-in default.
+    // An item goes back into Inventory, wherever it came from. Anything else goes back where it came
+    // from, never over something already there - except a plain field, whose saved value was only ever
+    // a stand-in default.
     private static bool TryPutBack(JsonObject profile, QuarantineEntry entry)
     {
         if (entry.IsItem)
         {
-            return profile[nameof(PlayerSaveData.Inventory)] is JsonArray inventory && TryFillGap(inventory, entry.Data);
+            return profile[nameof(PlayerSaveData.Inventory)] is JsonObject inventory && PutOffGrid(inventory, entry.Data);
         }
 
         if (entry.Field == null)
@@ -88,8 +88,7 @@ public static class SaveFile
                 return true;
             }
 
-            // Only the slot-based lists (Inventory, Tokens) keep gaps; in any other, position never
-            // mattered.
+            // Only Tokens keeps gaps; in any other list, position never mattered.
             if (list.All(element => element != null))
             {
                 list.Add(entry.Data);
@@ -114,17 +113,17 @@ public static class SaveFile
         return true;
     }
 
-    private static bool TryFillGap(JsonArray list, JsonNode data)
+    // Under a key off the grid, so loading moves it to the first space it fits (SaveManager.SettleGrids).
+    private static bool PutOffGrid(JsonObject grid, JsonNode data)
     {
-        for (int i = 0; i < list.Count; i++)
+        int key = -1;
+
+        while (grid.ContainsKey(key.ToString()))
         {
-            if (list[i] == null)
-            {
-                list[i] = data;
-                return true;
-            }
+            key--;
         }
 
-        return false;
+        grid[key.ToString()] = data;
+        return true;
     }
 }

@@ -10,8 +10,28 @@ public static class SaveMigrations
 {
     private const string FirstVersion = "0.1";
 
-    // e.g. ("0.2", file => ForEachObject(file, obj => { ...rename a key or value... }))
-    private static readonly (string Version, Action<JsonObject> Upgrade)[] _steps = Array.Empty<(string, Action<JsonObject>)>();
+    // e.g. ("0.3", file => ForEachObject(file, obj => { ...rename a key or value... }))
+    private static readonly (string Version, Action<JsonObject> Upgrade)[] _steps =
+    {
+        // Inventory and stash tabs became item grids; their old slot lists are emptied, not repacked.
+        ("0.2", file =>
+        {
+            if (file["profile"] is not JsonObject profile)
+            {
+                return;
+            }
+
+            profile.Remove(nameof(PlayerSaveData.Inventory));
+
+            if (profile[nameof(PlayerSaveData.Stash)] is JsonArray tabs)
+            {
+                foreach (JsonNode tab in tabs)
+                {
+                    (tab as JsonObject)?.Remove(nameof(StashTab.Items));
+                }
+            }
+        })
+    };
 
     public static string CurrentVersion => _steps.Length == 0 ? FirstVersion : _steps[^1].Version;
 

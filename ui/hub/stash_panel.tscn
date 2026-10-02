@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/hub/StashPanel.cs" id="1_stashpanel"]
+[ext_resource type="Script" path="res://ui/inventory/ItemGridView.cs" id="2_itemgridview"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel_bg"]
 bg_color = Color(0.12, 0.12, 0.12, 1)
@@ -69,9 +70,8 @@ theme_override_constants/separation = 6
 layout_mode = 2
 placeholder_text = "Tab name"
 
-[node name="Grid" type="GridContainer" parent="Panel/MarginContainer/VBoxContainer"]
+[node name="Grid" type="Control" parent="Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_constants/h_separation = 6
-theme_override_constants/v_separation = 6
-columns = 10
+script = ExtResource("2_itemgridview")
+CellSize = 68.0

@@ -1,16 +1,17 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 using SlotHandle = ItemDragController.SlotHandle;
 
 public partial class InventoryPanel : Control
 {
     public static InventoryPanel Instance { get; private set; }
 
-    private static readonly Color DisabledBg = new Color(0.32f, 0.14f, 0.14f);
     private static readonly Color AcceptBorderColor = new Color(0.3f, 0.9f, 0.3f);
     private static readonly Color PlaceholderTint = new Color(1f, 1f, 1f, 0.4f);
     private static readonly Color HeldOriginColor = new Color(0.85f, 0.75f, 0.15f);
     private const int AcceptBorderWidth = 3;
+    private const float DollGap = 12f;
 
     // Each equipment slot's focus neighbor per direction (left, right, up, down), by
     // _equipmentSlots index. The silhouette is too sparse for Godot's automatic nearest-control
@@ -28,7 +29,7 @@ public partial class InventoryPanel : Control
     {
         { 2, 1, Stay, 3 },       // Helmet
         { 0, 4, Stay, 7 },       // Amulet
-        { Stay, 3, 0, 5 },       // Weapon
+        { Stay, 3, Stay, 5 },    // Weapon
         { 2, 4, 0, 6 },          // Chest
         { 3, Stay, 1, 7 },       // Relic
         { Stay, 6, 2, 9 },       // Left Ring
@@ -57,11 +58,11 @@ public partial class InventoryPanel : Control
     }
 
     [Export] public Control SlotArea { get; private set; }
-    [Export] public TileGrid Grid { get; private set; }
+    [Export] public ItemGridView Grid { get; private set; }
     [Export] public Control PhaseIndicator { get; private set; }
 
     private EquipmentSlotView[] _equipmentSlots;
-    private Button[] _gridButtons;
+    private Control _doll;
 
     private EquippedLoadout _loadout;
     private Control _leftPanelEntry;
@@ -78,7 +79,7 @@ public partial class InventoryPanel : Control
 
         // Sit just below PhaseIndicator when it's showing, rather than a hardcoded number that could
         // drift out of sync with it - CallDeferred because a Control's Size isn't settled until after
-        // the first layout pass. Outside a match it hides itself, and this anchors to the top instead.
+        // the first layout pass.
         if (PhaseIndicator != null)
         {
             PhaseIndicator.Resized += UpdateTopOffset;
@@ -90,15 +91,7 @@ public partial class InventoryPanel : Control
         ItemDragController.Instance.Changed += OnInventoryChangedExternally;
         ItemDragController.Instance.RegisterPanelBounds(this);
         ItemDragController.Instance.RegisterInventoryFallback(item =>
-        {
-            if (PlayerProfiles.Local.Data.Inventory.Contains(item))
-            {
-                return false;
-            }
-
-            ReturnToInventory(item);
-            return true;
-        });
+            !PlayerProfiles.Local.Data.InventoryGrid.Contains(item) && PlayerProfiles.Local.TryAddToInventory(item));
     }
 
     public override void _ExitTree()
@@ -107,27 +100,74 @@ public partial class InventoryPanel : Control
         ItemDragController.Instance.Changed -= OnInventoryChangedExternally;
     }
 
-    // Fractional positions within SlotArea, roughly a human silhouette: head row (Helmet/Amulet),
-    // weapon+torso+relic row, ring+belt row, legs, then gloves/boots at the bottom. Order matters
-    // only in that the first entry is what Open() focuses.
+    // Order matters only in that it's the index _equipmentFocusNeighbors uses.
     private void BuildEquipmentSlots()
     {
+        Dictionary<EquipmentSlot, Rect2> layout = DollLayout(out Vector2 dollSize);
+
+        _doll = new Control { MouseFilter = MouseFilterEnum.Ignore };
+        ControlLayout.CenterOnAnchor(_doll, new Vector2(0.5f, 0.5f), dollSize);
+        SlotArea.CustomMinimumSize = new Vector2(0f, dollSize.Y);
+        SlotArea.AddChild(_doll);
+
         _equipmentSlots = new[]
         {
-            CreateEquipmentSlot("Helmet", new Vector2(0.50f, 0.10f), SimpleSlot(() => _loadout.Helmet, item => _loadout.Helmet = (Helmet)item)),
-            CreateEquipmentSlot("Amulet", new Vector2(0.70f, 0.10f), SimpleSlot(() => _loadout.Amulet, item => _loadout.Amulet = (Amulet)item)),
-            CreateEquipmentSlot("Weapon", new Vector2(0.08f, 0.32f), SimpleSlot(() => _loadout.Weapon, item => _loadout.Weapon = (Weapon)item)),
-            CreateEquipmentSlot("Chest", new Vector2(0.50f, 0.32f), SimpleSlot(() => _loadout.Chest, item => _loadout.Chest = (Chest)item)),
-            CreateEquipmentSlot("Relic", new Vector2(0.92f, 0.32f), SimpleSlot(() => _loadout.Relic, item => _loadout.Relic = (Relic)item)),
-            CreateEquipmentSlot("Ring", new Vector2(0.30f, 0.54f), SimpleSlot(() => _loadout.LeftRing, item => _loadout.LeftRing = (Ring)item)),
-            CreateEquipmentSlot("Belt", new Vector2(0.50f, 0.54f), SimpleSlot(() => _loadout.Belt, item => _loadout.Belt = (Belt)item)),
-            CreateEquipmentSlot("Ring", new Vector2(0.70f, 0.54f), SimpleSlot(() => _loadout.RightRing, item => _loadout.RightRing = (Ring)item)),
-            CreateEquipmentSlot("Legplates", new Vector2(0.50f, 0.72f), SimpleSlot(() => _loadout.Legplates, item => _loadout.Legplates = (Legplates)item)),
-            CreateEquipmentSlot("Gloves", new Vector2(0.30f, 0.90f), SimpleSlot(() => _loadout.Gloves, item => _loadout.Gloves = (Gloves)item)),
-            CreateEquipmentSlot("Boots", new Vector2(0.70f, 0.90f), SimpleSlot(() => _loadout.Boots, item => _loadout.Boots = (Boots)item))
+            CreateEquipmentSlot("Helmet", layout[EquipmentSlot.Helmet], SimpleSlot(() => _loadout.Helmet, item => _loadout.Helmet = (Helmet)item)),
+            CreateEquipmentSlot("Amulet", layout[EquipmentSlot.Amulet], SimpleSlot(() => _loadout.Amulet, item => _loadout.Amulet = (Amulet)item)),
+            CreateEquipmentSlot("Weapon", layout[EquipmentSlot.Weapon], SimpleSlot(() => _loadout.Weapon, item => _loadout.Weapon = (Weapon)item)),
+            CreateEquipmentSlot("Chest", layout[EquipmentSlot.Chest], SimpleSlot(() => _loadout.Chest, item => _loadout.Chest = (Chest)item)),
+            CreateEquipmentSlot("Relic", layout[EquipmentSlot.Relic], SimpleSlot(() => _loadout.Relic, item => _loadout.Relic = (Relic)item)),
+            CreateEquipmentSlot("Ring", layout[EquipmentSlot.LeftRing], SimpleSlot(() => _loadout.LeftRing, item => _loadout.LeftRing = (Ring)item)),
+            CreateEquipmentSlot("Belt", layout[EquipmentSlot.Belt], SimpleSlot(() => _loadout.Belt, item => _loadout.Belt = (Belt)item)),
+            CreateEquipmentSlot("Ring", layout[EquipmentSlot.RightRing], SimpleSlot(() => _loadout.RightRing, item => _loadout.RightRing = (Ring)item)),
+            CreateEquipmentSlot("Legplates", layout[EquipmentSlot.Legplates], SimpleSlot(() => _loadout.Legplates, item => _loadout.Legplates = (Legplates)item)),
+            CreateEquipmentSlot("Gloves", layout[EquipmentSlot.Gloves], SimpleSlot(() => _loadout.Gloves, item => _loadout.Gloves = (Gloves)item)),
+            CreateEquipmentSlot("Boots", layout[EquipmentSlot.Boots], SimpleSlot(() => _loadout.Boots, item => _loadout.Boots = (Boots)item))
         };
 
         LinkEquipmentFocus();
+    }
+
+    // The paper doll at Inventory's own cell size, so an item looks the same size on and off: Helmet,
+    // Chest, Belt and Legplates down the middle; Weapon, a Ring and Gloves down the left; Amulet,
+    // Relic, the other Ring and Boots down the right. Side items line up with their neighbor in the
+    // middle, hugging it horizontally, with Gloves and Boots level with the bottom of Legplates.
+    private Dictionary<EquipmentSlot, Rect2> DollLayout(out Vector2 dollSize)
+    {
+        Vector2 Size(EquipmentSlot slot) => Grid.FootprintSize(Item.GridSizeOf(slot));
+
+        float sideWidth = Size(EquipmentSlot.Weapon).X;
+        float middleX = sideWidth + DollGap;
+        float middleWidth = Size(EquipmentSlot.Chest).X;
+        float rightX = middleX + middleWidth + DollGap;
+
+        float chestY = Size(EquipmentSlot.Helmet).Y + DollGap;
+        float beltY = chestY + Size(EquipmentSlot.Chest).Y + DollGap;
+        float legplatesY = beltY + Size(EquipmentSlot.Belt).Y + DollGap;
+        float bottom = legplatesY + Size(EquipmentSlot.Legplates).Y;
+
+        Dictionary<EquipmentSlot, Rect2> layout = new();
+
+        void Middle(EquipmentSlot slot, float y) => layout[slot] = new Rect2(middleX + (middleWidth - Size(slot).X) / 2f, y, Size(slot));
+        void Left(EquipmentSlot slot, float y) => layout[slot] = new Rect2(sideWidth - Size(slot).X, y, Size(slot));
+        void Right(EquipmentSlot slot, float y) => layout[slot] = new Rect2(rightX, y, Size(slot));
+
+        Middle(EquipmentSlot.Helmet, 0f);
+        Middle(EquipmentSlot.Chest, chestY);
+        Middle(EquipmentSlot.Belt, beltY);
+        Middle(EquipmentSlot.Legplates, legplatesY);
+
+        Left(EquipmentSlot.Weapon, 0f);
+        Left(EquipmentSlot.LeftRing, beltY);
+        Left(EquipmentSlot.Gloves, bottom - Size(EquipmentSlot.Gloves).Y);
+
+        Right(EquipmentSlot.Amulet, (Size(EquipmentSlot.Helmet).Y - Size(EquipmentSlot.Amulet).Y) / 2f);
+        Right(EquipmentSlot.Relic, chestY);
+        Right(EquipmentSlot.RightRing, beltY);
+        Right(EquipmentSlot.Boots, bottom - Size(EquipmentSlot.Boots).Y);
+
+        dollSize = new Vector2(rightX + sideWidth, bottom);
+        return layout;
     }
 
     private void LinkEquipmentFocus()
@@ -151,9 +191,9 @@ public partial class InventoryPanel : Control
 
     // The slot's accessors read _loadout through this panel rather than capturing it, so a handle
     // built once here stays correct after Refresh swaps in a different character's loadout.
-    private EquipmentSlotView CreateEquipmentSlot(string placeholderName, Vector2 anchor, SlotHandle slot)
+    private EquipmentSlotView CreateEquipmentSlot(string placeholderName, Rect2 rect, SlotHandle slot)
     {
-        Button button = BuildSlotButton(anchor);
+        Button button = BuildSlotButton(rect);
         button.Pressed += () => OnEquipmentSlotPressed(slot, button);
         button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(slot, button, @event);
         button.GuiInput += @event => OnEquipmentSlotGuiInput(slot, @event);
@@ -163,34 +203,11 @@ public partial class InventoryPanel : Control
         return new EquipmentSlotView(button, placeholderName, slot);
     }
 
-    // All 40 slots exist as buttons for the panel's whole life - Inventory's index is the slot, not
-    // a filtered view of "whatever's currently owned," so the button set never changes. Only their
-    // contents do, which is what RefreshGrid updates.
     private void BuildGrid()
     {
-        Godot.Collections.Array<Item> inventory = PlayerProfiles.Local.Data.Inventory;
-        _gridButtons = new Button[inventory.Count];
-
-        for (int i = 0; i < inventory.Count; i++)
-        {
-            int slotIndex = i;
-
-            Button button = new Button
-            {
-                CustomMinimumSize = new Vector2(90f, 90f)
-            };
-
-            BuildIconOnlyVisual(button);
-            button.Pressed += () => OnGridSlotPressed(slotIndex, button);
-            button.GuiInput += @event => ItemDragController.Instance.OnSlotGuiInput(GridSlot(slotIndex), button, @event);
-            button.GuiInput += @event => OnGridSlotGuiInput(slotIndex, @event);
-            ItemDragController.Instance.RegisterSlot(button, GridSlot(slotIndex));
-            ItemTooltip.Instance.Register(button, () => GridSlot(slotIndex).GetItem());
-
-            Grid.AddChild(button);
-            _gridButtons[i] = button;
-        }
-
+        Grid.Setup(() => PlayerProfiles.Local.Data.InventoryGrid, IsCompatible);
+        Grid.TryHandlePress = TryQuickEquipPress;
+        Grid.CellGuiInput += OnGridCellGuiInput;
         LinkGridTopRowFocus();
     }
 
@@ -198,10 +215,11 @@ public partial class InventoryPanel : Control
     // Legplates, which Godot's nearest pick would reach from the middle columns.
     private void LinkGridTopRowFocus()
     {
-        for (int column = 0; column < Grid.Columns && column < _gridButtons.Length; column++)
+        for (int column = 0; column < Grid.Columns; column++)
         {
+            Button cell = Grid.Cell(new Vector2I(column, 0));
             int target = column < Grid.Columns / 2 ? GlovesSlot : BootsSlot;
-            _gridButtons[column].FocusNeighborTop = _gridButtons[column].GetPathTo(_equipmentSlots[target].Button);
+            cell.FocusNeighborTop = cell.GetPathTo(_equipmentSlots[target].Button);
         }
     }
 
@@ -221,9 +239,10 @@ public partial class InventoryPanel : Control
             button.FocusNeighborLeft = button.GetPathTo(target ?? button);
         }
 
-        for (int i = 0; i < _gridButtons.Length; i += Grid.Columns)
+        for (int row = 0; row < Grid.Rows; row++)
         {
-            _gridButtons[i].FocusNeighborLeft = _gridButtons[i].GetPathTo(target ?? _gridButtons[i]);
+            Button cell = Grid.Cell(new Vector2I(0, row));
+            cell.FocusNeighborLeft = cell.GetPathTo(target ?? cell);
         }
     }
 
@@ -301,7 +320,7 @@ public partial class InventoryPanel : Control
 
     public void FocusDefaultSlot()
     {
-        _gridButtons[0].GrabFocus();
+        Grid.Cell(Vector2I.Zero).GrabFocus();
     }
 
     private void Close()
@@ -324,7 +343,7 @@ public partial class InventoryPanel : Control
     {
         _loadout = GetOrCreateLoadout();
         RefreshEquipmentSlots();
-        RefreshGrid();
+        Grid.Refresh();
     }
 
     private EquippedLoadout GetOrCreateLoadout()
@@ -374,52 +393,20 @@ public partial class InventoryPanel : Control
         }
     }
 
-    // Updates the existing buttons in place. This runs on every click in the panel, so rebuilding
-    // all 40 nodes here would mean a full teardown/instantiate cycle per click.
-    private void RefreshGrid()
+    private bool TryQuickEquipPress(Vector2I cell)
     {
-        Godot.Collections.Array<Item> inventory = PlayerProfiles.Local.Data.Inventory;
-
-        for (int i = 0; i < _gridButtons.Length; i++)
+        if (ItemDragController.Instance.Held != null || !Input.IsActionPressed("quick_equip"))
         {
-            Button button = _gridButtons[i];
-            Item slotItem = i < inventory.Count ? inventory[i] : null;
-
-            SetIconOnlyVisual(button, slotItem?.Icon);
-
-            if (slotItem == null)
-            {
-                ClearBackground(button, isHeldOrigin: ItemDragController.Instance.HeldOriginButton == button);
-                continue;
-            }
-
-            SetBackground(button, IsCompatible(slotItem) ? RarityColors.Get(slotItem.Rarity) : DisabledBg);
+            return false;
         }
+
+        QuickEquip(cell);
+        return true;
     }
 
-    private void OnGridSlotPressed(int gridIndex, Control button)
-    {
-        if (ItemDragController.Instance.ConsumeDragJustHandled())
-        {
-            return;
-        }
-
-        bool quickEquip = ItemDragController.Instance.Held == null
-            && PlayerProfiles.Local.Data.Inventory[gridIndex] != null
-            && Input.IsActionPressed("quick_equip");
-
-        if (quickEquip)
-        {
-            QuickEquip(gridIndex);
-            return;
-        }
-
-        ItemDragController.Instance.OnSlotPressed(GridSlot(gridIndex), button);
-    }
-
-    // inventory_use (right-click / Square) is a slot's one-press action: learn a Rune Tome, or equip
+    // inventory_use (right-click / Square) is a cell's one-press action: learn a Rune Tome, or equip
     // anything else straight from the grid.
-    private void OnGridSlotGuiInput(int gridIndex, InputEvent @event)
+    private void OnGridCellGuiInput(Vector2I cell, InputEvent @event)
     {
         if (!@event.IsActionPressed("inventory_use"))
         {
@@ -428,13 +415,13 @@ public partial class InventoryPanel : Control
 
         GetViewport().SetInputAsHandled();
 
-        if (PlayerProfiles.Local.Data.Inventory[gridIndex] is RuneTome)
+        if (PlayerProfiles.Local.Data.InventoryGrid.At(cell) is RuneTome tome)
         {
-            PlayerProfiles.Local.LearnRuneTome(gridIndex);
+            PlayerProfiles.Local.LearnRuneTome(tome);
         }
         else
         {
-            QuickEquip(gridIndex);
+            QuickEquip(cell);
         }
     }
 
@@ -449,20 +436,30 @@ public partial class InventoryPanel : Control
         QuickUnequip(slot);
     }
 
-    // Shift-click a grid item to equip it directly, skipping the click-to-pick-up-then-place flow.
-    // Whatever was already in the matching slot (if anything) swaps into the grid slot being vacated.
-    private void QuickEquip(int gridIndex)
+    // Equips a grid item straight into its slot. Whatever that slot held takes the item's place in the
+    // grid when it fits there, and otherwise goes to the first space it fits.
+    private void QuickEquip(Vector2I cell)
     {
-        Godot.Collections.Array<Item> inventory = PlayerProfiles.Local.Data.Inventory;
-        Item item = inventory[gridIndex];
+        ItemGrid grid = PlayerProfiles.Local.Data.InventoryGrid;
+        Item item = grid.At(cell);
 
         if (item == null || !IsCompatible(item))
         {
             return;
         }
 
+        Vector2I anchor = grid.AnchorOf(item).Value;
+        grid.Remove(item);
         Item displaced = _loadout.ForceEquip(item);
-        inventory[gridIndex] = displaced;
+
+        if (displaced != null && grid.CanPlace(displaced, anchor, out Item blocking) && blocking == null)
+        {
+            grid.Place(displaced, anchor);
+        }
+        else
+        {
+            ReturnToInventory(displaced);
+        }
 
         CommitChange();
     }
@@ -506,27 +503,17 @@ public partial class InventoryPanel : Control
         PlayerProfiles.Local.CommitChange();
     }
 
-    // A SlotHandle for one index of the 40-slot Inventory array. Any item is accepted - the grid
-    // has no type restriction of its own, unlike an equipment slot.
-    private SlotHandle GridSlot(int index)
-    {
-        return new SlotHandle(
-            getItem: () => PlayerProfiles.Local.Data.Inventory[index],
-            placeItem: newItem => PlayerProfiles.Local.Data.Inventory[index] = newItem,
-            canAccept: candidateItem => true);
-    }
-
     // A SlotHandle for an equipment field. Every equipment slot, weapon included, uses this same
     // get/place/accept shape: accepting requires the right item subtype and character compatibility.
     private SlotHandle SimpleSlot<T>(Func<T> getEquipped, Action<Item> assignEquipped) where T : Item
     {
-        return new SlotHandle(
+        return SlotHandle.Single(
             getItem: () => getEquipped(),
-            placeItem: newItem => assignEquipped(newItem),
+            setItem: assignEquipped,
             canAccept: candidateItem => candidateItem == null || (candidateItem is T && IsCompatible(candidateItem)));
     }
 
-    // Drops a displaced item into the first empty Inventory slot (lowest index first). Falls back
+    // Drops a displaced item into the first space in Inventory it fits. Falls back
     // to dropping it in the world at the player's feet if Inventory is completely full, rather
     // than losing it — mirrors WorldItem.PickUp's own "leave it in the world until there's room"
     // behavior for the same situation.
@@ -617,12 +604,11 @@ public partial class InventoryPanel : Control
         style.BorderWidthRight = AcceptBorderWidth;
     }
 
-    private Button BuildSlotButton(Vector2 anchor)
+    private Button BuildSlotButton(Rect2 rect)
     {
-        Button button = new Button();
-        ControlLayout.CenterOnAnchor(button, anchor, new Vector2(130f, 130f));
+        Button button = new Button { Position = rect.Position, Size = rect.Size };
         BuildItemVisual(button);
-        SlotArea.AddChild(button);
+        _doll.AddChild(button);
 
         return button;
     }
@@ -661,28 +647,6 @@ public partial class InventoryPanel : Control
     {
         button.GetNode<TextureRect>("Content/Icon").Texture = icon;
         button.GetNode<Label>("Content/Label").Text = name;
-    }
-
-    // Grid tiles show only the thumbnail - the name lives in the hover tooltip instead.
-    private static void BuildIconOnlyVisual(Button button)
-    {
-        button.Text = "";
-
-        TextureRect icon = new TextureRect
-        {
-            Name = "Icon",
-            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-            MouseFilter = MouseFilterEnum.Ignore
-        };
-        icon.SetAnchorsPreset(LayoutPreset.FullRect);
-
-        button.AddChild(icon);
-    }
-
-    private static void SetIconOnlyVisual(Button button, Texture2D icon)
-    {
-        button.GetNode<TextureRect>("Icon").Texture = icon;
     }
 
     private bool IsCompatible(Item item)

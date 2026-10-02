@@ -21,11 +21,18 @@ public partial class BuildMenu
     // the tier wheel.
     private const float TierHoldSeconds = GameRules.AbilityHoldThreshold;
 
+    // Holding Save Favorite names it before saving; a tap saves under the default name.
+    private const float NameFavoriteHoldSeconds = GameRules.AbilityHoldThreshold;
+
     private static readonly Color _placeColor = new Color(0.2f, 0.45f, 0.25f);
 
-    private static int SocketSlot(int socket) => socket * 2 + 1;
+    private LineEdit _favoriteNameField;
 
-    private static int SocketAt(int slot) => RitualInscription.IsSocketSlot(slot) ? (slot - 1) / 2 : -1;
+    // Socket 0 is top-left, then clockwise. Wheel slots count clockwise from the top, so the sockets
+    // sit on the odd slots and top-left is the last of them.
+    private static int SocketSlot(int socket) => (socket * 2 + InscriptionSlots - 1) % InscriptionSlots;
+
+    private static int SocketAt(int slot) => RitualInscription.IsSocketSlot(slot) ? (slot + 1) / 2 % 4 : -1;
 
     // The first empty socket after afterSocket, wrapping around, or Place once every socket is full.
     private int NextEmptySocketSlot(int afterSocket)
@@ -73,6 +80,7 @@ public partial class BuildMenu
     private float[] BuildHoldSeconds()
     {
         float[] holdSeconds = new float[InscriptionSlots];
+        holdSeconds[SaveFavoriteSlot] = NameFavoriteHoldSeconds;
         holdSeconds[ClearAllSlot] = ClearAllHoldSeconds;
         holdSeconds[SaveTokenSlot] = IsAuthoringToken ? ClearTokenHoldSeconds : 0f;
 
@@ -180,5 +188,67 @@ public partial class BuildMenu
         {
             FinishToken(null);
         }
+        else if (slot == SaveFavoriteSlot)
+        {
+            BeginNamingFavorite();
+        }
+    }
+
+    private void BeginNamingFavorite()
+    {
+        FavoriteLoadout existing = PlayerProfiles.Local.FindFavorite(_build.Spell, _build.Sockets);
+
+        if (existing != null)
+        {
+            Inscription.DescriptionLabel.Text = $"Already saved as \"{existing.Name}\".";
+            return;
+        }
+
+        _favoriteNameField = new LineEdit
+        {
+            Text = FavoriteLoadout.DefaultName(_build.Spell, _build.Sockets),
+            MaxLength = 32,
+            CustomMinimumSize = new Vector2(320f, 0f)
+        };
+        Inscription.DescriptionLabel.AddSibling(_favoriteNameField);
+
+        LineEdit field = _favoriteNameField;
+        field.TextSubmitted += SubmitFavoriteName;
+        field.GuiInput += @event =>
+        {
+            if (@event.IsActionPressed("ui_cancel"))
+            {
+                field.AcceptEvent();
+                EndNamingFavorite();
+                ShowInscriptionInfo(SaveFavoriteSlot);
+            }
+        };
+
+        Inscription.AcceptsInput = false;
+        field.GrabFocus();
+        field.SelectAll();
+        Inscription.DescriptionLabel.Text = "Type a name and press Enter. Escape cancels.";
+    }
+
+    private void SubmitFavoriteName(string text)
+    {
+        string name = text.StripEdges();
+        string saved = PlayerProfiles.Local.AddFavorite(
+            name == "" ? FavoriteLoadout.DefaultName(_build.Spell, _build.Sockets) : name, _build.Spell, _build.Sockets);
+
+        EndNamingFavorite();
+        Inscription.DescriptionLabel.Text = $"Saved as \"{saved}\".";
+    }
+
+    private void EndNamingFavorite()
+    {
+        if (_favoriteNameField == null)
+        {
+            return;
+        }
+
+        _favoriteNameField.QueueFree();
+        _favoriteNameField = null;
+        Inscription.AcceptsInput = true;
     }
 }

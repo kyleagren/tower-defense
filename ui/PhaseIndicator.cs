@@ -23,7 +23,9 @@ public partial class PhaseIndicator : Control
 
         if (_match == null)
         {
-            Visible = false;
+            ReadyLabel.Visible = false;
+            EventBus.Instance.InventoryChanged += RefreshHub;
+            RefreshHub();
             return;
         }
 
@@ -37,6 +39,7 @@ public partial class PhaseIndicator : Control
     {
         if (_match == null)
         {
+            EventBus.Instance.InventoryChanged -= RefreshHub;
             return;
         }
 
@@ -104,5 +107,12 @@ public partial class PhaseIndicator : Control
 
         int totalGold = PlayerProfiles.Local.Data.Gold + _economy.GoldEarned;
         GoldLabel.Text = $"Gold: {totalGold}";
+    }
+
+    // The hub has no match, so no mana or capacity to run out of; gold is only what's in the profile.
+    private void RefreshHub()
+    {
+        PhaseLabel.Text = "The Hub — Mana: ∞ | Build Capacity: ∞";
+        GoldLabel.Text = $"Gold: {PlayerProfiles.Local.Data.Gold}";
     }
 }

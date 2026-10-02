@@ -11,18 +11,48 @@ public partial class ItemDragController : CanvasLayer
     public readonly struct SlotHandle
     {
         public readonly Func<Item> GetItem;
-        public readonly Action<Item> PlaceItem;
+
+        // Puts an item here - null takes out what's here - and returns whatever that displaced.
+        public readonly Func<Item, Item> PlaceItem;
+
+        // Whether item can go here, displacing at most one item.
         public readonly Func<Item, bool> CanAccept;
 
-        public SlotHandle(Func<Item> getItem, Action<Item> placeItem, Func<Item, bool> canAccept)
+        // What placing item here would displace, or null for open space.
+        public readonly Func<Item, Item> WouldDisplace;
+
+        // Called just before this slot's item is lifted, for the slot that puts it back exactly where it
+        // was. Null when that's this slot itself; a grid cell isn't, since it centers an item on itself.
+        public readonly Func<SlotHandle> ReturnSlot;
+
+        public SlotHandle(Func<Item> getItem, Func<Item, Item> placeItem, Func<Item, bool> canAccept,
+            Func<Item, Item> wouldDisplace, Func<SlotHandle> returnSlot)
         {
             GetItem = getItem;
             PlaceItem = placeItem;
             CanAccept = canAccept;
+            WouldDisplace = wouldDisplace;
+            ReturnSlot = returnSlot;
         }
+
+        // A slot holding one item at a time - an equipment slot, the crafting table.
+        public static SlotHandle Single(Func<Item> getItem, Action<Item> setItem, Func<Item, bool> canAccept) => new SlotHandle(
+            getItem,
+            placeItem: item =>
+            {
+                Item displaced = getItem();
+                setItem(item);
+                return displaced;
+            },
+            canAccept,
+            wouldDisplace: _ => getItem(),
+            returnSlot: null);
+
+        public SlotHandle ReturnTarget() => ReturnSlot?.Invoke() ?? this;
     }
 
     private const float DragThreshold = 8f;
+    private const float HeldIconCellSize = 48f;
     private const float DropHoldDuration = 0.5f;
 
     public static ItemDragController Instance { get; private set; }
@@ -64,7 +94,6 @@ public partial class ItemDragController : CanvasLayer
             MouseFilter = Control.MouseFilterEnum.Ignore,
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-            Size = new Vector2(72f, 72f),
             Visible = false
         };
         AddChild(_cursorIcon);
@@ -125,7 +154,7 @@ public partial class ItemDragController : CanvasLayer
             return;
         }
 
-        if (_heldSource is SlotHandle source && source.GetItem() == null && source.CanAccept(Held))
+        if (_heldSource is SlotHandle source && source.CanAccept(Held) && source.WouldDisplace(Held) == null)
         {
             source.PlaceItem(Held);
             SetHeld(null);
@@ -230,26 +259,22 @@ public partial class ItemDragController : CanvasLayer
                 return;
             }
 
-            Item displaced = slot.GetItem();
-            slot.PlaceItem(Held);
-            SetHeld(displaced);
+            SetHeld(slot.PlaceItem(Held));
             HeldOriginButton = null;
             _heldSource = null;
             CommitChange();
             return;
         }
 
-        Item pickedUpItem = slot.GetItem();
-
-        if (pickedUpItem == null)
+        if (slot.GetItem() == null)
         {
             return;
         }
 
-        SetHeld(pickedUpItem);
+        SlotHandle source = slot.ReturnTarget();
+        SetHeld(slot.PlaceItem(null));
         HeldOriginButton = button;
-        _heldSource = slot;
-        slot.PlaceItem(null);
+        _heldSource = source;
         Changed?.Invoke();
     }
 
@@ -378,9 +403,10 @@ public partial class ItemDragController : CanvasLayer
     // shared cursor icon (already driven by Held) starts following the drag immediately.
     private void BeginDrag()
     {
-        SetHeld(_dragSourceSlot.Value.GetItem());
+        SlotHandle source = _dragSourceSlot.Value.ReturnTarget();
+        SetHeld(_dragSourceSlot.Value.PlaceItem(null));
         HeldOriginButton = _dragOriginButton;
-        _dragSourceSlot.Value.PlaceItem(null);
+        _heldSource = source;
         _isDragging = true;
         Changed?.Invoke();
     }
@@ -399,24 +425,25 @@ public partial class ItemDragController : CanvasLayer
         // Back over the slot it started from: straight back in.
         if (hovered == _dragOriginButton)
         {
-            ReturnHeldToSource();
+            PutHeldBack();
             return;
         }
 
         if (hovered != null && _slotsByControl.TryGetValue(hovered, out SlotHandle targetSlot) && targetSlot.CanAccept(Held))
         {
-            Item displaced = targetSlot.GetItem();
-            targetSlot.PlaceItem(Held);
+            SlotHandle? origin = _heldSource;
+            Item displaced = targetSlot.PlaceItem(Held);
 
-            if (displaced != null && _dragSourceSlot.HasValue && _dragSourceSlot.Value.CanAccept(displaced))
+            if (displaced != null && origin is SlotHandle source && source.CanAccept(displaced) && source.WouldDisplace(displaced) == null)
             {
-                _dragSourceSlot.Value.PlaceItem(displaced);
+                source.PlaceItem(displaced);
                 SetHeld(null);
             }
             else
             {
                 SetHeld(displaced);
                 HeldOriginButton = null;
+                _heldSource = null;
             }
 
             CommitChange();
@@ -430,9 +457,10 @@ public partial class ItemDragController : CanvasLayer
             return;
         }
 
+        // Released inside a panel but not on a slot that takes it: back where it came from.
         if (IsInsideAnyOpenPanel(mousePosition))
         {
-            ReturnHeldToSource();
+            PutHeldBack();
             return;
         }
 
@@ -460,16 +488,6 @@ public partial class ItemDragController : CanvasLayer
         }
 
         return false;
-    }
-
-    // Released somewhere that can't take the item - a slot that rejects it, the gap between grid
-    // squares, a margin, anything inside a panel that isn't itself a slot - snap back to wherever
-    // it was picked up from rather than losing it.
-    private void ReturnHeldToSource()
-    {
-        _dragSourceSlot.Value.PlaceItem(Held);
-        SetHeld(null);
-        Changed?.Invoke();
     }
 
     private bool IsInsideAnyOpenPanel(Vector2 mousePosition)
@@ -523,13 +541,18 @@ public partial class ItemDragController : CanvasLayer
         }
     }
 
+    // The carried icon takes the item's grid shape, so a weapon reads as tall and a ring as small.
     private void SetHeld(Item item)
     {
         Held = item;
         _cursorIcon.Visible = Held != null;
         _cursorIcon.Texture = Held?.Icon;
 
-        if (item == null)
+        if (item != null)
+        {
+            _cursorIcon.Size = new Vector2(item.GridSize.X, item.GridSize.Y) * HeldIconCellSize;
+        }
+        else
         {
             HeldOriginButton = null;
             _heldSource = null;

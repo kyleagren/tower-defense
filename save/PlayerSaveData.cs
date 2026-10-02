@@ -8,7 +8,8 @@ public partial class PlayerSaveData : Resource
     [Export] public int Gold { get; set; } = 0;
     [Export] public Godot.Collections.Array<Spell> KnownSpells { get; set; } = new();
     [Export] public Godot.Collections.Array<RuneInventoryEntry> KnownRunes { get; set; } = new();
-    [Export] public Godot.Collections.Array<Item> Inventory { get; set; } = new();
+    // Each item under its top-left cell - see ItemGrid.
+    [Export] public Godot.Collections.Dictionary<int, Item> Inventory { get; set; } = new();
     [Export] public Godot.Collections.Dictionary<CharacterId, EquippedLoadout> Loadouts { get; set; } = new();
     [Export] public Godot.Collections.Array<FavoriteLoadout> Favorites { get; set; } = new();
     [Export] public Godot.Collections.Array<RuneLoadout> Tokens { get; set; } = new();
@@ -49,6 +50,8 @@ public partial class PlayerSaveData : Resource
     // Which Sentinel this player played most recently - also the sensible starting pick for a
     // brand-new save. Read/written through PlayerProfile, not directly.
     [Export] public CharacterId LastPlayedCharacter { get; set; } = CharacterId.Soldier;
+
+    public ItemGrid InventoryGrid => new ItemGrid(Inventory, GameRules.InventoryColumns, GameRules.InventoryRows);
 
     public EquippedLoadout GetOrCreateLoadout(CharacterId character)
     {

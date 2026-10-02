@@ -331,6 +331,7 @@ public partial class BuildMenu : Control
 
     private void Close()
     {
+        EndNamingFavorite();
         EndTokenAuthoring();
         Visible = false;
         UiPanelStack.Pop(this);

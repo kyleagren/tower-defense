@@ -88,9 +88,9 @@ public partial class CraftingPanel : Control
 
     public override void _Ready()
     {
-        _slot = new ItemDragController.SlotHandle(
+        _slot = ItemDragController.SlotHandle.Single(
             getItem: () => PlayerProfiles.Local.Data.CraftingSlotItem,
-            placeItem: item => PlayerProfiles.Local.SetCraftingSlotItem(item),
+            setItem: item => PlayerProfiles.Local.SetCraftingSlotItem(item),
             canAccept: item => true);
 
         ItemDragController.Instance.RegisterSlot(ItemSlotButton, _slot);

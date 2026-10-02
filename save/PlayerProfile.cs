@@ -60,18 +60,15 @@ public class PlayerProfile
         EventBus.Instance.EmitSignal(EventBus.SignalName.InventoryChanged);
     }
 
-    // First empty slot, lowest index first. False when Inventory is full - the caller decides what
-    // happens to the item then (leave it in the world, drop it at the player's feet).
+    // The first space it fits. False when there's none - the caller decides what happens to the item
+    // then (leave it in the world, drop it at the player's feet).
     public bool TryAddToInventory(Item item)
     {
-        int emptySlotIndex = Data.Inventory.IndexOf(null);
-
-        if (emptySlotIndex < 0)
+        if (!Data.InventoryGrid.TryAdd(item))
         {
             return false;
         }
 
-        Data.Inventory[emptySlotIndex] = item;
         CommitChange();
         return true;
     }
@@ -92,15 +89,15 @@ public class PlayerProfile
     // Whether PickUp would find item a place.
     public bool CanPickUp(Item item) =>
         (item.IsCompatibleWith(SelectedCharacter) && GetLoadout(SelectedCharacter).HasOpenSlotFor(item))
-        || Data.Inventory.Contains(null);
+        || Data.InventoryGrid.HasRoomFor(item);
 
     public bool KnowsRune(Rune rune) => Data.KnownRunes.Any(entry => entry.Rune == rune);
 
     // Learning a tier also learns every lower tier of the same rune not yet known, so owned tiers are
     // always a contiguous range from Common up. False when the tome teaches nothing new - it stays put.
-    public bool LearnRuneTome(int inventoryIndex)
+    public bool LearnRuneTome(RuneTome tome)
     {
-        if (Data.Inventory[inventoryIndex] is not RuneTome tome || tome.TaughtRune == null || KnowsRune(tome.TaughtRune))
+        if (tome.TaughtRune == null || KnowsRune(tome.TaughtRune) || !Data.InventoryGrid.Contains(tome))
         {
             return false;
         }
@@ -112,7 +109,7 @@ public class PlayerProfile
             LearnRune(lowerTier);
         }
 
-        Data.Inventory[inventoryIndex] = null;
+        Data.InventoryGrid.Remove(tome);
         CommitChange();
         return true;
     }
