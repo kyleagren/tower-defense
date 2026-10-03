@@ -30,8 +30,8 @@ public partial class GustSpell : Spell
             Scene = SweepScene,
             Radius = BaseSweepRadius,
             Speed = BaseSweepSpeed,
-            Duration = BaseSweepDuration,
-            InfusionShare = BaseInfusionShare
+            Duration = BaseSweepDuration
         };
+        context.Infusion = new InfusionCastData { Share = BaseInfusionShare };
     }
 }

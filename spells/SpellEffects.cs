@@ -48,6 +48,25 @@ public partial class SpellEffects : Node
         visual.Show(from, to);
     }
 
+    public void ShowSwirl(PackedScene scene, Vector3 position, float radius, Color color)
+    {
+        SpawnSwirl(scene, position, radius, color);
+        Rpc(MethodName.ReceiveSwirl, scene.ResourcePath, position, radius, color);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void ReceiveSwirl(string scenePath, Vector3 position, float radius, Color color)
+    {
+        SpawnSwirl(GD.Load<PackedScene>(scenePath), position, radius, color);
+    }
+
+    private void SpawnSwirl(PackedScene scene, Vector3 position, float radius, Color color)
+    {
+        SwirlVortex vortex = scene.Instantiate<SwirlVortex>();
+        _level.LevelRoot.AddChild(vortex);
+        vortex.Show(position, radius, color);
+    }
+
     public void ShowSlash(PackedScene scene, Vector3 center, Vector3 facing, float tilt, float extraHold)
     {
         SpawnSlash(scene, center, facing, tilt, extraHold);
@@ -101,6 +120,20 @@ public partial class SpellEffects : Node
         Projectile first = volley[0];
         Rpc(MethodName.ReceiveVolleyLaunched, firstId, scene.ResourcePath, launch, data.ProjectileCount, data.Rows,
             data.SpreadAngleDegrees, data.IsNova, first.Speed, first.Radius, first.Length, first.Crosswise);
+    }
+
+    public void InfuseProjectile(Projectile projectile, Tag element)
+    {
+        Rpc(MethodName.ReceiveProjectileInfused, projectile.ReplicaId, (int)element);
+    }
+
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ReceiveProjectileInfused(int id, int element)
+    {
+        if (_projectileCopies.TryGetValue(id, out Projectile copy))
+        {
+            copy.ShowInfusion((Tag)element);
+        }
     }
 
     public void TurnProjectile(Projectile projectile)

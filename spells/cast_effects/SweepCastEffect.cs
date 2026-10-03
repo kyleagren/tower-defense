@@ -38,6 +38,6 @@ public class SweepCastEffect : CastEffect
         // Announced before its first hit, which can already infuse it, so every copy exists before
         // any infusion reaches it.
         LevelContext.Current.SpellEffects.ShowSweep(sweep, data.Scene, start, direction, data.Speed.Value, radius, data.Duration.Value);
-        sweep.Initialize(start, direction, data.Speed.Value, radius, data.Duration.Value, context.Damage, context.RagdollForce.Value, data.InfusionShare, context.SpellHit);
+        sweep.Initialize(start, direction, data.Speed.Value, radius, data.Duration.Value, context.Damage, context.RagdollForce.Value, context.Infusion?.Share ?? 0f, context.SpellHit);
     }
 }

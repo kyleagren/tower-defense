@@ -33,6 +33,9 @@ public partial class Projectile : Area3D
     private float _speed;
     // 0 when it flies until it hits something.
     private float _maxDistance;
+
+    // Null for a projectile that never infuses.
+    private WindInfusion _infusion;
     private bool _hasExpired;
     private bool _isReturn;
     private bool _hasReturned;
@@ -73,6 +76,7 @@ public partial class Projectile : Area3D
         _isReturn = context.Projectile.IsReturn;
         _speed = context.Projectile.Speed.Value;
         _maxDistance = context.Range.Value * context.Projectile.ExpiryRangeMultiplier;
+        _infusion = context.Infusion != null ? new WindInfusion(context.Infusion.Share) : null;
     }
 
     // Another machine's view of a projectile the host fired: it only flies, turned and ended by the
@@ -237,8 +241,24 @@ public partial class Projectile : Area3D
         {
             Vector3 ragdollImpulse = -GlobalTransform.Basis.Z * RagdollForce;
             LastRagdollImpulse = ragdollImpulse;
-            enemy.TakeDamage(SpellHit.CreateHit(Damage, ragdollImpulse));
+
+            // Read first, since the hit itself may change it.
+            Tag? statusBefore = enemy.Status;
+            enemy.TakeDamage(SpellHit.CreateHit(_infusion?.Apply(Damage) ?? Damage, ragdollImpulse));
+
+            if (_infusion?.TryPickUp(statusBefore) == true)
+            {
+                ShowInfusion(_infusion.Element.Value);
+                _effects.InfuseProjectile(this, _infusion.Element.Value);
+            }
         }
+    }
+
+    // On every machine: the host's projectile when it picks an element up, each copy when told.
+    public void ShowInfusion(Tag element)
+    {
+        BodyMesh.SetInstanceShaderParameter("infused", 1f);
+        BodyMesh.SetInstanceShaderParameter("infusion_color", DamageTypeColors.Get(element));
     }
 
     private void Expire(Node3D lastHitBody)

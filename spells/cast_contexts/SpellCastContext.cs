@@ -115,6 +115,7 @@ public class SpellCastContext
     public StatusStrikeCastData StatusStrike;
     public ImpactCastData Impact;
     public FixedSpotCastData FixedSpot;
+    public InfusionCastData Infusion;
     public TriggerCastData Trigger;
     public GroundEffectCastData GroundEffect;
     public CastTrigger CastTrigger;

@@ -9,6 +9,8 @@ using System.Linq;
 // Wind and no runes, so a swirl can never set off another.
 public static class Swirl
 {
+    private static readonly PackedScene _vortexScene = GD.Load<PackedScene>("res://combat/visual_effects/swirl_vortex.tscn");
+
     // Called once the hit has fully resolved, with the Status it found on arrival.
     public static void TryTrigger(Enemy struck, Hit hit, Tag? statusBefore)
     {
@@ -34,6 +36,8 @@ public static class Swirl
         {
             enemy.TakeDamage(new Hit { Damage = burst, Attribution = hit.Attribution });
         }
+
+        LevelContext.Current.SpellEffects.ShowSwirl(_vortexScene, struck.GlobalPosition, GameRules.SwirlRadius, DamageTypeColors.Get(statusBefore.Value));
     }
 
     // Wind has to be the largest share of the hit, Physical included. A damage-over-time tick or a

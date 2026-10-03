@@ -29,8 +29,7 @@ public partial class GroundSweep : Node3D
     private DamagePacket _damage;
     private SpellHit _spellHit;
     private float _ragdollForce;
-    private float _infusionShare;
-    private Tag? _infusion;
+    private WindInfusion _infusion;
     private bool _isCopy;
 
     // Called from the Ritual's physics step, so the first hit's space query is safe here.
@@ -40,7 +39,7 @@ public partial class GroundSweep : Node3D
 
         _damage = damage;
         _ragdollForce = ragdollForce;
-        _infusionShare = infusionShare;
+        _infusion = new WindInfusion(infusionShare);
         _spellHit = spellHit;
         _query = new PhysicsShapeQueryParameters3D
         {
@@ -127,14 +126,12 @@ public partial class GroundSweep : Node3D
 
             // Read first, since the hit itself may change it.
             Tag? statusBefore = enemy.Status;
-            enemy.TakeDamage(_spellHit.CreateHit(CurrentDamage(), _direction * _ragdollForce));
+            enemy.TakeDamage(_spellHit.CreateHit(_infusion.Apply(_damage), _direction * _ragdollForce));
 
-            // Picked up from the first enemy found carrying a Status, after hitting it, and kept for
-            // the rest of the sweep.
-            if (_infusion == null && _infusionShare > 0f && statusBefore is Tag status)
+            if (_infusion.TryPickUp(statusBefore))
             {
-                Infuse(status);
-                LevelContext.Current.SpellEffects.InfuseSweep(this, status);
+                Infuse(_infusion.Element.Value);
+                LevelContext.Current.SpellEffects.InfuseSweep(this, _infusion.Element.Value);
             }
         }
     }
@@ -142,22 +139,7 @@ public partial class GroundSweep : Node3D
     // On every machine: the host's sweep when it picks the element up, each copy when told.
     public void Infuse(Tag element)
     {
-        _infusion = element;
         Body.SetInstanceShaderParameter("infused", 1f);
         Body.SetInstanceShaderParameter("infusion_color", DamageTypeColors.Get(element));
-    }
-
-    private DamagePacket CurrentDamage()
-    {
-        if (_infusion is not Tag element)
-        {
-            return _damage;
-        }
-
-        DamagePacket infused = _damage;
-        float moved = infused.WindDamage * _infusionShare;
-        infused.WindDamage -= moved;
-        infused.AddElement(element, moved);
-        return infused;
     }
 }

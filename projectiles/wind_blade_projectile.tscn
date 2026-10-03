@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://fj4eqt7o5kjn" path="res://projectiles/Projectile.cs" id="1_projectile"]
+[ext_resource type="Shader" path="res://spells/visual_effects/wind_blade.gdshader" id="2_shader"]
+[ext_resource type="Script" path="res://spells/visual_effects/CrescentBlade.cs" id="3_crescent"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_windblade"]
+shader = ExtResource("2_shader")
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_windblade"]
+radius = 1.0
+
+[node name="WindBladeProjectile" type="Area3D" node_paths=PackedStringArray("BodyMesh", "BodyCollision")]
+collision_mask = 3
+script = ExtResource("1_projectile")
+BodyMesh = NodePath("MeshInstance3D")
+BodyCollision = NodePath("CollisionShape3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+material_override = SubResource("ShaderMaterial_windblade")
+script = ExtResource("3_crescent")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_windblade")

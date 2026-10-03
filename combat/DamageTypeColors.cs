@@ -27,8 +27,7 @@ public static class DamageTypeColors
         [Tag.Water] = new Color(0.05f, 0.15f, 0.55f)
     };
 
-    // Physical (and, rarely, pure Wind - DominantElement doesn't candidate it either) both fall
-    // back to the neutral physical color.
+    // Physical falls back to the neutral physical color.
     public static Color Get(Tag? element)
     {
         return element.HasValue && _elementColors.TryGetValue(element.Value, out Color color) ? color : Physical;
@@ -41,7 +40,17 @@ public static class DamageTypeColors
     {
         return damage.IsTrueDamage
             ? (TrueDamage, TrueDamageOutline)
-            : (Get(damage.DominantElement), DefaultOutline);
+            : (Get(NumberElement(damage)), DefaultOutline);
+    }
+
+    // Wind when it's the largest share of the hit, Physical included - the same test that makes a hit
+    // swirl. DominantElement leaves Wind out, since Wind never becomes a Status.
+    private static Tag? NumberElement(DamagePacket damage)
+    {
+        float largestOther = Mathf.Max(Mathf.Max(damage.PhysicalDamage, damage.FireDamage),
+            Mathf.Max(Mathf.Max(damage.WaterDamage, damage.ColdDamage), damage.LightningDamage));
+
+        return damage.WindDamage > 0f && damage.WindDamage >= largestOther ? Tag.Wind : damage.DominantElement;
     }
 
     // A spell's own dominant damage element misses anything that deals no direct damage at all -
