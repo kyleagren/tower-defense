@@ -8,6 +8,8 @@ public partial class StatusInRangeCastTrigger : CastTrigger
 {
     [Export] public Tag Status { get; set; }
 
+    public override bool AllowsTriggerRunes => true;
+
     public override bool ShouldCast(Ritual caster, SpellCastContext context)
     {
         bool Carries(Enemy enemy) => enemy.Status == Status;

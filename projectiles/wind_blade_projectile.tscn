@@ -2,46 +2,13 @@
 
 [ext_resource type="Script" uid="uid://fj4eqt7o5kjn" path="res://projectiles/Projectile.cs" id="1_projectile"]
 [ext_resource type="Script" path="res://spells/visual_effects/CrescentBlade.cs" id="2_crescent"]
-[ext_resource type="Shader" path="res://spells/visual_effects/wind_trail.gdshader" id="3_trail"]
+[ext_resource type="Shader" path="res://spells/visual_effects/wind_blade.gdshader" id="3_shader"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_windblade"]
-transparency = 1
-cull_mode = 2
-shading_mode = 0
-albedo_color = Color(0.55, 0.92, 0.59, 0.6)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_windblade"]
+shader = ExtResource("3_shader")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_windblade"]
 radius = 1.0
-
-[sub_resource type="Gradient" id="Gradient_trail"]
-colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
-
-[sub_resource type="GradientTexture1D" id="GradientTexture1D_trail"]
-gradient = SubResource("Gradient_trail")
-
-[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_trail"]
-emission_shape = 3
-emission_box_extents = Vector3(1.2, 0.05, 0.05)
-particle_flag_align_y = true
-direction = Vector3(0, 0, 1)
-spread = 10.0
-initial_velocity_min = 1.0
-initial_velocity_max = 2.0
-gravity = Vector3(0, 0, 0)
-scale_min = 0.8
-scale_max = 1.2
-color_ramp = SubResource("GradientTexture1D_trail")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_trail"]
-shader = ExtResource("3_trail")
-
-[sub_resource type="QuadMesh" id="QuadMesh_trail"]
-material = SubResource("ShaderMaterial_trail")
-size = Vector2(0.06, 1.2)
-
-[sub_resource type="QuadMesh" id="QuadMesh_trail_long"]
-material = SubResource("ShaderMaterial_trail")
-size = Vector2(0.06, 1.8)
 
 [node name="WindBladeProjectile" type="Area3D" node_paths=PackedStringArray("BodyMesh", "BodyCollision")]
 collision_mask = 3
@@ -51,24 +18,8 @@ BodyCollision = NodePath("CollisionShape3D")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 cast_shadow = 0
-material_override = SubResource("StandardMaterial3D_windblade")
+material_override = SubResource("ShaderMaterial_windblade")
 script = ExtResource("2_crescent")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_windblade")
-
-[node name="Trail" type="GPUParticles3D" parent="."]
-cast_shadow = 0
-amount = 6
-lifetime = 0.4
-local_coords = true
-process_material = SubResource("ParticleProcessMaterial_trail")
-draw_pass_1 = SubResource("QuadMesh_trail")
-
-[node name="TrailLong" type="GPUParticles3D" parent="."]
-cast_shadow = 0
-amount = 2
-lifetime = 0.4
-local_coords = true
-process_material = SubResource("ParticleProcessMaterial_trail")
-draw_pass_1 = SubResource("QuadMesh_trail_long")

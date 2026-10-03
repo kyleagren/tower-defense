@@ -357,7 +357,7 @@ A slick dark patch where each enemy on it that isn't already down rolls a chance
 A wide crescent of wind that cuts through three enemies before stopping, infusing like Gust (each blade on its own, so Salvo's blades can pick up different elements) and swirling like any Wind hit.
 
 - **A crosswise projectile** (Section 7, Projectile shapes), so Pierce, Salvo, Chain and Return apply, Expand widens it, and Bearing fits.
-- **Visual:** a solid crescent built in code (`CrescentBlade`: a lens-shaped cross-section swept across the span, bowed forward in the middle, pinched to points at the tips, built once per shape and shared), plain translucent green, trailing short streaks behind it (`wind_trail.gdshader` on a particle emitter across its width). Infusion tints the trail. The trail vanishes with the blade rather than lingering, and is authored at the base width, so Expand widens the blade but not its trail.
+- **Visual:** a solid crescent built in code (`CrescentBlade`: a lens-shaped cross-section swept across the span, bowed forward in the middle, pinched to points at the tips, built once per shape and shared), translucent green with a brighter rim (`wind_blade.gdshader`). Infusion tints it.
 
 ### Spells that never hit
 

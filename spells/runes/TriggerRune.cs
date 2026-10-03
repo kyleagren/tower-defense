@@ -12,6 +12,7 @@ public abstract partial class TriggerRune : Rune
 
     public override IReadOnlyList<Tag> RequiredTags => Array.Empty<Tag>();
 
-    // A spell with its own cast trigger (Ice Wall's) already decides when it casts.
-    public override bool IsCompatibleWith(Spell spell) => spell.CreateBaseContext().CastTrigger == null && base.IsCompatibleWith(spell);
+    // A spell whose own cast trigger decides when it casts (Ice Wall's) has no room for one.
+    public override bool IsCompatibleWith(Spell spell) =>
+        spell.CreateBaseContext().CastTrigger is not { AllowsTriggerRunes: false } && base.IsCompatibleWith(spell);
 }

@@ -275,6 +275,7 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
+        NavAgent.Velocity = Vector3.Zero;
         _knockbackVelocity += new Vector3(impulse.X, 0f, impulse.Z) / Mass;
 
         if (impulse.Y > 0f)
@@ -761,8 +762,15 @@ public partial class WalkingEnemy : Enemy
         _walkAnimator.Animate(Speed > 0f ? 1.0 : 0.0, delta);
     }
 
+    // The avoidance server keeps answering with the last steering velocity it was given, so without
+    // this a knocked-back enemy would walk on under its own knockback.
     private void OnVelocityComputed(Vector3 safeVelocity)
     {
+        if (IsKnockedBack)
+        {
+            return;
+        }
+
         float fallSpeed = UpdateFallSpeed((float)GetPhysicsProcessDeltaTime());
         Velocity = new Vector3(safeVelocity.X, -fallSpeed, safeVelocity.Z);
         MoveAndSlide();

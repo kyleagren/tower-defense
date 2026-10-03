@@ -19,7 +19,7 @@ public partial class RitualPlacer : Node
     // How far off a wall's face to step before looking for the ground below.
     private const float WallStepBack = 0.5f;
 
-    // How far the reticle reaches while aiming a spot or direction - as far as the eye can, since
+    // How far the reticle reaches while aiming a spot - as far as the eye can, since
     // the pick is clamped to the Ritual's range anyway, so there's no walking over to it.
     [Export] public float AimReach = 60f;
 
@@ -258,9 +258,11 @@ public partial class RitualPlacer : Node
         }
     }
 
+    // The lane runs the way the camera faces. Aiming from the Ritual to the reticle would swing it back
+    // toward the player whenever the view lands short of the Ritual.
     private void ProcessDirectionAim()
     {
-        Vector3 direction = FlatDirection(_ghost.GlobalPosition, _cursorPosition);
+        Vector3 direction = FlatDirection(Vector3.Zero, -Character.Camera.GlobalTransform.Basis.Z);
 
         if (direction == Vector3.Zero)
         {
