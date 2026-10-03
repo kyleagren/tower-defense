@@ -26,8 +26,7 @@ public partial class RadialWheel : Control
     public const int SpiralWedges = 8;
 
     // How far the stick, or the mouse's virtual stick, must point before it picks a wedge. Anything
-    // less keeps the last highlight, so letting go of the stick doesn't lose it - unless
-    // ClearsHighlightAtCenter.
+    // less drops the highlight - see ClearsHighlightAtCenter.
     private const float SelectThreshold = 0.5f;
 
     // Mouse travel in pixels that counts as a fully deflected virtual stick.
@@ -62,6 +61,11 @@ public partial class RadialWheel : Control
 
     private readonly List<RadialWheelItem> _items = new();
     private int _highlighted = -1;
+
+    // What a spiral's laps are laid out around: the highlight, or the last one before it cleared, so
+    // drifting back to the center doesn't jump the spiral back to its first lap.
+    private int _anchor;
+
     private Vector2 _virtualStick;
     private Vector2 _pointer;
     private Color? _outlineColor;
@@ -92,8 +96,9 @@ public partial class RadialWheel : Control
     // still moving.
     public bool PointsWithLookStick { get; set; }
 
-    // On for a wheel where pointing nowhere is itself a choice: drifting back inside the select
-    // threshold drops the highlight rather than keeping it.
+    // On a controller too, for a wheel where pointing nowhere is itself a choice. With the mouse, every
+    // wheel drops its highlight back at the center; a controller keeps it, so letting go of the stick
+    // doesn't lose it.
     public bool ClearsHighlightAtCenter { get; set; }
 
     public int SlotCount => _items.Count;
@@ -129,6 +134,7 @@ public partial class RadialWheel : Control
         _items.Clear();
         _items.AddRange(items);
         _highlighted = highlighted < _items.Count ? highlighted : -1;
+        _anchor = Math.Max(_highlighted, 0);
 
         // A new ring starts from neutral, not from wherever the mouse pointed into the last one.
         _virtualStick = Vector2.Zero;
@@ -148,6 +154,11 @@ public partial class RadialWheel : Control
         if (_highlighted >= _items.Count)
         {
             _highlighted = -1;
+        }
+
+        if (_anchor >= _items.Count)
+        {
+            _anchor = 0;
         }
 
         UpdateShownItems(fade: false);
@@ -192,7 +203,7 @@ public partial class RadialWheel : Control
         if (IsSpiral && @event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown } scroll)
         {
             int lap = scroll.ButtonIndex == MouseButton.WheelDown ? SpiralWedges : -SpiralWedges;
-            SetHighlighted(Mathf.Clamp(Math.Max(_highlighted, 0) + lap, 0, _items.Count - 1));
+            SetHighlighted(Mathf.Clamp(_anchor + lap, 0, _items.Count - 1));
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -221,9 +232,12 @@ public partial class RadialWheel : Control
 
         if (direction.Length() < SelectThreshold)
         {
+            // Only on the way back in, so a highlight the host opened with survives until the
+            // player points somewhere.
+            bool returning = _turning;
             _turning = false;
 
-            if (ClearsHighlightAtCenter)
+            if (returning && (ClearsHighlightAtCenter || !InputDevice.UsingController))
             {
                 SetHighlighted(-1);
             }
@@ -248,6 +262,12 @@ public partial class RadialWheel : Control
         }
 
         _highlighted = item;
+
+        if (item >= 0)
+        {
+            _anchor = item;
+        }
+
         UpdateShownItems(fade: true);
         QueueRedraw();
         EmitSignal(SignalName.HighlightChanged, item);
@@ -279,7 +299,7 @@ public partial class RadialWheel : Control
         }
     }
 
-    // The item a wedge shows. On a spiral that's the one belonging there nearest the highlight, so
+    // The item a wedge shows. On a spiral that's the one belonging there nearest the anchor, so
     // the seam between laps sits opposite it. Near either end of the list that item may not exist,
     // and the wedge shows the lap on the other side of the seam instead - or nothing, with
     // nearestOnly, which is what keeps turning past an end from jumping back a lap.
@@ -290,8 +310,7 @@ public partial class RadialWheel : Control
             return wedge;
         }
 
-        int anchor = Math.Max(_highlighted, 0);
-        int item = anchor + Mathf.PosMod(wedge - anchor + SpiralWedgesBehind, SpiralWedges) - SpiralWedgesBehind;
+        int item = _anchor + Mathf.PosMod(wedge - _anchor + SpiralWedgesBehind, SpiralWedges) - SpiralWedgesBehind;
 
         if (item >= 0 && item < _items.Count)
         {
@@ -306,16 +325,16 @@ public partial class RadialWheel : Control
         return item < 0 ? item + SpiralWedges : item - SpiralWedges;
     }
 
-    // Full at the highlight, fading to SpiralFarAlpha half a ring away.
+    // Full at the anchor, fading to SpiralFarAlpha half a ring away.
     private float SpiralAlpha(int item)
     {
-        if (!IsSpiral || _highlighted < 0)
+        if (!IsSpiral)
         {
             return 1f;
         }
 
         int halfRing = SpiralWedges / 2;
-        return Mathf.Lerp(1f, SpiralFarAlpha, Mathf.Min(Math.Abs(item - _highlighted), halfRing) / (float)halfRing);
+        return Mathf.Lerp(1f, SpiralFarAlpha, Mathf.Min(Math.Abs(item - _anchor), halfRing) / (float)halfRing);
     }
 
     private float WeightOf(int wedge) => IsSpiral ? 1f : _items[wedge]?.Weight ?? 1f;
@@ -420,7 +439,7 @@ public partial class RadialWheel : Control
             DrawSeams(center, innerRadius, outerRadius * (1f + HighlightGrowFraction));
 
             int laps = (_items.Count + SpiralWedges - 1) / SpiralWedges;
-            int lap = Math.Max(_highlighted, 0) / SpiralWedges + 1;
+            int lap = _anchor / SpiralWedges + 1;
             DrawLabel($"{lap} / {laps}", center + Vector2.Down * innerRadius * LapCounterDrop, innerRadius);
         }
 
