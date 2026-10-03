@@ -9,9 +9,8 @@ public partial class OverloadRune : ReactionRune
 {
     [Export] public float BurstDamagePercent { get; private set; } = 0.4f;
     [Export] public float Radius { get; private set; } = 3f;
-    // kg·m/s, like any knockback - with launched enemies' lowered gravity, about a 1.5m, 2.2s hop on
-    // an 80kg Grunt, barely a lift on a Brute.
-    [Export] public float LaunchImpulse { get; private set; } = 215f;
+    // kg·m/s, like any knockback - about a 1.5m, 1.1s hop on an 80kg Grunt, barely a lift on a Brute.
+    [Export] public float LaunchImpulse { get; private set; } = 430f;
     // How far off straight up a launch tips, away from the centre.
     [Export] public float LaunchOutwardDegrees { get; private set; } = 1f;
     [Export] public float Cooldown { get; private set; } = 5f;

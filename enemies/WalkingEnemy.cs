@@ -43,10 +43,6 @@ public partial class WalkingEnemy : Enemy
     [Export] public float LegSwingAmplitude = 0.5f;
     [Export] public float ArmSwingAmplitude = 0.2f;
 
-    // While launched, gravity is scaled by this - a floatier arc that stays up longer for the same
-    // peak, provided the launch is lowered to match.
-    [Export] public float LaunchGravityScale = 0.25f;
-
     private enum MovementMode { FollowingLane, ChasingPlayer, AttackingWall, AttackingRitual, RejoiningLane, ApproachingObjective }
 
 
@@ -782,8 +778,7 @@ public partial class WalkingEnemy : Enemy
     // frame it starts.
     private float UpdateFallSpeed(float delta)
     {
-        float gravity = _launched ? _gravity * LaunchGravityScale : _gravity;
-        _fallSpeed = IsOnFloor() && _fallSpeed >= 0f ? 0f : _fallSpeed + gravity * delta;
+        _fallSpeed = IsOnFloor() && _fallSpeed >= 0f ? 0f : _fallSpeed + _gravity * delta;
         return _fallSpeed;
     }
 

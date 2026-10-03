@@ -8,7 +8,7 @@ using System.Collections.Generic;
 public partial class HarvestAbility : Ability
 {
     [Export] public override float BaseCooldown { get; protected set; } = 8f;
-    [Export] public float Radius { get; private set; } = 8f;
+    [Export] public float Radius { get; private set; } = 20f;
     [Export] public float ChargePerStatus { get; private set; } = 0.04f;
     [Export] public float MaxChargePerCast { get; private set; } = 0.25f;
     // Both fractions of the Soldier's maximum Shield.
