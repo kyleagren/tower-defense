@@ -26,7 +26,8 @@ public partial class RadialWheel : Control
     public const int SpiralWedges = 8;
 
     // How far the stick, or the mouse's virtual stick, must point before it picks a wedge. Anything
-    // less keeps the last highlight, so letting go of the stick doesn't lose it.
+    // less keeps the last highlight, so letting go of the stick doesn't lose it - unless
+    // ClearsHighlightAtCenter.
     private const float SelectThreshold = 0.5f;
 
     // Mouse travel in pixels that counts as a fully deflected virtual stick.
@@ -86,6 +87,14 @@ public partial class RadialWheel : Control
 
     // Set by the host: only one wheel reads input at a time, and not while a dialog sits over it.
     public bool AcceptsInput { get; set; }
+
+    // Points with the look stick rather than the radial_* one, for a wheel open while the player is
+    // still moving.
+    public bool PointsWithLookStick { get; set; }
+
+    // On for a wheel where pointing nowhere is itself a choice: drifting back inside the select
+    // threshold drops the highlight rather than keeping it.
+    public bool ClearsHighlightAtCenter { get; set; }
 
     public int SlotCount => _items.Count;
     public int Highlighted => _highlighted;
@@ -149,7 +158,9 @@ public partial class RadialWheel : Control
     {
         if (IsReadingInput() && InputDevice.UsingController)
         {
-            Point(Input.GetVector("radial_left", "radial_right", "radial_up", "radial_down"));
+            Point(PointsWithLookStick
+                ? Input.GetVector("look_left", "look_right", "look_up", "look_down")
+                : Input.GetVector("radial_left", "radial_right", "radial_up", "radial_down"));
         }
 
         for (int wedge = 0; wedge < SpiralWedges; wedge++)
@@ -211,6 +222,12 @@ public partial class RadialWheel : Control
         if (direction.Length() < SelectThreshold)
         {
             _turning = false;
+
+            if (ClearsHighlightAtCenter)
+            {
+                SetHighlighted(-1);
+            }
+
             return;
         }
 

@@ -22,7 +22,8 @@ public partial class CrosshairCue : Control
     private const float RoundGap = 5f;
     private static readonly Vector2 _roundSize = new Vector2(7f, 22f);
 
-    private const float TimerTop = RowTop + 22f + CueGap;
+    // Clear of OverdriveElementWheel's ring, which can be open while a timer runs.
+    private const float TimerTop = RowTop + 22f + CueGap + 8f;
     private const float TimerSpacing = 13f;
     private static readonly Vector2 _timerSize = new Vector2(120f, 7f);
 

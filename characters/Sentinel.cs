@@ -175,6 +175,24 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
     private static readonly string[] _abilityActions = { "ability_1", "ability_2", "ability_3", "ability_4" };
 
+    public static string AbilityAction(int slot) => _abilityActions[slot];
+
+    protected override bool CanLook
+    {
+        get
+        {
+            foreach (Ability ability in AllAbilities)
+            {
+                if (ability.SuspendsLook)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
     private float _currentHealth;
     private float _currentShield;
     private float _timeSinceLastHit;

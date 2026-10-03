@@ -59,6 +59,9 @@ public abstract partial class Ability : Node
     // ordinary behavior instead of being swallowed.
     public virtual bool CanCancelCapture => true;
 
+    // While true, the camera ignores look input - an ability pointing with the mouse or stick itself.
+    public virtual bool SuspendsLook => false;
+
     // While this is active, no other ability can be started - Retaliation's stance. One already
     // running carries on.
     public virtual bool LocksOutOtherAbilities => false;
@@ -119,7 +122,7 @@ public abstract partial class Ability : Node
     protected float EffectiveBonus(AbilityStatKind kind)
     {
         CharacterSheet sheet = Character.Sheet;
-        float bonus = sheet.GetBonus(AbilityStats.Generic(kind));
+        float bonus = sheet.GetBonus(AbilityStats.Generic(kind)) + OwnBonus(kind);
 
         if (SlotIndex >= 0)
         {
@@ -128,6 +131,9 @@ public abstract partial class Ability : Node
 
         return bonus * Effectiveness(kind);
     }
+
+    // A gear bonus only this ability gets, on top of the generic and per-slot ones.
+    protected virtual float OwnBonus(AbilityStatKind kind) => 0f;
 
     private float Effectiveness(AbilityStatKind kind) => kind switch
     {

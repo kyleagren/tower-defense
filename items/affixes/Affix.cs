@@ -30,7 +30,6 @@ public class Affix
     // The character half of "can this mod roll here", parallel to AllowedSlots' slot half. An
     // unrestricted mod rolls on anything; a restricted one only on an item already bound to that
     // same character, so an unbound (AnySentinel) item can never pick up a character-specific mod.
-    // Nothing in AffixTable sets this yet - it's the lever for character-signature weapon mods.
     public bool IsAvailableTo(CharacterId character)
     {
         return RestrictedCharacter == CharacterId.AnySentinel || RestrictedCharacter == character;

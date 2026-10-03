@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://ui/OptionsMenu.cs" id="13_optionsmenu"]
 [ext_resource type="Script" path="res://ui/organize/OrganizePanel.cs" id="14_organizepanel"]
 [ext_resource type="Script" path="res://ui/RitualDetailsPanel.cs" id="15_ritualdetails"]
+[ext_resource type="Script" path="res://ui/OverdriveElementWheel.cs" id="16_overdrivewheel"]
 
 [node name="PlayerHud" type="Node"]
 
@@ -37,6 +38,16 @@ script = ExtResource("1_itemnameplate")
 [node name="RespawnOverlay" parent="." instance=ExtResource("6_respawnoverlay")]
 
 [node name="Crosshair" parent="." instance=ExtResource("7_crosshair")]
+
+[node name="OverdriveElementWheel" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("16_overdrivewheel")
 
 [node name="RitualDetailsPanel" type="PanelContainer" parent="."]
 offset_left = 20.0

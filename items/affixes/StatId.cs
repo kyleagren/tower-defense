@@ -57,5 +57,7 @@ public enum StatId
     Ability4Damage,
 
     RitualArea,
-    RitualDuration
+    RitualDuration,
+
+    OverdriveElementPick
 }

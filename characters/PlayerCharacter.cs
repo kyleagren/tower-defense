@@ -47,6 +47,10 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     // it look around and act. Forced movement like a dodge is the subclass's own to refuse.
     protected virtual bool CanMove => true;
 
+    // Hook for a subclass to stop the camera turning while something else is reading the mouse or
+    // stick.
+    protected virtual bool CanLook => true;
+
     // While non-null, replaces input-driven horizontal movement for this tick - a dodge. Called once
     // per ApplyGroundMovement, so an override can advance its own timer here.
     protected virtual Vector3? UpdateForcedMovement(float delta) => null;
@@ -106,7 +110,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
             SpringArm.Position = SpringArm.Position with { X = shoulderX };
         }
 
-        if (!IsActive || UiPanelStack.AnyOpen)
+        if (!IsActive || UiPanelStack.AnyOpen || !CanLook)
         {
             return;
         }
@@ -231,7 +235,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     {
         // A panel can keep the mouse captured (a radial wheel reading it as a stick), so being
         // captured alone doesn't mean the mouse belongs to the camera.
-        if (Input.MouseMode != Input.MouseModeEnum.Captured || UiPanelStack.AnyOpen)
+        if (Input.MouseMode != Input.MouseModeEnum.Captured || UiPanelStack.AnyOpen || !CanLook)
         {
             return;
         }

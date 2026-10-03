@@ -43,6 +43,17 @@ public partial class OverdriveAbility : Ability
     public override float? CrosshairTimerFraction => IsActive && _expiryDuration > 0f ? _expiryRemaining / _expiryDuration : null;
     public override Color CrosshairCueColor => DamageTypeColors.Get(_ailmentElement);
 
+    // For a Soldier whose weapon allows picking, holding the slot on a full gauge opens the element
+    // wheel instead; releasing it starts Overdrive as whatever the wheel points at.
+    public bool IsPickingElement { get; private set; }
+
+    // Set by the HUD's wheel. Null spends the gauge as harvested.
+    public Tag? PointedElement { get; private set; }
+
+    public override bool SuspendsLook => IsPickingElement;
+
+    private bool CanPickElement => Character.Sheet.GetBonus(StatId.OverdriveElementPick) > 0f;
+
     private float ShotsFraction => OverdriveShots <= 0 ? 0f : (float)_shotsRemaining / OverdriveShots;
 
     private int _shotsRemaining;
@@ -60,9 +71,38 @@ public partial class OverdriveAbility : Ability
         return Harvest.IsGaugeFull;
     }
 
+    public override bool TryActivate()
+    {
+        if (!CanPickElement)
+        {
+            return base.TryActivate();
+        }
+
+        if (IsActive || !IsReady || !CanActivate())
+        {
+            return false;
+        }
+
+        IsPickingElement = true;
+        PointedElement = null;
+        return true;
+    }
+
+    public void PointAt(Tag? element)
+    {
+        PointedElement = element;
+    }
+
     protected override void Activate()
     {
         Harvest.TryConsumeFullGauge(out _shares, out _ailmentElement);
+
+        if (PointedElement is Tag picked)
+        {
+            _shares = new Dictionary<Tag, float> { [picked] = 1f };
+            _ailmentElement = picked;
+            PointedElement = null;
+        }
 
         IsActive = true;
         _shotsRemaining = OverdriveShots;
@@ -73,8 +113,13 @@ public partial class OverdriveAbility : Ability
         Wielder.SetWeaponTint(DamageTypeColors.Get(_ailmentElement));
     }
 
+    protected override float OwnBonus(AbilityStatKind kind) =>
+        kind == AbilityStatKind.Damage ? Character.Sheet.GetBonus(StatId.OverdriveElementPick) : 0f;
+
     public override void OnCharacterDied()
     {
+        IsPickingElement = false;
+
         if (IsActive)
         {
             EndOverdrive();
@@ -83,14 +128,43 @@ public partial class OverdriveAbility : Ability
 
     public override void OnCharacterDeactivated()
     {
+        IsPickingElement = false;
+
         if (IsActive)
         {
             EndOverdrive();
         }
     }
 
+    // Polled rather than read from the release event, so a release swallowed while ability input
+    // was gated can't leave the wheel open.
+    public override void _Process(double delta)
+    {
+        if (!IsPickingElement)
+        {
+            return;
+        }
+
+        if (!Character.CanUseAbilityInput)
+        {
+            IsPickingElement = false;
+        }
+        else if (!Input.IsActionPressed(Sentinel.AbilityAction(SlotIndex)))
+        {
+            IsPickingElement = false;
+            base.TryActivate();
+        }
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (IsPickingElement && InputChords.IsPressedWithoutAbilityModifier(@event, "ui_cancel"))
+        {
+            IsPickingElement = false;
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
         // Health Link's spikes, or any other capture layered on top, take the click first.
         if (!IsActive || !Character.CanUseAbilityInput || Character.IsAnotherAbilityCapturing(this)
             || !InputPress.Began(@event, "attack"))

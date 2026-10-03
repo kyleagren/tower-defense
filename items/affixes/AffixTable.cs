@@ -570,6 +570,24 @@ public static class AffixTable
                 new PercentTierRange(4, 20, 26),
                 new PercentTierRange(5, 27, 35)
             ]
+        },
+        [StatId.OverdriveElementPick] = new Affix
+        {
+            Name = "Attunement",
+            DescriptionTemplate = "+{0}% Overdrive Damage, and Overdrive's element can be chosen",
+            AffixType = AffixType.Prefix,
+            Stat = StatId.OverdriveElementPick,
+            AllowedSlots = WeaponSlots,
+            RestrictedCharacter = CharacterId.Soldier,
+            Tags = [AffixTag.Damage],
+            TierTable =
+            [
+                new PercentTierRange(1, 5, 8),
+                new PercentTierRange(2, 9, 12),
+                new PercentTierRange(3, 13, 16),
+                new PercentTierRange(4, 17, 20),
+                new PercentTierRange(5, 21, 25)
+            ]
         }
     };
 
