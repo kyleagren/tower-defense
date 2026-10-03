@@ -27,7 +27,8 @@ public partial class DebugToggle : Node
     }
 
     // Fills the local Soldier's Harvest gauge from one random element, for testing Overdrive without
-    // harvesting a wave's worth of Statuses.
+    // harvesting a wave's worth of Statuses. Wind is included, though Harvest can't actually be fed
+    // it, to try out how Wind shots feel.
     private static void FillLocalHarvestGauge()
     {
         if (Sentinel.Local is not Soldier soldier)
@@ -39,7 +40,7 @@ public partial class DebugToggle : Node
         {
             if (ability is HarvestAbility harvest)
             {
-                harvest.FillGauge(ElementTags.StatusCapable[GD.RandRange(0, ElementTags.StatusCapable.Count - 1)]);
+                harvest.FillGauge(ElementTags.All[GD.RandRange(0, ElementTags.All.Count - 1)]);
             }
         }
     }

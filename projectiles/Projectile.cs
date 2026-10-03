@@ -254,11 +254,25 @@ public partial class Projectile : Area3D
         }
     }
 
-    // On every machine: the host's projectile when it picks an element up, each copy when told.
+    // On every machine: the host's projectile when it picks an element up, each copy when told. A
+    // trail under the projectile takes the tint along with the body.
     public void ShowInfusion(Tag element)
     {
-        BodyMesh.SetInstanceShaderParameter("infused", 1f);
-        BodyMesh.SetInstanceShaderParameter("infusion_color", DamageTypeColors.Get(element));
+        TintInfused(BodyMesh, element);
+
+        foreach (Node child in GetChildren())
+        {
+            if (child is GpuParticles3D trail)
+            {
+                TintInfused(trail, element);
+            }
+        }
+    }
+
+    private static void TintInfused(GeometryInstance3D geometry, Tag element)
+    {
+        geometry.SetInstanceShaderParameter("infused", 1f);
+        geometry.SetInstanceShaderParameter("infusion_color", DamageTypeColors.Get(element));
     }
 
     private void Expire(Node3D lastHitBody)
