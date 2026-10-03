@@ -1,7 +1,7 @@
 using Godot;
 
-// Vent's placeholder: a faint disc on the ground around the Tank with a crisp ring at its edge, so
-// it still reads apart from Retaliation's circle when the two overlap.
+// Vent's look: heat haze and steam rising off the Tank, over a faint disc on the ground with a crisp
+// ring at its edge, so it still reads apart from Retaliation's circle when the two overlap.
 public partial class VentAura : MeshInstance3D
 {
     [Export] public Color FillColor { get; private set; } = new Color(1f, 0.65f, 0.2f, 0.12f);
@@ -14,6 +14,10 @@ public partial class VentAura : MeshInstance3D
     // Must be parented to the Tank - it positions itself locally and rides along with him.
     public void Begin(float radius)
     {
+        // Its own process mode rather than the Tank's: on another player's screen the Tank is a puppet
+        // that doesn't process, and the steam still has to run.
+        ProcessMode = ProcessModeEnum.Pausable;
+
         Position = Vector3.Up * GroundOffset;
         CastShadow = ShadowCastingSetting.Off;
 

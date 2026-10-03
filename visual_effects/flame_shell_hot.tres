@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://visual_effects/flame_shell.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" path="res://visual_effects/fire_noise.tres" id="2_noise"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/noise = ExtResource("2_noise")
+shader_parameter/edge_color = Color(1, 0.45, 0.06, 1)
+shader_parameter/core_color = Color(1, 0.95, 0.75, 1)
+shader_parameter/strength = 1.8
+shader_parameter/rise_speed = 2.2
+shader_parameter/tongues = 3.0
+shader_parameter/reach = 0.95

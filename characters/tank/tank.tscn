@@ -10,7 +10,7 @@
 [ext_resource type="PackedScene" path="res://characters/tank/visual_effects/vent_aura.tscn" id="8_ventaura"]
 [ext_resource type="Script" uid="uid://d3wn53v2ivpva" path="res://characters/tank/abilities/ImmolateAbility.cs" id="9_immolate"]
 [ext_resource type="PackedScene" uid="uid://br10xjkf1iim8" path="res://characters/tank/visual_effects/immolate_channel_visual.tscn" id="10_immolatechannel"]
-[ext_resource type="PackedScene" path="res://visual_effects/explosion_visual.tscn" id="11_explosion"]
+[ext_resource type="PackedScene" path="res://characters/tank/visual_effects/immolate_eruption.tscn" id="11_eruption"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_tank"]
 height = 1.9
@@ -153,7 +153,7 @@ AuraScene = ExtResource("8_ventaura")
 [node name="Immolate" type="Node" parent="."]
 script = ExtResource("9_immolate")
 ChannelScene = ExtResource("10_immolatechannel")
-ExplosionScene = ExtResource("11_explosion")
+EruptionScene = ExtResource("11_eruption")
 
 [node name="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_tank")

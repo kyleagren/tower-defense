@@ -7,6 +7,8 @@ using Godot;
 public partial class RepelField : EffectVolume
 {
     [Export] public float AxisWedgeDegrees { get; private set; } = 60f;
+    // Bursts of motes thrown out from the core to the rim, one per pulse.
+    [Export] public GpuParticles3D Motes { get; private set; }
 
     private Vector3 _forward = Vector3.Forward;
     private float _impulse;
@@ -15,6 +17,26 @@ public partial class RepelField : EffectVolume
     {
         _forward = new Vector3(forward.X, 0f, forward.Z).Normalized();
         _impulse = impulse;
+    }
+
+    public override void Initialize(Vector3 position, float radius, float duration)
+    {
+        base.Initialize(position, radius, duration);
+        SizeMotes(radius);
+    }
+
+    // Each burst reaches the rim as its lifetime ends. A fresh copy of the scene's material, since that
+    // one is shared by every field.
+    private void SizeMotes(float radius)
+    {
+        float speed = radius / (float)Motes.Lifetime;
+
+        ParticleProcessMaterial material = (ParticleProcessMaterial)Motes.ProcessMaterial.Duplicate();
+        material.InitialVelocityMin = speed * 0.8f;
+        material.InitialVelocityMax = speed;
+
+        Motes.ProcessMaterial = material;
+        Motes.VisibilityAabb = new Aabb(new Vector3(-radius, -1f, -radius), new Vector3(radius * 2f, 4f, radius * 2f));
     }
 
     protected override void OnTick(Enemy enemy)

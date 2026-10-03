@@ -32,9 +32,28 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // enemy shows and the color its damage numbers use can't drift apart.
     private static readonly Dictionary<Tag, StandardMaterial3D> _statusMaterials = BuildStatusMaterials();
 
-    private static readonly StandardMaterial3D _burnFlashMaterial = CreateTintMaterial(new Color(0.5f, 0f, 0f));
     private static readonly StandardMaterial3D _frostburnFlashMaterial = CreateTintMaterial(new Color(0.04f, 0.07f, 0.28f));
     private const float AilmentFlashDuration = 0.1f;
+
+    // Burning: a glow over the body and flames up a shell around it. Immolation burns hotter.
+    private static readonly Material _burningGlow = GD.Load<Material>("res://enemies/visual_effects/burning_glow.tres");
+    private static readonly Material _immolationGlow = GD.Load<Material>("res://enemies/visual_effects/burning_glow_hot.tres");
+    private static readonly Material _burningFlames = GD.Load<Material>("res://visual_effects/flame_shell.tres");
+    private static readonly Material _immolationFlames = GD.Load<Material>("res://visual_effects/flame_shell_hot.tres");
+
+    private static readonly CylinderMesh _flameShellMesh = new()
+    {
+        TopRadius = 1f,
+        BottomRadius = 1f,
+        Height = 1f,
+        CapTop = false,
+        CapBottom = false
+    };
+
+    // The flame shell's size against the body capsule: a little wider, and tall enough for the flames
+    // to lick above the head.
+    private const float FlameShellWidth = 1.15f;
+    private const float FlameShellHeight = 1.25f;
 
     private static Dictionary<Tag, StandardMaterial3D> BuildStatusMaterials()
     {
@@ -58,6 +77,9 @@ public partial class Enemy : CharacterBody3D, IDamageable
     private Material _appliedTint;
     private Material _statusMeshRestMaterial;
     private float _ailmentFlashTimer;
+    private readonly List<MeshInstance3D> _bodyMeshes = new List<MeshInstance3D>();
+    private MeshInstance3D _flameShell;
+    private Material _appliedBurnGlow;
 
     public bool IsDead => _isDead;
     public bool IsDestroyed => _isDead;
@@ -258,6 +280,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
         CurrentHealth = MaxHealth;
         _statusMeshRestMaterial = StatusMesh?.MaterialOverride;
         Level = LevelContext.Current;
+        BuildBurnVisuals();
 
         // Group membership is for editor / remote-debugger inspection only — code paths that need
         // living enemies go through LevelContext.Enemies, which excludes ragdolls.
@@ -297,6 +320,69 @@ public partial class Enemy : CharacterBody3D, IDamageable
         }
 
         UpdateElementalVisual((float)delta); // TODO placeholder: remove once there's a real way to display this.
+        UpdateBurnVisual();
+    }
+
+    // Collected before any subclass adds visuals of its own, so only the body's meshes are found. Weak
+    // points and the health bar keep their own look.
+    private void BuildBurnVisuals()
+    {
+        foreach (Node node in FindChildren("*", nameof(MeshInstance3D), true, false))
+        {
+            if (node is MeshInstance3D mesh && !IsWeakPoint(mesh) && !HealthBar.IsAncestorOf(mesh))
+            {
+                _bodyMeshes.Add(mesh);
+            }
+        }
+
+        if (BodyCollision?.Shape is not CapsuleShape3D capsule)
+        {
+            return;
+        }
+
+        // Its bottom at the capsule's, rising past the top.
+        _flameShell = new MeshInstance3D
+        {
+            Mesh = _flameShellMesh,
+            Scale = new Vector3(capsule.Radius * FlameShellWidth, capsule.Height * FlameShellHeight, capsule.Radius * FlameShellWidth),
+            Position = BodyCollision.Position + Vector3.Up * capsule.Height * (FlameShellHeight - 1f) / 2f,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Visible = false
+        };
+        AddChild(_flameShell);
+    }
+
+    private bool IsWeakPoint(MeshInstance3D mesh) =>
+        mesh == HeadWeakPoint || mesh == BodyWeakPoint || mesh == ArmLWeakPoint
+        || mesh == ArmRWeakPoint || mesh == LegLWeakPoint || mesh == LegRWeakPoint;
+
+    // Every machine, off the synced debuff types. Only written on a change, like the Status tint.
+    private void UpdateBurnVisual()
+    {
+        bool immolated = !_isDead && HasDebuff(DebuffType.Immolation);
+        bool burning = !_isDead && HasDebuff(DebuffType.Burn);
+        Material glow = immolated ? _immolationGlow : burning ? _burningGlow : null;
+
+        if (glow == _appliedBurnGlow)
+        {
+            return;
+        }
+
+        _appliedBurnGlow = glow;
+
+        foreach (MeshInstance3D mesh in _bodyMeshes)
+        {
+            if (IsInstanceValid(mesh))
+            {
+                mesh.MaterialOverlay = glow;
+            }
+        }
+
+        if (_flameShell != null)
+        {
+            _flameShell.MaterialOverride = immolated ? _immolationFlames : _burningFlames;
+            _flameShell.Visible = glow != null;
+        }
     }
 
     public void TakeDamage(Hit hit)
@@ -789,10 +875,10 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // an enemy's element and ailments.
     private void UpdateElementalVisual(float delta)
     {
-        bool isBurning = HasDebuff(DebuffType.Burn | DebuffType.Immolation);
+        // Burning has its own fire (UpdateBurnVisual); only Frostburn still flashes.
         bool isFrostburning = HasDebuff(DebuffType.Frostburn);
 
-        if (isBurning || isFrostburning)
+        if (isFrostburning)
         {
             _ailmentFlashTimer += delta;
             if (_ailmentFlashTimer >= 1f)
@@ -805,14 +891,12 @@ public partial class Enemy : CharacterBody3D, IDamageable
             _ailmentFlashTimer = 0f;
         }
 
-        bool isFlashing = (isBurning || isFrostburning) && _ailmentFlashTimer < AilmentFlashDuration;
+        bool isFlashing = isFrostburning && _ailmentFlashTimer < AilmentFlashDuration;
 
         Material tint = null;
         if (isFlashing)
         {
-            // An enemy both burning and frostburning flashes red; the two rarely overlap, since one
-            // consumes the Fire Status the other is set off by.
-            tint = isBurning ? _burnFlashMaterial : _frostburnFlashMaterial;
+            tint = _frostburnFlashMaterial;
         }
         else if (Status.HasValue && _statusMaterials.TryGetValue(Status.Value, out StandardMaterial3D statusMaterial))
         {

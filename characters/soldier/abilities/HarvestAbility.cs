@@ -14,6 +14,9 @@ public partial class HarvestAbility : Ability
     // Both fractions of the Soldier's maximum Shield.
     [Export] public float ShieldPerStatus { get; private set; } = 0.05f;
     [Export] public float MaxShieldPerCast { get; private set; } = 0.25f;
+    [Export] public PackedScene WispScene { get; private set; }
+    // Past this many enemies stripped, the wisps are spread across them rather than one each.
+    [Export] public int MaxWisps { get; private set; } = 16;
 
     // Charge is built from floats, so a gauge that should be full can land a hair under.
     private const float FullChargeTolerance = 0.001f;
@@ -31,15 +34,48 @@ public partial class HarvestAbility : Ability
 
     protected override void Activate()
     {
-        Dictionary<Tag, int> stripped = StripNearbyStatuses(out int strippedCount);
+        List<Vector3> wispOrigins = new List<Vector3>();
+        List<int> wispElements = new List<int>();
+        Dictionary<Tag, int> stripped = StripNearbyStatuses(wispOrigins, wispElements, out int strippedCount);
 
         if (strippedCount > 0)
         {
             Character.GrantShield(Character.MaxShield * Mathf.Min(strippedCount * ShieldPerStatus, MaxShieldPerCast));
             AddCharge(stripped, strippedCount);
+            SendWisps(wispOrigins, wispElements);
         }
 
         StartCooldown();
+    }
+
+    // Picked evenly through the list once there are more than MaxWisps, so a capped harvest still
+    // draws from across the whole crowd.
+    private void SendWisps(List<Vector3> origins, List<int> elements)
+    {
+        int count = Mathf.Min(origins.Count, MaxWisps);
+        Vector3[] from = new Vector3[count];
+        int[] fromElements = new int[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            int source = i * origins.Count / count;
+            from[i] = origins[source];
+            fromElements[i] = elements[source];
+        }
+
+        Rpc(MethodName.ShowWisps, from, fromElements);
+    }
+
+    // On every machine, the Soldier's own included.
+    [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
+    private void ShowWisps(Vector3[] origins, int[] elements)
+    {
+        for (int i = 0; i < origins.Length; i++)
+        {
+            HarvestWisp wisp = WispScene.Instantiate<HarvestWisp>();
+            LevelContext.Current.LevelRoot.AddChild(wisp);
+            wisp.Launch(origins[i], Character, (Tag)elements[i]);
+        }
     }
 
     // Empties a full gauge, handing back each element's share of it and whichever fed it most.
@@ -65,7 +101,8 @@ public partial class HarvestAbility : Ability
         return true;
     }
 
-    private Dictionary<Tag, int> StripNearbyStatuses(out int strippedCount)
+    // Also records where each Status came from and its element, for the wisps.
+    private Dictionary<Tag, int> StripNearbyStatuses(List<Vector3> wispOrigins, List<int> wispElements, out int strippedCount)
     {
         Dictionary<Tag, int> stripped = new Dictionary<Tag, int>();
         strippedCount = 0;
@@ -86,6 +123,8 @@ public partial class HarvestAbility : Ability
             {
                 stripped[status.Value] = stripped.GetValueOrDefault(status.Value) + 1;
                 strippedCount++;
+                wispOrigins.Add(enemy.CenterMass);
+                wispElements.Add((int)status.Value);
             }
         }
 

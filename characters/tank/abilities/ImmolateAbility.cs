@@ -21,7 +21,7 @@ public partial class ImmolateAbility : Ability
     // Launches anything an eruption kills, outward from it.
     [Export] public float KillLaunchImpulse { get; private set; } = 200f;
     [Export] public PackedScene ChannelScene { get; private set; }
-    [Export] public PackedScene ExplosionScene { get; private set; }
+    [Export] public PackedScene EruptionScene { get; private set; }
 
     public override string DisplayName => "Immolate";
     public override string Description => "Call the fire out of every burning enemy nearby, erupting and immolating each one.";
@@ -148,7 +148,7 @@ public partial class ImmolateAbility : Ability
                 HitAround(origin, eruptionRadius, eruptionDamage);
             }
 
-            Rpc(MethodName.PlayExplosion, origin, eruptionRadius);
+            Rpc(MethodName.PlayEruption, origin, eruptionRadius);
         }
 
         Wielder.AddHeat(-(Wielder.Heat + Tank.HeatLimit));
@@ -181,11 +181,11 @@ public partial class ImmolateAbility : Ability
 
     // On every machine, the Tank's own included.
     [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
-    private void PlayExplosion(Vector3 position, float radius)
+    private void PlayEruption(Vector3 position, float radius)
     {
-        ExplosionVisual explosion = ExplosionScene.Instantiate<ExplosionVisual>();
-        LevelContext.Current.LevelRoot.AddChild(explosion);
-        explosion.Show(position, radius);
+        ImmolateEruption eruption = EruptionScene.Instantiate<ImmolateEruption>();
+        LevelContext.Current.LevelRoot.AddChild(eruption);
+        eruption.Show(position, radius);
     }
 
     private void EndChannel()

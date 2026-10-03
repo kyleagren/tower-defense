@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://enemies/visual_effects/burning_glow.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" path="res://visual_effects/fire_noise.tres" id="2_noise"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/noise = ExtResource("2_noise")
+shader_parameter/ember_color = Color(1, 0.4, 0.05, 1)
+shader_parameter/flame_color = Color(1, 0.93, 0.65, 1)
+shader_parameter/strength = 1.7
+shader_parameter/rim_strength = 1.8
+shader_parameter/rise_speed = 1.8
+shader_parameter/noise_scale = 0.9
+shader_parameter/grow = 0.02

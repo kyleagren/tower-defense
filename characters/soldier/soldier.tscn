@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" path="res://characters/soldier/abilities/converge_field.tscn" id="13_convergefield"]
 [ext_resource type="PackedScene" path="res://characters/soldier/abilities/repel_field.tscn" id="14_repelfield"]
 [ext_resource type="PackedScene" path="res://characters/soldier/abilities/health_link_bolt.tscn" id="15_bolt"]
+[ext_resource type="PackedScene" path="res://characters/soldier/visual_effects/harvest_wisp.tscn" id="16_wisp"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_soldier"]
 albedo_color = Color(0.1, 0.15, 0.5, 1)
@@ -114,6 +115,7 @@ BeamOrigin = NodePath("../Weapon/MuzzlePoint")
 
 [node name="Harvest" type="Node" parent="." index="11"]
 script = ExtResource("9_statusstrip")
+WispScene = ExtResource("16_wisp")
 
 [node name="Overdrive" type="Node" parent="." index="12" node_paths=PackedStringArray("Harvest")]
 script = ExtResource("10_overdrive")
