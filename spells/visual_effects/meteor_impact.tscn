@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://spells/effect_volumes/DelayedImpact.cs" id="1_impact"]
+[ext_resource type="PackedScene" path="res://visual_effects/explosion_visual.tscn" id="2_explosion"]
+[ext_resource type="Shader" path="res://spells/visual_effects/meteor.gdshader" id="3_shader"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_marker"]
+top_radius = 1.0
+bottom_radius = 1.0
+height = 0.02
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_marker"]
+transparency = 1
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(1, 0.45, 0.05, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_meteor"]
+radius = 1.0
+height = 2.0
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_meteor"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_meteor"]
+seamless = true
+noise = SubResource("FastNoiseLite_meteor")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_meteor"]
+shader = ExtResource("3_shader")
+shader_parameter/noise = SubResource("NoiseTexture2D_meteor")
+
+[node name="MeteorImpact" type="Node3D" node_paths=PackedStringArray("Marker", "FallingBody")]
+script = ExtResource("1_impact")
+Marker = NodePath("Marker")
+FallingBody = NodePath("FallingBody")
+ExplosionScene = ExtResource("2_explosion")
+
+[node name="Marker" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_marker")
+material_override = SubResource("StandardMaterial3D_marker")
+
+[node name="FallingBody" type="Node3D" parent="."]
+
+[node name="Mesh" type="MeshInstance3D" parent="FallingBody"]
+mesh = SubResource("SphereMesh_meteor")
+material_override = SubResource("ShaderMaterial_meteor")

@@ -108,6 +108,7 @@ public class SpellCastContext
     public PulseCastData Pulse;
     public FixedAimCastData FixedAim;
     public StatusStrikeCastData StatusStrike;
+    public ImpactCastData Impact;
     public TriggerCastData Trigger;
     public GroundEffectCastData GroundEffect;
     public CastTrigger CastTrigger;
