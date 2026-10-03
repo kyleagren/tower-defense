@@ -77,7 +77,7 @@ public class SpellCastContext
     // The radius of the circle a spell that lands on a spot covers, Area included - whichever of its
     // components holds it. 0 for a spell that doesn't land on a spot.
     public float SpotRadius =>
-        (Bombardment?.Radius ?? Impact?.Radius ?? StatusStrike?.Radius ?? 0f) * (Area?.Multiplier.Value ?? 1f);
+        (Bombardment?.Radius ?? Impact?.Radius ?? StatusStrike?.Radius ?? GroundEffect?.Radius ?? 0f) * (Area?.Multiplier.Value ?? 1f);
 
     // Mana/capacity cost reduction is ordinary linear "Increased" (unlike cooldown), so it needs
     // an explicit floor instead - PoE's own rule that nothing can ever cost less than 1.

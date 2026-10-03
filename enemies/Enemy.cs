@@ -154,7 +154,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     // Frozen or electrocuted: no steering, turning or attacking. Checked against the debuff types
     // rather than the list, so a copy - which only has the synced types - agrees with the host.
-    private const DebuffType ActionPreventing = DebuffType.Frozen | DebuffType.Electrocuted;
+    private const DebuffType ActionPreventing = DebuffType.Frozen | DebuffType.Electrocuted | DebuffType.KnockedDown;
 
     public bool IsActionPrevented => HasDebuff(ActionPreventing);
 
@@ -474,6 +474,13 @@ public partial class Enemy : CharacterBody3D, IDamageable
         DamagePacket damage = new DamagePacket { IsTrueDamage = true };
         damage.AddElement(element, CurrentHealth);
         TakeDamage(new Hit { Damage = damage, Attribution = attribution, Type = HitType.Unmarked });
+    }
+
+    // Sets this enemy's Status outright, for something that marks it without landing a hit. Host only,
+    // like the ground effects that call it.
+    public void SetStatus(Tag element)
+    {
+        Status = element;
     }
 
     // Takes this enemy's Status outright, for something that spends it without landing a hit.

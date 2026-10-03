@@ -17,5 +17,6 @@ public enum DebuffType
     Melted = 1 << 8,
     Overloaded = 1 << 9,
     Frozen = 1 << 10,
-    Electrocuted = 1 << 11
+    Electrocuted = 1 << 11,
+    KnockedDown = 1 << 12
 }

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RainSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/RainSpell.cs" id="1_rain"]
+[ext_resource type="PackedScene" path="res://spells/effect_volumes/rain_field.tscn" id="2_field"]
+
+[resource]
+script = ExtResource("1_rain")
+WheelOrder = 15
+FieldScene = ExtResource("2_field")

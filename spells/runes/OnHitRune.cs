@@ -4,6 +4,9 @@ public abstract partial class OnHitRune : Rune
 {
     public override void Apply(SpellCastContext context) => context.OnHitRunes.Add(this);
 
+    // A spell that never lands a hit would leave this socketed and silent.
+    public override bool IsCompatibleWith(Spell spell) => spell.DealsHits && base.IsCompatibleWith(spell);
+
     // What the Ritual details panel calls one use of this rune's effect - null for a rune with
     // nothing to count.
     public virtual string EffectLabel => null;

@@ -7,6 +7,8 @@ uniform float columns = 40.0;
 // Flip the sign if the hail falls upward.
 uniform float fall_speed = 2.5;
 uniform float streak_length = 0.12;
+// How much of each column a streak fills, side to side.
+uniform float streak_width = 0.12;
 
 float hash(float x) {
     return fract(sin(x * 91.3458) * 47453.5453);
@@ -18,7 +20,7 @@ void fragment() {
     float y = fract(UV.y - TIME * speed + hash(column));
     float across = fract(UV.x * columns);
 
-    if (y > streak_length || abs(across - 0.5) > 0.12) {
+    if (y > streak_length || abs(across - 0.5) > streak_width) {
         discard;
     }
 

@@ -24,6 +24,9 @@ public abstract partial class Spell : Resource
     public virtual int BaseManaCost { get; protected set; } = 10;
     public virtual int BaseCapacityCost { get; protected set; } = 10;
     public virtual bool RequiresTarget => true;
+
+    // False for a spell that never damages anything directly, so runes that act on hits stay off it.
+    public virtual bool DealsHits => true;
     public virtual TargetPriority BaseTargetPriority { get; protected set; } = TargetPriority.ClosestToGoal;
 
     public DamagePacket BaseDamage => new DamagePacket

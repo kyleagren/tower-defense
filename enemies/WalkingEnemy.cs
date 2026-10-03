@@ -94,9 +94,13 @@ public partial class WalkingEnemy : Enemy
     // How far an electrocuted enemy's model is nudged each frame.
     private const float JitterDistance = 0.02f;
 
+    // How far a knocked-down enemy's model tips back - nearly flat.
+    private const float KnockdownTilt = -1.4f;
+
     private MeshInstance3D _iceBlock;
     private MeshInstance3D _electricShell;
     private Vector3 _skeletonRestPosition;
+    private Vector3 _skeletonRestRotation;
 
     public override void _Ready()
     {
@@ -123,6 +127,7 @@ public partial class WalkingEnemy : Enemy
     private void BuildCrowdControlVisuals()
     {
         _skeletonRestPosition = Skeleton.Position;
+        _skeletonRestRotation = Skeleton.Rotation;
 
         float radius = 0.4f;
         float height = 1.8f;
@@ -167,6 +172,10 @@ public partial class WalkingEnemy : Enemy
         Skeleton.Position = electrocuted
             ? _skeletonRestPosition + new Vector3((float)GD.RandRange(-1.0, 1.0), (float)GD.RandRange(-1.0, 1.0), (float)GD.RandRange(-1.0, 1.0)) * JitterDistance
             : _skeletonRestPosition;
+
+        Skeleton.Rotation = HasDebuff(DebuffType.KnockedDown)
+            ? _skeletonRestRotation + new Vector3(KnockdownTilt, 0f, 0f)
+            : _skeletonRestRotation;
     }
 
     public void SetLane(Lane lane, DefendableObjective objective)
@@ -827,6 +836,7 @@ public partial class WalkingEnemy : Enemy
         _iceBlock.Visible = false;
         _electricShell.Visible = false;
         Skeleton.Position = _skeletonRestPosition;
+        Skeleton.Rotation = _skeletonRestRotation;
 
         NavAgent.AvoidanceEnabled = false;
         SetPhysicalBonesCollision(PhysicsLayers.Ragdoll, PhysicsLayers.World);

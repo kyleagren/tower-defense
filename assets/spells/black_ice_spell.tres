@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="BlackIceSpell" format=3]
+
+[ext_resource type="Script" path="res://spells/BlackIceSpell.cs" id="1_blackice"]
+[ext_resource type="PackedScene" path="res://spells/effect_volumes/black_ice.tscn" id="2_field"]
+
+[resource]
+script = ExtResource("1_blackice")
+WheelOrder = 16
+FieldScene = ExtResource("2_field")
