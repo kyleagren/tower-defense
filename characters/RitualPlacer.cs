@@ -13,6 +13,16 @@ public partial class RitualPlacer : Node
     [Export] public float PlacementDistance = GameRules.RitualReach;
     [Export] public float GroundRaycastRange = 10f;
 
+    // A surface steeper than this isn't ground: a reticle on a wall's face steps back off it.
+    private const float MinGroundNormalY = 0.7f;
+
+    // How far off a wall's face to step before looking for the ground below.
+    private const float WallStepBack = 0.5f;
+
+    // How far the reticle reaches while aiming a spot or direction - as far as the eye can, since
+    // the pick is clamped to the Ritual's range anyway, so there's no walking over to it.
+    [Export] public float AimReach = 60f;
+
     // Which phase transition should cancel an in-progress placement for this placer's owner - the
     // Architect's own instance cancels on entering Combat (placement only happens during Build);
     // the Sentinel's instance (README's mid-wave token deployment) needs the opposite: cancel
@@ -36,11 +46,14 @@ public partial class RitualPlacer : Node
     // also confirm it; confirming needs a fresh one.
     private bool _confirmHeldSinceStart;
 
-    // For a spell that fires in a fixed direction: once the Ritual's spot is confirmed, the next
-    // stage picks the direction from there. Its lane indicator stands in for the range circle.
+    // For a spell that fires in a fixed direction or lands on a fixed spot: once the Ritual's own
+    // position is confirmed, the next stage picks the direction or the spot from there. A lane
+    // indicator stands in for the range circle; a spot shows the range's edge and its own area.
     private bool _isAiming;
+    private MeshInstance3D _rangeIndicator;
     private MeshInstance3D _laneIndicator;
-    private AimPlacementData _aim;
+    private MeshInstance3D _spotIndicator;
+    private PlacementData _aimPick;
 
     // Invoked once the Ritual has actually been placed (not on cancel, or a placement the host turns
     // down) - lets a caller like TokenDeployer know it should consume the token that was just spent.
@@ -147,23 +160,44 @@ public partial class RitualPlacer : Node
 
     private void UpdateCursorPosition()
     {
-        Vector3 aheadPoint = Character.GetCameraAimPoint(PlacementDistance);
-
-        Vector3 rayStart = aheadPoint + Vector3.Up * GroundRaycastRange;
-        Vector3 rayEnd = aheadPoint - Vector3.Up * GroundRaycastRange;
-
-        PhysicsDirectSpaceState3D spaceState = Character.GetWorld3D().DirectSpaceState;
-        PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(rayStart, rayEnd);
+        if (_isAiming)
+        {
+            _cursorPosition = CursorAlongView();
+            return;
+        }
 
         // World only — ignore rituals/obstacles so the cursor always lands at true ground height
-        query.CollisionMask = PhysicsLayers.World;
+        _cursorPosition = DropToGround(Character.GetCameraAimPoint(PlacementDistance)) ?? _cursorPosition;
+    }
 
-        Godot.Collections.Dictionary result = spaceState.IntersectRay(query);
+    // The first ground straight along the camera's view, within AimReach - a wall's face steps back
+    // off it onto the ground below. Looking at the sky, the point that far along the view at the
+    // Ritual's height; the range clamp pulls it in either way.
+    private Vector3 CursorAlongView()
+    {
+        Vector3 far = Character.GetCameraAimPoint(AimReach);
+        PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(Character.Camera.GlobalPosition, far, PhysicsLayers.World);
+        Godot.Collections.Dictionary result = Character.GetWorld3D().DirectSpaceState.IntersectRay(query);
 
-        if (result.Count > 0)
+        if (result.Count == 0)
         {
-            _cursorPosition = (Vector3)result["position"];
+            far.Y = _ghost.GlobalPosition.Y;
+            return far;
         }
+
+        Vector3 position = (Vector3)result["position"];
+        Vector3 normal = (Vector3)result["normal"];
+
+        return normal.Y >= MinGroundNormalY ? position : DropToGround(position + normal * WallStepBack) ?? position;
+    }
+
+    // The terrain straight below point, looking from GroundRaycastRange above it - null with none there.
+    private Vector3? DropToGround(Vector3 point)
+    {
+        PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(
+            point + Vector3.Up * GroundRaycastRange, point - Vector3.Up * GroundRaycastRange, PhysicsLayers.World);
+        Godot.Collections.Dictionary result = Character.GetWorld3D().DirectSpaceState.IntersectRay(query);
+        return result.Count == 0 ? null : (Vector3)result["position"];
     }
 
     private void ProcessRitualStage()
@@ -181,10 +215,9 @@ public partial class RitualPlacer : Node
 
         if (ConfirmJustPressed() && _isValidPlacement)
         {
-            if (_pendingContext.FixedAim != null)
+            if (_pendingContext.FixedAim != null || _pendingContext.FixedSpot != null)
             {
-                _isAiming = true;
-                _confirmHeldSinceStart = true;
+                BeginAiming();
             }
             else
             {
@@ -193,7 +226,39 @@ public partial class RitualPlacer : Node
         }
     }
 
+    private void BeginAiming()
+    {
+        _isAiming = true;
+        _confirmHeldSinceStart = true;
+
+        // A spot is picked inside the range, so the range shrinks to its edge and the spot's own
+        // area follows the reticle.
+        if (_pendingContext.FixedSpot != null)
+        {
+            if (_rangeIndicator != null)
+            {
+                _rangeIndicator.Visible = false;
+            }
+
+            _ghost.AddChild(BuildRangeOutline(_pendingContext.Range.Value));
+            _spotIndicator = BuildSpotIndicator(_pendingContext.SpotRadius);
+            _ghost.AddChild(_spotIndicator);
+        }
+    }
+
     private void ProcessAimStage()
+    {
+        if (_pendingContext.FixedSpot != null)
+        {
+            ProcessSpotAim();
+        }
+        else
+        {
+            ProcessDirectionAim();
+        }
+    }
+
+    private void ProcessDirectionAim()
     {
         Vector3 direction = FlatDirection(_ghost.GlobalPosition, _cursorPosition);
 
@@ -206,7 +271,29 @@ public partial class RitualPlacer : Node
 
         if (ConfirmJustPressed())
         {
-            _aim = new AimPlacementData(direction);
+            _aimPick = new AimPlacementData(direction);
+            ConfirmPlacement();
+        }
+    }
+
+    private void ProcessSpotAim()
+    {
+        Vector3 offset = _cursorPosition - _ghost.GlobalPosition;
+        offset.Y = 0f;
+        float range = _pendingContext.Range.Value;
+
+        if (offset.Length() > range)
+        {
+            offset = offset.Normalized() * range;
+        }
+
+        Vector3 spot = new Vector3(_ghost.GlobalPosition.X + offset.X, _cursorPosition.Y, _ghost.GlobalPosition.Z + offset.Z);
+        spot = DropToGround(spot) ?? spot;
+        _spotIndicator.GlobalPosition = spot + new Vector3(0f, 0.03f, 0f);
+
+        if (ConfirmJustPressed())
+        {
+            _aimPick = new SpotPlacementData(spot);
             ConfirmPlacement();
         }
     }
@@ -249,7 +336,8 @@ public partial class RitualPlacer : Node
         }
         else if (_flow.ShowsRangeIndicator)
         {
-            _ghost.AddChild(BuildRangeIndicator(_pendingContext.Range.Value));
+            _rangeIndicator = BuildRangeIndicator(_pendingContext.Range.Value);
+            _ghost.AddChild(_rangeIndicator);
         }
 
         if (_flow.ShowsRangeIndicator && _pendingContext.Trigger?.Resonant == true)
@@ -286,9 +374,9 @@ public partial class RitualPlacer : Node
 
     private void ConfirmPlacement()
     {
-        // A spell with placement picks of its own (Ice Wall) can't take a fixed direction, so at most
-        // one of these is set.
-        LevelContext.Current.RitualRoster.RequestPlacement(_pendingSpell, _pendingRunes, _ghost.GlobalTransform, _flow.Data ?? _aim, _onConfirmed);
+        // A spell with placement picks of its own (Ice Wall) can't take a fixed direction or spot, so
+        // at most one of these is set.
+        LevelContext.Current.RitualRoster.RequestPlacement(_pendingSpell, _pendingRunes, _ghost.GlobalTransform, _flow.Data ?? _aimPick, _onConfirmed);
         EndPlacement();
     }
 
@@ -311,8 +399,10 @@ public partial class RitualPlacer : Node
 
         _resonanceOverlay = null;
         _isAiming = false;
+        _rangeIndicator = null;
         _laneIndicator = null;
-        _aim = null;
+        _spotIndicator = null;
+        _aimPick = null;
 
         _onConfirmed = null;
         IsPlacing = false;
@@ -326,6 +416,26 @@ public partial class RitualPlacer : Node
             Mesh = new CylinderMesh { TopRadius = range, BottomRadius = range, Height = 0.05f },
             MaterialOverride = PreviewMaterials.RangeFill,
             Position = new Vector3(0f, 0.03f, 0f)
+        };
+    }
+
+    // Just the edge of the range, so a spot's own area reads clearly inside it.
+    public static MeshInstance3D BuildRangeOutline(float range)
+    {
+        return new MeshInstance3D
+        {
+            Mesh = new TorusMesh { InnerRadius = range - 0.1f, OuterRadius = range },
+            MaterialOverride = PreviewMaterials.RangeFill,
+            Position = new Vector3(0f, 0.03f, 0f)
+        };
+    }
+
+    public static MeshInstance3D BuildSpotIndicator(float radius)
+    {
+        return new MeshInstance3D
+        {
+            Mesh = new CylinderMesh { TopRadius = radius, BottomRadius = radius, Height = 0.05f },
+            MaterialOverride = PreviewMaterials.Valid
         };
     }
 

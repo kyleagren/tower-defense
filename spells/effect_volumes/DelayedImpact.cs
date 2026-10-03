@@ -5,7 +5,8 @@ using Godot;
 // visuals, but never deal damage.
 public partial class DelayedImpact : Node3D
 {
-    // A flat disc of radius 1, scaled to the blast radius, fading in as the impact nears.
+    // A flat disc of radius 1, growing from a point to the full blast radius - and fading in - as the
+    // impact nears.
     [Export] public GeometryInstance3D Marker { get; private set; }
     // A sphere of radius 1, sized off the blast, falling from FallHeight until it rests on the spot.
     [Export] public Node3D FallingBody { get; private set; }
@@ -14,6 +15,10 @@ public partial class DelayedImpact : Node3D
 
     private const float MarkerStartTransparency = 0.8f;
     private const float MarkerEndTransparency = 0.3f;
+
+    // The marker's starting size as a share of the blast. Not zero - a zero-scaled transform can't be
+    // inverted.
+    private const float MarkerStartShare = 0.05f;
 
     // The falling body's radius as a share of the blast's - big enough to read as what made the
     // crater, small enough not to swallow the screen.
@@ -49,7 +54,7 @@ public partial class DelayedImpact : Node3D
         GlobalPosition = point;
         _radius = radius;
         _delay = delay;
-        Marker.Scale = new Vector3(radius, 1f, radius);
+        SetMarkerSize(0f);
         Marker.Transparency = MarkerStartTransparency;
         float bodyRadius = radius * BodyToBlastRatio;
         FallingBody.Scale = Vector3.One * bodyRadius;
@@ -63,11 +68,18 @@ public partial class DelayedImpact : Node3D
 
         FallingBody.Position = Vector3.Up * (_radius * BodyToBlastRatio + FallHeight * (1f - progress));
         Marker.Transparency = Mathf.Lerp(MarkerStartTransparency, MarkerEndTransparency, progress);
+        SetMarkerSize(progress);
 
         if (progress >= 1f)
         {
             Land();
         }
+    }
+
+    private void SetMarkerSize(float progress)
+    {
+        float share = Mathf.Lerp(MarkerStartShare, 1f, progress);
+        Marker.Scale = new Vector3(_radius * share, 1f, _radius * share);
     }
 
     // Every machine shows its own explosion off the same countdown, so nothing more is sent.

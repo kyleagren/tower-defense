@@ -24,6 +24,7 @@ public abstract class PlacementData
         {
             WallPlacementData.NetworkKind => WallPlacementData.Decode(data),
             AimPlacementData.NetworkKind => AimPlacementData.Decode(data),
+            SpotPlacementData.NetworkKind => SpotPlacementData.Decode(data),
             _ => null
         };
     }

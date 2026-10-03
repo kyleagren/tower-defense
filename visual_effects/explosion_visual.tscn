@@ -1,24 +1,27 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://visual_effects/ExplosionVisual.cs" id="1_explosion"]
+[ext_resource type="Shader" path="res://visual_effects/explosion.gdshader" id="2_shader"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_explosion"]
 radius = 1.0
 height = 2.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_explosion"]
-shading_mode = 0
-albedo_color = Color(1, 0.5, 0.1, 0.6)
-emission_enabled = true
-emission = Color(1, 0.4, 0.05, 1)
-emission_energy_multiplier = 3.0
-transparency = 1
-cull_mode = 2
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_explosion"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_explosion"]
+seamless = true
+noise = SubResource("FastNoiseLite_explosion")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_explosion"]
+shader = ExtResource("2_shader")
+shader_parameter/noise = SubResource("NoiseTexture2D_explosion")
 
 [node name="ExplosionVisual" type="Node3D" node_paths=PackedStringArray("Sphere")]
 script = ExtResource("1_explosion")
 Sphere = NodePath("Sphere")
 
 [node name="Sphere" type="MeshInstance3D" parent="."]
+cast_shadow = 0
 mesh = SubResource("SphereMesh_explosion")
-material_override = SubResource("StandardMaterial3D_explosion")
+material_override = SubResource("ShaderMaterial_explosion")

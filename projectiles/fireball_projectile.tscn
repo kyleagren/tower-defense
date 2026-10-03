@@ -1,12 +1,18 @@
 [gd_scene format=3 uid="uid://o210wvy66vdy"]
 
 [ext_resource type="Script" uid="uid://fj4eqt7o5kjn" path="res://projectiles/Projectile.cs" id="1_eeyek"]
+[ext_resource type="Shader" path="res://spells/visual_effects/meteor.gdshader" id="2_shader"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_proj01"]
-albedo_color = Color(1, 0.4, 0.05, 1)
-emission_enabled = true
-emission = Color(1, 0.4, 0.05, 1)
-emission_energy_multiplier = 1.5
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_proj01"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_proj01"]
+seamless = true
+noise = SubResource("FastNoiseLite_proj01")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_proj01"]
+shader = ExtResource("2_shader")
+shader_parameter/noise = SubResource("NoiseTexture2D_proj01")
+shader_parameter/lumpiness = 0.05
 
 [sub_resource type="SphereMesh" id="SphereMesh_s42qg"]
 radius = 1.0
@@ -22,7 +28,7 @@ BodyMesh = NodePath("MeshInstance3D")
 BodyCollision = NodePath("CollisionShape3D")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2106799628]
-material_override = SubResource("StandardMaterial3D_proj01")
+material_override = SubResource("ShaderMaterial_proj01")
 mesh = SubResource("SphereMesh_s42qg")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=89428427]

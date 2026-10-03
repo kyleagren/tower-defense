@@ -74,6 +74,11 @@ public class SpellCastContext
     // Far Resonance gives only the spell.
     public float ResonanceRadius => Range.Base * (1f + Range.Increased - (Trigger?.RangeNotResonating ?? 0f)) * Range.More;
 
+    // The radius of the circle a spell that lands on a spot covers, Area included - whichever of its
+    // components holds it. 0 for a spell that doesn't land on a spot.
+    public float SpotRadius =>
+        (Bombardment?.Radius ?? Impact?.Radius ?? StatusStrike?.Radius ?? 0f) * (Area?.Multiplier.Value ?? 1f);
+
     // Mana/capacity cost reduction is ordinary linear "Increased" (unlike cooldown), so it needs
     // an explicit floor instead - PoE's own rule that nothing can ever cost less than 1.
     public int ResolvedManaCost => Mathf.Max(1, Mathf.CeilToInt((ManaCost.Base + PlacementManaCost) * ManaCost.Multiplier));
@@ -109,6 +114,7 @@ public class SpellCastContext
     public FixedAimCastData FixedAim;
     public StatusStrikeCastData StatusStrike;
     public ImpactCastData Impact;
+    public FixedSpotCastData FixedSpot;
     public TriggerCastData Trigger;
     public GroundEffectCastData GroundEffect;
     public CastTrigger CastTrigger;

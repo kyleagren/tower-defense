@@ -1,0 +1,29 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://fj4eqt7o5kjn" path="res://projectiles/Projectile.cs" id="1_projectile"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pellet"]
+albedo_color = Color(1, 0.4, 0.05, 1)
+emission_enabled = true
+emission = Color(1, 0.45, 0.05, 1)
+emission_energy_multiplier = 4.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_pellet"]
+radius = 1.0
+height = 2.0
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_pellet"]
+radius = 1.0
+
+[node name="FireBurstPellet" type="Area3D" node_paths=PackedStringArray("BodyMesh", "BodyCollision")]
+collision_mask = 3
+script = ExtResource("1_projectile")
+BodyMesh = NodePath("MeshInstance3D")
+BodyCollision = NodePath("CollisionShape3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_pellet")
+mesh = SubResource("SphereMesh_pellet")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_pellet")

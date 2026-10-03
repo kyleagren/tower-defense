@@ -440,8 +440,8 @@ public partial class Ritual : Node3D, IDamageable
         if (_searchTimer <= 0f || justLostTarget)
         {
             _searchTimer = TargetSearchInterval;
-            _currentTarget = context.FixedAim != null
-                ? FindInLane(context)
+            _currentTarget = context.FixedSpot != null ? FindInSpot(context)
+                : context.FixedAim != null ? FindInLane(context)
                 : EnemyTargeting.FindTarget(GlobalPosition, context, sightFrom: SpawnPoint.GlobalPosition);
         }
 
@@ -652,6 +652,11 @@ public partial class Ritual : Node3D, IDamageable
     // and is wasted.
     private Enemy PulseTarget(SpellCastContext context)
     {
+        if (context.FixedSpot != null)
+        {
+            return FindInSpot(context);
+        }
+
         if (context.FixedAim != null)
         {
             return FindInLane(context);
@@ -747,6 +752,13 @@ public partial class Ritual : Node3D, IDamageable
             _rangeIndicator = RitualPlacer.BuildLaneIndicator(context.Range.Value, context.FixedAim.LaneHalfWidth);
             RitualPlacer.PointLaneIndicator(_rangeIndicator, context.FixedAim.Direction, context.Range.Value);
         }
+        else if (context.FixedSpot != null)
+        {
+            _rangeIndicator = RitualPlacer.BuildRangeOutline(context.Range.Value);
+            MeshInstance3D spot = RitualPlacer.BuildSpotIndicator(context.SpotRadius);
+            spot.Position = context.FixedSpot.Point - GlobalPosition;
+            _rangeIndicator.AddChild(spot);
+        }
         else
         {
             _rangeIndicator = RitualPlacer.BuildRangeIndicator(context.Range.Value);
@@ -761,6 +773,16 @@ public partial class Ritual : Node3D, IDamageable
             _resonanceOverlay.Draw(context.ResonanceRadius, context.Range.Value, this);
         }
     }
+
+    // Where a spell that lands on a spot comes down: an Anchor Ritual's spot, else the target enemy,
+    // else - for a Resonant cast with nothing in range - the ground point it reaches toward.
+    public Vector3? LandingPoint(SpellCastContext context) =>
+        context.FixedSpot != null ? (Vector3?)context.FixedSpot.Point : _currentTarget?.GlobalPosition ?? CastPoint;
+
+    // An Anchor Ritual only answers to an enemy inside its spot's area. No sight needed - it isn't
+    // aiming at anyone.
+    private Enemy FindInSpot(SpellCastContext context) =>
+        EnemyTargeting.FindNearest(context.FixedSpot.Point, context.SpotRadius);
 
     // A Ritual that fires in a fixed direction only answers to an enemy it can see in its lane:
     // within the lane's half-width of the line from its base out to its range.

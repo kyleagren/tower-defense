@@ -8,8 +8,18 @@ public partial class StatusInRangeCastTrigger : CastTrigger
 {
     [Export] public Tag Status { get; set; }
 
-    public override bool ShouldCast(Ritual caster, SpellCastContext context) =>
-        caster.CurrentTarget != null
-        && EnemyTargeting.FindNearest(caster.GlobalPosition, context.Range.Value,
-            predicate: enemy => enemy.Status == Status, sightFrom: caster.SpawnPoint.GlobalPosition) != null;
+    public override bool ShouldCast(Ritual caster, SpellCastContext context)
+    {
+        bool Carries(Enemy enemy) => enemy.Status == Status;
+
+        // Anchored, only a carrier inside its spot counts.
+        if (context.FixedSpot != null)
+        {
+            return EnemyTargeting.FindNearest(context.FixedSpot.Point, context.SpotRadius, predicate: Carries) != null;
+        }
+
+        return caster.CurrentTarget != null
+            && EnemyTargeting.FindNearest(caster.GlobalPosition, context.Range.Value,
+                predicate: Carries, sightFrom: caster.SpawnPoint.GlobalPosition) != null;
+    }
 }

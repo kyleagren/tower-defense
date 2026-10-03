@@ -8,9 +8,7 @@ public class ImpactCastEffect : CastEffect
     {
         ImpactCastData data = context.Impact;
 
-        // On the target enemy, or - for a Resonant cast with nothing in range - the ground point it
-        // reaches toward.
-        Vector3? point = caster.CurrentTarget?.GlobalPosition ?? caster.CastPoint;
+        Vector3? point = caster.LandingPoint(context);
 
         if (data?.Scene == null || point == null)
         {

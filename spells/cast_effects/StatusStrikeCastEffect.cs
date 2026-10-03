@@ -8,7 +8,7 @@ public class StatusStrikeCastEffect : CastEffect
     public override void Cast(SpellCastContext context, Node3D spawnPoint, Ritual caster)
     {
         StatusStrikeCastData data = context.StatusStrike;
-        Vector3? center = caster.CurrentTarget?.GlobalPosition ?? caster.CastPoint;
+        Vector3? center = caster.LandingPoint(context);
 
         if (data == null || center == null)
         {
