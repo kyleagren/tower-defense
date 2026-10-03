@@ -10,8 +10,11 @@ public partial class Beam : Node3D
     [Export] public Node3D Footprint { get; private set; }
     // How long the beam stays visible after its last tick.
     [Export] public float Linger { get; private set; } = 0.15f;
+    // Optional: a mesh whose shader takes the beam's age as "progress", 0 as it fires to 1 as it goes.
+    [Export] public GeometryInstance3D FadeMesh { get; private set; }
 
     public float Duration { get; private set; }
+    public float Length { get; private set; }
 
     // Generous: a wide beam down a packed lane can hold many enemies, and each can report more than
     // one shape.
@@ -67,6 +70,8 @@ public partial class Beam : Node3D
             Tick();
         }
 
+        FadeMesh?.SetInstanceShaderParameter("progress", Mathf.Min(_elapsed / Duration, 1f));
+
         if (_elapsed >= Duration)
         {
             QueueFree();
@@ -79,6 +84,7 @@ public partial class Beam : Node3D
         GlobalPosition = origin;
         GlobalBasis = Basis.LookingAt(direction, Vector3.Up);
         Footprint.Scale = new Vector3(halfWidth, halfWidth, length);
+        Length = length;
         Duration = duration;
     }
 
