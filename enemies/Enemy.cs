@@ -485,7 +485,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         if (CurrentHealth <= 0f)
         {
-            Die(hit.RagdollImpulse);
+            Die(hit.RagdollImpulse, hit.DeathStyle ?? DeathStyleFor(hit.Damage));
         }
 
         CreditRitual(hit, Mathf.Min(amount.Total, healthBefore), _isDead);
@@ -555,11 +555,11 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
     // Kills outright with an ordinary hit for whatever health is left, so death, kill credit and the
     // damage number all go the usual way. Host only. Unmarked, so it sets no Status of its own.
-    public void Execute(Attribution attribution, Tag element)
+    public void Execute(Attribution attribution, Tag element, DeathStyle? deathStyle = null)
     {
         DamagePacket damage = new DamagePacket { IsTrueDamage = true };
         damage.AddElement(element, CurrentHealth);
-        TakeDamage(new Hit { Damage = damage, Attribution = attribution, Type = HitType.Unmarked });
+        TakeDamage(new Hit { Damage = damage, Attribution = attribution, Type = HitType.Unmarked, DeathStyle = deathStyle });
     }
 
     // Sets this enemy's Status outright, for something that marks it without landing a hit. Host only,
@@ -725,7 +725,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // subclass with more to do on death (ragdoll physics) overrides this and calls base.Die() first -
     // see WalkingEnemy. A subclass that shouldn't die at all (a training dummy) overrides this and
     // skips base entirely.
-    public virtual void Die(Vector3 ragdollImpulse)
+    public virtual void Die(Vector3 ragdollImpulse, DeathStyle style)
     {
         if (_isDead)
         {
@@ -746,6 +746,15 @@ public partial class Enemy : CharacterBody3D, IDamageable
         // The ragdoll takes over from wherever a copy is being shown.
         GetNodeOrNull<MotionPlayback>("Motion")?.Stop();
 
+        DeathEffect effect = DeathEffect.For(style);
+        float corpseLifetime = RagdollCleanupDelay;
+
+        if (effect != null)
+        {
+            effect.Play(this, HandBodyToDeathEffect(effect.BodyMaterial), ragdollImpulse);
+            corpseLifetime = effect.Duration;
+        }
+
         // A copy only shows the death. The host pays out, tells the copies, and later frees the body,
         // which removes it everywhere - its synchronizer going first, so no update arrives for a body
         // another machine has already removed.
@@ -756,14 +765,59 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         EventBus.Instance.EmitSignal(EventBus.SignalName.EnemyKilled, ManaReward, GoldReward, GlobalPosition, DropChance, LootRolls);
         GetNodeOrNull("MultiplayerSynchronizer")?.QueueFree();
-        Rpc(MethodName.ReceiveDeath, ragdollImpulse);
-        GetTree().CreateTimer(RagdollCleanupDelay).Timeout += QueueFree;
+        Rpc(MethodName.ReceiveDeath, ragdollImpulse, (int)style);
+        GetTree().CreateTimer(corpseLifetime).Timeout += QueueFree;
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceiveDeath(Vector3 ragdollImpulse)
+    private void ReceiveDeath(Vector3 ragdollImpulse, int style)
     {
-        Die(ragdollImpulse);
+        Die(ragdollImpulse, (DeathStyle)style);
+    }
+
+    private static DeathStyle DeathStyleFor(DamagePacket killingBlow) => killingBlow.LeadingElement switch
+    {
+        Tag.Fire => DeathStyle.Burn,
+        Tag.Cold => DeathStyle.Freeze,
+        Tag.Lightning => DeathStyle.Fry,
+        Tag.Water => DeathStyle.Sink,
+        Tag.Wind => DeathStyle.Gust,
+        _ => DeathStyle.Plain
+    };
+
+    // The burn glow, flame shell, status tint and weak points come off, since they'd stay as they are
+    // while the body changes under them. Each mesh passes its own color to the effect as base_color.
+    private IReadOnlyList<MeshInstance3D> HandBodyToDeathEffect(Material material)
+    {
+        ClearWeakPoints();
+
+        if (_flameShell != null)
+        {
+            _flameShell.Visible = false;
+        }
+
+        if (StatusMesh != null)
+        {
+            StatusMesh.MaterialOverride = _statusMeshRestMaterial;
+        }
+
+        List<MeshInstance3D> body = new List<MeshInstance3D>();
+
+        foreach (MeshInstance3D mesh in _bodyMeshes)
+        {
+            if (!IsInstanceValid(mesh))
+            {
+                continue;
+            }
+
+            Color color = mesh.GetActiveMaterial(0) is BaseMaterial3D rest ? rest.AlbedoColor : Colors.White;
+            mesh.MaterialOverlay = null;
+            mesh.MaterialOverride = material;
+            mesh.SetInstanceShaderParameter("base_color", color);
+            body.Add(mesh);
+        }
+
+        return body;
     }
 
     // A non-lethal shove from outside - a pylon, a shield slam - in kg·m/s. A copy passes it to the
@@ -797,6 +851,77 @@ public partial class Enemy : CharacterBody3D, IDamageable
     // No-op by default — only an enemy with a ragdoll-capable rig (WalkingEnemy) does anything here.
     public virtual void ApplyExtraRagdollImpulse(Vector3 impulse)
     {
+    }
+
+    // Spin a broken-off part tumbles with, in radians per second on each axis at most.
+    private const float DetachedPartSpin = 4f;
+
+    // The body mesh for a part: the one sharing its weak point's parent, the bone attachment for that
+    // part. Null when the enemy has no such part, or it has already come off.
+    public MeshInstance3D BodyMeshFor(BodyPart part)
+    {
+        Node attachment = WeakPointFor(part)?.GetParent();
+
+        if (attachment == null)
+        {
+            return null;
+        }
+
+        foreach (MeshInstance3D mesh in _bodyMeshes)
+        {
+            if (IsInstanceValid(mesh) && mesh.GetParent() == attachment)
+            {
+                return mesh;
+            }
+        }
+
+        return null;
+    }
+
+    private MeshInstance3D WeakPointFor(BodyPart part) => part switch
+    {
+        BodyPart.Torso => BodyWeakPoint,
+        BodyPart.Head => HeadWeakPoint,
+        BodyPart.ArmL => ArmLWeakPoint,
+        BodyPart.ArmR => ArmRWeakPoint,
+        BodyPart.LegL => LegLWeakPoint,
+        _ => LegRWeakPoint
+    };
+
+    // Breaks a part off the dead body: its mesh moves onto a loose rigid body of its own, thrown out
+    // from the torso and leaning along push, with impulse in kg·m/s. Whatever the rest of the body is
+    // doing carries on without it. Purely visual, so every machine does its own.
+    public void DetachPart(BodyPart part, Vector3 push, float impulse)
+    {
+        MeshInstance3D mesh = BodyMeshFor(part);
+
+        if (mesh == null)
+        {
+            return;
+        }
+
+        Aabb box = mesh.GetAabb();
+        MeshInstance3D torso = BodyMeshFor(BodyPart.Torso);
+        Vector3 torsoCenter = torso != null ? torso.GlobalTransform * torso.GetAabb().GetCenter() : CenterMass;
+        Vector3 away = mesh.GlobalTransform * box.GetCenter() - torsoCenter;
+        away.Y = 0f;
+
+        RigidBody3D piece = new RigidBody3D
+        {
+            TopLevel = true,
+            CollisionLayer = PhysicsLayers.Ragdoll,
+            CollisionMask = PhysicsLayers.World
+        };
+        piece.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = box.Size }, Position = box.GetCenter() });
+        AddChild(piece);
+        piece.GlobalTransform = mesh.GlobalTransform;
+        mesh.Reparent(piece);
+
+        // Set outright rather than applied as an impulse, which a body only just entering the space
+        // could lose.
+        piece.LinearVelocity = (away.Normalized() + push + Vector3.Up * 0.5f).Normalized() * impulse / piece.Mass;
+        piece.AngularVelocity = new Vector3(
+            (float)GD.RandRange(-1.0, 1.0), (float)GD.RandRange(-1.0, 1.0), (float)GD.RandRange(-1.0, 1.0)) * DetachedPartSpin;
     }
 
     // For a subclass that wants to know it just took damage (TrainingDummy's DPS readout). Runs only

@@ -11,7 +11,7 @@ public partial class TrainingDummy : Enemy
     private readonly List<(double time, float amount)> _recentHits = new();
     private int _displayedDps = -1;
 
-    public override void Die(Vector3 ragdollImpulse)
+    public override void Die(Vector3 ragdollImpulse, DeathStyle style)
     {
         CurrentHealth = MaxHealth;
         HealthBar.SetFraction(1f);

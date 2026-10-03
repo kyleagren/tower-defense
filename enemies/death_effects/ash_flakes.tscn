@@ -1,0 +1,94 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://enemies/death_effects/DeathParticles.cs" id="1_particles"]
+
+[sub_resource type="Gradient" id="Gradient_fade"]
+offsets = PackedFloat32Array(0, 0.7, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.8, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_fade"]
+gradient = SubResource("Gradient_fade")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ash"]
+emission_shape = 3
+emission_box_extents = Vector3(0.3, 0.9, 0.2)
+direction = Vector3(0, 1, 0)
+spread = 60.0
+initial_velocity_min = 0.3
+initial_velocity_max = 1.0
+gravity = Vector3(0, 0.3, 0)
+damping_min = 0.5
+damping_max = 1.0
+scale_min = 0.5
+scale_max = 1.3
+color_ramp = SubResource("GradientTexture1D_fade")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ash"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.12, 0.12, 0.13, 1)
+billboard_mode = 3
+billboard_keep_scale = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_ash"]
+material = SubResource("StandardMaterial3D_ash")
+size = Vector2(0.05, 0.05)
+
+[sub_resource type="Gradient" id="Gradient_sparks"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 0.95, 1, 1, 0.75, 0.55, 1, 1, 0.5, 0.3, 0.9, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_sparks"]
+gradient = SubResource("Gradient_sparks")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_sparks"]
+emission_shape = 3
+emission_box_extents = Vector3(0.3, 0.9, 0.2)
+direction = Vector3(0, 1, 0)
+spread = 180.0
+initial_velocity_min = 2.0
+initial_velocity_max = 4.0
+gravity = Vector3(0, -6, 0)
+damping_min = 2.0
+damping_max = 4.0
+color_ramp = SubResource("GradientTexture1D_sparks")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_spark"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_spark"]
+material = SubResource("StandardMaterial3D_spark")
+radius = 0.02
+height = 0.04
+radial_segments = 6
+rings = 3
+
+[node name="AshFlakes" type="Node3D"]
+script = ExtResource("1_particles")
+Lifetime = 2.5
+
+[node name="Ash" type="GPUParticles3D" parent="."]
+cast_shadow = 0
+emitting = false
+amount = 40
+lifetime = 1.6
+one_shot = true
+explosiveness = 0.3
+visibility_aabb = AABB(-3, -2, -3, 6, 6, 6)
+process_material = SubResource("ParticleProcessMaterial_ash")
+draw_pass_1 = SubResource("QuadMesh_ash")
+
+[node name="Sparks" type="GPUParticles3D" parent="."]
+cast_shadow = 0
+emitting = false
+amount = 8
+lifetime = 0.4
+one_shot = true
+explosiveness = 1.0
+visibility_aabb = AABB(-3, -2, -3, 6, 6, 6)
+process_material = SubResource("ParticleProcessMaterial_sparks")
+draw_pass_1 = SubResource("SphereMesh_spark")

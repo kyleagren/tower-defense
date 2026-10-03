@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://enemies/death_effects/DeathParticles.cs" id="1_particles"]
+
+[sub_resource type="Gradient" id="Gradient_fade"]
+offsets = PackedFloat32Array(0, 0.6, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.7, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_fade"]
+gradient = SubResource("Gradient_fade")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_flecks"]
+emission_shape = 3
+emission_box_extents = Vector3(0.3, 0.9, 0.2)
+direction = Vector3(0, 0, -1)
+spread = 15.0
+initial_velocity_min = 4.0
+initial_velocity_max = 7.0
+gravity = Vector3(0, 0.5, 0)
+damping_min = 1.0
+damping_max = 2.0
+scale_min = 0.5
+scale_max = 1.2
+color_ramp = SubResource("GradientTexture1D_fade")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fleck"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.7, 0.95, 0.72, 1)
+billboard_mode = 3
+billboard_keep_scale = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_fleck"]
+material = SubResource("StandardMaterial3D_fleck")
+size = Vector2(0.04, 0.04)
+
+[node name="WindFlecks" type="Node3D"]
+script = ExtResource("1_particles")
+Lifetime = 2.0
+
+[node name="Flecks" type="GPUParticles3D" parent="."]
+cast_shadow = 0
+emitting = false
+amount = 50
+lifetime = 0.8
+one_shot = true
+explosiveness = 0.2
+visibility_aabb = AABB(-8, -3, -8, 16, 8, 16)
+process_material = SubResource("ParticleProcessMaterial_flecks")
+draw_pass_1 = SubResource("QuadMesh_fleck")

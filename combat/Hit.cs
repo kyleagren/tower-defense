@@ -30,6 +30,10 @@ public struct Hit
     public HitType Type;
     public Vector3 RagdollImpulse;
 
+    // How the target dies if this hit kills it, when that's something other than the killing
+    // element's own death - Shatter's execute. Null leaves it to the element.
+    public DeathStyle? DeathStyle;
+
     // The casting spell's on-hit runes and tags - default for a hit that isn't from a spell.
     public SpellHit Spell;
 

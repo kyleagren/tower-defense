@@ -826,22 +826,27 @@ public partial class WalkingEnemy : Enemy
         Basis = Basis.Slerp(targetBasis.Value, Mathf.Min(1f, (float)delta * RotationSpeed));
     }
 
-    public override void Die(Vector3 ragdollImpulse)
+    public override void Die(Vector3 ragdollImpulse, DeathStyle style)
     {
         if (IsDead)
         {
             return;
         }
 
-        base.Die(ragdollImpulse);
+        base.Die(ragdollImpulse, style);
 
-        // Physics processing stops with death, so nothing else would clear these off the ragdoll.
+        // Physics processing stops with death, so nothing else would clear these off the body.
         _iceBlock.Visible = false;
         _electricShell.Visible = false;
         Skeleton.Position = _skeletonRestPosition;
         Skeleton.Rotation = _skeletonRestRotation;
-
         NavAgent.AvoidanceEnabled = false;
+
+        if (DeathEffect.For(style)?.KeepsPose == true)
+        {
+            return;
+        }
+
         SetPhysicalBonesCollision(PhysicsLayers.Ragdoll, PhysicsLayers.World);
         BoneSimulator.PhysicalBonesStartSimulation();
         _ = ApplyRagdollImpulseNextPhysicsFrame(ragdollImpulse);

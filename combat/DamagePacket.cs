@@ -57,6 +57,25 @@ public struct DamagePacket
         }
     }
 
+    // Whichever of the six deals the most, Physical and Wind included - null when Physical does, ties
+    // included.
+    public readonly Tag? LeadingElement
+    {
+        get
+        {
+            Tag? leading = null;
+            float leadingAmount = PhysicalDamage;
+
+            if (FireDamage > leadingAmount) { leading = Tag.Fire; leadingAmount = FireDamage; }
+            if (WaterDamage > leadingAmount) { leading = Tag.Water; leadingAmount = WaterDamage; }
+            if (ColdDamage > leadingAmount) { leading = Tag.Cold; leadingAmount = ColdDamage; }
+            if (LightningDamage > leadingAmount) { leading = Tag.Lightning; leadingAmount = LightningDamage; }
+            if (WindDamage > leadingAmount) { leading = Tag.Wind; }
+
+            return leading;
+        }
+    }
+
     // Physical isn't a Tag, so only the elemental fields are reachable through this.
     public void AddElement(Tag element, float amount)
     {

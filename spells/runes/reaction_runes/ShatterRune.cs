@@ -30,7 +30,7 @@ public partial class ShatterRune : ReactionRune
         }
 
         CountEffect(hit.Attribution);
-        hit.Target.Execute(hit.Attribution, hit.Damage.DominantElement.Value);
+        hit.Target.Execute(hit.Attribution, Tag.Cold, DeathStyle.Shatter);
     }
 
     private static bool IsPair(Tag? status, Tag? incoming) =>

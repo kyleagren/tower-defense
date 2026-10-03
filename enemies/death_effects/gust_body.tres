@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://enemies/death_effects/dissolve_body.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" path="res://visual_effects/fire_noise.tres" id="2_noise"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/noise = ExtResource("2_noise")
+shader_parameter/noise_scale = 3.0
+shader_parameter/char_color = Color(0.05, 0.04, 0.035, 1)
+shader_parameter/char_embers = 0.0
+shader_parameter/edge_color = Color(0.55, 0.92, 0.59, 1)
+shader_parameter/edge_width = 0.06
+shader_parameter/edge_glow = 1.5
+shader_parameter/flash_color = Color(0.55, 0.92, 0.59, 1)
+shader_parameter/flash_glow = 0.0
+shader_parameter/sweep_weight = 0.75

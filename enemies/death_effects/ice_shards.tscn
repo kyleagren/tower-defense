@@ -1,0 +1,106 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://enemies/death_effects/DeathParticles.cs" id="1_particles"]
+
+[sub_resource type="Curve" id="Curve_shrink"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.7, 0.8), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_shrink"]
+curve = SubResource("Curve_shrink")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_shards"]
+emission_shape = 3
+emission_box_extents = Vector3(0.3, 0.9, 0.2)
+particle_flag_rotate_y = true
+angle_min = -180.0
+angle_max = 180.0
+direction = Vector3(0, 1, 0)
+spread = 180.0
+initial_velocity_min = 1.5
+initial_velocity_max = 3.5
+angular_velocity_min = -540.0
+angular_velocity_max = 540.0
+gravity = Vector3(0, -9.8, 0)
+scale_min = 0.6
+scale_max = 1.5
+scale_curve = SubResource("CurveTexture_shrink")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shard"]
+transparency = 1
+albedo_color = Color(0.75, 0.9, 1, 0.75)
+roughness = 0.1
+emission_enabled = true
+emission = Color(0.4, 0.6, 0.8, 1)
+emission_energy_multiplier = 0.5
+
+[sub_resource type="PrismMesh" id="PrismMesh_shard"]
+material = SubResource("StandardMaterial3D_shard")
+size = Vector3(0.07, 0.14, 0.04)
+
+[sub_resource type="Gradient" id="Gradient_fade"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 1, 1, 0.6, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_fade"]
+gradient = SubResource("Gradient_fade")
+
+[sub_resource type="Curve" id="Curve_grow"]
+_data = [Vector2(0, 0.4), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_grow"]
+curve = SubResource("Curve_grow")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_frost"]
+emission_shape = 3
+emission_box_extents = Vector3(0.3, 0.9, 0.2)
+direction = Vector3(0, 1, 0)
+spread = 180.0
+initial_velocity_min = 0.4
+initial_velocity_max = 1.2
+gravity = Vector3(0, 0, 0)
+damping_min = 1.5
+damping_max = 2.5
+scale_min = 0.8
+scale_max = 1.4
+scale_curve = SubResource("CurveTexture_grow")
+color_ramp = SubResource("GradientTexture1D_fade")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_frost"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.9, 0.97, 1, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_frost"]
+material = SubResource("StandardMaterial3D_frost")
+radius = 0.15
+height = 0.3
+radial_segments = 8
+rings = 4
+
+[node name="IceShards" type="Node3D"]
+script = ExtResource("1_particles")
+Lifetime = 1.5
+
+[node name="Shards" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 40
+lifetime = 1.0
+one_shot = true
+explosiveness = 1.0
+visibility_aabb = AABB(-4, -4, -4, 8, 8, 8)
+process_material = SubResource("ParticleProcessMaterial_shards")
+draw_pass_1 = SubResource("PrismMesh_shard")
+
+[node name="Frost" type="GPUParticles3D" parent="."]
+cast_shadow = 0
+emitting = false
+amount = 12
+lifetime = 0.6
+one_shot = true
+explosiveness = 1.0
+visibility_aabb = AABB(-3, -3, -3, 6, 6, 6)
+process_material = SubResource("ParticleProcessMaterial_frost")
+draw_pass_1 = SubResource("SphereMesh_frost")
