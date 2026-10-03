@@ -12,7 +12,7 @@ public partial class RainSpell : Spell
     [Export] public override float BaseRange { get; protected set; } = 12f;
     [Export] public override float BaseCastTime { get; protected set; } = 1f;
     [Export] public override float BaseCooldown { get; protected set; } = 5f;
-    [Export] public override int BaseManaCost { get; protected set; } = 10;
+    [Export] public override int BaseManaCost { get; protected set; } = 6;
 
     public override string Name => "Rain";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Water, Tag.AoE, Tag.Duration };

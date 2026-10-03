@@ -14,7 +14,7 @@ public partial class BlackIceSpell : Spell
     [Export] public override float BaseRange { get; protected set; } = 12f;
     [Export] public override float BaseCastTime { get; protected set; } = 1f;
     [Export] public override float BaseCooldown { get; protected set; } = 7f;
-    [Export] public override int BaseManaCost { get; protected set; } = 15;
+    [Export] public override int BaseManaCost { get; protected set; } = 10;
 
     public override string Name => "Black Ice";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Cold, Tag.AoE, Tag.Duration };
