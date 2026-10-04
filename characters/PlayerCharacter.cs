@@ -5,6 +5,10 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
     [Export] public float BaseSpeed = 5.0f;
     [Export] public float JumpVelocity = 4.5f;
+    // Jumps allowed in mid-air before landing again - 1 is a double jump. Walking off a ledge still
+    // leaves them all.
+    [Export] public int AirJumps = 1;
+    [Export] public float StepHeight = 0.35f;
     [Export] public float SprintSpeedMultiplier = 1.3f;
     [Export] public float SprintFovBonus = 5f;
     [Export] public float FovTransitionSpeed = 10f;
@@ -79,6 +83,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
     // events rather than polled, so the press a UI panel handled - the one that closed it - can't
     // also jump.
     private bool _jumpQueued;
+    private int _airJumpsLeft;
 
     public override void _Ready()
     {
@@ -271,13 +276,26 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         Vector3 velocity = Velocity;
         Vector3? forced = UpdateForcedMovement((float)delta);
 
-        if (!IsOnFloor())
+        bool jumping = allowJump && forced == null && jumpPressed && !InputChords.AbilityModifierHeld;
+
+        if (IsOnFloor())
+        {
+            _airJumpsLeft = AirJumps;
+
+            if (jumping)
+            {
+                velocity.Y = JumpVelocity;
+            }
+        }
+        else
         {
             velocity.Y -= _gravity * (float)delta;
-        }
-        else if (allowJump && forced == null && jumpPressed &&!InputChords.AbilityModifierHeld)
-        {
-            velocity.Y = JumpVelocity;
+
+            if (jumping && _airJumpsLeft > 0)
+            {
+                velocity.Y = JumpVelocity;
+                _airJumpsLeft--;
+            }
         }
 
         Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0f, inputDir.Y)).Normalized();
@@ -302,6 +320,7 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         }
 
         Velocity = velocity;
+        StepClimber.TryStepUp(this, velocity, (float)delta, StepHeight);
         MoveAndSlide();
         UpdateFov((float)delta);
     }

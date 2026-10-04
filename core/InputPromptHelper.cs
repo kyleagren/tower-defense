@@ -15,6 +15,7 @@ public static class InputPromptHelper
             InputEventKey key => KeyName(key),
             InputEventJoypadButton button => ButtonName(button.ButtonIndex),
             InputEventJoypadMotion motion => AxisName(motion.Axis),
+            InputEventMouseButton mouse => MouseName(mouse.ButtonIndex),
             InputEvent other => other.AsText(),
             null => action
         };
@@ -58,6 +59,16 @@ public static class InputPromptHelper
 
         return OS.GetKeycodeString(key);
     }
+
+    private static string MouseName(MouseButton button) => button switch
+    {
+        MouseButton.Left => "Left Click",
+        MouseButton.Right => "Right Click",
+        MouseButton.Middle => "Middle Click",
+        MouseButton.WheelUp => "Wheel Up",
+        MouseButton.WheelDown => "Wheel Down",
+        _ => $"Mouse {(int)button}"
+    };
 
     // Switch controllers read as Xbox for now.
     private static ControllerFamily Family

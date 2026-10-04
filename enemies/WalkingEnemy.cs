@@ -9,6 +9,9 @@ public partial class WalkingEnemy : Enemy
 {
     [Export] public float BaseSpeed = 2.625f;
     [Export] public float RotationSpeed = 10f;
+    // Keep in step with the navmesh's Agent Max Climb, or lanes route enemies up ledges they can't
+    // climb.
+    [Export] public float StepHeight = 0.25f;
     [Export] public float WaypointArrivalDistance = 0.5f;
     [Export] public float EngagementCheckInterval = 0.25f;
     [Export] public float WallDetectionRange = 4f;
@@ -767,8 +770,10 @@ public partial class WalkingEnemy : Enemy
             return;
         }
 
-        float fallSpeed = UpdateFallSpeed((float)GetPhysicsProcessDeltaTime());
+        float delta = (float)GetPhysicsProcessDeltaTime();
+        float fallSpeed = UpdateFallSpeed(delta);
         Velocity = new Vector3(safeVelocity.X, -fallSpeed, safeVelocity.Z);
+        StepClimber.TryStepUp(this, Velocity, delta, StepHeight);
         MoveAndSlide();
     }
 

@@ -339,6 +339,7 @@ shadow_enabled = true
 environment = ExtResource("27_environment")
 
 [node name="PlayerSpawnCircle" parent="." instance=ExtResource("28_spawncircle")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
 
 [node name="SentinelSpawnerP1" type="Node" parent="." unique_id=1027289134 node_paths=PackedStringArray("BodySpawner")]
 script = ExtResource("1_sentinelspawner")

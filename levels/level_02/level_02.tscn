@@ -1,0 +1,177 @@
+[gd_scene format=3 uid="uid://c3v52c6fgf1yq"]
+
+[ext_resource type="Script" uid="uid://bwo3ge3uh27eg" path="res://core/LevelContext.cs" id="1_mihb8"]
+[ext_resource type="PackedScene" path="res://levels/objective.tscn" id="2_2owmk"]
+[ext_resource type="Script" uid="uid://c6jpbpp1tql77" path="res://waves/EnemySpawner.cs" id="3_cwmx8"]
+[ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://waves/WaveController.cs" id="4_05651"]
+[ext_resource type="Environment" uid="uid://cl3i6wom3itph" path="res://levels/default_environment.tres" id="5_xxuo2"]
+[ext_resource type="PackedScene" path="res://levels/level_systems.tscn" id="6_liqpl"]
+[ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="7_4c076"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_s42qg"]
+agent_height = 1.8
+agent_radius = 0.4
+
+[node name="LevelTemplate" type="Node3D" unique_id=1697416623]
+
+[node name="LevelContext" type="Node" parent="." unique_id=575617308]
+script = ExtResource("1_mihb8")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1508703879]
+navigation_mesh = SubResource("NavigationMesh_s42qg")
+
+[node name="Blockout" type="CSGCombiner3D" parent="NavigationRegion3D" unique_id=1622979130]
+use_collision = true
+collision_layer = 17
+
+[node name="Ground" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=762810880]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+size = Vector3(90, 0.2, 50)
+
+[node name="MainPlatform" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=966082453]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+size = Vector3(10, 5, 20)
+
+[node name="PlatformExtension" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=2009808857]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2.5, 0)
+size = Vector3(6, 5, 8)
+
+[node name="StairTop" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=1944926034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 2.25, 0)
+size = Vector3(5, 5, 5)
+
+[node name="Balcony" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=370560635]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 2, 0)
+size = Vector3(10, 4, 30)
+
+[node name="Stairs1" type="CSGPolygon3D" parent="NavigationRegion3D/Blockout" unique_id=1913571691]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 16, 0, 9)
+polygon = PackedVector2Array(0, 0, 6.5, 0, 6.5, 4.75)
+depth = 5.0
+
+[node name="Stairs2" type="CSGPolygon3D" parent="NavigationRegion3D/Blockout" unique_id=1763643666]
+transform = Transform3D(1.3113416e-07, 0, -1, 0, 1, 0, 1, 0, 1.3113416e-07, 11, 0, -9)
+polygon = PackedVector2Array(0, 0, 6.5, 0, 6.5, 4.75)
+depth = 5.0
+
+[node name="HutRamp1" type="CSGPolygon3D" parent="NavigationRegion3D/Blockout" unique_id=46211428]
+transform = Transform3D(1, 0, 1.7881393e-07, 0, 1, 0, -1.7881393e-07, 0, 1, -27.5, 0, -4.5)
+polygon = PackedVector2Array(0, 0, 6.5, 0, 6.5, 5)
+depth = 5.0
+
+[node name="RampCutOut1" type="CSGPolygon3D" parent="NavigationRegion3D/Blockout/HutRamp1" unique_id=2100370435]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.999995)
+operation = 2
+polygon = PackedVector2Array(1, 0, 6.5, 0, 6.5, 4)
+depth = 7.0
+
+[node name="HutRamp2" type="CSGPolygon3D" parent="NavigationRegion3D/Blockout" unique_id=1950694695]
+transform = Transform3D(1, 0, 1.7881393e-07, 0, 1, 0, -1.7881393e-07, 0, 1, -27.5, 0, 9.5)
+polygon = PackedVector2Array(0, 0, 6.5, 0, 6.5, 5)
+depth = 5.0
+
+[node name="RampCutOut2" type="CSGPolygon3D" parent="NavigationRegion3D/Blockout/HutRamp2" unique_id=351635096]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+operation = 2
+polygon = PackedVector2Array(1, 0, 6.5, 0, 6.5, 4)
+depth = 7.0
+
+[node name="Building" type="CSGCombiner3D" parent="NavigationRegion3D/Blockout" unique_id=39805881]
+
+[node name="BuildingFront" type="CSGBox3D" parent="NavigationRegion3D/Blockout/Building" unique_id=268883943]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 2.5, 0)
+size = Vector3(6, 5, 7)
+
+[node name="BuildingMain" type="CSGBox3D" parent="NavigationRegion3D/Blockout/Building" unique_id=1845758368]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 3, 0)
+size = Vector3(10, 6, 20)
+
+[node name="BuildingInteriorNeg" type="CSGBox3D" parent="NavigationRegion3D/Blockout/Building/BuildingMain" unique_id=1652160156]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+operation = 2
+size = Vector3(9, 5, 18)
+
+[node name="BuildingInteriorDoors1" type="CSGBox3D" parent="NavigationRegion3D/Blockout/Building/BuildingMain" unique_id=422865220]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+operation = 2
+size = Vector3(4, 4, 22)
+
+[node name="BuildingInteriorDoors2" type="CSGBox3D" parent="NavigationRegion3D/Blockout/Building" unique_id=1366337680]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 1.5, 0)
+operation = 2
+size = Vector3(20, 4, 4)
+
+[node name="BellTower" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=2110597074]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 7.5, 0)
+size = Vector3(5, 15, 5)
+
+[node name="BellTowerDoorBottom1" type="CSGBox3D" parent="NavigationRegion3D/Blockout/BellTower" unique_id=1311865949]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+operation = 2
+size = Vector3(6, 4, 3)
+
+[node name="BellTowerDoorBottom2" type="CSGBox3D" parent="NavigationRegion3D/Blockout/BellTower" unique_id=92864649]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, -0.5, 0)
+operation = 2
+size = Vector3(6, 4, 3)
+
+[node name="BellTowerDoorTop1" type="CSGBox3D" parent="NavigationRegion3D/Blockout/BellTower" unique_id=712935031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 0)
+operation = 2
+size = Vector3(6, 4, 3)
+
+[node name="BellTowerDoorTop2" type="CSGBox3D" parent="NavigationRegion3D/Blockout/BellTower" unique_id=55103438]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 8, 0)
+operation = 2
+size = Vector3(6, 4, 3)
+
+[node name="Bridge1" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=885706103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 4.75, 7)
+size = Vector3(10, 0.5, 3)
+
+[node name="Bridge2" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=506241890]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 4.75, -7)
+size = Vector3(10, 0.5, 3)
+
+[node name="Hut1" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=1524750001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 2.5, 7)
+size = Vector3(6, 5, 6)
+
+[node name="Hut2" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=1852944111]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 2.5, -7)
+size = Vector3(6, 5, 6)
+
+[node name="CSGBox3D" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=712978607]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 2, -15)
+size = Vector3(4, 4, 10)
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=2128567039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.5, 0)
+size = Vector3(1, 1, 8)
+
+[node name="Objective" parent="." unique_id=714650942 instance=ExtResource("2_2owmk")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0.5, 5.5, -0.14337063)
+
+[node name="Lanes" type="Node3D" parent="." unique_id=519593315]
+visible = false
+
+[node name="Lane1" type="Node3D" parent="Lanes" unique_id=290494112]
+
+[node name="Spawn" type="Marker3D" parent="Lanes/Lane1" unique_id=830896758 node_paths=PackedStringArray("Target")]
+script = ExtResource("3_cwmx8")
+Id = "Lane1"
+Target = NodePath("../../../Objective/Shell")
+
+[node name="WaveController" type="Node" parent="." unique_id=453830432]
+script = ExtResource("4_05651")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1575365187]
+transform = Transform3D(0.8660254, -0.44278097, 0.23226067, 0, 0.46452135, 0.88556194, -0.5, -0.76691633, 0.40228823, -2.0641685, 7.890005, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2125013330]
+environment = ExtResource("5_xxuo2")
+
+[node name="LevelSystems" parent="." unique_id=1308887037 instance=ExtResource("6_liqpl")]
+
+[node name="PlayerHud" parent="." unique_id=1147163776 instance=ExtResource("7_4c076")]

@@ -11,7 +11,8 @@ public partial class LevelSelectPanel : Control
     private static readonly (string Name, string ScenePath)[] _levels =
     {
         ("Test Level", "uid://vqr88ehteuiw"),
-        ("Level 1", "uid://qem6spgugag8")
+        ("Level 1", "uid://qem6spgugag8"),
+        ("Level 2", "uid://c3v52c6fgf1yq")
     };
 
     [Export] public Control ListContainer { get; private set; }
