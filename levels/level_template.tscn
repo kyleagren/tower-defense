@@ -1,0 +1,57 @@
+[gd_scene format=3 uid="uid://clyyrsis8dj26"]
+
+[ext_resource type="Script" uid="uid://bwo3ge3uh27eg" path="res://core/LevelContext.cs" id="1_gup2b"]
+[ext_resource type="PackedScene" path="res://levels/objective.tscn" id="2_objective"]
+[ext_resource type="Script" uid="uid://c6jpbpp1tql77" path="res://waves/EnemySpawner.cs" id="4_13k7l"]
+[ext_resource type="Environment" uid="uid://cl3i6wom3itph" path="res://levels/default_environment.tres" id="5_8xmsw"]
+[ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://waves/WaveController.cs" id="5_yglgk"]
+[ext_resource type="PackedScene" path="res://levels/level_systems.tscn" id="6_glpk1"]
+[ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="7_22dcj"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_s42qg"]
+agent_height = 1.8
+agent_radius = 0.4
+
+[node name="LevelTemplate" type="Node3D" unique_id=1697416623]
+
+[node name="LevelContext" type="Node" parent="." unique_id=575617308]
+script = ExtResource("1_gup2b")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1508703879]
+navigation_mesh = SubResource("NavigationMesh_s42qg")
+
+[node name="Blockout" type="CSGCombiner3D" parent="NavigationRegion3D" unique_id=1622979130]
+use_collision = true
+collision_layer = 17
+
+[node name="Ground" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=762810880]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+size = Vector3(30, 0.2, 30)
+
+[node name="Objective" parent="." unique_id=714650942 instance=ExtResource("2_objective")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 9.856629)
+visible = false
+
+[node name="Lanes" type="Node3D" parent="." unique_id=519593315]
+visible = false
+
+[node name="Lane1" type="Node3D" parent="Lanes" unique_id=290494112]
+
+[node name="Spawn" type="Marker3D" parent="Lanes/Lane1" unique_id=830896758 node_paths=PackedStringArray("Target")]
+script = ExtResource("4_13k7l")
+Id = "Lane1"
+Target = NodePath("../../../Objective/Shell")
+
+[node name="WaveController" type="Node" parent="." unique_id=453830432]
+script = ExtResource("5_yglgk")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1575365187]
+transform = Transform3D(0.8660254, -0.44278097, 0.23226067, 0, 0.46452135, 0.88556194, -0.5, -0.76691633, 0.40228823, -2.0641685, 7.890005, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2125013330]
+environment = ExtResource("5_8xmsw")
+
+[node name="LevelSystems" parent="." unique_id=1308887037 instance=ExtResource("6_glpk1")]
+
+[node name="PlayerHud" parent="." unique_id=1147163776 instance=ExtResource("7_22dcj")]

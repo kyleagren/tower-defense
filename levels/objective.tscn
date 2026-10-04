@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://bp87ojgy31wot" path="res://levels/DefendableObjective.cs" id="1_objective"]
+[ext_resource type="PackedScene" path="res://ui/health_bar_3d.tscn" id="2_healthbar"]
+[ext_resource type="PackedScene" path="res://levels/player_spawn_circle.tscn" id="3_spawncircle"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_objective"]
+albedo_color = Color(0.85, 0.7, 0.15, 1)
+emission_enabled = true
+emission = Color(0.85, 0.7, 0.15, 1)
+emission_energy_multiplier = 0.5
+
+[sub_resource type="SphereMesh" id="SphereMesh_objective"]
+radius = 1.1
+height = 2.2
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_objective"]
+radius = 2.0
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_objective_solid"]
+radius = 1.1
+
+[node name="Objective" type="Node3D"]
+
+[node name="Shell" type="Area3D" parent="." node_paths=PackedStringArray("HealthBar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+collision_mask = 2
+script = ExtResource("1_objective")
+HealthBar = NodePath("HealthBar3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Shell"]
+material_override = SubResource("StandardMaterial3D_objective")
+mesh = SubResource("SphereMesh_objective")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Shell"]
+shape = SubResource("SphereShape3D_objective")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Shell"]
+collision_layer = 17
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Shell/StaticBody3D"]
+shape = SubResource("SphereShape3D_objective_solid")
+
+[node name="HealthBar3D" parent="Shell" instance=ExtResource("2_healthbar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+
+[node name="PlayerSpawnCircle" parent="." instance=ExtResource("3_spawncircle")]

@@ -3,78 +3,78 @@
     {
       "steps": [
         { "spawn": [
-            { "lane": "LaneA", "enemy": "Grunt", "count": 6 },
-            { "lane": "LaneB", "enemy": "Grunt", "count": 6 }
+            { "lane": "Lane1", "enemy": "Grunt", "count": 6 },
+            { "lane": "Lane2", "enemy": "Grunt", "count": 6 }
         ]},
         { "wait": 6 },
         { "spawn": [
-            { "lane": "LaneA", "enemy": "Grunt", "count": 4 },
-            { "lane": "LaneA", "enemy": "Sapper", "count": 2 },
-            { "lane": "LaneB", "enemy": "Grunt", "count": 4 },
-            { "lane": "LaneB", "enemy": "Marksman", "count": 1 }
+            { "lane": "Lane1", "enemy": "Grunt", "count": 4 },
+            { "lane": "Lane1", "enemy": "Sapper", "count": 2 },
+            { "lane": "Lane2", "enemy": "Grunt", "count": 4 },
+            { "lane": "Lane2", "enemy": "Marksman", "count": 1 }
         ]},
         { "wait": 6 },
         { "spawn": [
-            { "lane": "LaneA", "enemy": "Grunt", "count": 6 },
-            { "lane": "LaneA", "enemy": "Marksman", "count": 2 },
-            { "lane": "LaneB", "enemy": "Grunt", "count": 6 },
-            { "lane": "LaneB", "enemy": "Sapper", "count": 2 }
+            { "lane": "Lane1", "enemy": "Grunt", "count": 6 },
+            { "lane": "Lane1", "enemy": "Marksman", "count": 2 },
+            { "lane": "Lane2", "enemy": "Grunt", "count": 6 },
+            { "lane": "Lane2", "enemy": "Sapper", "count": 2 }
         ]}
       ]
     },
     {
       "steps": [
         { "spawn": [
-            { "lane": "LaneA", "enemy": "Grunt", "count": 10 },
-            { "lane": "LaneA", "enemy": "Marksman", "count": 2 },
-            { "lane": "LaneB", "enemy": "Grunt", "count": 10 },
-            { "lane": "LaneB", "enemy": "Sapper", "count": 2 }
+            { "lane": "Lane1", "enemy": "Grunt", "count": 10 },
+            { "lane": "Lane1", "enemy": "Marksman", "count": 2 },
+            { "lane": "Lane2", "enemy": "Grunt", "count": 10 },
+            { "lane": "Lane2", "enemy": "Sapper", "count": 2 }
         ]},
         { "wait": 8 },
         { "spawn": [
-            { "lane": "LaneA", "enemy": "Sapper", "count": 4 },
-            { "lane": "LaneA", "enemy": "Marksman", "count": 3 },
-            { "lane": "LaneB", "enemy": "Sapper", "count": 4 },
-            { "lane": "LaneB", "enemy": "Marksman", "count": 3 }
+            { "lane": "Lane1", "enemy": "Sapper", "count": 4 },
+            { "lane": "Lane1", "enemy": "Marksman", "count": 3 },
+            { "lane": "Lane2", "enemy": "Sapper", "count": 4 },
+            { "lane": "Lane2", "enemy": "Marksman", "count": 3 }
         ]},
         { "wait": 8 },
         { "spawn": [
-            { "lane": "LaneA", "enemy": "Grunt", "count": 15 },
-            { "lane": "LaneA", "enemy": "Sapper", "count": 3 },
-            { "lane": "LaneA", "enemy": "Marksman", "count": 3 },
-            { "lane": "LaneA", "enemy": "Brute", "count": 1 },
-            { "lane": "LaneB", "enemy": "Grunt", "count": 15 },
-            { "lane": "LaneB", "enemy": "Sapper", "count": 3 },
-            { "lane": "LaneB", "enemy": "Marksman", "count": 3 },
-            { "lane": "LaneB", "enemy": "Brute", "count": 1 }
+            { "lane": "Lane1", "enemy": "Grunt", "count": 15 },
+            { "lane": "Lane1", "enemy": "Sapper", "count": 3 },
+            { "lane": "Lane1", "enemy": "Marksman", "count": 3 },
+            { "lane": "Lane1", "enemy": "Brute", "count": 1 },
+            { "lane": "Lane2", "enemy": "Grunt", "count": 15 },
+            { "lane": "Lane2", "enemy": "Sapper", "count": 3 },
+            { "lane": "Lane2", "enemy": "Marksman", "count": 3 },
+            { "lane": "Lane2", "enemy": "Brute", "count": 1 }
         ]}
       ]
     },
     {
       "steps": [
         { "spawn": [
-            { "lane": "LaneA", "enemy": "Grunt", "count": 15 },
-            { "lane": "LaneA", "enemy": "Marksman", "count": 4 },
-            { "lane": "LaneB", "enemy": "Grunt", "count": 15 },
-            { "lane": "LaneB", "enemy": "Marksman", "count": 4 }
+            { "lane": "Lane1", "enemy": "Grunt", "count": 15 },
+            { "lane": "Lane1", "enemy": "Marksman", "count": 4 },
+            { "lane": "Lane2", "enemy": "Grunt", "count": 15 },
+            { "lane": "Lane2", "enemy": "Marksman", "count": 4 }
         ]},
         { "wait": 8 },
         { "spawn": [
-            { "lane": "LaneA", "enemy": "Sapper", "count": 6 },
-            { "lane": "LaneA", "enemy": "Marksman", "count": 4 },
-            { "lane": "LaneB", "enemy": "Sapper", "count": 6 },
-            { "lane": "LaneB", "enemy": "Marksman", "count": 4 }
+            { "lane": "Lane1", "enemy": "Sapper", "count": 6 },
+            { "lane": "Lane1", "enemy": "Marksman", "count": 4 },
+            { "lane": "Lane2", "enemy": "Sapper", "count": 6 },
+            { "lane": "Lane2", "enemy": "Marksman", "count": 4 }
         ]},
         { "wait": 10 },
         { "spawn": [
-            { "lane": "LaneA", "enemy": "Grunt", "count": 20 },
-            { "lane": "LaneA", "enemy": "Sapper", "count": 5 },
-            { "lane": "LaneA", "enemy": "Marksman", "count": 5 },
-            { "lane": "LaneA", "enemy": "Brute", "count": 2 },
-            { "lane": "LaneB", "enemy": "Grunt", "count": 20 },
-            { "lane": "LaneB", "enemy": "Sapper", "count": 5 },
-            { "lane": "LaneB", "enemy": "Marksman", "count": 5 },
-            { "lane": "LaneB", "enemy": "Brute", "count": 2 }
+            { "lane": "Lane1", "enemy": "Grunt", "count": 20 },
+            { "lane": "Lane1", "enemy": "Sapper", "count": 5 },
+            { "lane": "Lane1", "enemy": "Marksman", "count": 5 },
+            { "lane": "Lane1", "enemy": "Brute", "count": 2 },
+            { "lane": "Lane2", "enemy": "Grunt", "count": 20 },
+            { "lane": "Lane2", "enemy": "Sapper", "count": 5 },
+            { "lane": "Lane2", "enemy": "Marksman", "count": 5 },
+            { "lane": "Lane2", "enemy": "Brute", "count": 2 }
         ]}
       ]
     }

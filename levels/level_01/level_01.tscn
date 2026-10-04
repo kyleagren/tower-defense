@@ -1,0 +1,131 @@
+[gd_scene format=3 uid="uid://qem6spgugag8"]
+
+[ext_resource type="Script" uid="uid://bwo3ge3uh27eg" path="res://core/LevelContext.cs" id="1_cg8v6"]
+[ext_resource type="PackedScene" path="res://levels/objective.tscn" id="2_j0sdw"]
+[ext_resource type="Script" uid="uid://c6jpbpp1tql77" path="res://waves/EnemySpawner.cs" id="3_jy02f"]
+[ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://waves/WaveController.cs" id="4_5dxk1"]
+[ext_resource type="Environment" uid="uid://cl3i6wom3itph" path="res://levels/default_environment.tres" id="5_kjd3d"]
+[ext_resource type="PackedScene" path="res://levels/level_systems.tscn" id="6_qdeet"]
+[ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="7_y72ps"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_s42qg"]
+agent_height = 1.8
+agent_radius = 0.4
+
+[node name="LevelTemplate" type="Node3D" unique_id=1697416623]
+
+[node name="LevelContext" type="Node" parent="." unique_id=575617308]
+script = ExtResource("1_cg8v6")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1508703879]
+navigation_mesh = SubResource("NavigationMesh_s42qg")
+
+[node name="Blockout" type="CSGCombiner3D" parent="NavigationRegion3D" unique_id=1622979130]
+use_collision = true
+collision_layer = 17
+
+[node name="Ground" type="CSGBox3D" parent="NavigationRegion3D/Blockout" unique_id=762810880]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 49.800003)
+size = Vector3(100, 0.2, 160)
+
+[node name="Portico" type="CSGCombiner3D" parent="NavigationRegion3D/Blockout" unique_id=522351154]
+
+[node name="PorticoColumn1" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Portico" unique_id=854806794]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 3.25, 26.5)
+height = 6.5
+
+[node name="PorticoColumn2" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Portico" unique_id=1597820263]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 3.25, 26.5)
+height = 6.5
+
+[node name="PorticoColumn3" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Portico" unique_id=697638579]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 3.25, 29.5)
+height = 6.5
+
+[node name="PorticoColumn4" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Portico" unique_id=1737975179]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 3.25, 29.5)
+height = 6.5
+
+[node name="PorticoColumn5" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Portico" unique_id=1903854926]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 3.25, 32.5)
+height = 6.5
+
+[node name="PorticoColumn6" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Portico" unique_id=1456843242]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 3.25, 32.5)
+height = 6.5
+
+[node name="PorticoColumn7" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Portico" unique_id=2052596189]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 3.25, 35.5)
+height = 6.5
+
+[node name="PorticoColumn8" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Portico" unique_id=1262468883]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 3.25, 35.5)
+height = 6.5
+
+[node name="PorticoRoofBase" type="CSGBox3D" parent="NavigationRegion3D/Blockout/Portico" unique_id=1795993403]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 31)
+size = Vector3(8, 1, 10)
+
+[node name="Temple" type="CSGCombiner3D" parent="NavigationRegion3D/Blockout" unique_id=818951173]
+
+[node name="TempleFrontWall" type="CSGBox3D" parent="NavigationRegion3D/Blockout/Temple" unique_id=478518553]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, 36.5)
+size = Vector3(50, 15, 1)
+
+[node name="TempleDoor" type="CSGBox3D" parent="NavigationRegion3D/Blockout/Temple/TempleFrontWall" unique_id=263344312]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 0)
+operation = 2
+size = Vector3(8, 8, 2)
+
+[node name="Fountain" type="CSGCombiner3D" parent="NavigationRegion3D/Blockout" unique_id=1763324718]
+
+[node name="FountainOutline" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Fountain" unique_id=1010925038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -19)
+radius = 10.0
+height = 1.0
+sides = 16
+
+[node name="FountainPool" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Fountain/FountainOutline" unique_id=808540592]
+operation = 2
+radius = 9.0
+sides = 16
+
+[node name="FountainBase1" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Fountain" unique_id=1242779801]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, -19)
+radius = 5.0
+height = 0.5
+sides = 16
+
+[node name="FountainBase2" type="CSGCylinder3D" parent="NavigationRegion3D/Blockout/Fountain" unique_id=363727922]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, -19)
+radius = 4.0
+height = 0.5
+sides = 16
+
+[node name="Objective" parent="." unique_id=714650942 instance=ExtResource("2_j0sdw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 9.856629)
+visible = false
+
+[node name="Lanes" type="Node3D" parent="." unique_id=519593315]
+visible = false
+
+[node name="Lane1" type="Node3D" parent="Lanes" unique_id=290494112]
+
+[node name="Spawn" type="Marker3D" parent="Lanes/Lane1" unique_id=830896758 node_paths=PackedStringArray("Target")]
+script = ExtResource("3_jy02f")
+Id = "Lane1"
+Target = NodePath("../../../Objective/Shell")
+
+[node name="WaveController" type="Node" parent="." unique_id=453830432]
+script = ExtResource("4_5dxk1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1575365187]
+transform = Transform3D(0.8660254, -0.44278097, 0.23226067, 0, 0.46452135, 0.88556194, -0.5, -0.76691633, 0.40228823, -2.0641685, 7.890005, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2125013330]
+environment = ExtResource("5_kjd3d")
+
+[node name="LevelSystems" parent="." unique_id=1308887037 instance=ExtResource("6_qdeet")]
+
+[node name="PlayerHud" parent="." unique_id=1147163776 instance=ExtResource("7_y72ps")]

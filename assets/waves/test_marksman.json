@@ -2,7 +2,7 @@
   "waves": [
     {
       "steps": [
-        { "spawn": [ { "lane": "LaneA", "enemy": "Marksman", "count": 1 } ] }
+        { "spawn": [ { "lane": "Lane1", "enemy": "Marksman", "count": 1 } ] }
       ]
     }
   ]

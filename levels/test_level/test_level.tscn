@@ -2,9 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c6jpbpp1tql77" path="res://waves/EnemySpawner.cs" id="1_enemyspawner"]
 [ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://waves/WaveController.cs" id="2_wavecontroller"]
-[ext_resource type="Script" uid="uid://bp87ojgy31wot" path="res://levels/DefendableObjective.cs" id="6_objective"]
-[ext_resource type="Script" path="res://levels/PlayerSpawnPoint.cs" id="7_spawnpoint"]
-[ext_resource type="PackedScene" path="res://ui/health_bar_3d.tscn" id="12_healthbar"]
+[ext_resource type="PackedScene" path="res://levels/objective.tscn" id="6_objective"]
 [ext_resource type="Script" path="res://core/LevelContext.cs" id="27_levelcontext"]
 [ext_resource type="PackedScene" path="res://levels/level_systems.tscn" id="29_levelsystems"]
 [ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="30_playerhud"]
@@ -48,22 +46,6 @@ size = Vector3(10, 1.5, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_fence"]
 size = Vector3(10, 1.5, 1)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_objective"]
-albedo_color = Color(0.85, 0.7, 0.15, 1)
-emission_enabled = true
-emission = Color(0.85, 0.7, 0.15, 1)
-emission_energy_multiplier = 0.5
-
-[sub_resource type="SphereMesh" id="SphereMesh_objective"]
-radius = 1.1
-height = 2.2
-
-[sub_resource type="SphereShape3D" id="SphereShape3D_objective"]
-radius = 2.0
-
-[sub_resource type="SphereShape3D" id="SphereShape3D_objective_solid"]
-radius = 1.1
 
 [node name="TestLevel" type="Node3D" unique_id=493134053]
 
@@ -131,67 +113,48 @@ shape = SubResource("BoxShape3D_wall_ew")
 
 [node name="Obstacles" type="Node3D" parent="NavigationRegion3D" unique_id=704024420]
 
-[node name="FenceLaneA" type="StaticBody3D" parent="NavigationRegion3D/Obstacles" unique_id=574831794]
+[node name="FenceLane1" type="StaticBody3D" parent="NavigationRegion3D/Obstacles" unique_id=574831794]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.75, -6)
 collision_layer = 17
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Obstacles/FenceLaneA" unique_id=1878927162]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Obstacles/FenceLane1" unique_id=1878927162]
 material_override = SubResource("StandardMaterial3D_fence")
 mesh = SubResource("BoxMesh_fence")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacles/FenceLaneA" unique_id=903433508]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacles/FenceLane1" unique_id=903433508]
 shape = SubResource("BoxShape3D_fence")
 
-[node name="FenceLaneB" type="StaticBody3D" parent="NavigationRegion3D/Obstacles" unique_id=2068323487]
+[node name="FenceLane2" type="StaticBody3D" parent="NavigationRegion3D/Obstacles" unique_id=2068323487]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.75, -6)
 collision_layer = 17
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Obstacles/FenceLaneB" unique_id=1620246954]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Obstacles/FenceLane2" unique_id=1620246954]
 material_override = SubResource("StandardMaterial3D_fence")
 mesh = SubResource("BoxMesh_fence")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacles/FenceLaneB" unique_id=324383121]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacles/FenceLane2" unique_id=324383121]
 shape = SubResource("BoxShape3D_fence")
 
-[node name="Objective" type="Area3D" parent="." unique_id=281504465 node_paths=PackedStringArray("HealthBar")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 9.856629)
-collision_mask = 2
-script = ExtResource("6_objective")
-HealthBar = NodePath("HealthBar3D")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Objective" unique_id=916345286]
-material_override = SubResource("StandardMaterial3D_objective")
-mesh = SubResource("SphereMesh_objective")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Objective" unique_id=2046577188]
-shape = SubResource("SphereShape3D_objective")
-
-[node name="StaticBody3D" type="StaticBody3D" parent="Objective" unique_id=2054202233]
-collision_layer = 17
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Objective/StaticBody3D" unique_id=305892027]
-shape = SubResource("SphereShape3D_objective_solid")
-
-[node name="HealthBar3D" parent="Objective" unique_id=1599200350 instance=ExtResource("12_healthbar")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+[node name="Objective" parent="." instance=ExtResource("6_objective")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 9.856629)
 
 [node name="Lanes" type="Node3D" parent="." unique_id=124541586]
 
-[node name="LaneA" type="Node3D" parent="Lanes" unique_id=385720669]
+[node name="Lane1" type="Node3D" parent="Lanes" unique_id=385720669]
 
-[node name="Spawn" type="Marker3D" parent="Lanes/LaneA" unique_id=635544662 node_paths=PackedStringArray("Target")]
+[node name="Spawn" type="Marker3D" parent="Lanes/Lane1" unique_id=635544662 node_paths=PackedStringArray("Target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.1, -14)
 script = ExtResource("1_enemyspawner")
-Id = "LaneA"
-Target = NodePath("../../../Objective")
+Id = "Lane1"
+Target = NodePath("../../../Objective/Shell")
 
-[node name="LaneB" type="Node3D" parent="Lanes" unique_id=1808231694]
+[node name="Lane2" type="Node3D" parent="Lanes" unique_id=1808231694]
 
-[node name="Spawn" type="Marker3D" parent="Lanes/LaneB" unique_id=824124468 node_paths=PackedStringArray("Target")]
+[node name="Spawn" type="Marker3D" parent="Lanes/Lane2" unique_id=824124468 node_paths=PackedStringArray("Target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.1, -14)
 script = ExtResource("1_enemyspawner")
-Id = "LaneB"
-Target = NodePath("../../../Objective")
+Id = "Lane2"
+Target = NodePath("../../../Objective/Shell")
 
 [node name="WaveController" type="Node" parent="." unique_id=196385774]
 script = ExtResource("2_wavecontroller")
@@ -203,25 +166,6 @@ shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1525073669]
 environment = ExtResource("31_environment")
-
-[node name="PlayerSpawnPointP1" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 7.6874204)
-script = ExtResource("7_spawnpoint")
-
-[node name="PlayerSpawnPointP2" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.872931, 0, 7.6874204)
-script = ExtResource("7_spawnpoint")
-Seat = 2
-
-[node name="PlayerSpawnPointP3" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.872931, 0, 7.6874204)
-script = ExtResource("7_spawnpoint")
-Seat = 3
-
-[node name="PlayerSpawnPointP4" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.872931, 0, 9.6874204)
-script = ExtResource("7_spawnpoint")
-Seat = 4
 
 [node name="LevelSystems" parent="." instance=ExtResource("29_levelsystems")]
 
