@@ -20,6 +20,10 @@ public partial class RitualPlacer : Node
     // an obstacle - level geometry is World and Obstacles at once.
     private const float PlacementClearance = 0.05f;
 
+    // How far above a point the search for the ground under it starts - high enough to find the top
+    // of a step or a rise, low enough that a room's ceiling doesn't count as its floor.
+    private const float GroundSearchHeight = 2f;
+
     // How far off a wall's face to step before looking for the ground below.
     private const float WallStepBack = 0.5f;
 
@@ -164,29 +168,29 @@ public partial class RitualPlacer : Node
 
     private void UpdateCursorPosition()
     {
-        if (_isAiming)
-        {
-            _cursorPosition = CursorAlongView();
-            return;
-        }
-
         // World only — ignore rituals/obstacles so the cursor always lands at true ground height
-        _cursorPosition = DropToGround(Character.GetCameraAimPoint(PlacementDistance)) ?? _cursorPosition;
+        _cursorPosition = CursorAlongView(_isAiming ? AimReach : PlacementDistance);
     }
 
-    // The first ground straight along the camera's view, within AimReach - a wall's face steps back
-    // off it onto the ground below. Looking at the sky, the point that far along the view at the
-    // Ritual's height; the range clamp pulls it in either way.
-    private Vector3 CursorAlongView()
+    // The first ground straight along the camera's view, within reach - a wall's face steps back
+    // off it onto the ground below. Looking past everything: while aiming, the point that far along
+    // the view at the Ritual's height (the range clamp pulls it in); while placing, the ground under
+    // that point.
+    private Vector3 CursorAlongView(float reach)
     {
-        Vector3 far = Character.GetCameraAimPoint(AimReach);
+        Vector3 far = Character.GetCameraAimPoint(reach);
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(Character.Camera.GlobalPosition, far, PhysicsLayers.World);
         Godot.Collections.Dictionary result = Character.GetWorld3D().DirectSpaceState.IntersectRay(query);
 
         if (result.Count == 0)
         {
-            far.Y = _ghost.GlobalPosition.Y;
-            return far;
+            if (_isAiming)
+            {
+                far.Y = _ghost.GlobalPosition.Y;
+                return far;
+            }
+
+            return DropToGround(far) ?? _cursorPosition;
         }
 
         Vector3 position = (Vector3)result["position"];
@@ -195,11 +199,12 @@ public partial class RitualPlacer : Node
         return normal.Y >= MinGroundNormalY ? position : DropToGround(position + normal * WallStepBack) ?? position;
     }
 
-    // The terrain straight below point, looking from GroundRaycastRange above it - null with none there.
+    // The terrain under point, searching from GroundSearchHeight above it down to GroundRaycastRange
+    // below - null with none there.
     private Vector3? DropToGround(Vector3 point)
     {
         PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(
-            point + Vector3.Up * GroundRaycastRange, point - Vector3.Up * GroundRaycastRange, PhysicsLayers.World);
+            point + Vector3.Up * GroundSearchHeight, point - Vector3.Up * GroundRaycastRange, PhysicsLayers.World);
         Godot.Collections.Dictionary result = Character.GetWorld3D().DirectSpaceState.IntersectRay(query);
         return result.Count == 0 ? null : (Vector3)result["position"];
     }
