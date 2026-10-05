@@ -14,10 +14,12 @@ public partial class ItemDropManager : Node
 {
     [Export] public PackedScene WorldItemScene { get; private set; }
     [Export] public float ChestSprayRadius = 5f;
-    [Export] public float GroundHeight = 0f;
     [Export] public float SprayArcHeight = 3f;
     [Export] public float SprayItemDuration = 1.2f;
     [Export] public float SprayStaggerInterval = 0.15f;
+
+    // How far below the chest a landing spot looks for ground.
+    private const float GroundSearchDepth = 30f;
 
     private const float GoldenAngle = 2.399963f;
 
@@ -82,10 +84,12 @@ public partial class ItemDropManager : Node
         Vector3 chestPosition = objective?.GlobalPosition ?? Vector3.Zero;
         objective?.QueueFree();
 
+        // Launched in the physics step, since finding each landing spot queries the space state.
         for (int i = 0; i < sorted.Count; i++)
         {
+            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
             LaunchItem(sorted[i], chestPosition, i, sorted.Count);
-            await ToSignal(GetTree().CreateTimer(SprayStaggerInterval), "timeout");
+            await ToSignal(GetTree().CreateTimer(SprayStaggerInterval, processInPhysics: true), "timeout");
         }
     }
 
@@ -112,17 +116,20 @@ public partial class ItemDropManager : Node
         return point;
     }
 
-    // Vogel's method / golden-angle spiral - spreads N points across a circle with even density
-    // and no overlap, so items don't need physics collision to separate themselves. Lands at
-    // GroundHeight rather than the chest's own Y - WorldItem's own mesh is already offset up by
-    // its radius internally (world_item.tscn), so GlobalPosition is meant to be the ground contact
-    // point, not the sphere's center.
+    // Vogel's method / golden-angle spiral - spreads N points across a circle with even density and
+    // no overlap, so items don't need physics collision to separate themselves. Each lands on the
+    // terrain straight below its spot - WorldItem's own mesh is already offset up by its radius
+    // internally (world_item.tscn), so GlobalPosition is meant to be the ground contact point, not
+    // the sphere's center.
     private Vector3 SpiralLandingPoint(Vector3 chestPosition, int index, int total)
     {
         float radius = ChestSprayRadius * Mathf.Sqrt((index + 1f) / total);
         float angle = index * GoldenAngle;
-        Vector3 groundPoint = chestPosition;
-        groundPoint.Y = GroundHeight;
-        return groundPoint + new Vector3(radius * Mathf.Cos(angle), 0f, radius * Mathf.Sin(angle));
+        Vector3 spot = chestPosition + new Vector3(radius * Mathf.Cos(angle), 0f, radius * Mathf.Sin(angle));
+
+        PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(
+            spot, spot + Vector3.Down * GroundSearchDepth, PhysicsLayers.World);
+        Godot.Collections.Dictionary hit = GetViewport().World3D.DirectSpaceState.IntersectRay(query);
+        return hit.Count == 0 ? spot : (Vector3)hit["position"];
     }
 }

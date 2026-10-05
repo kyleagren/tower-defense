@@ -16,6 +16,10 @@ public partial class RitualPlacer : Node
     // A surface steeper than this isn't ground: a reticle on a wall's face steps back off it.
     private const float MinGroundNormalY = 0.7f;
 
+    // The overlap test runs this far above the ghost, so the surface it stands on doesn't count as
+    // an obstacle - level geometry is World and Obstacles at once.
+    private const float PlacementClearance = 0.05f;
+
     // How far off a wall's face to step before looking for the ground below.
     private const float WallStepBack = 0.5f;
 
@@ -359,7 +363,7 @@ public partial class RitualPlacer : Node
         PhysicsShapeQueryParameters3D query = new PhysicsShapeQueryParameters3D
         {
             Shape = _ghostCollisionShape.Shape,
-            Transform = _ghostCollisionShape.GlobalTransform,
+            Transform = _ghostCollisionShape.GlobalTransform.Translated(Vector3.Up * PlacementClearance),
             CollisionMask = PhysicsLayers.Obstacles | PhysicsLayers.PlacementBlocked | PhysicsLayers.RitualHitbox,
             CollideWithBodies = true,
             CollideWithAreas = false
@@ -411,25 +415,30 @@ public partial class RitualPlacer : Node
         EventBus.Instance.EmitSignal(EventBus.SignalName.PlacementModeChanged, false);
     }
 
-    public static MeshInstance3D BuildRangeIndicator(float range)
-    {
-        return new MeshInstance3D
-        {
-            Mesh = new CylinderMesh { TopRadius = range, BottomRadius = range, Height = 0.05f },
-            MaterialOverride = PreviewMaterials.RangeFill,
-            Position = new Vector3(0f, 0.03f, 0f)
-        };
-    }
+    // The range's true shape, painted onto whatever falls inside it (range_volume.gdshader).
+    public static MeshInstance3D BuildRangeIndicator(float range) => BuildRangeVolume(range, 1f);
 
     // Just the edge of the range, so a spot's own area reads clearly inside it.
-    public static MeshInstance3D BuildRangeOutline(float range)
+    public static MeshInstance3D BuildRangeOutline(float range) => BuildRangeVolume(range, 0f);
+
+    // The box only has to contain the shape: range out and up, range / DownWeight down.
+    private static MeshInstance3D BuildRangeVolume(float range, float fillStrength)
     {
-        return new MeshInstance3D
+        float reachUp = range / GameRules.RitualRangeUpWeight;
+        float reachDown = range / GameRules.RitualRangeDownWeight;
+        float centreHeight = (reachUp - reachDown) / 2f;
+
+        MeshInstance3D volume = new()
         {
-            Mesh = new TorusMesh { InnerRadius = range - 0.1f, OuterRadius = range },
-            MaterialOverride = PreviewMaterials.RangeFill,
-            Position = new Vector3(0f, 0.03f, 0f)
+            Mesh = new BoxMesh { Size = new Vector3(range * 2f, reachUp + reachDown, range * 2f) },
+            MaterialOverride = PreviewMaterials.RangeVolume,
+            Position = new Vector3(0f, centreHeight, 0f),
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off
         };
+        volume.SetInstanceShaderParameter("range", range);
+        volume.SetInstanceShaderParameter("base_offset", -centreHeight);
+        volume.SetInstanceShaderParameter("fill_strength", fillStrength);
+        return volume;
     }
 
     public static MeshInstance3D BuildSpotIndicator(float radius)

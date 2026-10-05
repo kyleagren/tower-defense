@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bwo3ge3uh27eg" path="res://core/LevelContext.cs" id="1_cg8v6"]
 [ext_resource type="PackedScene" path="res://levels/objective.tscn" id="2_j0sdw"]
+[ext_resource type="Script" uid="uid://l1er4pkj7bk3" path="res://levels/CostedNavigationRegion.cs" id="2_thp0t"]
 [ext_resource type="Script" uid="uid://c6jpbpp1tql77" path="res://waves/EnemySpawner.cs" id="3_jy02f"]
 [ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://waves/WaveController.cs" id="4_5dxk1"]
 [ext_resource type="Environment" uid="uid://cl3i6wom3itph" path="res://levels/default_environment.tres" id="5_kjd3d"]
@@ -9,8 +10,8 @@
 [ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="7_y72ps"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_s42qg"]
-agent_height = 1.8
-agent_radius = 0.4
+agent_height = 3.2
+agent_radius = 0.75
 
 [node name="LevelTemplate" type="Node3D" unique_id=1697416623]
 
@@ -19,6 +20,7 @@ script = ExtResource("1_cg8v6")
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1508703879]
 navigation_mesh = SubResource("NavigationMesh_s42qg")
+script = ExtResource("2_thp0t")
 
 [node name="Blockout" type="CSGCombiner3D" parent="NavigationRegion3D" unique_id=1622979130]
 use_collision = true

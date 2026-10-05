@@ -103,11 +103,16 @@ public partial class PhaseIndicator : Control
             _ => phase.ToString()
         };
 
-        PhaseLabel.Text = $"{phaseText} — Mana: {_economy.Mana} | Build Capacity: {_economy.CapacityUsed}/{_economy.MaxCapacity}";
+        PhaseLabel.Text = $"Wave {DisplayedWave}/{_match.WaveCount} — {phaseText} — Mana: {_economy.Mana} | Build Capacity: {_economy.CapacityUsed}/{_economy.MaxCapacity}";
 
         int totalGold = PlayerProfiles.Local.Data.Gold + _economy.GoldEarned;
         GoldLabel.Text = $"Gold: {totalGold}";
     }
+
+    // The wave being fought, or in Planning and Build the one coming next.
+    private int DisplayedWave => _match.Phase is GamePhase.Combat or GamePhase.PostGame
+        ? _match.WavesStarted
+        : Mathf.Min(_match.WavesStarted + 1, _match.WaveCount);
 
     // The hub has no match, so no mana or capacity to run out of; gold is only what's in the profile.
     private void RefreshHub()

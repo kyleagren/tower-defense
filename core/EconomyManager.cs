@@ -5,6 +5,7 @@ public partial class EconomyManager : Node
     [Export] public int StartingMana = 120;
     [Export] public int MaxCapacity = 1000;
     [Export] public bool Unlimited = false;
+    [Export] public int WaveClearMana = 50;
 
     public int Mana { get; private set; }
     public int CapacityUsed { get; private set; }
@@ -78,6 +79,13 @@ public partial class EconomyManager : Node
     {
         Mana += reward;
         GoldEarned += goldReward;
+        Changed();
+    }
+
+    // Host only.
+    public void AwardWaveClear()
+    {
+        Mana += WaveClearMana;
         Changed();
     }
 

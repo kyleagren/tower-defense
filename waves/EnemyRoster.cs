@@ -29,7 +29,7 @@ public partial class EnemyRoster : Node
     }
 
     // Spawner's spawn function - runs on every machine, host included, for each enemy the host
-    // spawns. Only the host gives it a lane to walk; a copy has no pathing of its own.
+    // spawns. Only the host gives it an objective to walk to; a copy has no pathing of its own.
     private Node BuildEnemy(Variant data)
     {
         Godot.Collections.Array args = data.AsGodotArray();
@@ -45,7 +45,7 @@ public partial class EnemyRoster : Node
 
         if (NetworkSession.Instance.IsHost)
         {
-            enemy.Connect(Node.SignalName.Ready, Callable.From(() => enemy.SetLane(lane.Lane, lane.Target)), (uint)ConnectFlags.OneShot);
+            enemy.Connect(Node.SignalName.Ready, Callable.From(() => enemy.SetObjective(lane.Target)), (uint)ConnectFlags.OneShot);
         }
 
         return enemy;

@@ -74,6 +74,38 @@ public partial class Ritual : Node3D, IDamageable
 
     public bool IsShrouded => _spellInstance != null && ResolveWithOwner().Shrouded;
 
+    private float? _walkUpDistance;
+
+    // How close an enemy on foot can get: the gap between this Ritual and the nearest navmesh point
+    // walkable from the objective. Every lane reaches the objective, so that's every lane. Measured
+    // once, since the navmesh doesn't change during a match.
+    public float WalkUpDistance
+    {
+        get
+        {
+            _walkUpDistance ??= MeasureWalkUpDistance();
+            return _walkUpDistance ?? 0f;
+        }
+    }
+
+    // Null while the navigation map isn't queryable yet, so the next ask measures again.
+    private float? MeasureWalkUpDistance()
+    {
+        DefendableObjective objective = _level.PrimaryObjective;
+        if (objective == null)
+        {
+            return 0f;
+        }
+
+        Vector3[] path = NavigationServer3D.MapGetPath(GetWorld3D().NavigationMap, objective.GlobalPosition, GlobalPosition, true);
+        if (path.Length == 0)
+        {
+            return null;
+        }
+
+        return path[^1].DistanceTo(GlobalPosition);
+    }
+
     // A placement preview: shows the model and gives RitualPlacer a real collision shape to test,
     // but isn't a Ritual to anything else - it never registers, so enemies can't target it, and it
     // never casts. Set before the node enters the tree.
@@ -222,6 +254,17 @@ public partial class Ritual : Node3D, IDamageable
         }
 
         SetHealth(Mathf.Max(0f, _currentHealth - hit.Damage.Total));
+    }
+
+    // Host only. Breaks it outright, whatever its health - a Sapper's finished channel.
+    public void Break()
+    {
+        if (_disabled || !IsMultiplayerAuthority())
+        {
+            return;
+        }
+
+        SetHealth(0f);
     }
 
     private float MissingHealthFraction => 1f - (_currentHealth / MaxHealth);
@@ -670,7 +713,7 @@ public partial class Ritual : Node3D, IDamageable
         Enemy source = _pulseSource != null && IsInstanceValid(_pulseSource) && !_pulseSource.IsDead ? _pulseSource : null;
 
         if (source != null
-            && GlobalPosition.DistanceTo(source.GlobalPosition) <= context.Range.Value
+            && GeometryUtils.RangeDistanceSquared(GlobalPosition, source.GlobalPosition) <= context.Range.Value * context.Range.Value
             && LineOfSight.IsClear(this, SpawnPoint.GlobalPosition, source.AimPoint))
         {
             return source;
@@ -756,7 +799,7 @@ public partial class Ritual : Node3D, IDamageable
         {
             _rangeIndicator = RitualPlacer.BuildRangeOutline(context.Range.Value);
             MeshInstance3D spot = RitualPlacer.BuildSpotIndicator(context.SpotRadius);
-            spot.Position = context.FixedSpot.Point - GlobalPosition;
+            spot.Position = context.FixedSpot.Point - GlobalPosition - _rangeIndicator.Position;
             _rangeIndicator.AddChild(spot);
         }
         else

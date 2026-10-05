@@ -12,6 +12,8 @@ public static class PreviewMaterials
     public static readonly StandardMaterial3D RangeBorder = CreateFlatOverlay(new Color(0.5f, 0.8f, 1f, 0.9f));
     public static readonly StandardMaterial3D WallFootprint = CreateFlatOverlay(new Color(0.6f, 0.9f, 1f, 0.8f));
 
+    public static readonly ShaderMaterial RangeVolume = CreateRangeVolume();
+
     public static StandardMaterial3D CreateGhost(Color color)
     {
         return new StandardMaterial3D
@@ -28,6 +30,14 @@ public static class PreviewMaterials
     {
         StandardMaterial3D material = CreateGhost(color);
         material.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
+        return material;
+    }
+
+    private static ShaderMaterial CreateRangeVolume()
+    {
+        ShaderMaterial material = new() { Shader = GD.Load<Shader>("res://rituals/visual_effects/range_volume.gdshader") };
+        material.SetShaderParameter("up_weight", GameRules.RitualRangeUpWeight);
+        material.SetShaderParameter("down_weight", GameRules.RitualRangeDownWeight);
         return material;
     }
 }

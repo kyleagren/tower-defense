@@ -12,6 +12,8 @@ public partial class ShieldSlamAbility : Ability
     [Export] public float Range { get; private set; } = 4f;
     // Full width of the cone.
     [Export] public float ConeDegrees { get; private set; } = 120f;
+    // How far above or below the Tank's feet an enemy can stand and still be hit.
+    [Export] public float HeightReach { get; private set; } = 2f;
     [Export] public float DamageMultiplier { get; private set; } = 1f;
     // kg·m/s - an 80kg Grunt slides about 5m, a 300kg brute barely over one.
     [Export] public float KnockbackImpulse { get; private set; } = 2400f;
@@ -64,13 +66,14 @@ public partial class ShieldSlamAbility : Ability
         wave.Play(origin, forward, range, ConeDegrees);
     }
 
-    // Measured flat, so a slope or a taller enemy doesn't change what counts as in front.
+    // Measured flat within a height band, so a slope or a taller enemy doesn't change what counts as
+    // in front, but an enemy on another floor - under a bridge the Tank stands on - isn't.
     private List<(Enemy, Vector3)> FindTargets(Vector3 origin, Vector3 forward, float range)
     {
         List<(Enemy, Vector3)> targets = new List<(Enemy, Vector3)>();
         float halfAngle = Mathf.DegToRad(ConeDegrees / 2f);
 
-        foreach (Enemy enemy in EnemyTargeting.FindAllWithinFlat(origin, range))
+        foreach (Enemy enemy in EnemyTargeting.FindAllWithinFlat(origin, range, enemy => Mathf.Abs(enemy.GlobalPosition.Y - origin.Y) <= HeightReach))
         {
             Vector3 offset = enemy.GlobalPosition - origin;
             offset.Y = 0f;

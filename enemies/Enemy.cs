@@ -20,7 +20,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
     [Export] public float CenterMassHeight = 1f;
     // Kilograms. Knockback divides by it, so a heavy enemy moves less but is never made immune.
     [Export] public float Mass = 80f;
-    [Export] public int ManaReward = 1;
+    [Export] public int ManaReward = 2;
     [Export] public int GoldReward = 1;
     [Export] public float DropChance = 0.15f;
     [Export] public int LootRolls = 1;

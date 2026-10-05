@@ -4,6 +4,10 @@ public static class GameRules
     public const int MaxTokens = 3;
     public const int PinnedFavoriteSlots = 8;
     public const float RitualReach = 4f;
+    // How much a metre of height counts against a Ritual's range: fully looking up, half looking
+    // down - high ground reaches further out, never endlessly far down.
+    public const float RitualRangeUpWeight = 1f;
+    public const float RitualRangeDownWeight = 0.5f;
     public const float ItemPickupReach = 3f;
     // How far a character can walk from a station before its panel closes - past ItemPickupReach,
     // so stepping back from the counter doesn't slam it shut.

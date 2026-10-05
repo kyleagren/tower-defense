@@ -17,6 +17,15 @@ public static class GeometryUtils
         return point.DistanceSquaredTo(closestPoint);
     }
 
+    // A Ritual's range shape: squared distance with the height above or below `from` weighted by
+    // GameRules.RitualRangeUpWeight / DownWeight, so `<= range * range` means in range.
+    public static float RangeDistanceSquared(Vector3 from, Vector3 to)
+    {
+        Vector3 offset = to - from;
+        offset.Y *= offset.Y < 0f ? GameRules.RitualRangeDownWeight : GameRules.RitualRangeUpWeight;
+        return offset.LengthSquared();
+    }
+
     // Ignoring height, so a slope or a taller enemy doesn't change who counts as in range.
     public static float FlatDistanceSquared(Vector3 a, Vector3 b)
     {

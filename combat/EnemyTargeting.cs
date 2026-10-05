@@ -12,7 +12,7 @@ public static class EnemyTargeting
     // sightFrom, when given, also requires a clear line from there to the enemy (LineOfSight).
     public static Enemy FindTarget(Vector3 fromPosition, SpellCastContext context, ISet<Enemy> exclude = null, Vector3? sightFrom = null)
     {
-        float RangeSquared(Enemy enemy) => fromPosition.DistanceSquaredTo(enemy.GlobalPosition);
+        float RangeSquared(Enemy enemy) => GeometryUtils.RangeDistanceSquared(fromPosition, enemy.GlobalPosition);
         float range = context.Range.Value;
 
         if (context.TargetPriority == TargetPriority.HasStatus)
@@ -104,7 +104,7 @@ public static class EnemyTargeting
     // reaching for whatever is nearest its source's target.
     public static Enemy FindNearestTo(Vector3 point, Vector3 fromPosition, float range, Vector3? sightFrom = null)
     {
-        float RangeSquared(Enemy enemy) => fromPosition.DistanceSquaredTo(enemy.GlobalPosition);
+        float RangeSquared(Enemy enemy) => GeometryUtils.RangeDistanceSquared(fromPosition, enemy.GlobalPosition);
         float Closeness(Enemy enemy) => point.DistanceSquaredTo(enemy.GlobalPosition);
 
         return FindBest(RangeSquared, range, Closeness, null, null, sightFrom: sightFrom);

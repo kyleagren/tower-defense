@@ -48,7 +48,7 @@ The more I think about it the more I'm fairly confident that enemies will need t
 
 ## Physical
 
-- **Earth Wall** - Similar to Ice wall, but is constantly there and cannot be destroyed.
+- **Earth Wall** - Similar to Ice wall, but is constantly there and cannot be attacked under normal circumstances.
 - **Earthquake** - A wide area on the ground shakes, knocking down all enemies in the area. Long cooldown.
 
 ## Multi-Element or element unknown

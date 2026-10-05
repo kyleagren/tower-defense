@@ -3,16 +3,16 @@
 [ext_resource type="Script" uid="uid://c6jpbpp1tql77" path="res://waves/EnemySpawner.cs" id="1_enemyspawner"]
 [ext_resource type="Script" uid="uid://biehy5klxwjlb" path="res://waves/WaveController.cs" id="2_wavecontroller"]
 [ext_resource type="PackedScene" path="res://levels/objective.tscn" id="6_objective"]
-[ext_resource type="Script" path="res://core/LevelContext.cs" id="27_levelcontext"]
+[ext_resource type="Script" uid="uid://bwo3ge3uh27eg" path="res://core/LevelContext.cs" id="27_levelcontext"]
 [ext_resource type="PackedScene" path="res://levels/level_systems.tscn" id="29_levelsystems"]
 [ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="30_playerhud"]
-[ext_resource type="Environment" path="res://levels/default_environment.tres" id="31_environment"]
+[ext_resource type="Environment" uid="uid://cl3i6wom3itph" path="res://levels/default_environment.tres" id="31_environment"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_level01"]
 vertices = PackedVector3Array(-19.25, 0.3, -5.75, -15.5, 0.3, -5.75, -15.25, 0.3, -7, -19.25, 0.3, -14.25, -6, 0.3, -7, -5.75, 0.3, -14.25, 4.75, 0.3, -7, 6.25, 0.3, -7, 6, 0.3, -14.25, -4.5, 0.3, -7, -4.25, 0.3, -6, 4.5, 0.3, -5.75, 15.5, 0.3, -7, 15.75, 0.3, -6, 19.5, 0.3, -6, 19.5, 0.3, -14.25, 4.75, 0.3, -4.75, -4.75, 0.3, -4.75, -6, 0.3, 14.5, 6, 0.3, 14.5, -6.25, 0.3, -4.75, 6.25, 0.3, -4.75, 15.25, 0.3, -4.75, 19.5, 0.3, 14.5, -15.25, 0.3, -4.75, -19.25, 0.3, 14.5)
 polygons = [PackedInt32Array(1, 0, 2), PackedInt32Array(2, 0, 3), PackedInt32Array(4, 2, 5), PackedInt32Array(5, 2, 3), PackedInt32Array(8, 7, 6), PackedInt32Array(9, 4, 5), PackedInt32Array(9, 5, 10), PackedInt32Array(10, 5, 11), PackedInt32Array(11, 5, 6), PackedInt32Array(6, 5, 8), PackedInt32Array(13, 12, 14), PackedInt32Array(14, 12, 15), PackedInt32Array(7, 8, 12), PackedInt32Array(12, 8, 15), PackedInt32Array(11, 16, 10), PackedInt32Array(10, 16, 17), PackedInt32Array(17, 16, 19), PackedInt32Array(17, 19, 18), PackedInt32Array(18, 20, 17), PackedInt32Array(16, 21, 19), PackedInt32Array(13, 14, 22), PackedInt32Array(22, 14, 23), PackedInt32Array(21, 22, 19), PackedInt32Array(19, 22, 23), PackedInt32Array(1, 24, 0), PackedInt32Array(0, 24, 25), PackedInt32Array(20, 18, 24), PackedInt32Array(24, 18, 25)]
-agent_height = 1.8
-agent_radius = 0.4
+agent_height = 3.2
+agent_radius = 0.75
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.35, 0.45, 0.3, 1)
@@ -49,7 +49,7 @@ size = Vector3(10, 1.5, 1)
 
 [node name="TestLevel" type="Node3D" unique_id=493134053]
 
-[node name="LevelContext" type="Node" parent="."]
+[node name="LevelContext" type="Node" parent="." unique_id=1492607402]
 script = ExtResource("27_levelcontext")
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1818073141]
@@ -135,7 +135,7 @@ mesh = SubResource("BoxMesh_fence")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Obstacles/FenceLane2" unique_id=324383121]
 shape = SubResource("BoxShape3D_fence")
 
-[node name="Objective" parent="." instance=ExtResource("6_objective")]
+[node name="Objective" parent="." unique_id=957136813 instance=ExtResource("6_objective")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 9.856629)
 
 [node name="Lanes" type="Node3D" parent="." unique_id=124541586]
@@ -158,15 +158,14 @@ Target = NodePath("../../../Objective/Shell")
 
 [node name="WaveController" type="Node" parent="." unique_id=196385774]
 script = ExtResource("2_wavecontroller")
-WaveFilePath = "res://assets/waves/test_level.json"
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=367131371]
-transform = Transform3D(0.8660254, -0.44278097, 0.23226068, 0, 0.46452135, 0.88556194, -0.5, -0.76691633, 0.40228823, -2.0641685, 7.890005, 0)
+transform = Transform3D(0.8660254, -0.44278097, 0.23226067, 0, 0.46452135, 0.88556194, -0.5, -0.76691633, 0.40228823, -2.0641685, 7.890005, 0)
 shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1525073669]
 environment = ExtResource("31_environment")
 
-[node name="LevelSystems" parent="." instance=ExtResource("29_levelsystems")]
+[node name="LevelSystems" parent="." unique_id=1477777020 instance=ExtResource("29_levelsystems")]
 
-[node name="PlayerHud" parent="." instance=ExtResource("30_playerhud")]
+[node name="PlayerHud" parent="." unique_id=1572700009 instance=ExtResource("30_playerhud")]

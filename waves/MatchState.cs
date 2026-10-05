@@ -15,6 +15,10 @@ public class MatchState
     // Meaningful once IsOver.
     public bool Victory { get; private set; }
 
+    // How many waves have begun, and how many the level's wave file holds.
+    public int WavesStarted { get; private set; }
+    public int WaveCount { get; set; }
+
     public IReadOnlyCollection<PlayerId> ReadyPlayers => _ready;
 
     // Seconds until the ready check passes on its own - null until the host readies up. It exists so
@@ -40,6 +44,11 @@ public class MatchState
         Phase = phase;
         ClearReadyCheck();
         EventBus.Instance.EmitSignal(EventBus.SignalName.GamePhaseChanged, (int)phase);
+    }
+
+    public void SetWavesStarted(int count)
+    {
+        WavesStarted = count;
     }
 
     // First call wins: the objective falling and the Sentinel dying in the same wave is one loss.

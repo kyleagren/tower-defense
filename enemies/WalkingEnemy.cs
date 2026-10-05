@@ -1,10 +1,10 @@
 using Godot;
 using System.Threading.Tasks;
 
-// An Enemy that follows a shared Lane's waypoints, can break off to chase the player or attack an
-// Ice Wall, and ragdolls on death. Everything ground-pathing-specific lives here rather than on
-// the base Enemy, so a future FlyingEnemy (or the dev-only TrainingDummy) doesn't have to carry
-// navmesh/leash/wall-engagement logic it has no use for.
+// An Enemy that walks the navmesh to the objective, can break off to chase the player or attack an
+// Ice Wall or a Ritual, and ragdolls on death. Everything ground-pathing-specific lives here rather
+// than on the base Enemy, so a future FlyingEnemy (or the dev-only TrainingDummy) doesn't have to
+// carry navmesh/leash/wall-engagement logic it has no use for.
 public partial class WalkingEnemy : Enemy
 {
     [Export] public float BaseSpeed = 2.625f;
@@ -12,11 +12,10 @@ public partial class WalkingEnemy : Enemy
     // Keep in step with the navmesh's Agent Max Climb, or lanes route enemies up ledges they can't
     // climb.
     [Export] public float StepHeight = 0.25f;
-    [Export] public float WaypointArrivalDistance = 0.5f;
     [Export] public float EngagementCheckInterval = 0.25f;
     [Export] public float WallDetectionRange = 4f;
-    [Export] public bool CanAttackRituals = false;
-    [Export] public float RitualDetectionRange = 4f;
+    [Export] public bool CanAttackRituals = true;
+    [Export] public float RitualDetectionRange = 3f;
     [Export] public bool RitualsOutrankPlayer = false;
     [Export] public PackedScene ProjectileScene;
     [Export] public float LeashRange = 6f;
@@ -46,14 +45,12 @@ public partial class WalkingEnemy : Enemy
     [Export] public float LegSwingAmplitude = 0.5f;
     [Export] public float ArmSwingAmplitude = 0.2f;
 
-    private enum MovementMode { FollowingLane, ChasingPlayer, AttackingWall, AttackingRitual, RejoiningLane, ApproachingObjective }
+    private enum MovementMode { ApproachingObjective, ChasingPlayer, AttackingWall, AttackingRitual }
 
 
     private ProceduralWalkAnimator _walkAnimator;
-    private Lane _lane;
     private DefendableObjective _objective;
-    private int _waypointIndex;
-    private MovementMode _movementMode = MovementMode.FollowingLane;
+    private MovementMode _movementMode = MovementMode.ApproachingObjective;
     private float _engagementCheckTimer;
     private IceWall _targetWall;
     private Ritual _targetRitual;
@@ -63,9 +60,18 @@ public partial class WalkingEnemy : Enemy
     private Vector3 _knockbackVelocity;
     // Set by an upward push until the enemy lands - it isn't steering while airborne.
     private bool _launched;
-    private bool _rejoinPending;
+    private bool _repathPending;
     private float _gravity;
     private float _fallSpeed;
+
+    // The agent's current path and, per point, the path length left after it - rebuilt whenever the
+    // path changes, so DistanceToGoal costs one distance a frame.
+    private Vector3[] _path = System.Array.Empty<Vector3>();
+    private float[] _remainingAfter = System.Array.Empty<float>();
+    private bool _pathLeadsToObjective;
+
+    private float _stuckTimer;
+    private Vector3 _stuckCheckPosition;
 
     // Copies only: where the synced position was last frame, and how much longer to keep walking
     // after it last moved - sync updates don't land every physics frame, so a copy that animated only
@@ -76,6 +82,15 @@ public partial class WalkingEnemy : Enemy
 
     // How close a ranged enemy without a clear shot walks toward its target before stopping.
     private const float BlockedShotApproachDistance = 1f;
+
+    // How far off its path the agent drifts before it re-paths on its own (Godot's default is 5m, far
+    // enough to be pushed around a corner and then try to walk through it).
+    private const float OffPathRepathDistance = 1.5f;
+
+    // An enemy heading for the objective that covers less than this fraction of the ground its speed
+    // should have, over StuckCheckInterval, re-paths from where it stands.
+    private const float StuckCheckInterval = 2f;
+    private const float StuckProgressFraction = 0.25f;
 
     private static readonly StandardMaterial3D _iceMaterial = new()
     {
@@ -116,6 +131,8 @@ public partial class WalkingEnemy : Enemy
             NavAgent.Radius = capsuleShape.Radius;
         }
         NavAgent.VelocityComputed += OnVelocityComputed;
+        NavAgent.PathMaxDistance = OffPathRepathDistance;
+        NavAgent.PathChanged += OnPathChanged;
 
         SetPhysicalBonesCollision(0, 0);
         BuildCrowdControlVisuals();
@@ -177,17 +194,42 @@ public partial class WalkingEnemy : Enemy
             : _skeletonRestRotation;
     }
 
-    public void SetLane(Lane lane, DefendableObjective objective)
+    public void SetObjective(DefendableObjective objective)
     {
-        _lane = lane;
         _objective = objective;
-        _waypointIndex = 0;
-        NavAgent.TargetPosition = lane.Waypoints[0];
+        BeginApproachingObjective();
     }
 
+    // The remaining length of the agent's own path while it heads for the objective. While it's busy
+    // with something else its path leads there instead, so the last value holds.
     private void UpdateDistanceToGoal()
     {
-        DistanceToGoal = _lane.DistanceToGoal(_waypointIndex, GlobalPosition);
+        if (!_pathLeadsToObjective || _path.Length == 0)
+        {
+            return;
+        }
+
+        int index = Mathf.Min(NavAgent.GetCurrentNavigationPathIndex(), _path.Length - 1);
+        DistanceToGoal = GlobalPosition.DistanceTo(_path[index]) + _remainingAfter[index];
+    }
+
+    private void OnPathChanged()
+    {
+        _path = NavAgent.GetCurrentNavigationPath();
+        _remainingAfter = new float[_path.Length];
+        _pathLeadsToObjective = _movementMode == MovementMode.ApproachingObjective;
+
+        for (int i = _path.Length - 2; i >= 0; i--)
+        {
+            _remainingAfter[i] = _remainingAfter[i + 1] + _path[i].DistanceTo(_path[i + 1]);
+        }
+    }
+
+    // A fresh path from where the enemy stands now - the agent re-paths on every assignment, even
+    // to the same target.
+    private void Repath()
+    {
+        NavAgent.TargetPosition = NavAgent.TargetPosition;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -220,10 +262,10 @@ public partial class WalkingEnemy : Enemy
 
         // Deferred until the enemy can walk again, so one rooted in place doesn't re-path every time
         // a pull nudges it.
-        if (_rejoinPending && Speed > 0f)
+        if (_repathPending && Speed > 0f)
         {
-            _rejoinPending = false;
-            BeginRejoin();
+            _repathPending = false;
+            Repath();
         }
 
         // Engagement is decided on an interval (mirrors Ritual.TargetSearchInterval) rather than every
@@ -242,6 +284,8 @@ public partial class WalkingEnemy : Enemy
             }
         }
 
+        UpdateStuckCheck(delta);
+
         switch (_movementMode)
         {
             case MovementMode.ChasingPlayer:
@@ -253,14 +297,8 @@ public partial class WalkingEnemy : Enemy
             case MovementMode.AttackingRitual:
                 ProcessAttackingRitual(delta);
                 break;
-            case MovementMode.RejoiningLane:
-                ProcessRejoiningLane(delta);
-                break;
-            case MovementMode.ApproachingObjective:
-                ProcessApproachingObjective(delta);
-                break;
             default:
-                ProcessLaneFollowing(delta);
+                ProcessApproachingObjective(delta);
                 break;
         }
     }
@@ -285,9 +323,8 @@ public partial class WalkingEnemy : Enemy
     }
 
     // A shoved enemy isn't steering: it slides with the shove and can't attack. Once the shove is
-    // spent, an enemy that was on a lane re-paths to one rather than walking a straight line back to
-    // a waypoint that may now be behind a wall - every other mode already steers by the nav agent
-    // and carries on from wherever it landed.
+    // spent it re-paths from wherever it landed, rather than following a path that may now run
+    // through a wall.
     private void ProcessKnockback(double delta)
     {
         Velocity = _knockbackVelocity + Vector3.Down * UpdateFallSpeed((float)delta);
@@ -308,53 +345,7 @@ public partial class WalkingEnemy : Enemy
         }
 
         _knockbackVelocity = Vector3.Zero;
-
-        if (_movementMode == MovementMode.FollowingLane || _movementMode == MovementMode.RejoiningLane)
-        {
-            _rejoinPending = true;
-        }
-    }
-
-    private void ProcessLaneFollowing(double delta)
-    {
-        AdvanceWaypointIfPassed();
-
-        if (_waypointIndex >= _lane.Waypoints.Count - 1)
-        {
-            BeginApproachingObjective();
-            ProcessApproachingObjective(delta);
-            return;
-        }
-
-        Move((_lane.Waypoints[_waypointIndex] - GlobalPosition).Normalized(), delta);
-    }
-
-    // Catches up _waypointIndex to wherever the enemy actually is, not just where it was heading
-    // before being interrupted (e.g. a wall fight, or a player leash-chase). Uses a projection
-    // onto the direction the path continues from the current waypoint, not raw distance, so it
-    // still works when waypoints are sparse (a distance comparison would favor whichever waypoint
-    // happens to be geometrically nearer, which is unreliable when the next one is far away).
-    private void AdvanceWaypointIfPassed()
-    {
-        while (_waypointIndex < _lane.Waypoints.Count - 1)
-        {
-            Vector3 current = _lane.Waypoints[_waypointIndex];
-            Vector3 next = _lane.Waypoints[_waypointIndex + 1];
-            Vector3 forward = (next - current).Normalized();
-            Vector3 offset = GlobalPosition - current;
-            offset.Y = 0f;
-
-            bool arrived = offset.Length() <= WaypointArrivalDistance;
-            bool alreadyPastIt = offset.Dot(forward) > 0f;
-
-            if (!arrived && !alreadyPastIt)
-            {
-                break;
-            }
-
-            _waypointIndex++;
-            NavAgent.TargetPosition = _lane.Waypoints[_waypointIndex];
-        }
+        _repathPending = true;
     }
 
     private void BeginApproachingObjective()
@@ -382,7 +373,7 @@ public partial class WalkingEnemy : Enemy
 
     // A taunt outranks everything - lane, leash, walls, Rituals and the objective, Sappers included.
     // Once it lapses, the ordinary checks pick back up: out of leash range, the chase gives up and
-    // rejoins the lane like any other.
+    // heads back for the objective like any other.
     private bool TryFollowForcedTarget()
     {
         Sentinel forced = ForcedTarget;
@@ -421,7 +412,7 @@ public partial class WalkingEnemy : Enemy
         else if (_movementMode == MovementMode.ChasingPlayer)
         {
             _targetSentinel = null;
-            BeginRejoin();
+            BeginApproachingObjective();
         }
     }
 
@@ -450,67 +441,36 @@ public partial class WalkingEnemy : Enemy
         return nearest;
     }
 
-    // Give-up-and-rejoin across lanes (README: Enemies): one real pathfind to whichever waypoint is
-    // nearest across every lane's spawner, not just the one this enemy started on.
-    private void BeginRejoin()
+    // An enemy heading for the objective that's trying to walk but barely moving - pinned in a corner
+    // by its neighbours, or snagged on geometry. A fresh path from where it actually stands usually
+    // walks it out. Standing still on purpose (attacking, mid-swing, arrived) never counts.
+    private void UpdateStuckCheck(double delta)
     {
-        (Lane lane, int waypointIndex) = FindNearestWaypointAcrossLanes();
-
-        if (lane == null)
+        bool tryingToWalk = _movementMode == MovementMode.ApproachingObjective && NavAgent.Velocity.LengthSquared() > 0.01f;
+        if (!tryingToWalk)
         {
-            _movementMode = MovementMode.FollowingLane;
+            ResetStuckCheck();
             return;
         }
 
-        _lane = lane;
-        _waypointIndex = waypointIndex;
-        NavAgent.TargetDesiredDistance = WaypointArrivalDistance;
-        NavAgent.TargetPosition = lane.Waypoints[waypointIndex];
-        _movementMode = MovementMode.RejoiningLane;
-    }
-
-    private (Lane lane, int waypointIndex) FindNearestWaypointAcrossLanes()
-    {
-        Lane bestLane = null;
-        int bestIndex = -1;
-        float bestDistance = float.MaxValue;
-
-        foreach (EnemySpawner spawner in Level.EnemySpawners.Values)
+        _stuckTimer += (float)delta;
+        if (_stuckTimer < StuckCheckInterval)
         {
-            if (spawner.Lane == null)
-            {
-                continue;
-            }
-
-            // Never rejoin behind where this enemy already progressed on its own lane — only
-            // other lanes, which it never walked, are fair game at any point along their length.
-            int startIndex = spawner.Lane == _lane ? _waypointIndex : 0;
-
-            for (int i = startIndex; i < spawner.Lane.Waypoints.Count; i++)
-            {
-                float distance = GlobalPosition.DistanceTo(spawner.Lane.Waypoints[i]);
-                if (distance < bestDistance)
-                {
-                    bestDistance = distance;
-                    bestLane = spawner.Lane;
-                    bestIndex = i;
-                }
-            }
-        }
-
-        return (bestLane, bestIndex);
-    }
-
-    private void ProcessRejoiningLane(double delta)
-    {
-        if (NavAgent.IsNavigationFinished())
-        {
-            _movementMode = MovementMode.FollowingLane;
-            ProcessLaneFollowing(delta);
             return;
         }
 
-        Move((NavAgent.GetNextPathPosition() - GlobalPosition).Normalized(), delta);
+        if (GlobalPosition.DistanceTo(_stuckCheckPosition) < Speed * StuckCheckInterval * StuckProgressFraction)
+        {
+            Repath();
+        }
+
+        ResetStuckCheck();
+    }
+
+    private void ResetStuckCheck()
+    {
+        _stuckTimer = 0f;
+        _stuckCheckPosition = GlobalPosition;
     }
 
     // Runs every tick regardless of current mode so a wall can interrupt lane-following or
@@ -571,19 +531,18 @@ public partial class WalkingEnemy : Enemy
         if (_targetWall == null || !IsInstanceValid(_targetWall) || _targetWall.IsDestroyed)
         {
             _targetWall = null;
-            _movementMode = MovementMode.FollowingLane;
-            ProcessLaneFollowing(delta);
+            BeginApproachingObjective();
+            ProcessApproachingObjective(delta);
             return;
         }
 
         EngageTarget(FindNearestSegment(AttackRange, _targetWall), delta);
     }
 
-    // Opt-in per enemy (CanAttackRituals) - most enemies never touch rituals at all. Sapper sets an
-    // effectively unlimited RitualDetectionRange (and RitualsOutrankPlayer) so this fires the
-    // instant it spawns and outranks the player entirely; a short-range, RitualsOutrankPlayer=false
-    // enemy instead only attacks a ritual opportunistically, and the player can interrupt it at any
-    // time via UpdatePlayerLeash's own matching check.
+    // Every enemy stops to fight a Ritual it comes within RitualDetectionRange of, though a player in
+    // leash range pulls it away (UpdatePlayerLeash's matching check). Sapper sets an effectively
+    // unlimited RitualDetectionRange (and RitualsOutrankPlayer), so it hunts Rituals across the level
+    // the instant it spawns and ignores the player entirely.
     private void UpdateRitualEngagement()
     {
         if (!CanAttackRituals)
@@ -617,7 +576,7 @@ public partial class WalkingEnemy : Enemy
 
         foreach (Ritual ritual in Level.Rituals.Active)
         {
-            if (ritual.IsDisabled || ritual.IsShrouded)
+            if (ritual.IsDisabled || ritual.IsShrouded || ritual.WalkUpDistance > AttackRange)
             {
                 continue;
             }
@@ -638,8 +597,8 @@ public partial class WalkingEnemy : Enemy
         if (_targetRitual == null || !IsInstanceValid(_targetRitual) || _targetRitual.IsDisabled)
         {
             _targetRitual = null;
-            _movementMode = MovementMode.FollowingLane;
-            ProcessLaneFollowing(delta);
+            BeginApproachingObjective();
+            ProcessApproachingObjective(delta);
             return;
         }
 

@@ -43,12 +43,11 @@ public partial class WaveController : Node
         _level.Match = _match;
         _match.ReadyCheckPassed += OnReadyCheckPassed;
         _match.ReadyStateChanged += OnReadyStateChanged;
+        LoadWaves();
     }
 
     public override void _Ready()
     {
-        LoadWaves();
-
         EventBus.Instance.GamePhaseChanged += OnGamePhaseChanged;
         EventBus.Instance.GameEnded += OnGameEnded;
 
@@ -77,6 +76,7 @@ public partial class WaveController : Node
         string json = file.GetAsText();
         WaveFile waveFile = JsonSerializer.Deserialize<WaveFile>(json, _jsonOptions);
         _waves = waveFile.Waves;
+        _match.WaveCount = _waves.Count;
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -114,7 +114,7 @@ public partial class WaveController : Node
     {
         if (NetworkSession.Instance.IsHost)
         {
-            Rpc(MethodName.ReceivePhase, (int)phase);
+            Rpc(MethodName.ReceivePhase, (int)phase, _match.WavesStarted);
         }
     }
 
@@ -135,8 +135,9 @@ public partial class WaveController : Node
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceivePhase(int phase)
+    private void ReceivePhase(int phase, int wavesStarted)
     {
+        _match.SetWavesStarted(wavesStarted);
         _match.SetPhase((GamePhase)phase);
     }
 
@@ -162,7 +163,7 @@ public partial class WaveController : Node
         }
 
         long sender = Multiplayer.GetRemoteSenderId();
-        RpcId(sender, MethodName.ReceivePhase, (int)_match.Phase);
+        RpcId(sender, MethodName.ReceivePhase, (int)_match.Phase, _match.WavesStarted);
         RpcId(sender, MethodName.ReceiveReadyState, ReadySeats(), _match.ReadyCountdown ?? -1f);
 
         if (_match.IsOver)
@@ -208,6 +209,7 @@ public partial class WaveController : Node
         _isWaiting = false;
         _laneQueues.Clear();
 
+        _match.SetWavesStarted(_nextWaveIndex);
         _match.SetPhase(GamePhase.Combat);
         AdvanceStep();
     }
@@ -339,6 +341,7 @@ public partial class WaveController : Node
         _activeWave = null;
 
         bool isFinalWave = _nextWaveIndex >= _waves.Count;
+        _level.Economy.AwardWaveClear();
         _match.SetPhase(isFinalWave ? GamePhase.PostGame : GamePhase.Build);
 
         if (isFinalWave)
