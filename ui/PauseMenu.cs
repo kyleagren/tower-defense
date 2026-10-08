@@ -1,7 +1,7 @@
 using Godot;
 
-// Resume / Options / Return to Hub (host, in a match) or Leave Session (anyone who joined) / Main
-// Menu / Exit Game. Opened by the pause action, or by Escape when nothing else wanted it. Freezes the game while
+// Resume / Options / Invite Friends (host, in the hub, with Steam) / Return to Hub (host, in a match)
+// or Leave Session (anyone who joined) / Main Menu / Exit Game. Opened by the pause action, or by Escape when nothing else wanted it. Freezes the game while
 // open, unless other players share the session - one player's menu can't stop everyone else's game.
 // Runs with process_mode Always (player_hud.tscn) so it keeps working while the tree it paused is
 // stopped.
@@ -14,6 +14,7 @@ public partial class PauseMenu : Control
     private VBoxContainer _column;
     private Button _resumeButton;
     private Button _optionsButton;
+    private Button _inviteFriendsButton;
     private Button _returnToHubButton;
     private Button _leaveSessionButton;
 
@@ -50,6 +51,7 @@ public partial class PauseMenu : Control
 
         _resumeButton = AddButton(_column, "Resume", Close);
         _optionsButton = AddButton(_column, "Options", OpenOptions);
+        _inviteFriendsButton = AddButton(_column, "Invite Friends", SteamService.Instance.InviteFriends);
         _returnToHubButton = AddButton(_column, "Return to Hub", ReturnToHub);
         _leaveSessionButton = AddButton(_column, "Leave Session", LeaveSession);
         AddButton(_column, "Main Menu", ReturnToMainMenu);
@@ -102,6 +104,7 @@ public partial class PauseMenu : Control
 
         UiPanelStack.CloseAll();
         bool isHost = NetworkSession.Instance.IsHost;
+        _inviteFriendsButton.Visible = isHost && SteamService.Instance.IsAvailable && LevelContext.Current?.Match == null;
         _returnToHubButton.Visible = isHost && LevelContext.Current?.Match != null;
         _leaveSessionButton.Visible = !isHost;
         Visible = true;

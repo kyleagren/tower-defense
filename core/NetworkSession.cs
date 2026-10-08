@@ -45,6 +45,8 @@ public partial class NetworkSession : Node
     // Offline counts as the host, since that's what single-player is.
     public bool IsHost => Multiplayer.IsServer();
 
+    public bool IsOffline => Multiplayer.MultiplayerPeer is OfflineMultiplayerPeer;
+
     public long PeerOf(PlayerId seat) => _seatsByPeer.FirstOrDefault(pair => pair.Value == seat).Key;
 
     public override void _EnterTree()
@@ -78,14 +80,34 @@ public partial class NetworkSession : Node
         GD.Print($"NetworkSession: hosting on port {Port}.");
     }
 
+    // Starts hosting from wherever this machine already is - it stays peer 1, so nothing in the loaded
+    // level changes hands.
+    public bool HostOverSteam()
+    {
+        MultiplayerPeer peer = ClassDB.Instantiate("SteamMultiplayerPeer").As<MultiplayerPeer>();
+        Error error = (Error)peer.Call("create_host", 0).AsInt32();
+
+        if (error != Error.Ok)
+        {
+            GD.PushError($"NetworkSession: couldn't host over Steam ({error}).");
+            return false;
+        }
+
+        Multiplayer.MultiplayerPeer = peer;
+        GD.Print("NetworkSession: hosting over Steam.");
+        return true;
+    }
+
     public void Join(string address)
     {
         CallDeferred(MethodName.ConnectTo, address);
     }
 
-    // Deferred - a join can start from inside a level, like accepting an invite in the hub. The
-    // level being left goes before this machine stops being peer 1: otherwise, for a frame, every
-    // node in it would lose its authority, and the host's level couldn't arrive under the same name.
+    public void JoinOverSteam(ulong hostSteamId)
+    {
+        CallDeferred(MethodName.ConnectToSteam, hostSteamId);
+    }
+
     private void ConnectTo(string address)
     {
         ENetMultiplayerPeer peer = new ENetMultiplayerPeer();
@@ -97,13 +119,37 @@ public partial class NetworkSession : Node
             return;
         }
 
+        BecomeClient(peer);
+        GD.Print($"NetworkSession: joining {address}:{Port}.");
+    }
+
+    private void ConnectToSteam(ulong hostSteamId)
+    {
+        MultiplayerPeer peer = ClassDB.Instantiate("SteamMultiplayerPeer").As<MultiplayerPeer>();
+        Error error = (Error)peer.Call("create_client", hostSteamId, 0).AsInt32();
+
+        if (error != Error.Ok)
+        {
+            GD.PushError($"NetworkSession: couldn't join over Steam ({error}).");
+            SteamService.Instance.LeaveLobby();
+            return;
+        }
+
+        BecomeClient(peer);
+        GD.Print("NetworkSession: joining over Steam.");
+    }
+
+    // Deferred by its callers - a join can start from inside a level, like accepting an invite in the
+    // hub. The level being left goes before this machine stops being peer 1: otherwise, for a frame,
+    // every node in it would lose its authority, and the host's level couldn't arrive under the same name.
+    private void BecomeClient(MultiplayerPeer peer)
+    {
         LevelLoader.Instance?.DropLevel();
         Multiplayer.MultiplayerPeer.Close();
         Multiplayer.MultiplayerPeer = peer;
         _seatsByPeer.Clear();
         PlayerProfiles.Reset();
         EmitSignal(SignalName.SeatsChanged);
-        GD.Print($"NetworkSession: joining {address}:{Port}.");
     }
 
     // Host only: a joiner takes the first free seat, and everyone gets the new table.
@@ -242,7 +288,7 @@ public partial class NetworkSession : Node
     private void ReturnToSolo()
     {
         // Can run twice - leaving on purpose may also raise the disconnect it causes.
-        if (Multiplayer.MultiplayerPeer is OfflineMultiplayerPeer)
+        if (IsOffline)
         {
             return;
         }
@@ -257,12 +303,13 @@ public partial class NetworkSession : Node
     // none of what the real host gave it.
     public void CloseSession()
     {
-        if (Multiplayer.MultiplayerPeer is OfflineMultiplayerPeer)
+        if (IsOffline)
         {
             return;
         }
 
         Multiplayer.MultiplayerPeer.Close();
+        SteamService.Instance.LeaveLobby();
         Multiplayer.MultiplayerPeer = new OfflineMultiplayerPeer();
         _seatsByPeer.Clear();
         _seatsByPeer[HostPeerId] = PlayerId.P1;
