@@ -3,3 +3,6 @@
 /android/
 
 .vscode/
+
+# Locked DLL copies the editor makes while a GDExtension is loaded
+~*.dll
