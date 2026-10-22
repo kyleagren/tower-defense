@@ -54,7 +54,7 @@ public class ProjectileCastEffect : CastEffect
         Vector3 forward = -transform.Basis.Z;
         forward.Y = 0f;
 
-        // The Ritual never aims straight up or down (AimSpawnPointAt refuses to), so a flat
+        // The Ritual never aims straight up or down (RitualTargeting.AimAt refuses to), so a flat
         // direction always remains.
         transform.Basis = Basis.LookingAt(forward.Normalized(), Vector3.Up);
         return transform;

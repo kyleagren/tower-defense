@@ -117,7 +117,7 @@ public partial class Brute : WalkingEnemy
 
         foreach (Ritual ritual in Level.Rituals.Active)
         {
-            if (!ritual.IsDisabled && IsInSwingArc(ritual.GlobalPosition))
+            if (!ritual.Health.IsBroken &&IsInSwingArc(ritual.GlobalPosition))
             {
                 base.DealDamage(ritual);
             }

@@ -1,22 +1,26 @@
 using Godot;
 using System.Collections.Generic;
 
+// A placed Ritual: its spell and runes, who owns it, and the cast loop. Everything else it does lives
+// on its child components - Health, Targeting, Resonance, Readiness, RangeDisplay and StatsSync -
+// wired in ritual.tscn.
 public partial class Ritual : Node3D, IDamageable
 {
     [Export] public Spell Spell { get; private set; }
     [Export] public Rune[] RuneSlots { get; private set; } = new Rune[GameRules.MaxRuneSlots];
-    [Export] public Node3D SpawnPoint { get; private set; }
-    [Export] public float TargetSearchInterval = 0.25f;
     [Export] public PlayerId OwnerId { get; private set; } = PlayerId.P1;
-    [Export] public float MaxHealth = 100f;
-    [Export] public HealthBar3D HealthBar { get; private set; }
+    [Export] public Node3D SpawnPoint { get; private set; }
     [Export] public MeshInstance3D CoreMesh { get; private set; }
     [Export] public float ShroudedTransparency { get; private set; } = 0.6f;
-    [Export] public MeshInstance3D ReadinessRing { get; private set; }
-    // How much darker the ring is while the next cast is still coming.
-    [Export] public float RecoveringDarken { get; private set; } = 0.55f;
 
-    private static readonly StandardMaterial3D _disabledMaterial = new StandardMaterial3D
+    [Export] public RitualHealth Health { get; private set; }
+    [Export] public RitualTargeting Targeting { get; private set; }
+    [Export] public RitualResonance Resonance { get; private set; }
+    [Export] public RitualReadiness Readiness { get; private set; }
+    [Export] public RitualRangeDisplay RangeDisplay { get; private set; }
+    [Export] public RitualStatsSync StatsSync { get; private set; }
+
+    private static readonly StandardMaterial3D _brokenMaterial = new StandardMaterial3D
     {
         AlbedoColor = new Color(0.35f, 0.35f, 0.35f),
         ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
@@ -26,55 +30,48 @@ public partial class Ritual : Node3D, IDamageable
     private SpellInstance _spellInstance;
     private StaticBody3D _body;
     private CharacterSheet _ownerSheet;
-    private Enemy _currentTarget;
-    private float _searchTimer;
-    private int _manaCost;
-    private int _capacityCost;
-    private float _currentHealth;
-    private bool _disabled;
     private Material _activeMaterial;
-    private Color _elementColor = Colors.White;
-    private float _recoveryTotal;
-    private float _recoveryRemaining;
-    private bool _effectOngoing;
-    private MeshInstance3D _rangeIndicator;
-    private ResonanceOverlay _resonanceOverlay;
-    // Seconds until a received pulse casts, below 0 for none waiting; and the enemy whose hit sent it.
-    private float _pendingPulse = -1f;
-    private Enemy _pulseSource;
-    // Where the source's target was when a pulse arrived, for aiming at it if it has since died.
-    private Vector3 _pulseSourcePoint;
-    // Set only for a pulsed cast with nothing in range to hit: what the spawn point aims at.
-    private Vector3? _pulseAim;
+    private float? _walkUpDistance;
 
-    // How far above and below a pulled-in point the ground is looked for.
-    private const float GroundProbeHeight = 5f;
-    private const float GroundProbeDepth = 10f;
+    // A placement preview: shows the model and gives RitualPlacer a real collision shape to test,
+    // but isn't a Ritual to anything else - it never registers, so enemies can't target it, and it
+    // never casts. Set before the node enters the tree.
+    public bool IsPreview { get; set; }
 
-    // Where a ground spell lands when the cast has no target enemy - a Resonant cast reaching toward
-    // its source's target. Null outside such a cast.
-    public Vector3? CastPoint { get; private set; }
+    // False until Configure runs - placement ghosts and scene-authored Rituals with no Spell assigned
+    // both sit in this state.
+    public bool IsConfigured => _spellInstance != null;
 
-    public bool IsDisabled => _disabled;
+    public bool CanCast => _spellInstance?.CanCast == true;
 
-    // IDamageable only asks whether this can still take damage, which a disabled Ritual can't.
-    bool IDamageable.IsDestroyed => IsDisabled;
-    public Vector3 AimPoint => CoreMesh.GlobalPosition;
-
-    // So a CastEffect can act on the target this Ritual already picked rather than searching again.
-    public Enemy CurrentTarget => _currentTarget;
+    public int ManaCost { get; private set; }
+    public int CapacityCost { get; private set; }
 
     public RitualStats Stats { get; } = new RitualStats();
 
     // What it's cost so far - its own price plus Sentinel repairs - for damage per mana.
-    public float ManaPaid => _manaCost + Stats.RepairManaPaid;
+    public float ManaPaid => ManaCost + Stats.RepairManaPaid;
 
-    // The latest snapshot the host sent this copy - null until the first arrives.
-    public float[] ReceivedStats { get; private set; }
+    public Vector3 AimPoint => CoreMesh.GlobalPosition;
 
-    public bool IsShrouded => _spellInstance != null && ResolveWithOwner().Shrouded;
+    // IDamageable only asks whether this can still take damage, which a broken Ritual can't.
+    bool IDamageable.IsDestroyed => Health.IsBroken;
 
-    private float? _walkUpDistance;
+    public void TakeDamage(Hit hit) => Health.TakeDamage(hit);
+
+    public bool IsShrouded => IsConfigured && ResolveWithOwner().Shrouded;
+
+    // So a CastEffect can act on the target this Ritual already picked rather than searching again.
+    public Enemy CurrentTarget => Targeting.Current;
+
+    // Where a ground spell lands when the cast has no target enemy - a Resonant cast reaching toward
+    // its source's target. Null outside such a cast.
+    public Vector3? CastPoint => Resonance.CastPoint;
+
+    // Where a spell that lands on a spot comes down: an Anchor Ritual's spot, else the target enemy,
+    // else - for a Resonant cast with nothing in range - the ground point it reaches toward.
+    public Vector3? LandingPoint(SpellCastContext context) =>
+        context.FixedSpot != null ? (Vector3?)context.FixedSpot.Point : Targeting.Current?.GlobalPosition ?? Resonance.CastPoint;
 
     // How close an enemy on foot can get: the gap between this Ritual and the nearest navmesh point
     // walkable from the objective. Every lane reaches the objective, so that's every lane. Measured
@@ -106,21 +103,11 @@ public partial class Ritual : Node3D, IDamageable
         return path[^1].DistanceTo(GlobalPosition);
     }
 
-    // A placement preview: shows the model and gives RitualPlacer a real collision shape to test,
-    // but isn't a Ritual to anything else - it never registers, so enemies can't target it, and it
-    // never casts. Set before the node enters the tree.
-    public bool IsPreview { get; set; }
-
     public override void _Ready()
     {
-        _currentHealth = MaxHealth;
         _body = GetNode<StaticBody3D>("StaticBody3D");
         _activeMaterial = CoreMesh.MaterialOverride;
-        HealthBar.SetFraction(1f);
-        HealthBar.Visible = false;
-
-        // Shown by Configure, and only for a spell with a cooldown worth watching.
-        ReadinessRing.Visible = false;
+        Health.BrokenChanged += OnBrokenChanged;
 
         if (IsPreview)
         {
@@ -162,53 +149,6 @@ public partial class Ritual : Node3D, IDamageable
         }
     }
 
-    // Host only. What the Ritual details panel shows, in a fixed order: since placed, then this wave,
-    // each as damage, overkill, kills, casts and one count per rune slot (0 for an empty slot or a
-    // rune with nothing to count); then the mana it's cost. Every copy knows its own spell and runes,
-    // so only the numbers travel.
-    public float[] StatsSnapshot()
-    {
-        List<float> values = new List<float>();
-        AppendTally(values, Stats.SincePlaced);
-        AppendTally(values, Stats.Wave);
-        values.Add(ManaPaid);
-        return values.ToArray();
-    }
-
-    private void AppendTally(List<float> values, RitualStats.Tally tally)
-    {
-        values.Add(tally.Damage);
-        values.Add(tally.Overkill);
-        values.Add(tally.Kills);
-        values.Add(tally.Casts);
-
-        foreach (Rune rune in RuneSlots)
-        {
-            values.Add(rune is OnHitRune onHit ? tally.RuneEffects.GetValueOrDefault(onHit) : 0f);
-        }
-    }
-
-    // A copy asks the host for a fresh snapshot; it lands in ReceivedStats.
-    public void RequestStats()
-    {
-        RpcId(1, MethodName.ReceiveStatsRequest);
-    }
-
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceiveStatsRequest()
-    {
-        if (NetworkSession.Instance.SenderSeat != default)
-        {
-            RpcId(Multiplayer.GetRemoteSenderId(), MethodName.ReceiveStats, StatsSnapshot());
-        }
-    }
-
-    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
-    private void ReceiveStats(float[] snapshot)
-    {
-        ReceivedStats = snapshot;
-    }
-
     // Equipment changing anywhere drops both cached layers - the resolved context and the owner
     // sheet it was resolved against. Cheap even when it wasn't really this Ritual's own owner,
     // since both are rebuilt lazily on next use rather than here.
@@ -225,8 +165,8 @@ public partial class Ritual : Node3D, IDamageable
         _spellInstance?.InvalidateCache();
     }
 
-    // The owner's sheet is held rather than re-fetched per frame: _Process calls this every tick,
-    // and the lookup behind it walks PlayerProfiles -> a dictionary read. Both this and
+    // The owner's sheet is held rather than re-fetched per frame: _PhysicsProcess calls this every
+    // tick, and the lookup behind it walks PlayerProfiles -> a dictionary read. Both this and
     // SpellInstance's own cache are dropped together by OnInventoryChanged.
     public SpellCastContext ResolveWithOwner()
     {
@@ -238,156 +178,10 @@ public partial class Ritual : Node3D, IDamageable
         return context;
     }
 
-    // Called by an ongoing CastEffect when whatever it left behind is gone - the cooldown starts now.
-    public void ConcludeOngoingEffect()
-    {
-        float cooldown = ResolveWithOwner().ResolvedCooldown;
-        _spellInstance.EndOngoingEffect(cooldown);
-        BroadcastRecovery(cooldown, ongoing: false);
-    }
-
-    public void TakeDamage(Hit hit)
-    {
-        if (_disabled || !IsMultiplayerAuthority())
-        {
-            return;
-        }
-
-        SetHealth(Mathf.Max(0f, _currentHealth - hit.Damage.Total));
-    }
-
-    // Host only. Breaks it outright, whatever its health - a Sapper's finished channel.
-    public void Break()
-    {
-        if (_disabled || !IsMultiplayerAuthority())
-        {
-            return;
-        }
-
-        SetHealth(0f);
-    }
-
-    private float MissingHealthFraction => 1f - (_currentHealth / MaxHealth);
-
-    // Half the Ritual's own cost, scaled by missing health. Zero at full health. The spell's own
-    // cost only - placement extras like an Ice Wall's segments are left out, since the Ritual's own
-    // health doesn't scale with them.
-    public int RepairCost
-    {
-        get
-        {
-            float missingFraction = MissingHealthFraction;
-
-            if (missingFraction <= 0f)
-            {
-                return 0;
-            }
-
-            return Mathf.CeilToInt(ResolveWithOwner().ManaCost.Value * GameRules.RepairCostFraction * missingFraction);
-        }
-    }
-
-    // Free for the Architect; a Sentinel pays RepairCost.
-    public void Repair(PlayerId repairer)
-    {
-        if (!IsMultiplayerAuthority())
-        {
-            RpcId(1, MethodName.RequestRepair);
-            return;
-        }
-
-        if (MissingHealthFraction <= 0f)
-        {
-            return;
-        }
-
-        if (!IsArchitect(repairer))
-        {
-            int cost = RepairCost;
-
-            if (!_level.Economy.TrySpendMana(cost))
-            {
-                return;
-            }
-
-            Stats.RecordRepair(cost);
-        }
-
-        SetHealth(MaxHealth);
-    }
-
-    // The seat's current body - the Architect and its Sentinels take turns in one seat.
-    public bool IsArchitect(PlayerId player) =>
-        _level.SentinelSpawners.TryGetValue(player, out SentinelSpawner spawner) && spawner.Current is Architect;
-
     public void SetCost(int manaCost, int capacityCost)
     {
-        _manaCost = manaCost;
-        _capacityCost = capacityCost;
-    }
-
-    // Mana back shrinks with damage by the same fraction repair charges, so a Sentinel tearing a
-    // broken Ritual down and rebuilding it is never a way around repairing it. The Architect repairs
-    // for free, so it gets everything back. Capacity always returns in full: it's a ceiling on what
-    // can be built, not a currency, so shorting it would lose it for the rest of the match.
-    public void Destroy(PlayerId destroyer)
-    {
-        if (!IsMultiplayerAuthority())
-        {
-            RpcId(1, MethodName.RequestDestroy);
-            return;
-        }
-
-        float kept = IsArchitect(destroyer) ? 1f : 1f - GameRules.RepairCostFraction * MissingHealthFraction;
-        _level.Economy.RefundRitual(Mathf.FloorToInt(_manaCost * kept), _capacityCost);
-        QueueFree();
-    }
-
-    // Any player can repair or tear down any Ritual. The host goes by who sent it, not by anything
-    // the sender claims.
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void RequestRepair()
-    {
-        PlayerId seat = NetworkSession.Instance.SenderSeat;
-
-        if (seat != default)
-        {
-            Repair(seat);
-        }
-    }
-
-    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void RequestDestroy()
-    {
-        PlayerId seat = NetworkSession.Instance.SenderSeat;
-
-        if (seat != default)
-        {
-            Destroy(seat);
-        }
-    }
-
-    // Only the host changes a Ritual's health; copies follow.
-    private void SetHealth(float health)
-    {
-        ShowHealth(health);
-        Rpc(MethodName.ReceiveHealth, health);
-    }
-
-    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceiveHealth(float health)
-    {
-        ShowHealth(health);
-    }
-
-    // Broken at zero - greyed out, and no longer casting or targetable until repaired.
-    private void ShowHealth(float health)
-    {
-        _currentHealth = health;
-        _disabled = health <= 0f;
-        CoreMesh.MaterialOverride = _disabled ? _disabledMaterial : _activeMaterial;
-        HealthBar.SetFraction(health / MaxHealth);
-        HealthBar.Visible = health < MaxHealth;
+        ManaCost = manaCost;
+        CapacityCost = capacityCost;
     }
 
     public void Configure(Spell spell, IReadOnlyList<Rune> runes, PlacementData placement = null)
@@ -413,16 +207,15 @@ public partial class Ritual : Node3D, IDamageable
         // overlays already use. GetForSpell (not the raw Get) so a damage-less elemental spell like
         // Ice Wall still resolves to its Tag.Cold color instead of falling through to white/grey.
         Color elementColor = DamageTypeColors.GetForSpell(spell);
-        _elementColor = elementColor;
         _activeMaterial = new StandardMaterial3D { AlbedoColor = elementColor };
         CoreMesh.MaterialOverride = _activeMaterial;
 
         ApplyShroud();
         placement?.AttachTo(this, ResolveWithOwner());
 
-        // Rituals firing on cast time alone would just flicker it. Runes are fixed for the Ritual's
-        // lifetime, so one that adds a cooldown is already counted here.
-        ReadinessRing.Visible = ResolveWithOwner().ResolvedCooldown > 0f;
+        // Rituals firing on cast time alone would just flicker the ring. Runes are fixed for the
+        // Ritual's lifetime, so one that adds a cooldown is already counted here.
+        Readiness.Setup(ResolveWithOwner().ResolvedCooldown > 0f, elementColor);
     }
 
     // Resolved once here rather than per frame: a Ritual's rune loadout is fixed for its lifetime,
@@ -444,24 +237,24 @@ public partial class Ritual : Node3D, IDamageable
         // excluded because its no-depth-test setup reads wrong faded.
         foreach (Node node in FindChildren("*", nameof(MeshInstance3D), recursive: true, owned: false))
         {
-            if (node is MeshInstance3D meshInstance && !HealthBar.IsAncestorOf(meshInstance))
+            if (node is MeshInstance3D meshInstance && !Health.HealthBar.IsAncestorOf(meshInstance))
             {
                 meshInstance.Transparency = transparency;
             }
         }
     }
 
-    public override void _Process(double delta)
+    // Broken at zero - greyed out until repaired.
+    private void OnBrokenChanged(bool broken)
     {
-        UpdateReadiness((float)delta);
+        CoreMesh.MaterialOverride = broken ? _brokenMaterial : _activeMaterial;
     }
 
-    // On the physics step, since targeting raycasts for line of sight.
+    // On the physics step, since targeting raycasts for line of sight. Only the host runs a Ritual;
+    // everywhere else it's a copy.
     public override void _PhysicsProcess(double delta)
     {
-        // Null until Configure runs — placement ghosts and scene-authored rituals with no Spell
-        // assigned both sit in this state. Only the host runs a Ritual; everywhere else it's a copy.
-        if (_spellInstance == null || _disabled || !IsMultiplayerAuthority())
+        if (!IsConfigured || Health.IsBroken || !IsMultiplayerAuthority())
         {
             return;
         }
@@ -469,29 +262,12 @@ public partial class Ritual : Node3D, IDamageable
         SpellCastContext context = ResolveWithOwner();
 
         _spellInstance.Tick((float)delta);
-        _searchTimer -= (float)delta;
-
-        bool hadTarget = _currentTarget != null;
-
-        if (_currentTarget != null && (!IsInstanceValid(_currentTarget) || _currentTarget.IsDead))
-        {
-            _currentTarget = null;
-        }
-
-        bool justLostTarget = hadTarget && _currentTarget == null;
-
-        if (_searchTimer <= 0f || justLostTarget)
-        {
-            _searchTimer = TargetSearchInterval;
-            _currentTarget = context.FixedSpot != null ? FindInSpot(context)
-                : context.FixedAim != null ? FindInLane(context)
-                : EnemyTargeting.FindTarget(GlobalPosition, context, sightFrom: SpawnPoint.GlobalPosition);
-        }
+        Targeting.Refresh(context, (float)delta);
 
         // A trigger rune's Ritual never casts on its own - only when pulsed.
         if (context.Trigger != null)
         {
-            TickPendingPulse(context, (float)delta);
+            Resonance.Tick(context, (float)delta);
             return;
         }
 
@@ -508,10 +284,10 @@ public partial class Ritual : Node3D, IDamageable
             return context.CastTrigger.ShouldCast(this, context);
         }
 
-        return !Spell.RequiresTarget || _currentTarget != null;
+        return !Spell.RequiresTarget || Targeting.Current != null;
     }
 
-    private void CastAtTarget(SpellCastContext context)
+    public void CastAtTarget(SpellCastContext context)
     {
         CastEffect effect = context.CastEffect;
 
@@ -523,19 +299,19 @@ public partial class Ritual : Node3D, IDamageable
 
         if (context.FixedAim != null)
         {
-            AimSpawnPointAt(SpawnPoint.GlobalPosition + context.FixedAim.Direction * context.Range.Value);
+            Targeting.AimAt(SpawnPoint.GlobalPosition + context.FixedAim.Direction * context.Range.Value);
         }
-        else if (_currentTarget != null)
+        else if (Targeting.Current != null)
         {
-            AimSpawnPointAt(_currentTarget.AimPoint);
+            Targeting.AimAt(Targeting.Current.AimPoint);
         }
-        else if (_pulseAim.HasValue)
+        else if (Resonance.Aim.HasValue)
         {
-            AimSpawnPointAt(_pulseAim.Value);
+            Targeting.AimAt(Resonance.Aim.Value);
         }
 
         context.ResonancePulse = new ResonancePulse { Origin = GlobalPosition, Caster = this };
-        context.ChosenTarget = _currentTarget;
+        context.ChosenTarget = Targeting.Current;
         Stats.RecordCast();
         effect.Cast(context, SpawnPoint, this);
 
@@ -543,22 +319,24 @@ public partial class Ritual : Node3D, IDamageable
         {
             _spellInstance.StartCast(context.ResolvedCastTime, 0f);
             _spellInstance.BeginOngoingEffect();
-            BroadcastRecovery(0f, ongoing: true);
+            Readiness.Broadcast(0f, ongoing: true);
         }
         else
         {
             _spellInstance.StartCast(context.ResolvedCastTime, context.ResolvedCooldown);
-            BroadcastRecovery(context.ResolvedCastTime + context.ResolvedCooldown, ongoing: false);
+            Readiness.Broadcast(context.ResolvedCastTime + context.ResolvedCooldown, ongoing: false);
         }
     }
 
-    // A short beat between a hit and the Resonant casts it sets off, so a chain reads as a ripple.
-    private const float ResonanceStagger = 0.1f;
+    // Called by an ongoing CastEffect when whatever it left behind is gone - the cooldown starts now.
+    public void ConcludeOngoingEffect()
+    {
+        float cooldown = ResolveWithOwner().ResolvedCooldown;
+        _spellInstance.EndOngoingEffect(cooldown);
+        Readiness.Broadcast(cooldown, ongoing: false);
+    }
 
-    public bool IsManual => _spellInstance != null && ResolveWithOwner().Trigger?.Manual == true;
-
-    // Every machine, off the readiness timer: what the Activate prompt reads.
-    public bool IsReadyToCast => !_disabled && !_effectOngoing && _recoveryRemaining <= 0f;
+    public bool IsManual => IsConfigured && ResolveWithOwner().Trigger?.Manual == true;
 
     // Manual activation. Any player; a copy asks the host. Pressed while not ready, nothing happens,
     // and pressed with nothing in range, the cast goes off anyway - and is wasted.
@@ -570,16 +348,12 @@ public partial class Ritual : Node3D, IDamageable
             return;
         }
 
-        if (!IsManual || _disabled || !_spellInstance.CanCast)
+        if (!IsManual || Health.IsBroken || !_spellInstance.CanCast)
         {
             return;
         }
 
-        if (_currentTarget != null && (!IsInstanceValid(_currentTarget) || _currentTarget.IsDead))
-        {
-            _currentTarget = null;
-        }
-
+        Targeting.DropIfDead();
         CastAtTarget(ResolveWithOwner());
     }
 
@@ -590,263 +364,5 @@ public partial class Ritual : Node3D, IDamageable
         {
             Activate();
         }
-    }
-
-    // Host only. The first hit a cast lands reaches every other Resonant Ritual within its own
-    // resonance radius of where the cast came from, aimed at the enemy that was hit.
-    public static void PulseResonantNeighbours(ResonancePulse pulse, Enemy hitEnemy)
-    {
-        if (pulse.Sent)
-        {
-            return;
-        }
-
-        pulse.Sent = true;
-
-        foreach (Ritual ritual in LevelContext.Current.Rituals.Active)
-        {
-            if (ritual != pulse.Caster && ritual.HearsCastAt(pulse.Origin))
-            {
-                ritual.ReceivePulse(hitEnemy);
-            }
-        }
-    }
-
-    private bool HearsCastAt(Vector3 position)
-    {
-        if (_spellInstance == null || _disabled)
-        {
-            return false;
-        }
-
-        SpellCastContext context = ResolveWithOwner();
-        return context.Trigger?.Resonant == true && GlobalPosition.DistanceTo(position) <= context.ResonanceRadius;
-    }
-
-    // Dropped while the Ritual can't cast or already has one waiting - never queued.
-    private void ReceivePulse(Enemy hitEnemy)
-    {
-        if (_disabled || !_spellInstance.CanCast || _pendingPulse >= 0f)
-        {
-            return;
-        }
-
-        _pendingPulse = ResonanceStagger;
-        _pulseSource = hitEnemy;
-        _pulseSourcePoint = hitEnemy.AimPoint;
-    }
-
-    private void TickPendingPulse(SpellCastContext context, float delta)
-    {
-        if (_pendingPulse < 0f)
-        {
-            return;
-        }
-
-        _pendingPulse -= delta;
-
-        if (_pendingPulse >= 0f)
-        {
-            return;
-        }
-
-        if (_spellInstance.CanCast)
-        {
-            _currentTarget = PulseTarget(context);
-
-            // Nothing in range to hit: still reach toward the enemy that was hit - a projectile or
-            // beam along that line, a ground spell onto the nearest ground in range of it.
-            if (_currentTarget == null && _pulseSource != null)
-            {
-                Vector3 toward = IsInstanceValid(_pulseSource) && !_pulseSource.IsDead ? _pulseSource.AimPoint : _pulseSourcePoint;
-                _pulseAim = toward;
-                CastPoint = GroundPointToward(toward, context.Range.Value);
-            }
-
-            CastAtTarget(context);
-            _pulseAim = null;
-            CastPoint = null;
-        }
-
-        _pulseSource = null;
-    }
-
-    // The point pulled in to the edge of this Ritual's range if it's beyond it, then dropped onto the
-    // terrain beneath. Null where there's no ground under it.
-    private Vector3? GroundPointToward(Vector3 point, float range)
-    {
-        Vector3 offset = point - GlobalPosition;
-        offset.Y = 0f;
-
-        if (offset.Length() > range)
-        {
-            offset = offset.Normalized() * range;
-        }
-
-        Vector3 above = new Vector3(GlobalPosition.X + offset.X, point.Y + GroundProbeHeight, GlobalPosition.Z + offset.Z);
-        PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(above, above + Vector3.Down * (GroundProbeHeight + GroundProbeDepth), PhysicsLayers.World);
-        Godot.Collections.Dictionary hit = GetWorld3D().DirectSpaceState.IntersectRay(query);
-
-        return hit.Count == 0 ? null : (Vector3)hit["position"];
-    }
-
-    // The enemy that was hit if this Ritual can reach and see it, otherwise the enemy in its own range
-    // nearest it - unless a targeting rune says what to aim at. With none, the cast still goes off -
-    // and is wasted.
-    private Enemy PulseTarget(SpellCastContext context)
-    {
-        if (context.FixedSpot != null)
-        {
-            return FindInSpot(context);
-        }
-
-        if (context.FixedAim != null)
-        {
-            return FindInLane(context);
-        }
-
-        if (context.TargetingRune != null)
-        {
-            return EnemyTargeting.FindTarget(GlobalPosition, context, sightFrom: SpawnPoint.GlobalPosition);
-        }
-
-        Enemy source = _pulseSource != null && IsInstanceValid(_pulseSource) && !_pulseSource.IsDead ? _pulseSource : null;
-
-        if (source != null
-            && GeometryUtils.RangeDistanceSquared(GlobalPosition, source.GlobalPosition) <= context.Range.Value * context.Range.Value
-            && LineOfSight.IsClear(this, SpawnPoint.GlobalPosition, source.AimPoint))
-        {
-            return source;
-        }
-
-        Vector3 near = source?.GlobalPosition ?? GlobalPosition;
-        return EnemyTargeting.FindNearestTo(near, GlobalPosition, context.Range.Value, SpawnPoint.GlobalPosition);
-    }
-
-    // Host only. Every copy, this one included, then counts the time down on its own. A hidden ring
-    // is hidden on every copy, so there's nothing to tell them.
-    private void BroadcastRecovery(float duration, bool ongoing)
-    {
-        if (!ReadinessRing.Visible)
-        {
-            return;
-        }
-
-        ShowRecovery(duration, ongoing);
-        Rpc(MethodName.ReceiveRecovery, duration, ongoing);
-    }
-
-    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceiveRecovery(float duration, bool ongoing)
-    {
-        ShowRecovery(duration, ongoing);
-    }
-
-    private void ShowRecovery(float duration, bool ongoing)
-    {
-        _recoveryTotal = duration;
-        _recoveryRemaining = duration;
-        _effectOngoing = ongoing;
-    }
-
-    // Empty while broken or while an ongoing effect stands; fills toward the next cast, then lights
-    // up full. A broken Ritual's timer is paused on the host, so the copy pauses too.
-    private void UpdateReadiness(float delta)
-    {
-        if (!ReadinessRing.Visible)
-        {
-            return;
-        }
-
-        if (!_disabled && _recoveryRemaining > 0f)
-        {
-            _recoveryRemaining = Mathf.Max(0f, _recoveryRemaining - delta);
-        }
-
-        bool empty = _disabled || _effectOngoing;
-        bool ready = !empty && _recoveryRemaining <= 0f;
-        float fill = empty ? 0f : _recoveryTotal <= 0f ? 1f : 1f - _recoveryRemaining / _recoveryTotal;
-
-        ReadinessRing.SetInstanceShaderParameter("fill", fill);
-        ReadinessRing.SetInstanceShaderParameter("lit_color", ready ? _elementColor : _elementColor.Darkened(RecoveringDarken));
-    }
-
-    // Built fresh each time it's shown, so the circle matches the owner's current gear.
-    public void SetRangeShown(bool shown)
-    {
-        if (!shown)
-        {
-            _rangeIndicator?.QueueFree();
-            _rangeIndicator = null;
-            _resonanceOverlay?.QueueFree();
-            _resonanceOverlay = null;
-            return;
-        }
-
-        if (_rangeIndicator != null || _spellInstance == null)
-        {
-            return;
-        }
-
-        SpellCastContext context = ResolveWithOwner();
-
-        if (context.FixedAim != null)
-        {
-            _rangeIndicator = RitualPlacer.BuildLaneIndicator(context.Range.Value, context.FixedAim.LaneHalfWidth);
-            RitualPlacer.PointLaneIndicator(_rangeIndicator, context.FixedAim.Direction, context.Range.Value);
-        }
-        else if (context.FixedSpot != null)
-        {
-            _rangeIndicator = RitualPlacer.BuildRangeOutline(context.Range.Value);
-            MeshInstance3D spot = RitualPlacer.BuildSpotIndicator(context.SpotRadius);
-            spot.Position = context.FixedSpot.Point - GlobalPosition - _rangeIndicator.Position;
-            _rangeIndicator.AddChild(spot);
-        }
-        else
-        {
-            _rangeIndicator = RitualPlacer.BuildRangeIndicator(context.Range.Value);
-        }
-
-        AddChild(_rangeIndicator);
-
-        if (context.Trigger?.Resonant == true)
-        {
-            _resonanceOverlay = new ResonanceOverlay();
-            AddChild(_resonanceOverlay);
-            _resonanceOverlay.Draw(context.ResonanceRadius, context.Range.Value, this);
-        }
-    }
-
-    // Where a spell that lands on a spot comes down: an Anchor Ritual's spot, else the target enemy,
-    // else - for a Resonant cast with nothing in range - the ground point it reaches toward.
-    public Vector3? LandingPoint(SpellCastContext context) =>
-        context.FixedSpot != null ? (Vector3?)context.FixedSpot.Point : _currentTarget?.GlobalPosition ?? CastPoint;
-
-    // An Anchor Ritual only answers to an enemy inside its spot's area. No sight needed - it isn't
-    // aiming at anyone.
-    private Enemy FindInSpot(SpellCastContext context) =>
-        EnemyTargeting.FindNearest(context.FixedSpot.Point, context.SpotRadius);
-
-    // A Ritual that fires in a fixed direction only answers to an enemy it can see in its lane:
-    // within the lane's half-width of the line from its base out to its range.
-    private Enemy FindInLane(SpellCastContext context)
-    {
-        Vector3 end = GlobalPosition + context.FixedAim.Direction * context.Range.Value;
-        return EnemyTargeting.FindNearestToSegment(GlobalPosition, end, context.FixedAim.LaneHalfWidth, sightFrom: SpawnPoint.GlobalPosition);
-    }
-
-    // Straight at the target's center mass, so a projectile arrives where it's meant to hit. A
-    // target almost directly above or below keeps the previous aim, since LookAt can't resolve a
-    // direction parallel to its up vector - an enemy walking through a Shrouded Ritual can get there.
-    private void AimSpawnPointAt(Vector3 target)
-    {
-        Vector3 toTarget = (target - SpawnPoint.GlobalPosition).Normalized();
-
-        if (Mathf.Abs(toTarget.Dot(Vector3.Up)) > 0.999f)
-        {
-            return;
-        }
-
-        SpawnPoint.LookAt(target, Vector3.Up);
     }
 }

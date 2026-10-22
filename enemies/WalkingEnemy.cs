@@ -268,7 +268,7 @@ public partial class WalkingEnemy : Enemy
             Repath();
         }
 
-        // Engagement is decided on an interval (mirrors Ritual.TargetSearchInterval) rather than every
+        // Engagement is decided on an interval (mirrors RitualTargeting.SearchInterval) rather than every
         // frame: rituals, then players, then walls, in that priority order.
         _engagementCheckTimer -= (float)delta;
 
@@ -576,7 +576,7 @@ public partial class WalkingEnemy : Enemy
 
         foreach (Ritual ritual in Level.Rituals.Active)
         {
-            if (ritual.IsDisabled || ritual.IsShrouded || ritual.WalkUpDistance > AttackRange)
+            if (ritual.Health.IsBroken || ritual.IsShrouded || ritual.WalkUpDistance > AttackRange)
             {
                 continue;
             }
@@ -594,7 +594,7 @@ public partial class WalkingEnemy : Enemy
 
     private void ProcessAttackingRitual(double delta)
     {
-        if (_targetRitual == null || !IsInstanceValid(_targetRitual) || _targetRitual.IsDisabled)
+        if (_targetRitual == null || !IsInstanceValid(_targetRitual) || _targetRitual.Health.IsBroken)
         {
             _targetRitual = null;
             BeginApproachingObjective();

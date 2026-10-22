@@ -512,7 +512,7 @@ public partial class Enemy : CharacterBody3D, IDamageable
 
         if (hit.Spell.ResonancePulse != null)
         {
-            Ritual.PulseResonantNeighbours(hit.Spell.ResonancePulse, this);
+            RitualResonance.PulseNeighbours(hit.Spell.ResonancePulse, this);
         }
 
         // A Status a reaction rune already spent isn't there to swirl.

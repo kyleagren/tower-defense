@@ -61,7 +61,7 @@ public partial class Sapper : WalkingEnemy
 
         if (IsSimulatedHere)
         {
-            _channelTarget.Break();
+            _channelTarget.Health.Break();
         }
 
         StopChannel();
@@ -104,7 +104,7 @@ public partial class Sapper : WalkingEnemy
 
     private bool ChannelBroken() =>
         IsDead || IsActionPrevented || IsKnockedBack || ForcedTarget != null
-        || !IsInstanceValid(_channelTarget) || _channelTarget.IsDisabled;
+        || !IsInstanceValid(_channelTarget) || _channelTarget.Health.IsBroken;
 
     private void StartChannel(Ritual ritual)
     {

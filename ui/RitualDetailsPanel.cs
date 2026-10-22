@@ -68,12 +68,12 @@ public partial class RitualDetailsPanel : PanelContainer
 
         if (_ritual.IsMultiplayerAuthority())
         {
-            ShowStats(_ritual.StatsSnapshot());
+            ShowStats(_ritual.StatsSync.Snapshot());
         }
         else
         {
-            _ritual.RequestStats();
-            ShowStats(_ritual.ReceivedStats);
+            _ritual.StatsSync.Request();
+            ShowStats(_ritual.StatsSync.Received);
         }
     }
 

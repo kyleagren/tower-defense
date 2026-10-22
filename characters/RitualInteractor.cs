@@ -44,7 +44,7 @@ public partial class RitualInteractor : LookInteractor
             if (_destroyHoldTime >= DestroyHoldDuration)
             {
                 ClearTarget();
-                ritual.Destroy(Character.OwnerId);
+                ritual.Health.Destroy(Character.OwnerId);
             }
 
             return;
@@ -59,7 +59,7 @@ public partial class RitualInteractor : LookInteractor
             if (_repairHoldTime >= RepairHoldDuration)
             {
                 _repairHoldTime = 0f;
-                ritual.Repair(Character.OwnerId);
+                ritual.Health.Repair(Character.OwnerId);
             }
 
             return;
@@ -73,7 +73,7 @@ public partial class RitualInteractor : LookInteractor
     // Only while there's something to repair - an undamaged Ritual shows no cost at all.
     protected override (string Text, Color Color) BuildPromptDetail(Node3D target)
     {
-        int cost = ((Ritual)target).RepairCost;
+        int cost = ((Ritual)target).Health.RepairCost;
 
         if (cost <= 0)
         {
@@ -115,7 +115,7 @@ public partial class RitualInteractor : LookInteractor
 
         Ritual ritual = (Ritual)target;
         string activate = !ritual.IsManual ? ""
-            : ritual.IsReadyToCast ? $"Press {InputPromptHelper.GetPrompt("interact")} to Activate\n"
+            : ritual.Readiness.IsReady ?$"Press {InputPromptHelper.GetPrompt("interact")} to Activate\n"
             : "Recharging\n";
 
         return activate

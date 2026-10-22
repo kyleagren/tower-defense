@@ -3,6 +3,12 @@
 [ext_resource type="Script" uid="uid://bacs6w4uhrpe1" path="res://rituals/Ritual.cs" id="1_ritual"]
 [ext_resource type="PackedScene" path="res://ui/health_bar_3d.tscn" id="9_healthbar"]
 [ext_resource type="Shader" path="res://rituals/visual_effects/readiness_ring.gdshader" id="10_readiness"]
+[ext_resource type="Script" path="res://rituals/RitualHealth.cs" id="11_health"]
+[ext_resource type="Script" path="res://rituals/RitualTargeting.cs" id="12_targeting"]
+[ext_resource type="Script" path="res://rituals/RitualResonance.cs" id="13_resonance"]
+[ext_resource type="Script" path="res://rituals/RitualReadiness.cs" id="14_readiness"]
+[ext_resource type="Script" path="res://rituals/RitualRangeDisplay.cs" id="15_rangedisplay"]
+[ext_resource type="Script" path="res://rituals/RitualStatsSync.cs" id="16_statssync"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_ritual"]
 top_radius = 0.35
@@ -26,12 +32,16 @@ size = Vector2(1.8, 1.8)
 render_priority = 0
 shader = ExtResource("10_readiness")
 
-[node name="Ritual" type="Node3D" node_paths=PackedStringArray("SpawnPoint", "HealthBar", "CoreMesh", "ReadinessRing")]
+[node name="Ritual" type="Node3D" node_paths=PackedStringArray("SpawnPoint", "CoreMesh", "Health", "Targeting", "Resonance", "Readiness", "RangeDisplay", "StatsSync")]
 script = ExtResource("1_ritual")
 SpawnPoint = NodePath("SpawnPoint")
-HealthBar = NodePath("HealthBar3D")
 CoreMesh = NodePath("MeshInstance3D")
-ReadinessRing = NodePath("ReadinessRing")
+Health = NodePath("Health")
+Targeting = NodePath("Targeting")
+Resonance = NodePath("Resonance")
+Readiness = NodePath("Readiness")
+RangeDisplay = NodePath("RangeDisplay")
+StatsSync = NodePath("StatsSync")
 
 [node name="ReadinessRing" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
@@ -56,3 +66,23 @@ shape = SubResource("CylinderShape3D_ritual")
 
 [node name="SpawnPoint" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 0)
+
+[node name="Health" type="Node" parent="." node_paths=PackedStringArray("HealthBar")]
+script = ExtResource("11_health")
+HealthBar = NodePath("../HealthBar3D")
+
+[node name="Targeting" type="Node" parent="."]
+script = ExtResource("12_targeting")
+
+[node name="Resonance" type="Node" parent="."]
+script = ExtResource("13_resonance")
+
+[node name="Readiness" type="Node" parent="." node_paths=PackedStringArray("Ring")]
+script = ExtResource("14_readiness")
+Ring = NodePath("../ReadinessRing")
+
+[node name="RangeDisplay" type="Node3D" parent="."]
+script = ExtResource("15_rangedisplay")
+
+[node name="StatsSync" type="Node" parent="."]
+script = ExtResource("16_statssync")

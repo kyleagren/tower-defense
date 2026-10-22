@@ -50,11 +50,11 @@ public partial class RitualRangeViewer : Node
 
         if (IsInstanceValid(_shown))
         {
-            _shown.SetRangeShown(false);
+            _shown.RangeDisplay.SetShown(false);
         }
 
         _shown = ritual;
-        _shown?.SetRangeShown(true);
+        _shown?.RangeDisplay.SetShown(true);
 
         if (_character.IsLocallyControlled)
         {
