@@ -27,6 +27,11 @@ public partial class LevelContext : Node
     // The level's match - its phase and whether it's over. Null in a scene with no match (the hub).
     public MatchState Match { get; set; }
 
+    // The hub follows Build's rules: Rituals are built and tokens authored, never deployed.
+    public bool IsBuildTime => Match == null || Match.Phase == GamePhase.Build;
+
+    public bool IsCombatTime => Match?.Phase == GamePhase.Combat;
+
     // The level's mana, capacity and gold earned. Unlimited in the hub.
     public EconomyManager Economy { get; set; }
 
@@ -49,7 +54,7 @@ public partial class LevelContext : Node
     // effects - so it's freed with the level. LevelContext sits directly under the level's root.
     public Node LevelRoot => GetParent();
 
-    // Each player's currently controlled body - their Sentinel or their Architect, never both.
+    // Each player's currently controlled body.
     public Dictionary<PlayerId, PlayerCharacter> ActiveCharacters { get; } = new();
 
     // View-side convenience for this machine's camera and HUD. Gameplay code takes a PlayerId instead.

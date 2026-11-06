@@ -44,15 +44,9 @@ public partial class TokenDeployer : Node
         }
     }
 
-    // Outside a match (the hub) tokens work anytime, for testing; in a match, only in Combat.
-    private static bool CanDeployNow
-    {
-        get
-        {
-            MatchState match = LevelContext.Current.Match;
-            return match == null || match.Phase == GamePhase.Combat;
-        }
-    }
+    // Combat only - the hub follows Build's rules, where the same input authors a token instead
+    // (Builder).
+    private static bool CanDeployNow => LevelContext.Current.IsCombatTime;
 
     public override void _UnhandledInput(InputEvent @event)
     {

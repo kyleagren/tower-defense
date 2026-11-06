@@ -1,8 +1,7 @@
 using Godot;
 
 // A Sentinel's base values - what its stats start from before gear. A Resource rather than exports
-// on the Sentinel's scene, so the stat math can run with no Sentinel in the level: the character
-// sheet reads it in Build, while the Architect has taken over.
+// on the Sentinel's scene, so the stat math can run with no Sentinel of that kind in the level.
 [GlobalClass]
 public partial class SentinelDefinition : Resource
 {

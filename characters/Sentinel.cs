@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public abstract partial class Sentinel : PlayerCharacter, IDamageable
 {
-    // The local player's own Sentinel in the current scene, whether or not it's the active body.
+    // The local player's own Sentinel in the current scene.
     public static Sentinel Local => LevelContext.Current?.Sentinels.GetValueOrDefault(PlayerProfiles.LocalId);
 
     [Export] public Node3D Weapon { get; private set; }
@@ -16,7 +16,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     // export of a custom C# class against a base-scene node fails its cast during scene-build,
     // then gets written out as null on the next save. Same reason RitualPlacer/TokenDeployer
     // resolve their own Character via GetParent() instead of an export.
-    public RitualPlacer RitualTokenPlacer { get; private set; }
+    public RitualPlacer RitualPlacer { get; private set; }
     public TokenDeployer TokenDeployer { get; private set; }
     [Export] public Godot.Collections.Array<Ability> AbilitySlots { get; private set; } = new();
     // The ability each slot fires on a hold instead of a tap, or null. A slot with one waits on every
@@ -111,7 +111,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         }
     }
 
-    protected override bool ExtraCombatInputGate => !RitualTokenPlacer.IsPlacing && !IsDodging;
+    protected override bool ExtraCombatInputGate => !RitualPlacer.IsPlacing && !IsDodging;
 
     public bool IsDodging => _dodgeRemaining > 0f;
     protected bool IsDodgeImmune => _dodgeRemaining > DodgeDuration - DodgeImmunityDuration;
@@ -208,7 +208,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
     public override void _Ready()
     {
         base._Ready();
-        RitualTokenPlacer = GetNode<RitualPlacer>("RitualTokenPlacer");
+        RitualPlacer = GetNode<RitualPlacer>("RitualPlacer");
         TokenDeployer = GetNode<TokenDeployer>("TokenDeployer");
         _bodyMeshRestBasis = BodyMesh.Basis;
 
@@ -304,7 +304,7 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
             {
                 return;
             }
-            else if (!RitualTokenPlacer.IsPlacing && !UiPanelStack.AnyOpen && @event is not InputEventJoypadButton)
+            else if (!RitualPlacer.IsPlacing &&!UiPanelStack.AnyOpen && @event is not InputEventJoypadButton)
             {
                 PauseMenu.Instance?.Open();
                 GetViewport().SetInputAsHandled();
@@ -498,12 +498,21 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         return false;
     }
 
-    // Build hands the player to their Architect and this body is about to be swapped out, so it
-    // stands down now rather than acting for the frames until it goes - healed first, so the HUD
-    // shows the Health and Shield the next wave starts with. A wave ending while dead revives
-    // outright, whether it leads into Build or PostGame.
+    // A wave ending while dead revives outright, whether it leads into Build or PostGame. Build
+    // heals to full and ends whatever abilities are still running; Combat starts with every ability
+    // ready.
     private void OnGamePhaseChanged(GamePhase phase)
     {
+        if (phase == GamePhase.Combat)
+        {
+            foreach (Ability ability in AllAbilities)
+            {
+                ability.ResetCooldown();
+            }
+
+            return;
+        }
+
         if (phase != GamePhase.Build && phase != GamePhase.PostGame)
         {
             return;
@@ -521,11 +530,8 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
         foreach (Ability ability in AllAbilities)
         {
             ability.CancelCapture();
-            ability.OnCharacterDeactivated();
+            ability.OnBuildStarted();
         }
-
-        SetActive(false);
-        Weapon.Visible = false;
     }
 
     public void TakeDamage(Hit hit)
@@ -612,9 +618,9 @@ public abstract partial class Sentinel : PlayerCharacter, IDamageable
 
         TokenDeployer.ExitPickMode();
 
-        if (RitualTokenPlacer.IsPlacing)
+        if (RitualPlacer.IsPlacing)
         {
-            RitualTokenPlacer.CancelPlacement();
+            RitualPlacer.CancelPlacement();
         }
 
         foreach (Ability ability in AllAbilities)

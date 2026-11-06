@@ -10,8 +10,7 @@ public abstract partial class Item : Resource
     [Export] public string FlavorName { get; private set; }
 
     // AnySentinel for the shared, universal armor/jewelry pool. A Weapon always overrides this to
-    // one specific Sentinel. Architect can never appear here - CharacterId has no value for him at
-    // all (see the Sentinel class, which is where character-identity and gear-scaled stats live).
+    // one specific Sentinel.
     [Export] public CharacterId EquippableCharacter { get; private set; } = CharacterId.AnySentinel;
 
     public bool IsCompatibleWith(CharacterId character) => EquippableCharacter == character || EquippableCharacter == CharacterId.AnySentinel;

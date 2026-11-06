@@ -87,10 +87,9 @@ public abstract partial class Ability : Node
     {
     }
 
-    // Called when the wielding Sentinel hands control back to the Architect at the end of a wave,
-    // after any capture has been cancelled. Something the ability left out in the world is its own
-    // call to keep or clear.
-    public virtual void OnCharacterDeactivated()
+    // Called when a Build phase starts, after any capture has been cancelled. Something the ability
+    // left out in the world is its own call to keep or clear.
+    public virtual void OnBuildStarted()
     {
     }
 
@@ -181,6 +180,13 @@ public abstract partial class Ability : Node
         float recoveryRate = 1f + EffectiveBonus(AbilityStatKind.CooldownRecoveryRate);
         SetCooldown(BaseCooldown / recoveryRate);
         CooldownPartner?.SetCooldown(_cooldownDuration);
+    }
+
+    // Combat starts every wave with every ability ready.
+    public void ResetCooldown()
+    {
+        _cooldownRemaining = 0f;
+        _cooldownDuration = 0f;
     }
 
     private void SetCooldown(float duration)

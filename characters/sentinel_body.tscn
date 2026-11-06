@@ -9,6 +9,8 @@
 [ext_resource type="PackedScene" path="res://rituals/ritual.tscn" id="6_ritualscene"]
 [ext_resource type="Script" path="res://characters/TokenDeployer.cs" id="7_tokendeployer"]
 [ext_resource type="Script" path="res://core/MotionPlayback.cs" id="8_motion"]
+[ext_resource type="PackedScene" uid="uid://d2otykwv31mch" path="res://ui/build_menu.tscn" id="9_buildmenu"]
+[ext_resource type="Script" path="res://characters/Builder.cs" id="10_builder"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.4
@@ -69,14 +71,20 @@ PromptScene = ExtResource("2_prompt")
 script = ExtResource("4_stationinteractor")
 PromptScene = ExtResource("2_prompt")
 
-[node name="RitualTokenPlacer" type="Node" parent="."]
+[node name="RitualPlacer" type="Node" parent="."]
 script = ExtResource("5_ritualplacer")
 RitualScene = ExtResource("6_ritualscene")
-CancelOnPhase = 1
 
 [node name="TokenDeployer" type="Node" parent="." node_paths=PackedStringArray("Placer")]
 script = ExtResource("7_tokendeployer")
-Placer = NodePath("../RitualTokenPlacer")
+Placer = NodePath("../RitualPlacer")
+
+[node name="BuildMenu" parent="." instance=ExtResource("9_buildmenu")]
+
+[node name="Builder" type="Node" parent="." node_paths=PackedStringArray("Menu", "Placer")]
+script = ExtResource("10_builder")
+Menu = NodePath("../BuildMenu")
+Placer = NodePath("../RitualPlacer")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 process_mode = 3

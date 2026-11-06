@@ -2,7 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 
-// The Architect's construction menu, radial throughout: an element ring, that element's spells, then
+// The build menu, radial throughout: an element ring, that element's spells, then
 // the Ritual Inscription, where runes come from a bucket ring, a rune ring and a tier wheel opened
 // around the socket being filled, before the finished ritual is placed. The same flow authors
 // tokens: the token wheel picks a slot, and saving writes the build there instead of placing it.
@@ -89,7 +89,7 @@ public partial class BuildMenu : Control
     public void Open(int token = -1)
     {
         Visible = true;
-        UiPanelStack.Push(this, Close, capturesMouse: true);
+        UiPanelStack.Push(this, Close, capturesMouse: true, blocksMovement: true);
 
         if (token >= 0)
         {
@@ -319,13 +319,21 @@ public partial class BuildMenu : Control
         }
     }
 
-    // Freed with its Architect when Combat starts, possibly still open - an entry left on the panel
-    // stack would go on blocking combat input.
+    // Freed with its Sentinel, possibly still open - an entry left on the panel stack would go on
+    // blocking combat input.
     public override void _ExitTree()
     {
         if (Visible)
         {
             UiPanelStack.Pop(this);
+        }
+    }
+
+    public void CloseIfOpen()
+    {
+        if (Visible)
+        {
+            Close();
         }
     }
 

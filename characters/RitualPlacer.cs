@@ -31,12 +31,6 @@ public partial class RitualPlacer : Node
     // the pick is clamped to the Ritual's range anyway, so there's no walking over to it.
     [Export] public float AimReach = 60f;
 
-    // Which phase transition should cancel an in-progress placement for this placer's owner - the
-    // Architect's own instance cancels on entering Combat (placement only happens during Build);
-    // the Sentinel's instance (README's mid-wave token deployment) needs the opposite: cancel
-    // on entering Build, since that's when the Sentinel itself goes inactive.
-    [Export] public GamePhase CancelOnPhase = GamePhase.Combat;
-
     public bool IsPlacing { get; private set; }
 
     private Ritual _ghost;
@@ -90,9 +84,11 @@ public partial class RitualPlacer : Node
         }
     }
 
+    // A placement started under one phase's rules - a build in Build, a token in Combat - never
+    // carries into the next.
     private void OnGamePhaseChanged(GamePhase phase)
     {
-        if (phase == CancelOnPhase && IsPlacing)
+        if (IsPlacing)
         {
             CancelPlacement();
         }

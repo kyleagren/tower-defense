@@ -66,8 +66,8 @@ public partial class RitualHealth : Node
         }
     }
 
-    // Free for the Architect; a Sentinel pays RepairCost.
-    public void Repair(PlayerId repairer)
+    // Free during build time; otherwise RepairCost is paid.
+    public void Repair()
     {
         if (!IsMultiplayerAuthority())
         {
@@ -80,7 +80,7 @@ public partial class RitualHealth : Node
             return;
         }
 
-        if (!IsArchitect(repairer))
+        if (!_level.IsBuildTime)
         {
             int cost = RepairCost;
 
@@ -96,10 +96,11 @@ public partial class RitualHealth : Node
     }
 
     // Mana back shrinks with damage by the same fraction repair charges, so a Sentinel tearing a
-    // broken Ritual down and rebuilding it is never a way around repairing it. The Architect repairs
-    // for free, so it gets everything back. Capacity always returns in full: it's a ceiling on what
-    // can be built, not a currency, so shorting it would lose it for the rest of the match.
-    public void Destroy(PlayerId destroyer)
+    // broken Ritual down and rebuilding it is never a way around repairing it. Repairs are free
+    // during build time, so tearing one down then gets everything back. Capacity always returns in
+    // full: it's a ceiling on what can be built, not a currency, so shorting it would lose it for the
+    // rest of the match.
+    public void Destroy()
     {
         if (!IsMultiplayerAuthority())
         {
@@ -107,36 +108,28 @@ public partial class RitualHealth : Node
             return;
         }
 
-        float kept = IsArchitect(destroyer) ? 1f : 1f - GameRules.RepairCostFraction * MissingFraction;
+        float kept = _level.IsBuildTime ? 1f : 1f - GameRules.RepairCostFraction * MissingFraction;
         _level.Economy.RefundRitual(Mathf.FloorToInt(_ritual.ManaCost * kept), _ritual.CapacityCost);
         _ritual.QueueFree();
     }
-
-    // The seat's current body - the Architect and its Sentinels take turns in one seat.
-    private bool IsArchitect(PlayerId player) =>
-        _level.SentinelSpawners.TryGetValue(player, out SentinelSpawner spawner) && spawner.Current is Architect;
 
     // Any player can repair or tear down any Ritual. The host goes by who sent it, not by anything
     // the sender claims.
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void RequestRepair()
     {
-        PlayerId seat = NetworkSession.Instance.SenderSeat;
-
-        if (seat != default)
+        if (NetworkSession.Instance.SenderSeat != default)
         {
-            Repair(seat);
+            Repair();
         }
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void RequestDestroy()
     {
-        PlayerId seat = NetworkSession.Instance.SenderSeat;
-
-        if (seat != default)
+        if (NetworkSession.Instance.SenderSeat != default)
         {
-            Destroy(seat);
+            Destroy();
         }
     }
 

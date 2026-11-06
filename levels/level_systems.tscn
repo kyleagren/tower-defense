@@ -9,7 +9,6 @@
 [ext_resource type="Script" uid="uid://b2lh56ru63dye" path="res://characters/SentinelSpawner.cs" id="8_sentinelspawner"]
 [ext_resource type="PackedScene" uid="uid://c2e8ekj1x02pc" path="res://characters/soldier/soldier.tscn" id="9_soldierscene"]
 [ext_resource type="PackedScene" uid="uid://bxhdubyyf3032" path="res://characters/tank/tank.tscn" id="10_tankscene"]
-[ext_resource type="PackedScene" uid="uid://dod5att2rugml" path="res://characters/architect/architect.tscn" id="11_architectscene"]
 [ext_resource type="Script" path="res://waves/EnemyRoster.cs" id="12_enemyroster"]
 [ext_resource type="Script" path="res://rituals/RitualRoster.cs" id="13_ritualroster"]
 [ext_resource type="PackedScene" path="res://rituals/ritual.tscn" id="14_ritualscene"]
@@ -64,7 +63,6 @@ spawn_path = NodePath("..")
 script = ExtResource("8_sentinelspawner")
 SoldierScene = ExtResource("9_soldierscene")
 TankScene = ExtResource("10_tankscene")
-ArchitectScene = ExtResource("11_architectscene")
 BodySpawner = NodePath("BodySpawner")
 
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP1"]
@@ -75,7 +73,6 @@ script = ExtResource("8_sentinelspawner")
 OwnerId = 2
 SoldierScene = ExtResource("9_soldierscene")
 TankScene = ExtResource("10_tankscene")
-ArchitectScene = ExtResource("11_architectscene")
 BodySpawner = NodePath("BodySpawner")
 
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP2"]
@@ -86,7 +83,6 @@ script = ExtResource("8_sentinelspawner")
 OwnerId = 3
 SoldierScene = ExtResource("9_soldierscene")
 TankScene = ExtResource("10_tankscene")
-ArchitectScene = ExtResource("11_architectscene")
 BodySpawner = NodePath("BodySpawner")
 
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP3"]
@@ -97,7 +93,6 @@ script = ExtResource("8_sentinelspawner")
 OwnerId = 4
 SoldierScene = ExtResource("9_soldierscene")
 TankScene = ExtResource("10_tankscene")
-ArchitectScene = ExtResource("11_architectscene")
 BodySpawner = NodePath("BodySpawner")
 
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP4"]

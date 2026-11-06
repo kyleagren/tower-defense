@@ -2,8 +2,6 @@
 
 [ext_resource type="Script" uid="uid://b2lh56ru63dye" path="res://characters/SentinelSpawner.cs" id="1_sentinelspawner"]
 [ext_resource type="Script" uid="uid://beylbkijyxcr5" path="res://core/EconomyManager.cs" id="2_economymanager"]
-[ext_resource type="Script" uid="uid://bnmhdebgbiqya" path="res://levels/hub/ArchitectSelectStation.cs" id="3_archstation"]
-[ext_resource type="Script" uid="uid://dsa3b2omiinqc" path="res://levels/hub/ArchitectTestZone.cs" id="4_archzone"]
 [ext_resource type="Script" uid="uid://c7mkc6ifdkhp8" path="res://levels/hub/CharacterSelectStation.cs" id="6_charselectstation"]
 [ext_resource type="PackedScene" path="res://ui/hub/character_select_panel.tscn" id="7_charselectpanel"]
 [ext_resource type="Script" uid="uid://cs7e675hoiaql" path="res://levels/hub/LevelSelectStation.cs" id="8_levelselectstation"]
@@ -16,7 +14,6 @@
 [ext_resource type="PackedScene" path="res://ui/hub/vendor_panel.tscn" id="16_vendorpanel"]
 [ext_resource type="PackedScene" uid="uid://c2e8ekj1x02pc" path="res://characters/soldier/soldier.tscn" id="22_soldierscene"]
 [ext_resource type="PackedScene" uid="uid://bxhdubyyf3032" path="res://characters/tank/tank.tscn" id="23_tankscene"]
-[ext_resource type="PackedScene" uid="uid://dod5att2rugml" path="res://characters/architect/architect.tscn" id="24_architectscene"]
 [ext_resource type="Script" uid="uid://bwo3ge3uh27eg" path="res://core/LevelContext.cs" id="25_levelcontext"]
 [ext_resource type="PackedScene" path="res://ui/player_hud.tscn" id="26_playerhud"]
 [ext_resource type="Environment" uid="uid://cl3i6wom3itph" path="res://levels/default_environment.tres" id="27_environment"]
@@ -104,19 +101,6 @@ size = Vector3(16, 6, 2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wall_roomB_flank"]
 size = Vector3(16, 6, 2)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_archstation"]
-albedo_color = Color(0.6, 0.4, 0.1, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_archstation"]
-material = SubResource("StandardMaterial3D_archstation")
-size = Vector3(1, 2, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_archstation"]
-size = Vector3(1, 2, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_archzone"]
-size = Vector3(40, 10, 43.320313)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_charselect"]
 albedo_color = Color(0.1, 0.5, 0.6, 1)
@@ -345,7 +329,6 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
 script = ExtResource("1_sentinelspawner")
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
-ArchitectScene = ExtResource("24_architectscene")
 BodySpawner = NodePath("BodySpawner")
 
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP1" unique_id=1416225481]
@@ -356,7 +339,6 @@ script = ExtResource("1_sentinelspawner")
 OwnerId = 2
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
-ArchitectScene = ExtResource("24_architectscene")
 BodySpawner = NodePath("BodySpawner")
 
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP2" unique_id=954741291]
@@ -367,7 +349,6 @@ script = ExtResource("1_sentinelspawner")
 OwnerId = 3
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
-ArchitectScene = ExtResource("24_architectscene")
 BodySpawner = NodePath("BodySpawner")
 
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP3" unique_id=2041372724]
@@ -378,7 +359,6 @@ script = ExtResource("1_sentinelspawner")
 OwnerId = 4
 SoldierScene = ExtResource("22_soldierscene")
 TankScene = ExtResource("23_tankscene")
-ArchitectScene = ExtResource("24_architectscene")
 BodySpawner = NodePath("BodySpawner")
 
 [node name="BodySpawner" type="MultiplayerSpawner" parent="SentinelSpawnerP4" unique_id=608043930]
@@ -406,26 +386,6 @@ WorldItemScene = ExtResource("33_worlditem")
 
 [node name="Spawner" type="MultiplayerSpawner" parent="WorldItems" unique_id=1657793431]
 spawn_path = NodePath("..")
-
-[node name="ArchitectSelectStation" type="StaticBody3D" parent="." unique_id=708825174]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4684536, 0.9999987, 35.53236)
-collision_layer = 17
-script = ExtResource("3_archstation")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="ArchitectSelectStation" unique_id=767876475]
-mesh = SubResource("BoxMesh_archstation")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="ArchitectSelectStation" unique_id=1883760829]
-shape = SubResource("BoxShape3D_archstation")
-
-[node name="ArchitectTestZone" type="Area3D" parent="." unique_id=1186547468]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 55)
-collision_mask = 8
-script = ExtResource("4_archzone")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="ArchitectTestZone" unique_id=1573708972]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.6601563)
-shape = SubResource("BoxShape3D_archzone")
 
 [node name="CharacterSelectStation" type="StaticBody3D" parent="." unique_id=1484671035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, -10)

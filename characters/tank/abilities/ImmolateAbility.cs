@@ -93,7 +93,7 @@ public partial class ImmolateAbility : Ability
         }
     }
 
-    public override void OnCharacterDeactivated()
+    public override void OnBuildStarted()
     {
         if (IsActive)
         {

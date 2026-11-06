@@ -203,8 +203,8 @@ public abstract partial class PlayerCharacter : CharacterBody3D
         }
     }
 
-    // Only ever removes this character's own entry: the Sentinel and Architect both react to the
-    // same phase change in no guaranteed order, so the one activating may already have claimed it.
+    // Only ever removes this character's own entry: during a body swap the incoming body can claim
+    // the slot before the outgoing one leaves.
     private void ReleaseActiveSlot()
     {
         if (Level.ActiveCharacters.TryGetValue(OwnerId, out PlayerCharacter current) && current == this)

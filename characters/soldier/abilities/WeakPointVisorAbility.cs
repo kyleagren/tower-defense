@@ -58,7 +58,7 @@ public partial class WeakPointVisorAbility : Ability
         _level.ActivateWeakPointVisor(WeakPointCount);
     }
 
-    public override void OnCharacterDeactivated()
+    public override void OnBuildStarted()
     {
         if (IsActive)
         {

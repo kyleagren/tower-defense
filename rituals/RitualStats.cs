@@ -16,7 +16,7 @@ public class RitualStats
     public Tally SincePlaced { get; } = new();
     public Tally Wave { get; private set; } = new();
 
-    // Mana Sentinels paid to repair it; the Architect's repairs are free and add nothing.
+    // Mana Sentinels paid to repair it; repairs during Build are free and add nothing.
     public float RepairManaPaid { get; private set; }
 
     public void StartWave() => Wave = new Tally();

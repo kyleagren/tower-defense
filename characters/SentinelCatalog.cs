@@ -26,8 +26,7 @@ public static class SentinelCatalog
     }
 
     // Slot names come from a Sentinel's ability nodes, so each Sentinel records its own when it's
-    // ready. Lets item text name the right abilities while the Architect has taken over and no
-    // Sentinel is in the level.
+    // ready. Lets item text name the right abilities for a Sentinel that isn't in the level.
     private static readonly Dictionary<CharacterId, string[]> _slotNames = new();
 
     public static void RecordSlotNames(CharacterId character, string[] names)

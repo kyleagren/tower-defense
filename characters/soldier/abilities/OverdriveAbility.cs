@@ -126,7 +126,7 @@ public partial class OverdriveAbility : Ability
         }
     }
 
-    public override void OnCharacterDeactivated()
+    public override void OnBuildStarted()
     {
         IsPickingElement = false;
 

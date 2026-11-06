@@ -72,7 +72,7 @@ public partial class VentAbility : Ability
         }
     }
 
-    public override void OnCharacterDeactivated()
+    public override void OnBuildStarted()
     {
         if (IsActive)
         {

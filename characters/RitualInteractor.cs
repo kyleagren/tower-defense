@@ -44,7 +44,7 @@ public partial class RitualInteractor : LookInteractor
             if (_destroyHoldTime >= DestroyHoldDuration)
             {
                 ClearTarget();
-                ritual.Health.Destroy(Character.OwnerId);
+                ritual.Health.Destroy();
             }
 
             return;
@@ -59,7 +59,7 @@ public partial class RitualInteractor : LookInteractor
             if (_repairHoldTime >= RepairHoldDuration)
             {
                 _repairHoldTime = 0f;
-                ritual.Health.Repair(Character.OwnerId);
+                ritual.Health.Repair();
             }
 
             return;
@@ -80,7 +80,7 @@ public partial class RitualInteractor : LookInteractor
             return (null, Colors.White);
         }
 
-        if (Character is Architect)
+        if (LevelContext.Current.IsBuildTime)
         {
             return ("Repair: Free", Colors.White);
         }

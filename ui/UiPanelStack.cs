@@ -98,8 +98,8 @@ public static class UiPanelStack
 
     public static Control Top => _open.Count > 0 ? _open[^1] : null;
 
-    // A panel whose choice replaces the character or the level stands the character still, keyboard
-    // included - there's nowhere worth walking to mid-choice.
+    // Some panels stand the character still, keyboard included: one whose choice replaces the
+    // character or the level, where there's nowhere worth walking to mid-choice, and the build menu.
     public static bool BlocksMovement => _blockingMovement.Count > 0;
 
     // A text field has focus, so the keyboard is typing rather than playing.
