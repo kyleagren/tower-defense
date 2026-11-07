@@ -1,7 +1,7 @@
 using Godot;
 using System.Linq;
 
-// README's "any player, mid-wave" token deployment: Q toggles (or R1 holds) a lightweight pick mode
+// design_reference.md's "any player, mid-wave" token deployment: Q toggles (or R1 holds) a lightweight pick mode
 // that remaps 1/2/3 (d-pad left/up/right) to the Sentinel's current tokens, only usable during the
 // Combat phase.
 // Pressing a mapped, non-empty slot hands straight off to RitualPlacer's ordinary ghost/reticle

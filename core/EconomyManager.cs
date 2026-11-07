@@ -14,7 +14,7 @@ public partial class EconomyManager : Node
     // Mana, capacity, and gold only ever move together (a kill, a spend, a refund, a reset), and
     // every listener refreshes on all of them, so one signal covers it. A Godot signal rather than
     // a C# event so every cross-system notification in the project goes through the same
-    // mechanism — and so the multiplayer layer (README: Architecture) has an RPC-able hook.
+    // mechanism — and so the multiplayer layer (design_reference.md: Architecture) has an RPC-able hook.
     [Signal] public delegate void EconomyChangedEventHandler();
 
     // Registered in _EnterTree rather than _Ready: _EnterTree runs top-down across the whole tree

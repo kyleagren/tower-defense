@@ -1,6 +1,6 @@
 using Godot;
 
-// README's Repel (Characters): a field that throws enemies out in pulses. Shares its slot and
+// design_reference.md's Repel (Characters): a field that throws enemies out in pulses. Shares its slot and
 // cooldown with Converge.
 public partial class RepelAbility : PlacedFieldAbility
 {

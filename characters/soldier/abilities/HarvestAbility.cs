@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-// README's Harvest (Characters). Pulls the Status off every enemy within Radius, converting each into
+// design_reference.md's Harvest (Characters). Pulls the Status off every enemy within Radius, converting each into
 // Shield and gauge charge. Shield is granted as a share of the Soldier's own maximum, so with no
 // Shield gear it still charges the gauge but grants nothing. The gauge remembers how much of each
 // element fed it, since Overdrive - which shares this slot - splits its damage in those proportions.

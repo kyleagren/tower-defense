@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-// README's Retaliation (Characters). For Duration, every enemy that comes within Radius is taunted
+// design_reference.md's Retaliation (Characters). For Duration, every enemy that comes within Radius is taunted
 // onto the Tank, who takes DamageReduction less damage throughout. The raw damage of every hit that
 // lands - before any mitigation, and not counting blocked or dodged ones - is recorded, then released
 // as a Fire blast on everything within Radius: BlastFraction of it to each, capped per enemy at the

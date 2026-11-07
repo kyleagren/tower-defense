@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-// README's Immolate (Characters). A short planted channel with sword and shield set down, then every
+// design_reference.md's Immolate (Characters). A short planted channel with sword and shield set down, then every
 // enemy within Radius carrying a Fire Status or a Burn erupts. Each one's Status and Burn are
 // consumed into an Immolation, and it blasts Fire over everything within EruptionRadius of it. Going
 // off takes all of the Tank's heat and drops him to the bottom of the dial; eruption damage scales

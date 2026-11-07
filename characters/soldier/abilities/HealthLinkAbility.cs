@@ -1,6 +1,6 @@
 using Godot;
 
-// README's Health Link (Characters). Arming captures the attack binding for exactly two shots, each
+// design_reference.md's Health Link (Characters). Arming captures the attack binding for exactly two shots, each
 // firing a spike bolt that sticks in whatever it hits - an enemy's shoulder or the terrain. Two
 // spikes in two different living enemies link them: each then mirrors MirrorPercent of the damage it
 // takes onto the other as true damage, for Duration, under a green beam. Anything else is a dud - a

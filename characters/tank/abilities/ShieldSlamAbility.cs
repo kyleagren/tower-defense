@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-// README's Shield Slam (Characters). A short frontal cone: every enemy inside takes a hit of
+// design_reference.md's Shield Slam (Characters). A short frontal cone: every enemy inside takes a hit of
 // DamageMultiplier x the sword's attack damage - rolled like a swing, so it can crit and carries
 // heat's Fire - and is thrown straight away from the Tank. Mass does the scaling: small enemies go
 // flying, big ones barely stagger and stay packed where the rest of the kit wants them. Heat lands

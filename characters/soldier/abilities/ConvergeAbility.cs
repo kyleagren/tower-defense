@@ -1,6 +1,6 @@
 using Godot;
 
-// README's Converge (Characters): a field that drags enemies in and roots them. Shares its slot and
+// design_reference.md's Converge (Characters): a field that drags enemies in and roots them. Shares its slot and
 // cooldown with Repel.
 public partial class ConvergeAbility : PlacedFieldAbility
 {

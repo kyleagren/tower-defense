@@ -37,7 +37,7 @@ public partial class Tank : Sentinel
     protected override bool IsInCombatAction =>
         _blockState == BlockState.Armed || (CanUseCombatInput && Input.IsActionPressed("attack"));
 
-    // README's heat dial: a signed gauge with equilibrium at 0. Above it the sword adds Fire and
+    // design_reference.md's heat dial: a signed gauge with equilibrium at 0. Above it the sword adds Fire and
     // armor falls; below it armor rises. It never drifts - only the kit and hits taken move it -
     // and carries across waves, clearing only on death. It's kept on the player's level state, not
     // on this body, so it survives the body being swapped.

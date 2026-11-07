@@ -1,6 +1,6 @@
 using Godot;
 
-// README's Vent (Characters). Drains heat at a steady rate for as long as it runs - past equilibrium
+// design_reference.md's Vent (Characters). Drains heat at a steady rate for as long as it runs - past equilibrium
 // and on down to the armor side's floor unless cancelled - while every enemy within Radius takes a
 // fixed Burn each application. Burns merge, so a steady stream of small ones settles at a constant
 // strength however much heat is left. Can only be started with heat above 0.

@@ -1,6 +1,6 @@
 using Godot;
 
-// README's Weak-Point Visor (Characters). Activates a few of each enemy's pre-placed body-part
+// design_reference.md's Weak-Point Visor (Characters). Activates a few of each enemy's pre-placed body-part
 // weak-point markers (built into the enemy scenes) for Duration - Head is always included, the
 // rest random. A shot through one stacks a flat more-damage multiplier (WeakPointMultiplier) on top
 // of whatever the crit roll already gave it. Delegates the actual marking to LevelContext rather

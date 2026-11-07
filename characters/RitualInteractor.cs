@@ -1,7 +1,7 @@
 using Godot;
 
 // Repair (hold to confirm) / destroy (hold to confirm) on whichever Ritual the character is
-// looking at - the contextual world prompt in README's Rituals/Spells/Runes section.
+// looking at - the contextual world prompt in design_reference.md's Rituals/Spells/Runes section.
 public partial class RitualInteractor : LookInteractor
 {
     [Export] public float InteractionRange { get; private set; } = GameRules.RitualReach;
@@ -17,7 +17,7 @@ public partial class RitualInteractor : LookInteractor
     // The raycast reports the Ritual's StaticBody3D child, not the Ritual itself.
     protected override Node3D ResolveTarget(Node3D collider) => collider?.GetParent() as Ritual;
 
-    // Looking away mid-hold cancels either action, per README's Rituals/Spells/Runes section.
+    // Looking away mid-hold cancels either action, per design_reference.md's Rituals/Spells/Runes section.
     protected override void OnTargetChanged(Node3D target)
     {
         _repairHoldTime = 0f;

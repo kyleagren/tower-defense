@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-// README's Overdrive (Characters). Spends a full Harvest gauge on OverdriveShots empowered shots,
+// design_reference.md's Overdrive (Characters). Spends a full Harvest gauge on OverdriveShots empowered shots,
 // which take over the attack binding until they're fired or expire. Each shot pierces, splits its
 // damage across elements in the proportions the gauge was filled with, and applies the default
 // ailment of whichever element fed it most.
