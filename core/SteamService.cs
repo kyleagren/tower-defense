@@ -9,7 +9,7 @@ using Godot;
 // SteamMultiplayerPeer (NetworkSession).
 public partial class SteamService : Node
 {
-    private const uint AppId = 1010909;
+    private const uint AppId = 5587760;
     private const int MaxLobbyMembers = 4;
 
     // Values from Steam's own enums, which GodotSteam passes through unchanged.
