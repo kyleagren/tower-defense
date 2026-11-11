@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using SlotHandle = ItemDragController.SlotHandle;
 
-public partial class InventoryPanel : Control
+public partial class InventoryPanel : Control, IHintSource
 {
     public static InventoryPanel Instance { get; private set; }
 
@@ -321,6 +321,54 @@ public partial class InventoryPanel : Control
     public void FocusDefaultSlot()
     {
         Grid.Cell(Vector2I.Zero).GrabFocus();
+    }
+
+    // What the focused slot (controller) or hovered one (mouse) offers. With an item carried, only
+    // where it can go.
+    public IEnumerable<Hint> GetHints()
+    {
+        if (ItemDragController.Instance.Held != null)
+        {
+            if (InputDevice.UsingController)
+            {
+                yield return new Hint("ui_cancel", "Put Back");
+                yield return new Hint("ui_cancel", "Drop", Hold: true);
+            }
+            else
+            {
+                yield return new Hint("ui_accept", "Drop", MouseText: "Click Outside");
+            }
+
+            yield break;
+        }
+
+        Control pointed = InputDevice.UsingController ? GetViewport().GuiGetFocusOwner() : GetViewport().GuiGetHoveredControl();
+
+        if (pointed == null || !IsAncestorOf(pointed) || !ItemDragController.Instance.TryGetSlot(pointed, out SlotHandle slot)
+            || slot.GetItem() is not Item item)
+        {
+            yield break;
+        }
+
+        bool equipped = Array.Exists(_equipmentSlots, view => view.Button == pointed);
+
+        if (item is RuneTome)
+        {
+            yield return new Hint("inventory_use", "Learn", MouseText: "Right Click");
+            yield break;
+        }
+
+        if (equipped || IsCompatible(item))
+        {
+            yield return new Hint("inventory_use", equipped ? "Unequip" : "Equip", MouseText: "Right Click");
+        }
+
+        yield return new Hint("advanced_tooltip", "Details", Hold: true);
+
+        if (!equipped)
+        {
+            yield return new Hint("compare_item", "Compare", Hold: true);
+        }
     }
 
     private void Close()

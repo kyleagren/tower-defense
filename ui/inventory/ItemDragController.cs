@@ -193,6 +193,10 @@ public partial class ItemDragController : CanvasLayer
         _slotsByControl[button] = slot;
     }
 
+    // The registered slot behind a control - how a panel names what its focused or hovered slot
+    // offers.
+    public bool TryGetSlot(Control control, out SlotHandle slot) => _slotsByControl.TryGetValue(control, out slot);
+
     private void PruneDeadSlots()
     {
         List<Control> deadKeys = new();
