@@ -7,6 +7,10 @@ public abstract partial class Spell : Resource
     public abstract IReadOnlyList<Tag> Tags { get; }
     public abstract string Description { get; }
 
+    // The rune at a Ritual's core, which tells spells of one element apart at a glance. A character
+    // from Unicode's Runic block.
+    public abstract string Glyph { get; }
+
     // Where the spell sits in its element's ring under the Default sort - currently the order spells
     // were added to the game, until there's a real unlock order.
     [Export] public int WheelOrder { get; private set; }

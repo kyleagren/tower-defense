@@ -13,6 +13,7 @@ public partial class LightningBoltSpell : ChainableSpell
 
     public override string Name => "Lightning Bolt";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Chaining, Tag.Lightning };
+    public override string Glyph => "ᚦ";
     public override string Description => "Instantly strikes the nearest enemy, arcing to nearby foes.";
 
     protected override void AddComponents(SpellCastContext context)

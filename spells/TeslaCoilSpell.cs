@@ -18,6 +18,7 @@ public partial class TeslaCoilSpell : Spell
 
     public override string Name => "Tesla Coil";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Lightning };
+    public override string Glyph => "ᛃ";
     public override string Description => "Arcs lightning out to several nearby enemies in a rapid series of pulses.";
 
     protected override void AddComponents(SpellCastContext context)

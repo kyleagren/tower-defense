@@ -18,6 +18,7 @@ public partial class WindBlastSpell : Spell
 
     public override string Name => "Wind Blast";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Wind, Tag.AoE, Tag.Line };
+    public override string Glyph => "ᚹ";
     public override string Description => "Blasts a short, wide gust out from the Ritual, shoving every enemy in it away.";
 
     // One instant tick, so the interval never comes into it.

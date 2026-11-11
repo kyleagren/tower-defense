@@ -18,6 +18,7 @@ public partial class LightningStrikeSpell : Spell
 
     public override string Name => "Lightning Strike";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Lightning, Tag.AoE };
+    public override string Glyph => "ᛞ";
     public override string Description => "Calls lightning down on every enemy near its target that already carries a Lightning Status.";
 
     protected override void AddComponents(SpellCastContext context)

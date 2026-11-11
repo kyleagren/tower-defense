@@ -20,6 +20,7 @@ public partial class WaterCannonSpell : Spell
 
     public override string Name => "Water Cannon";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Water, Tag.AoE, Tag.Line };
+    public override string Glyph => "ᚢ";
     public override string Description => "Blasts a beam of water down a line of enemies, hitting each three times and pushing them back.";
 
     protected override void AddComponents(SpellCastContext context)

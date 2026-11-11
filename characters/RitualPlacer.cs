@@ -330,7 +330,7 @@ public partial class RitualPlacer : Node
         _ghost.IsPreview = true;
         LevelContext.Current.LevelRoot.AddChild(_ghost);
 
-        _ghostMesh = _ghost.GetNode<MeshInstance3D>("MeshInstance3D");
+        _ghostMesh = _ghost.CoreMesh;
         _ghostCollisionShape = _ghost.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D");
         _ghostCollisionShape.Disabled = true;
 

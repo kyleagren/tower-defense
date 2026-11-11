@@ -19,6 +19,7 @@ public partial class GustSpell : Spell
 
     public override string Name => "Gust";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Wind, Tag.AoE, Tag.Duration, Tag.Traveling };
+    public override string Glyph => "ᚱ";
     public override string Description => "Sends a small twister along the ground through every enemy in its path, swirling any Status it finds.";
 
     protected override void AddComponents(SpellCastContext context)

@@ -18,6 +18,7 @@ public partial class BlackIceSpell : Spell
 
     public override string Name => "Black Ice";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Cold, Tag.AoE, Tag.Duration };
+    public override string Glyph => "ᚾ";
     public override string Description => "Freezes a patch of ground slick. Enemies crossing it may slip and fall.";
     public override bool DealsHits => false;
 

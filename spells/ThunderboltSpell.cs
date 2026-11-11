@@ -14,6 +14,7 @@ public partial class ThunderboltSpell : Spell
 
     public override string Name => "Thunderbolt";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Lightning };
+    public override string Glyph => "ᛉ";
     public override string Description => "Calls a heavy bolt of lightning down onto a single enemy.";
 
     protected override void AddComponents(SpellCastContext context)

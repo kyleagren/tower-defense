@@ -17,6 +17,7 @@ public partial class HydroBladeSpell : Spell
 
     public override string Name => "Hydro Blade";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Water };
+    public override string Glyph => "ᚷ";
     public override string Description => "Cuts a single enemy with two quick slashes of water.";
 
     protected override void AddComponents(SpellCastContext context)

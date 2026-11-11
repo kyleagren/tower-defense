@@ -37,7 +37,7 @@ public partial class RemotePlacementGhost : Node3D
         ritual.IsPreview = true;
         _ritual.AddChild(ritual);
         ritual.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D").Disabled = true;
-        ritual.GetNode<MeshInstance3D>("MeshInstance3D").MaterialOverride = PreviewMaterials.OtherPlayer;
+        ritual.CoreMesh.MaterialOverride = PreviewMaterials.OtherPlayer;
 
         if (range > 0f)
         {

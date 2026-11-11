@@ -17,6 +17,7 @@ public partial class IceSpearSpell : Spell
 
     public override string Name => "Ice Spear";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Projectile, Tag.Cold };
+    public override string Glyph => "ᛁ";
     public override string Description => "Hurls a spear of ice that pierces through several enemies.";
 
     protected override void AddComponents(SpellCastContext context)

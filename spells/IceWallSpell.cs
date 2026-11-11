@@ -19,6 +19,7 @@ public partial class IceWallSpell : Spell
 
     public override string Name => "Ice Wall";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Cold, Tag.Duration, Tag.Wall };
+    public override string Glyph => "ᛟ";
     public override string Description => "Summons a destructible ice blockade near enemies, forcing them to stop and break through.";
     public override bool RequiresTarget => false;
 

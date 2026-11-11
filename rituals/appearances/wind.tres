@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="RitualAppearance" format=3]
+
+[ext_resource type="Script" path="res://rituals/RitualAppearance.cs" id="1_appearance"]
+
+[resource]
+script = ExtResource("1_appearance")
+Element = 9
+CoreTurbulence = 0.4
+CoreFlowSpeed = 1.8
+CrystalCount = 3
+CrystalSides = 4
+CrystalLength = 0.55
+CrystalRadius = 0.05
+CrystalLengthJitter = 0.2
+CrystalMaxTilt = 60.0
+OrbitRadius = 0.65
+OrbitSpeed = 3.0
+CrystalSpin = 0.0
+BobHeight = 0.08
+CircleSpinSpeed = 0.6
+CircleFlicker = 0.0
+CircleGlyphCount = 16

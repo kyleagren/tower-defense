@@ -24,6 +24,7 @@ public partial class FireBurstSpell : Spell
 
     public override string Name => "Fire Burst";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Projectile, Tag.Fire };
+    public override string Glyph => "ᛊ";
     public override string Description => "Blasts a tight spray of fire pellets at close range.";
 
     protected override void AddComponents(SpellCastContext context)

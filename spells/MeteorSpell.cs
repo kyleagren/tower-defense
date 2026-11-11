@@ -18,6 +18,7 @@ public partial class MeteorSpell : Spell
 
     public override string Name => "Meteor";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Fire, Tag.AoE };
+    public override string Glyph => "ᛏ";
     public override string Description => "Calls a meteor down on a spot, crushing whatever is still standing there when it lands.";
 
     protected override void AddComponents(SpellCastContext context)

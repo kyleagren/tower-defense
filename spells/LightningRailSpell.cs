@@ -15,6 +15,7 @@ public partial class LightningRailSpell : Spell
 
     public override string Name => "Lightning Rail";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Lightning, Tag.AoE, Tag.Line };
+    public override string Glyph => "ᛖ";
     public override string Description => "Fires a bar of lightning that strikes every enemy along its path.";
 
     protected override void AddComponents(SpellCastContext context)

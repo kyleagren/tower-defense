@@ -16,6 +16,7 @@ public partial class RainSpell : Spell
 
     public override string Name => "Rain";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Water, Tag.AoE, Tag.Duration };
+    public override string Glyph => "ᛚ";
     public override string Description => "Rains on an area, soaking everything in it with Water.";
     public override bool DealsHits => false;
 

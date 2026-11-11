@@ -2,8 +2,8 @@ using Godot;
 using System.Collections.Generic;
 
 // A placed Ritual: its spell and runes, who owns it, and the cast loop. Everything else it does lives
-// on its child components - Health, Targeting, Resonance, Readiness, RangeDisplay and StatsSync -
-// wired in ritual.tscn.
+// on its child components - Health, Targeting, Resonance, Readiness, RangeDisplay, StatsSync and
+// Visual - wired in ritual.tscn.
 public partial class Ritual : Node3D, IDamageable
 {
     [Export] public Spell Spell { get; private set; }
@@ -19,18 +19,12 @@ public partial class Ritual : Node3D, IDamageable
     [Export] public RitualReadiness Readiness { get; private set; }
     [Export] public RitualRangeDisplay RangeDisplay { get; private set; }
     [Export] public RitualStatsSync StatsSync { get; private set; }
-
-    private static readonly StandardMaterial3D _brokenMaterial = new StandardMaterial3D
-    {
-        AlbedoColor = new Color(0.35f, 0.35f, 0.35f),
-        ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-    };
+    [Export] public RitualVisual Visual { get; private set; }
 
     private LevelContext _level;
     private SpellInstance _spellInstance;
     private StaticBody3D _body;
     private CharacterSheet _ownerSheet;
-    private Material _activeMaterial;
     private float? _walkUpDistance;
 
     // A placement preview: shows the model and gives RitualPlacer a real collision shape to test,
@@ -106,8 +100,6 @@ public partial class Ritual : Node3D, IDamageable
     public override void _Ready()
     {
         _body = GetNode<StaticBody3D>("StaticBody3D");
-        _activeMaterial = CoreMesh.MaterialOverride;
-        Health.BrokenChanged += OnBrokenChanged;
 
         if (IsPreview)
         {
@@ -202,13 +194,8 @@ public partial class Ritual : Node3D, IDamageable
             }
         }
 
-        // Placeholder: colors the Ritual by its spell's dominant element instead of a flat scene
-        // default, reusing the same element->color mapping floating combat text and enemy status
-        // overlays already use. GetForSpell (not the raw Get) so a damage-less elemental spell like
-        // Ice Wall still resolves to its Tag.Cold color instead of falling through to white/grey.
         Color elementColor = DamageTypeColors.GetForSpell(spell);
-        _activeMaterial = new StandardMaterial3D { AlbedoColor = elementColor };
-        CoreMesh.MaterialOverride = _activeMaterial;
+        Visual.Setup(spell);
 
         ApplyShroud();
         placement?.AttachTo(this, ResolveWithOwner());
@@ -235,19 +222,13 @@ public partial class Ritual : Node3D, IDamageable
         // Per-instance rather than through the materials, which are sub-resources shared by every
         // Ritual in the scene. owned: false to reach into instanced sub-scenes; the health bar is
         // excluded because its no-depth-test setup reads wrong faded.
-        foreach (Node node in FindChildren("*", nameof(MeshInstance3D), recursive: true, owned: false))
+        foreach (Node node in FindChildren("*", nameof(GeometryInstance3D), recursive: true, owned: false))
         {
-            if (node is MeshInstance3D meshInstance && !Health.HealthBar.IsAncestorOf(meshInstance))
+            if (node is GeometryInstance3D geometry && !Health.HealthBar.IsAncestorOf(geometry))
             {
-                meshInstance.Transparency = transparency;
+                geometry.Transparency = transparency;
             }
         }
-    }
-
-    // Broken at zero - greyed out until repaired.
-    private void OnBrokenChanged(bool broken)
-    {
-        CoreMesh.MaterialOverride = broken ? _brokenMaterial : _activeMaterial;
     }
 
     // On the physics step, since targeting raycasts for line of sight. Only the host runs a Ritual;

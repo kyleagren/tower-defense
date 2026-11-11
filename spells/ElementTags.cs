@@ -12,4 +12,18 @@ public static class ElementTags
 
     public static IReadOnlyList<Tag> All => _all;
     public static IReadOnlyList<Tag> StatusCapable => _statusCapable;
+
+    // A spell's element: the first element among its tags. Null for a spell with none.
+    public static Tag? Of(Spell spell)
+    {
+        foreach (Tag tag in spell.Tags)
+        {
+            if (System.Array.IndexOf(_all, tag) >= 0)
+            {
+                return tag;
+            }
+        }
+
+        return null;
+    }
 }

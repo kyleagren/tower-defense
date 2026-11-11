@@ -18,6 +18,9 @@ public partial class RitualReadiness : Node
     // Every machine, off the countdown: what the Activate prompt reads.
     public bool IsReady => !_ritual.Health.IsBroken && !_ongoing && _remaining <= 0f;
 
+    // 0 just cast, 1 ready. Stays 1 for a Ritual with no cooldown to show.
+    public float Fill { get; private set; } = 1f;
+
     public override void _Ready()
     {
         _ritual = GetParent<Ritual>();
@@ -74,6 +77,7 @@ public partial class RitualReadiness : Node
         bool empty = broken || _ongoing;
         bool ready = !empty && _remaining <= 0f;
         float fill = empty ? 0f : _total <= 0f ? 1f : 1f - _remaining / _total;
+        Fill = fill;
 
         Ring.SetInstanceShaderParameter("fill", fill);
         Ring.SetInstanceShaderParameter("lit_color", ready ? _color : _color.Darkened(RecoveringDarken));

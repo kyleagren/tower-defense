@@ -23,6 +23,7 @@ public partial class WindBladeSpell : Spell
 
     public override string Name => "Wind Blade";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Projectile, Tag.Wind, Tag.AoE };
+    public override string Glyph => "ᚨ";
     public override string Description => "Fires a wide blade of wind that cuts through several enemies, taking on the element of the first Status it finds.";
 
     protected override void AddComponents(SpellCastContext context)

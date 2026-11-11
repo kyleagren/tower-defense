@@ -20,6 +20,7 @@ public partial class IceStormSpell : Spell
 
     public override string Name => "Ice Storm";
     public override IReadOnlyList<Tag> Tags => new List<Tag> { Tag.Cold, Tag.AoE, Tag.Duration };
+    public override string Glyph => "ᚺ";
     public override string Description => "Calls down a hail of ice, leaving frozen ground that slows anything crossing it.";
 
     protected override void AddComponents(SpellCastContext context)
