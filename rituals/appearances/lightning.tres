@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="RitualAppearance" format=3]
 
 [ext_resource type="Script" path="res://rituals/RitualAppearance.cs" id="1_appearance"]
+[ext_resource type="ParticleProcessMaterial" path="res://rituals/appearances/particles/lightning_sparks.tres" id="2_particles"]
 
 [resource]
 script = ExtResource("1_appearance")
@@ -20,3 +21,10 @@ BobHeight = 0.02
 CircleSpinSpeed = 0.8
 CircleFlicker = 1.0
 CircleGlyphCount = 8
+SymbolCount = 3
+SymbolOrbitRadius = 0.8
+SymbolOrbitSpeed = -2.0
+SymbolOrbitTilt = 35.0
+Particles = ExtResource("2_particles")
+ParticleAmount = 20
+ParticleLifetime = 0.3

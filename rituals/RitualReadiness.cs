@@ -1,16 +1,11 @@
 using Godot;
 
-// The ring on the ground around a Ritual: it fills toward the next cast in a dimmed element color,
-// lights up full when ready, and stays empty while broken or while an ongoing effect stands. The host
+// How close a Ritual is to its next cast, drawn by RitualVisual as the rune circle's outer ring. The host
 // sends the time to the next cast on each cast, and every copy counts it down on its own.
 public partial class RitualReadiness : Node
 {
-    [Export] public MeshInstance3D Ring { get; private set; }
-    // How much darker the ring is while the next cast is still coming.
-    [Export] public float RecoveringDarken { get; private set; } = 0.55f;
-
     private Ritual _ritual;
-    private Color _color = Colors.White;
+    private bool _tracked;
     private float _total;
     private float _remaining;
     private bool _ongoing;
@@ -18,26 +13,26 @@ public partial class RitualReadiness : Node
     // Every machine, off the countdown: what the Activate prompt reads.
     public bool IsReady => !_ritual.Health.IsBroken && !_ongoing && _remaining <= 0f;
 
-    // 0 just cast, 1 ready. Stays 1 for a Ritual with no cooldown to show.
+    // 0 just cast, 1 ready. Empty while broken or while an ongoing effect stands.
     public float Fill { get; private set; } = 1f;
 
     public override void _Ready()
     {
         _ritual = GetParent<Ritual>();
-        Ring.Visible = false;
     }
 
-    public void Setup(bool shown, Color color)
+    // A Ritual firing on cast time alone would just flicker the ring, so only one with a cooldown is
+    // tracked. Any other reads full whenever it isn't broken.
+    public void Setup(bool tracked)
     {
-        Ring.Visible = shown;
-        _color = color;
+        _tracked = tracked;
     }
 
-    // Host only. Every copy, this one included, then counts the time down on its own. A hidden ring
-    // is hidden on every copy, so there's nothing to tell them.
+    // Host only. Every copy, this one included, then counts the time down on its own. An untracked
+    // Ritual is untracked on every copy, so there's nothing to tell them.
     public void Broadcast(float duration, bool ongoing)
     {
-        if (!Ring.Visible)
+        if (!_tracked)
         {
             return;
         }
@@ -62,12 +57,13 @@ public partial class RitualReadiness : Node
     // A broken Ritual's timer is paused on the host, so the copy pauses too.
     public override void _Process(double delta)
     {
-        if (!Ring.Visible)
+        bool broken = _ritual.Health.IsBroken;
+
+        if (!_tracked)
         {
+            Fill = broken ? 0f : 1f;
             return;
         }
-
-        bool broken = _ritual.Health.IsBroken;
 
         if (!broken && _remaining > 0f)
         {
@@ -75,11 +71,6 @@ public partial class RitualReadiness : Node
         }
 
         bool empty = broken || _ongoing;
-        bool ready = !empty && _remaining <= 0f;
-        float fill = empty ? 0f : _total <= 0f ? 1f : 1f - _remaining / _total;
-        Fill = fill;
-
-        Ring.SetInstanceShaderParameter("fill", fill);
-        Ring.SetInstanceShaderParameter("lit_color", ready ? _color : _color.Darkened(RecoveringDarken));
+        Fill = empty ? 0f : _total <= 0f ? 1f : 1f - _remaining / _total;
     }
 }

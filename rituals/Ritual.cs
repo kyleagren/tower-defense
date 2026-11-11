@@ -194,15 +194,13 @@ public partial class Ritual : Node3D, IDamageable
             }
         }
 
-        Color elementColor = DamageTypeColors.GetForSpell(spell);
         Visual.Setup(spell);
 
         ApplyShroud();
         placement?.AttachTo(this, ResolveWithOwner());
 
-        // Rituals firing on cast time alone would just flicker the ring. Runes are fixed for the
-        // Ritual's lifetime, so one that adds a cooldown is already counted here.
-        Readiness.Setup(ResolveWithOwner().ResolvedCooldown > 0f, elementColor);
+        // Runes are fixed for the Ritual's lifetime, so one that adds a cooldown is already counted here.
+        Readiness.Setup(ResolveWithOwner().ResolvedCooldown > 0f);
     }
 
     // Resolved once here rather than per frame: a Ritual's rune loadout is fixed for its lifetime,

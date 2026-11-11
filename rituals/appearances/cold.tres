@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="RitualAppearance" format=3]
+[gd_resource type="Resource" script_class="RitualAppearance" format=3 uid="uid://2t35w2fqwglv"]
 
-[ext_resource type="Script" path="res://rituals/RitualAppearance.cs" id="1_appearance"]
+[ext_resource type="Script" uid="uid://8762xb7fv36b" path="res://rituals/RitualAppearance.cs" id="1_appearance"]
+[ext_resource type="ParticleProcessMaterial" path="res://rituals/appearances/particles/cold_motes.tres" id="2_particles"]
 
 [resource]
 script = ExtResource("1_appearance")
@@ -20,3 +21,10 @@ BobHeight = 0.04
 CircleSpinSpeed = 0.12
 CircleFlicker = 0.0
 CircleGlyphCount = 12
+SymbolCount = 6
+SymbolOrbitRadius = 0.9
+SymbolOrbitSpeed = -0.25
+SymbolOrbitTilt = 8.0
+Particles = ExtResource("2_particles")
+ParticleAmount = 16
+ParticleLifetime = 3.0

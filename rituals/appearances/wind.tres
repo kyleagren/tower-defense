@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="RitualAppearance" format=3]
 
 [ext_resource type="Script" path="res://rituals/RitualAppearance.cs" id="1_appearance"]
+[ext_resource type="ParticleProcessMaterial" path="res://rituals/appearances/particles/wind_wisps.tres" id="2_particles"]
 
 [resource]
 script = ExtResource("1_appearance")
@@ -20,3 +21,10 @@ BobHeight = 0.08
 CircleSpinSpeed = 0.6
 CircleFlicker = 0.0
 CircleGlyphCount = 16
+SymbolCount = 6
+SymbolOrbitRadius = 0.95
+SymbolOrbitSpeed = 1.8
+SymbolOrbitTilt = 10.0
+Particles = ExtResource("2_particles")
+ParticleAmount = 18
+ParticleLifetime = 1.6

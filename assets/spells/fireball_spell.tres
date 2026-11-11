@@ -12,7 +12,7 @@ VisualScene = ExtResource("4_visual")
 
 [resource]
 script = ExtResource("1_ae04e")
-WheelOrder = 1
 ProjectileScene = ExtResource("2_projectile")
 HitEffect = SubResource("Resource_fireball_explode")
+WheelOrder = 1
 metadata/_custom_type_script = "uid://bamn5fqu62j5i"

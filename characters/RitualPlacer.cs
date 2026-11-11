@@ -377,6 +377,7 @@ public partial class RitualPlacer : Node
             && _economy.CanAfford(_pendingContext);
 
         _ghostMesh.MaterialOverride = _isValidPlacement ? PreviewMaterials.Valid : PreviewMaterials.Invalid;
+        _ghost.Visual.ShowFootprint(_isValidPlacement ? PreviewMaterials.Valid.AlbedoColor : PreviewMaterials.Invalid.AlbedoColor);
     }
 
     private void ConfirmPlacement()

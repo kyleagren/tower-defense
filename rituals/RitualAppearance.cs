@@ -31,4 +31,18 @@ public partial class RitualAppearance : Resource
     [Export] public float CircleSpinSpeed { get; private set; } = 0.2f;
     [Export(PropertyHint.Range, "0,1")] public float CircleFlicker { get; private set; } = 0f;
     [Export] public int CircleGlyphCount { get; private set; } = 12;
+
+    [ExportGroup("Symbols")]
+    [Export] public int SymbolCount { get; private set; } = 5;
+    [Export] public float SymbolOrbitRadius { get; private set; } = 0.85f;
+    // Radians per second; negative orbits the other way.
+    [Export] public float SymbolOrbitSpeed { get; private set; } = -0.4f;
+    // Degrees the symbols' ring leans off flat.
+    [Export] public float SymbolOrbitTilt { get; private set; } = 15f;
+
+    [ExportGroup("Particles")]
+    // Motion and fade only; the color comes from the element.
+    [Export] public ParticleProcessMaterial Particles { get; private set; }
+    [Export] public int ParticleAmount { get; private set; } = 16;
+    [Export] public float ParticleLifetime { get; private set; } = 1.5f;
 }

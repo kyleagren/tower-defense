@@ -38,6 +38,7 @@ public partial class RemotePlacementGhost : Node3D
         _ritual.AddChild(ritual);
         ritual.GetNode<CollisionShape3D>("StaticBody3D/CollisionShape3D").Disabled = true;
         ritual.CoreMesh.MaterialOverride = PreviewMaterials.OtherPlayer;
+        ritual.Visual.ShowFootprint(PreviewMaterials.OtherPlayer.AlbedoColor);
 
         if (range > 0f)
         {

@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="RitualAppearance" format=3]
 
 [ext_resource type="Script" path="res://rituals/RitualAppearance.cs" id="1_appearance"]
+[ext_resource type="ParticleProcessMaterial" path="res://rituals/appearances/particles/water_droplets.tres" id="2_particles"]
 
 [resource]
 script = ExtResource("1_appearance")
@@ -20,3 +21,10 @@ BobHeight = 0.12
 CircleSpinSpeed = 0.25
 CircleFlicker = 0.0
 CircleGlyphCount = 14
+SymbolCount = 5
+SymbolOrbitRadius = 0.85
+SymbolOrbitSpeed = 0.5
+SymbolOrbitTilt = 25.0
+Particles = ExtResource("2_particles")
+ParticleAmount = 14
+ParticleLifetime = 0.9
