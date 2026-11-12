@@ -41,6 +41,10 @@ project/assembly_name="TowerDefense"
 
 run/main_run_args="--profile 1"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/shader_warmup/plugin.cfg")
+
 [gui]
 
 timers/tooltip_delay_sec=0.0

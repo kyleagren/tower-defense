@@ -1,29 +1,33 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://be63s8fhy6jrg"]
 
-[ext_resource type="Script" path="res://levels/LevelLoader.cs" id="1_levelloader"]
+[ext_resource type="Script" uid="uid://cwrkmdq3rvgbt" path="res://levels/LevelLoader.cs" id="1_levelloader"]
 [ext_resource type="PackedScene" uid="uid://ct3j8oj7yvja4" path="res://levels/hub/hub.tscn" id="2_hub"]
-[ext_resource type="Script" path="res://save/ProfileSync.cs" id="3_profilesync"]
-[ext_resource type="Script" path="res://ui/MainMenu.cs" id="4_mainmenu"]
-[ext_resource type="Script" path="res://ui/hints/HintBar.cs" id="5_hintbar"]
+[ext_resource type="Script" uid="uid://baesfw1dnbmvb" path="res://save/ProfileSync.cs" id="3_profilesync"]
+[ext_resource type="Resource" uid="uid://c8oqps54mxve" path="res://core/shader_warmup_manifest.tres" id="3_qy63d"]
+[ext_resource type="Script" uid="uid://bg15vsks636en" path="res://ui/MainMenu.cs" id="4_mainmenu"]
+[ext_resource type="Script" uid="uid://c83xhnqr50yhl" path="res://ui/hints/HintBar.cs" id="5_hintbar"]
+[ext_resource type="Script" uid="uid://cudx1cmd68sxe" path="res://ui/LoadingScreen.cs" id="6_loadingscreen"]
 
-[node name="Main" type="Node" node_paths=PackedStringArray("LevelContainer", "LevelSpawner")]
+[node name="Main" type="Node" unique_id=151164597 node_paths=PackedStringArray("LevelContainer", "LevelSpawner", "LoadingScreen")]
 script = ExtResource("1_levelloader")
 LevelContainer = NodePath("Level")
 LevelSpawner = NodePath("LevelSpawner")
 HubScene = ExtResource("2_hub")
+LoadingScreen = NodePath("LoadingScreen")
+WarmupManifest = ExtResource("3_qy63d")
 
-[node name="Level" type="Node" parent="."]
+[node name="Level" type="Node" parent="." unique_id=939265955]
 
-[node name="LevelSpawner" type="MultiplayerSpawner" parent="."]
+[node name="LevelSpawner" type="MultiplayerSpawner" parent="." unique_id=1239419648]
 spawn_path = NodePath("../Level")
 
-[node name="ProfileSync" type="Node" parent="."]
+[node name="ProfileSync" type="Node" parent="." unique_id=293266233]
 script = ExtResource("3_profilesync")
 
-[node name="MenuLayer" type="CanvasLayer" parent="."]
+[node name="MenuLayer" type="CanvasLayer" parent="." unique_id=862334932]
 layer = 10
 
-[node name="MainMenu" type="Control" parent="MenuLayer"]
+[node name="MainMenu" type="Control" parent="MenuLayer" unique_id=499545479]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -32,7 +36,50 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("4_mainmenu")
 
-[node name="HintBar" type="CanvasLayer" parent="."]
+[node name="HintBar" type="CanvasLayer" parent="." unique_id=805129451]
 process_mode = 3
 layer = 11
 script = ExtResource("5_hintbar")
+
+[node name="LoadingScreen" type="CanvasLayer" parent="." unique_id=616500917 node_paths=PackedStringArray("Cover", "Bar", "Status")]
+process_mode = 3
+layer = 20
+script = ExtResource("6_loadingscreen")
+Cover = NodePath("Cover")
+Bar = NodePath("Cover/Content/Bar")
+Status = NodePath("Cover/Content/Status")
+
+[node name="Cover" type="ColorRect" parent="LoadingScreen" unique_id=766839667]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Content" type="VBoxContainer" parent="LoadingScreen/Cover" unique_id=1387393604]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -160.0
+offset_right = 300.0
+offset_bottom = -100.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 12
+
+[node name="Status" type="Label" parent="LoadingScreen/Cover/Content" unique_id=506611119]
+layout_mode = 2
+text = "Loading"
+horizontal_alignment = 1
+
+[node name="Bar" type="ProgressBar" parent="LoadingScreen/Cover/Content" unique_id=2074426615]
+custom_minimum_size = Vector2(600, 24)
+layout_mode = 2
+max_value = 1.0
+step = 0.0
+show_percentage = false
