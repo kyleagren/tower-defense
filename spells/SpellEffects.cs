@@ -198,17 +198,17 @@ public partial class SpellEffects : Node
     }
 
     // Host only, once the impact is placed. Each machine counts down and lands its own copy.
-    public void ShowImpact(PackedScene scene, Vector3 point, float radius, float delay)
+    public void ShowImpact(PackedScene scene, Vector3 point, Vector3 from, float radius, float delay)
     {
-        Rpc(MethodName.ReceiveImpact, scene.ResourcePath, point, radius, delay);
+        Rpc(MethodName.ReceiveImpact, scene.ResourcePath, point, from, radius, delay);
     }
 
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void ReceiveImpact(string scenePath, Vector3 point, float radius, float delay)
+    private void ReceiveImpact(string scenePath, Vector3 point, Vector3 from, float radius, float delay)
     {
         DelayedImpact copy = GD.Load<PackedScene>(scenePath).Instantiate<DelayedImpact>();
         _level.LevelRoot.AddChild(copy);
-        copy.InitializeCopy(point, radius, delay);
+        copy.InitializeCopy(point, from, radius, delay);
     }
 
     // Host only, once the beam is in place.

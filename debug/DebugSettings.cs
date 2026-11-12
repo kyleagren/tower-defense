@@ -11,6 +11,7 @@ public static class DebugSettings
     public static bool ShowWeaponDamageNumbers = true;
     public static bool ShowRitualDamageNumbers = true;
     public static bool CameraOnLeftShoulder;
+    public static bool ScreenShake = true;
 
     // Runs on first use, after the defaults above, so a missing file (first launch) keeps them.
     static DebugSettings()
@@ -26,6 +27,7 @@ public static class DebugSettings
         ShowWeaponDamageNumbers = file.GetValue(Section, nameof(ShowWeaponDamageNumbers), ShowWeaponDamageNumbers).AsBool();
         ShowRitualDamageNumbers = file.GetValue(Section, nameof(ShowRitualDamageNumbers), ShowRitualDamageNumbers).AsBool();
         CameraOnLeftShoulder = file.GetValue(Section, nameof(CameraOnLeftShoulder), CameraOnLeftShoulder).AsBool();
+        ScreenShake = file.GetValue(Section, nameof(ScreenShake), ScreenShake).AsBool();
     }
 
     public static void Save()
@@ -35,6 +37,7 @@ public static class DebugSettings
         file.SetValue(Section, nameof(ShowWeaponDamageNumbers), ShowWeaponDamageNumbers);
         file.SetValue(Section, nameof(ShowRitualDamageNumbers), ShowRitualDamageNumbers);
         file.SetValue(Section, nameof(CameraOnLeftShoulder), CameraOnLeftShoulder);
+        file.SetValue(Section, nameof(ScreenShake), ScreenShake);
 
         Error result = file.Save(FilePath);
 

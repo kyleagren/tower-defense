@@ -38,6 +38,8 @@ public partial class OptionsMenu : Control
             on => DebugSettings.ShowRitualDamageNumbers = on, DebugSettings.Save);
         AddToggle(column, "Camera over left shoulder", DebugSettings.CameraOnLeftShoulder,
             on => DebugSettings.CameraOnLeftShoulder = on, DebugSettings.Save);
+        AddToggle(column, "Screen shake", DebugSettings.ScreenShake,
+            on => DebugSettings.ScreenShake = on, DebugSettings.Save);
 
         Label video = new Label { Text = "Video", HorizontalAlignment = HorizontalAlignment.Center };
         video.AddThemeFontSizeOverride("font_size", 20);

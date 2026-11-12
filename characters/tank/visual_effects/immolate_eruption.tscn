@@ -1,9 +1,9 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://characters/tank/visual_effects/ImmolateEruption.cs" id="1_eruption"]
+[ext_resource type="Script" uid="uid://dus2x7vep70iq" path="res://characters/tank/visual_effects/ImmolateEruption.cs" id="1_eruption"]
 [ext_resource type="Material" path="res://visual_effects/flame_shell_hot.tres" id="2_flames"]
-[ext_resource type="Shader" path="res://characters/tank/visual_effects/ground_fire.gdshader" id="3_ground"]
-[ext_resource type="Texture2D" path="res://visual_effects/fire_noise.tres" id="4_noise"]
+[ext_resource type="Shader" uid="uid://dstp407be5erh" path="res://visual_effects/ground_fire.gdshader" id="3_ground"]
+[ext_resource type="Texture2D" uid="uid://clegnos33rtxn" path="res://visual_effects/fire_noise.tres" id="4_noise"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_column"]
 top_radius = 1.0

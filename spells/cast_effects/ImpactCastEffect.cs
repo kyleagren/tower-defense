@@ -19,7 +19,7 @@ public class ImpactCastEffect : CastEffect
 
         DelayedImpact impact = data.Scene.Instantiate<DelayedImpact>();
         LevelContext.Current.LevelRoot.AddChild(impact);
-        impact.Initialize(point.Value, radius, data.Delay, context.Damage, context.RagdollForce.Value, context.SpellHit);
-        LevelContext.Current.SpellEffects.ShowImpact(data.Scene, point.Value, radius, data.Delay);
+        impact.Initialize(point.Value, spawnPoint.GlobalPosition, radius, data.Delay, context.Damage, context.RagdollForce.Value, context.SpellHit);
+        LevelContext.Current.SpellEffects.ShowImpact(data.Scene, point.Value, spawnPoint.GlobalPosition, radius, data.Delay);
     }
 }

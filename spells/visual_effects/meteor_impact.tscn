@@ -1,19 +1,19 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://spells/effect_volumes/DelayedImpact.cs" id="1_impact"]
-[ext_resource type="PackedScene" path="res://visual_effects/explosion_visual.tscn" id="2_explosion"]
+[ext_resource type="PackedScene" path="res://spells/visual_effects/meteor_landing.tscn" id="2_landing"]
 [ext_resource type="Shader" path="res://spells/visual_effects/meteor.gdshader" id="3_shader"]
+[ext_resource type="Shader" path="res://spells/visual_effects/meteor_marker.gdshader" id="4_marker"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_marker"]
 top_radius = 1.0
 bottom_radius = 1.0
 height = 0.02
+radial_segments = 48
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_marker"]
-transparency = 1
-cull_mode = 2
-shading_mode = 0
-albedo_color = Color(1, 0.45, 0.05, 1)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_marker"]
+render_priority = 0
+shader = ExtResource("4_marker")
 
 [sub_resource type="SphereMesh" id="SphereMesh_meteor"]
 radius = 1.0
@@ -29,20 +29,134 @@ noise = SubResource("FastNoiseLite_meteor")
 shader = ExtResource("3_shader")
 shader_parameter/noise = SubResource("NoiseTexture2D_meteor")
 
-[node name="MeteorImpact" type="Node3D" node_paths=PackedStringArray("Marker", "FallingBody")]
+[sub_resource type="Gradient" id="Gradient_trail_embers"]
+offsets = PackedFloat32Array(0, 0.35, 1)
+colors = PackedColorArray(1, 0.9, 0.55, 1, 1, 0.45, 0.06, 1, 0.5, 0.08, 0.02, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_trail_embers"]
+gradient = SubResource("Gradient_trail_embers")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_trail_embers"]
+emission_shape = 1
+emission_sphere_radius = 1.0
+direction = Vector3(0, 1, 0)
+spread = 180.0
+initial_velocity_min = 0.5
+initial_velocity_max = 2.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.6
+scale_max = 1.6
+color_ramp = SubResource("GradientTexture1D_trail_embers")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_trail_ember"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_trail_ember"]
+material = SubResource("StandardMaterial3D_trail_ember")
+radius = 0.08
+height = 0.16
+radial_segments = 8
+rings = 4
+
+[sub_resource type="Gradient" id="Gradient_trail_smoke"]
+offsets = PackedFloat32Array(0, 0.2, 1)
+colors = PackedColorArray(0.3, 0.16, 0.1, 0, 0.18, 0.15, 0.14, 0.6, 0.12, 0.12, 0.12, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_trail_smoke"]
+gradient = SubResource("Gradient_trail_smoke")
+
+[sub_resource type="Curve" id="Curve_trail_smoke"]
+_data = [Vector2(0, 0.35), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_trail_smoke"]
+curve = SubResource("Curve_trail_smoke")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_trail_smoke"]
+emission_shape = 1
+emission_sphere_radius = 0.8
+direction = Vector3(0, 1, 0)
+spread = 180.0
+initial_velocity_min = 0.2
+initial_velocity_max = 0.8
+gravity = Vector3(0, 0.5, 0)
+angle_min = -180.0
+angle_max = 180.0
+scale_min = 2.0
+scale_max = 3.0
+scale_curve = SubResource("CurveTexture_trail_smoke")
+color_ramp = SubResource("GradientTexture1D_trail_smoke")
+
+[sub_resource type="Gradient" id="Gradient_puff"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_puff"]
+gradient = SubResource("Gradient_puff")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_trail_smoke"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_texture = SubResource("GradientTexture2D_puff")
+billboard_mode = 3
+billboard_keep_scale = true
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="QuadMesh_trail_smoke"]
+material = SubResource("StandardMaterial3D_trail_smoke")
+size = Vector2(1, 1)
+
+[node name="MeteorImpact" type="Node3D" node_paths=PackedStringArray("Marker", "FallingBody", "Rock", "Glow", "Trails")]
 script = ExtResource("1_impact")
 Marker = NodePath("Marker")
 FallingBody = NodePath("FallingBody")
-ExplosionScene = ExtResource("2_explosion")
+Rock = NodePath("FallingBody/Mesh")
+Glow = NodePath("FallingBody/Glow")
+Trails = [NodePath("FallingBody/TrailEmbers"), NodePath("FallingBody/TrailSmoke")]
+LandingScene = ExtResource("2_landing")
 
 [node name="Marker" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_marker")
-material_override = SubResource("StandardMaterial3D_marker")
+material_override = SubResource("ShaderMaterial_marker")
 
 [node name="FallingBody" type="Node3D" parent="."]
 
 [node name="Mesh" type="MeshInstance3D" parent="FallingBody"]
 mesh = SubResource("SphereMesh_meteor")
 material_override = SubResource("ShaderMaterial_meteor")
+
+[node name="Glow" type="OmniLight3D" parent="FallingBody"]
+light_color = Color(1, 0.5, 0.15, 1)
+light_energy = 0.5
+omni_range = 10.0
+
+[node name="TrailEmbers" type="GPUParticles3D" parent="FallingBody"]
+cast_shadow = 0
+emitting = false
+amount = 80
+lifetime = 0.6
+local_coords = false
+visibility_aabb = AABB(-30, -30, -30, 60, 60, 60)
+process_material = SubResource("ParticleProcessMaterial_trail_embers")
+draw_pass_1 = SubResource("SphereMesh_trail_ember")
+
+[node name="TrailSmoke" type="GPUParticles3D" parent="FallingBody"]
+cast_shadow = 0
+emitting = false
+amount = 40
+lifetime = 1.2
+local_coords = false
+visibility_aabb = AABB(-30, -30, -30, 60, 60, 60)
+process_material = SubResource("ParticleProcessMaterial_trail_smoke")
+draw_pass_1 = SubResource("QuadMesh_trail_smoke")

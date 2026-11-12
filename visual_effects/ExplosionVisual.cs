@@ -1,6 +1,6 @@
 using Godot;
 
-public partial class ExplosionVisual : Node3D
+public partial class ExplosionVisual : Node3D, IImpactVisual
 {
     [Export] public MeshInstance3D Sphere { get; private set; }
     [Export] public float Lifetime = 0.35f;

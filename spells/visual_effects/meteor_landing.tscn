@@ -1,0 +1,133 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://dejw5m1l1op6t" path="res://spells/visual_effects/MeteorLanding.cs" id="1_landing"]
+[ext_resource type="PackedScene" path="res://visual_effects/explosion_visual.tscn" id="2_explosion"]
+[ext_resource type="Shader" uid="uid://dstp407be5erh" path="res://visual_effects/ground_fire.gdshader" id="3_ground"]
+[ext_resource type="Texture2D" uid="uid://clegnos33rtxn" path="res://visual_effects/fire_noise.tres" id="4_noise"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ground_fire"]
+render_priority = 0
+shader = ExtResource("3_ground")
+shader_parameter/noise = ExtResource("4_noise")
+shader_parameter/fire_color = Color(1, 0.45, 0.06, 1)
+shader_parameter/hot_color = Color(1, 0.92, 0.6, 1)
+shader_parameter/scorch_color = Color(0.04, 0.02, 0.012, 0.8)
+shader_parameter/fire_strength = 2.5
+shader_parameter/flame_depth = 0.25
+shader_parameter/raggedness = 0.3
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ground"]
+material = SubResource("ShaderMaterial_ground_fire")
+top_radius = 1.0
+bottom_radius = 1.0
+height = 0.02
+radial_segments = 48
+
+[sub_resource type="Gradient" id="Gradient_embers"]
+offsets = PackedFloat32Array(0, 0.4, 1)
+colors = PackedColorArray(1, 0.95, 0.7, 1, 1, 0.5, 0.08, 1, 0.6, 0.1, 0.02, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_embers"]
+gradient = SubResource("Gradient_embers")
+
+[sub_resource type="Curve" id="Curve_embers"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.3), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_embers"]
+curve = SubResource("Curve_embers")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_embers"]
+emission_shape = 1
+emission_sphere_radius = 0.8
+direction = Vector3(0, 1, 0)
+spread = 50.0
+initial_velocity_min = 5.0
+initial_velocity_max = 11.0
+gravity = Vector3(0, -4, 0)
+damping_min = 1.0
+damping_max = 2.0
+scale_min = 0.6
+scale_max = 1.6
+scale_curve = SubResource("CurveTexture_embers")
+color_ramp = SubResource("GradientTexture1D_embers")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ember"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_ember"]
+material = SubResource("StandardMaterial3D_ember")
+radius = 0.06
+height = 0.12
+radial_segments = 8
+rings = 4
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_debris"]
+emission_shape = 1
+emission_sphere_radius = 0.6
+direction = Vector3(0, 1, 0)
+spread = 60.0
+initial_velocity_min = 6.0
+initial_velocity_max = 12.0
+gravity = Vector3(0, -18, 0)
+angular_velocity_min = -360.0
+angular_velocity_max = 360.0
+particle_flag_rotate_y = true
+scale_min = 0.5
+scale_max = 1.5
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_debris"]
+albedo_color = Color(0.16, 0.08, 0.05, 1)
+roughness = 0.9
+emission_enabled = true
+emission = Color(1, 0.35, 0.05, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_debris"]
+material = SubResource("StandardMaterial3D_debris")
+size = Vector3(0.25, 0.2, 0.25)
+
+[node name="MeteorLanding" type="Node3D" node_paths=PackedStringArray("Explosion", "Ground", "Bursts", "Flash")]
+script = ExtResource("1_landing")
+Explosion = NodePath("Explosion")
+Ground = NodePath("Ground")
+Bursts = [NodePath("Embers"), NodePath("Debris")]
+Flash = NodePath("Flash")
+
+[node name="Explosion" parent="." instance=ExtResource("2_explosion")]
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_ground")
+
+[node name="Embers" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+cast_shadow = 0
+emitting = false
+amount = 60
+lifetime = 1.4
+one_shot = true
+explosiveness = 1.0
+visibility_aabb = AABB(-10, -2, -10, 20, 16, 20)
+process_material = SubResource("ParticleProcessMaterial_embers")
+draw_pass_1 = SubResource("SphereMesh_ember")
+
+[node name="Debris" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+emitting = false
+amount = 14
+lifetime = 1.4
+one_shot = true
+explosiveness = 1.0
+visibility_aabb = AABB(-10, -2, -10, 20, 12, 20)
+process_material = SubResource("ParticleProcessMaterial_debris")
+draw_pass_1 = SubResource("BoxMesh_debris")
+
+[node name="Flash" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+light_color = Color(1, 0.6, 0.25, 1)
+light_energy = 0.0
+omni_range = 8.0
