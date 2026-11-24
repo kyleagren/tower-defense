@@ -6,7 +6,7 @@ using System.Collections.Generic;
 // panel with a tab per thing arranged. Split by tab across OrganizePanel.SpellWheels.cs,
 // OrganizePanel.Favorites.cs and OrganizePanel.Runes.cs; this file holds the frame, switching tabs,
 // backing out and closing.
-public partial class OrganizePanel : Control
+public partial class OrganizePanel : Control, IHintSource
 {
     public enum Tab
     {
@@ -149,6 +149,26 @@ public partial class OrganizePanel : Control
         Visible = false;
         UiPanelStack.Pop(this);
         Closed?.Invoke();
+    }
+
+    // Only while something is in progress - moving a picked-up entry, and Back undoing that step
+    // rather than closing. The panel's own line explains picking up.
+    public void AddHints(List<Hint> hints)
+    {
+        if (_renaming != null)
+        {
+            return;
+        }
+
+        if (_spellList.IsHolding || _favoriteList.IsHolding || _runeList.IsHolding)
+        {
+            hints.Add(new Hint("ui_up", "Move", MouseText: "Wheel"));
+            hints.Add(new Hint("ui_cancel", "Put Back"));
+        }
+        else if (_heldSlot >= 0 || _pinning != null)
+        {
+            hints.Add(new Hint("ui_cancel", "Cancel"));
+        }
     }
 
     // Back undoes whatever is in progress before it closes anything.

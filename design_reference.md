@@ -46,7 +46,7 @@ This file is the index. The design itself lives in one file per topic under [`do
 
 In order. Remove an entry once it's built; its design lives in the file named.
 
-1. **Rest of the hint bar** ([controls_and_ui.md](docs/design/controls_and_ui.md)) — the build menu, Organize, field states, the Ritual look prompt.
+1. **Rest of the hint bar** ([controls_and_ui.md](docs/design/controls_and_ui.md)) — field states (placement, token pick mode) and the Ritual look prompt.
 2. **Key rebinding menu** ([controls_and_ui.md](docs/design/controls_and_ui.md)).
 3. **Editing and copying a placed Ritual** ([rituals.md](docs/design/rituals.md), Construction & deployment UI).
 4. **Lane steering and Earth Wall** ([enemies.md](docs/design/enemies.md)).

@@ -9,7 +9,7 @@ using System.Linq;
 // Split by screen across BuildMenu.SpellScreens.cs, BuildMenu.Inscription.cs, BuildMenu.RuneScreens.cs
 // and BuildMenu.Tokens.cs; this file holds what they share - which screen is up, input, backing out
 // and closing.
-public partial class BuildMenu : Control
+public partial class BuildMenu : Control, IHintSource
 {
     [Signal] public delegate void ClosedEventHandler();
     [Signal] public delegate void ConfirmedEventHandler(Spell spell, Godot.Collections.Array<Rune> runes);
@@ -211,6 +211,45 @@ public partial class BuildMenu : Control
 
         return padded;
     }
+
+    // --- Hints ---
+
+    // The menu's controls a player wouldn't guess: holds on the inscription, jumping to tokens, and
+    // closing from any screen with the key that opened it.
+    public void AddHints(List<Hint> hints)
+    {
+        if (_favoriteNameField != null)
+        {
+            return;
+        }
+
+        if (_screen == Screen.Inscription)
+        {
+            int slot = Inscription.Highlighted;
+            int socket = SocketAt(slot);
+
+            if (socket >= 0 && _build.RuneIn(socket) != null)
+            {
+                hints.Add(new Hint("ui_accept", "Tiers", Hold: true, MouseText: "Click"));
+            }
+            else if (slot == SaveFavoriteSlot)
+            {
+                hints.Add(new Hint("ui_accept", "Name It", Hold: true, MouseText: "Click"));
+            }
+        }
+
+        if (_screen != Screen.TokenWheel)
+        {
+            hints.Add(InputDevice.UsingController
+                ? new Hint("token_modifier", "Tokens")
+                : new Hint("token_slot_1", "Tokens", MouseText: TokenKeys()));
+        }
+
+        hints.Add(new Hint("open_build_menu", "Close"));
+    }
+
+    // "1 / 2 / 3", read from the bindings so a rebind shows.
+    private static string TokenKeys() => string.Join(" / ", _tokenSlotActions.Select(InputPromptHelper.GetPrompt));
 
     // --- Input, backing out and closing ---
 

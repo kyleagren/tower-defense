@@ -59,6 +59,8 @@ public abstract partial class ButtonWheel : Control
         set => _wheel.AcceptsInput = value;
     }
 
+    public int Highlighted => _wheel.Highlighted;
+
     // A ring along the backdrop circle's edge when set - for a host marking the wheel as being in
     // some mode.
     public Color? BackdropOutlineColor { get; set; }
