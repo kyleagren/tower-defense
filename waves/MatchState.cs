@@ -15,9 +15,13 @@ public class MatchState
     // Meaningful once IsOver.
     public bool Victory { get; private set; }
 
-    // How many waves have begun, and how many the level's wave file holds.
+    // How many waves have begun, and the level's waves from its wave file.
     public int WavesStarted { get; private set; }
-    public int WaveCount { get; set; }
+    public IReadOnlyList<Wave> Waves { get; set; } = Array.Empty<Wave>();
+    public int WaveCount => Waves.Count;
+
+    // The wave the next ready check starts - null once every wave has begun.
+    public Wave UpcomingWave => WavesStarted < Waves.Count ? Waves[WavesStarted] : null;
 
     public IReadOnlyCollection<PlayerId> ReadyPlayers => _ready;
 

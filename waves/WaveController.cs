@@ -76,7 +76,7 @@ public partial class WaveController : Node
         string json = file.GetAsText();
         WaveFile waveFile = JsonSerializer.Deserialize<WaveFile>(json, _jsonOptions);
         _waves = waveFile.Waves;
-        _match.WaveCount = _waves.Count;
+        _match.Waves = _waves;
     }
 
     public override void _UnhandledInput(InputEvent @event)
