@@ -16,6 +16,7 @@ config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 
 [autoload]
 
+InputBindings="*res://core/InputBindings.cs"
 SteamService="*res://core/SteamService.cs"
 EventBus="*res://core/EventBus.cs"
 NetworkSession="*res://core/NetworkSession.cs"

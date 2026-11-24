@@ -8,18 +8,18 @@ public static class InputPromptHelper
 {
     private enum ControllerFamily { Xbox, PlayStation }
 
-    public static string GetPrompt(string action)
+    public static string GetPrompt(string action) => GetBinding(action) is { } binding ? NameOf(binding) : action;
+
+    // The name a player would read for this input - a key, a mouse button, a controller button or
+    // trigger, labeled for the connected controller's family.
+    public static string NameOf(InputEvent binding) => binding switch
     {
-        return GetBinding(action) switch
-        {
-            InputEventKey key => KeyName(key),
-            InputEventJoypadButton button => ButtonName(button.ButtonIndex),
-            InputEventJoypadMotion motion => AxisName(motion.Axis),
-            InputEventMouseButton mouse => MouseName(mouse.ButtonIndex),
-            InputEvent other => other.AsText(),
-            null => action
-        };
-    }
+        InputEventKey key => KeyName(key),
+        InputEventJoypadButton button => ButtonName(button.ButtonIndex),
+        InputEventJoypadMotion motion => AxisName(motion.Axis),
+        InputEventMouseButton mouse => MouseName(mouse.ButtonIndex),
+        _ => binding.AsText()
+    };
 
     public static ButtonGlyph.Shape GetGlyph(string action)
     {

@@ -10,6 +10,7 @@ public partial class OptionsMenu : Control
     public event Action Closed;
 
     private CheckBox _firstOption;
+    private ControlsMenu _controls;
 
     public override void _Ready()
     {
@@ -49,6 +50,14 @@ public partial class OptionsMenu : Control
         AddVideoToggle(column, "Glow", VideoSettings.Glow, on => VideoSettings.Glow = on);
         AddVideoToggle(column, "Ambient occlusion", VideoSettings.AmbientOcclusion, on => VideoSettings.AmbientOcclusion = on);
         AddVideoToggle(column, "Shadows", VideoSettings.Shadows, on => VideoSettings.Shadows = on);
+
+        _controls = new ControlsMenu();
+        AddChild(_controls);
+
+        Button controls = new Button { Text = "Controls", CustomMinimumSize = new Vector2(320f, 56f) };
+        controls.Pressed += _controls.Open;
+        _controls.Closed += () => controls.GrabFocus();
+        column.AddChild(controls);
 
         Button back = new Button { Text = "Back", CustomMinimumSize = new Vector2(320f, 56f) };
         back.Pressed += Close;
