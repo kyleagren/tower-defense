@@ -2,7 +2,7 @@
 
 ## Before creating or modifying files
 
-- **Code files** (`.cs`, and similar): show the full suggested code, then stop — do not call Edit/Write in the same turn. Wait for an explicit reply approving it (e.g. "yes," "go ahead," "looks good") in a separate message before creating or editing the actual file. Silence, a follow-up question, or moving on to a new topic is not approval. The one exception is `design_reference.md` (and `README.md`). You should ask or be instructed to do so before updating the readme, but you don't have to post your idea before updating the readme with it.
+- **Code files** (`.cs`, and similar): show the full suggested code, then stop — do not call Edit/Write in the same turn. Wait for an explicit reply approving it (e.g. "yes," "go ahead," "looks good") in a separate message before creating or editing the actual file. Silence, a follow-up question, or moving on to a new topic is not approval. The one exception is the design reference — `design_reference.md` and `docs/design/*.md` — (and `README.md`). You should ask or be instructed to do so before updating the readme, but you don't have to post your idea before updating the readme with it.
 - **Scene files** (`.tscn`) and other structural/data files: a plain-language explanation of what will be created or changed is sufficient instead of pasting full raw content — but the same rule applies otherwise: explain, then stop and wait for an explicit go-ahead before writing. Hand-authoring these directly (rather than giving editor instructions) is fine once that go-ahead is given.
 - If it's ambiguous whether approval was actually given, ask rather than assume.
 
@@ -13,7 +13,12 @@
 
 ## Project context
 
-Godot 4 (C#) 3D tower-defense project. `design_reference.md` is the design reference — **current-state design; reasoning only where a decision is still live or genuinely surprising.** See it before proposing design changes.
+Godot 4 (C#) 3D tower-defense project. The design reference is **current-state design; reasoning only where a decision is still live or genuinely surprising.** See it before proposing design changes.
+
+- **`design_reference.md` is its index**: the high concept, a table of the topic files under `docs/design/` with what each holds, the roadmap (the user's build order) and the backlog. Read it first, then read the topic file the work touches **in full** rather than searching across all of them.
+- **Write new design into the topic file it belongs to**, under a `##` heading per feature. Keep paragraphs short — a long one becomes a lead sentence plus bullets — so a search hit shows its whole context.
+- **Cross-reference by file and heading** (`[enemies.md](enemies.md), Movement`), never by section number.
+- **Keep the roadmap and backlog current**: remove an entry once it's built, and add anything newly designed-but-unbuilt to the backlog.
 
 Keep it that way. Do not add implementation logs ("extracted X into Y so that..."), bug post-mortems, changelog entries, or rationale for decisions nobody is going to reopen — git history and the code itself already hold those, and the doc becomes unreadable when they accumulate in it. When a feature is finished, the design reference should describe what the game *does*, not how it got built.
 
