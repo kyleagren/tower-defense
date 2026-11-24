@@ -46,15 +46,14 @@ This file is the index. The design itself lives in one file per topic under [`do
 
 In order. Remove an entry once it's built; its design lives in the file named.
 
-1. **Rest of the hint bar** ([controls_and_ui.md](docs/design/controls_and_ui.md)) — field states (placement, token pick mode) and the Ritual look prompt.
-2. **Key rebinding menu** ([controls_and_ui.md](docs/design/controls_and_ui.md)).
-3. **Editing and copying a placed Ritual** ([rituals.md](docs/design/rituals.md), Construction & deployment UI).
-4. **Lane steering and Earth Wall** ([enemies.md](docs/design/enemies.md)).
-5. **Party section in the pause menu** ([architecture.md](docs/design/architecture.md), Multiplayer).
-6. **Closing the Steam lobby to joins mid-match** ([architecture.md](docs/design/architecture.md), Multiplayer).
-7. **Ally revive** ([characters.md](docs/design/characters.md)) — `Sentinel.Respawn()` is the hook.
-8. **The missing reactions** ([reactions.md](docs/design/reactions.md)) — Blister and Scalding Zone.
-9. **Design the Elementalist.**
+1. **Key rebinding menu** ([controls_and_ui.md](docs/design/controls_and_ui.md)).
+2. **Editing and copying a placed Ritual** ([rituals.md](docs/design/rituals.md), Construction & deployment UI).
+3. **Lane steering and Earth Wall** ([enemies.md](docs/design/enemies.md)).
+4. **Party section in the pause menu** ([architecture.md](docs/design/architecture.md), Multiplayer).
+5. **Closing the Steam lobby to joins mid-match** ([architecture.md](docs/design/architecture.md), Multiplayer).
+6. **Ally revive** ([characters.md](docs/design/characters.md)) — `Sentinel.Respawn()` is the hook.
+7. **The missing reactions** ([reactions.md](docs/design/reactions.md)) — Blister and Scalding Zone.
+8. **Design the Elementalist.**
 
 ## Backlog
 

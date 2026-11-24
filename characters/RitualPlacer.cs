@@ -1,7 +1,8 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
-public partial class RitualPlacer : Node
+public partial class RitualPlacer : Node, IFieldHintSource
 {
     // Not exported: a typed [Export] against a node from an inherited base scene fails its cast at
     // scene-build time, since the base scene's root has no script yet and the parent is still a bare
@@ -117,6 +118,22 @@ public partial class RitualPlacer : Node
         {
             BeginRitualGhost();
         }
+    }
+
+    public void AddHints(List<Hint> hints)
+    {
+        if (!IsPlacing)
+        {
+            return;
+        }
+
+        string confirm = _ghost == null ? "Set Point"
+            : !_isAiming ? "Place"
+            : _pendingContext.FixedSpot != null ? "Set Spot"
+            : "Set Direction";
+
+        hints.Add(new Hint("confirm_placement", confirm, MouseText: "Click"));
+        hints.Add(new Hint("alt_action", "Cancel", MouseText: "Right Click"));
     }
 
     public override void _PhysicsProcess(double delta)

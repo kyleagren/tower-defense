@@ -120,6 +120,7 @@ public partial class RitualInteractor : LookInteractor
 
         return activate
             + $"Hold {InputPromptHelper.GetPrompt("repair_ritual")} to Repair\n"
-            + $"Hold {InputPromptHelper.GetPrompt("destroy_ritual")} to Destroy";
+            + $"Hold {InputPromptHelper.GetPrompt("destroy_ritual")} to Destroy\n"
+            + $"Hold {InputPromptHelper.GetPrompt("advanced_tooltip")} to Inspect";
     }
 }

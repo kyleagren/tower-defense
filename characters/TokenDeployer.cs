@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 using System.Linq;
 
 // design_reference.md's "any player, mid-wave" token deployment: Q toggles (or R1 holds) a lightweight pick mode
@@ -7,7 +8,7 @@ using System.Linq;
 // Pressing a mapped, non-empty slot hands straight off to RitualPlacer's ordinary ghost/reticle
 // flow - this class's only remaining job past that point is consuming the token once placement is
 // actually confirmed.
-public partial class TokenDeployer : Node
+public partial class TokenDeployer : Node, IFieldHintSource
 {
     // Not exported - same reason as RitualPlacer.Character: this lives in the shared
     // sentinel_body.tscn base scene, whose root has no script yet when Godot type-checks an
@@ -110,6 +111,30 @@ public partial class TokenDeployer : Node
                 TryDeployToken(i);
                 return;
             }
+        }
+    }
+
+    // The filled tokens by their spell, and on keyboard how to leave - a controller lets go of R1.
+    public void AddHints(List<Hint> hints)
+    {
+        if (!IsPickModeActive)
+        {
+            return;
+        }
+
+        Godot.Collections.Array<RuneLoadout> tokens = PlayerProfiles.Get(Character.OwnerId).Data.Tokens;
+
+        for (int i = 0; i < _slotActions.Length; i++)
+        {
+            if (tokens[i] != null)
+            {
+                hints.Add(new Hint(_slotActions[i], tokens[i].Spell.Name));
+            }
+        }
+
+        if (!InputDevice.UsingController)
+        {
+            hints.Add(new Hint("toggle_token_mode", "Exit"));
         }
     }
 

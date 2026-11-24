@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 // The row of control hints along the bottom of the open panel the player is pointing into (the top
-// panel when they're pointing at nothing), inside its bottom edge - a panel whose content reaches the
+// panel when they're pointing at nothing; the screen when no panel is open), inside its bottom edge - a panel whose content reaches the
 // bottom leaves ReservedHeight free for it. The hints themselves always come from the top panel.
 // Rebuilt only when the hints, the panel it sits under or the device change; repositioned every
 // frame, since panels move (the inventory drops below the wave bar while it shows). Lives in the
@@ -57,7 +57,11 @@ public partial class HintBar : CanvasLayer
         Control top = UiPanelStack.Top;
         _pending.Clear();
 
-        if (top is IHintSource source && top.IsVisibleInTree())
+        if (top == null)
+        {
+            AddFieldHints(_pending);
+        }
+        else if (top is IHintSource source && top.IsVisibleInTree())
         {
             source.AddHints(_pending);
         }
@@ -66,11 +70,12 @@ public partial class HintBar : CanvasLayer
         {
             _background.Visible = false;
             _shownFor = null;
+            _shown.Clear();
             return;
         }
 
-        Control anchor = ResolveAnchor(top);
-        Rect2 area = anchor.GetGlobalRect();
+        Control anchor = top == null ? null : ResolveAnchor(top);
+        Rect2 area = anchor?.GetGlobalRect() ?? GetViewport().GetVisibleRect();
 
         if (anchor != _shownFor || InputDevice.UsingController != _shownForController
             || InputDevice.LastJoypad != _shownForJoypad || !_pending.SequenceEqual(_shown))
@@ -87,6 +92,26 @@ public partial class HintBar : CanvasLayer
         _background.Position = new Vector2(
             area.Position.X + (area.Size.X - _background.Size.X) / 2f,
             area.End.Y - EdgeGap - _background.Size.Y);
+    }
+
+    // With no panel open, the local character's own components speak - placing a Ritual, picking a
+    // token. They're direct children of its body.
+    private static void AddFieldHints(List<Hint> hints)
+    {
+        PlayerCharacter character = LevelContext.Current?.LocalActiveCharacter;
+
+        if (character == null)
+        {
+            return;
+        }
+
+        foreach (Node child in character.GetChildren())
+        {
+            if (child is IFieldHintSource source)
+            {
+                source.AddHints(hints);
+            }
+        }
     }
 
     // The focused control on a controller, the hovered one on a mouse.
