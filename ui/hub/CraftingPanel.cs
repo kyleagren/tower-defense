@@ -8,7 +8,7 @@ using System.Linq;
 // for a different random one, reroll every mod's value, or upgrade a random mod's tier. Every
 // action costs a flat GameRules.CraftingActionGoldCost, gated by current affix counts and how much
 // Gold is banked.
-public partial class CraftingPanel : Control
+public partial class CraftingPanel : Control, IHintSource
 {
     public static CraftingPanel Instance { get; private set; }
 
@@ -284,6 +284,9 @@ public partial class CraftingPanel : Control
             GetViewport().SetInputAsHandled();
         }
     }
+
+    public void AddHints(List<Hint> hints) =>
+        StationHints.Add(hints, this, "Crafting", "To Crafting", _ => _slot.GetItem() == null);
 
     private void Close()
     {

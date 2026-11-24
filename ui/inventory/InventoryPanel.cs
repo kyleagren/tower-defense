@@ -323,51 +323,64 @@ public partial class InventoryPanel : Control, IHintSource
         Grid.Cell(Vector2I.Zero).GrabFocus();
     }
 
-    // What the focused slot (controller) or hovered one (mouse) offers. With an item carried, only
-    // where it can go.
-    public IEnumerable<Hint> GetHints()
+    public void AddHints(List<Hint> hints)
     {
         if (ItemDragController.Instance.Held != null)
         {
-            if (InputDevice.UsingController)
-            {
-                yield return new Hint("ui_cancel", "Put Back");
-                yield return new Hint("ui_cancel", "Drop", Hold: true);
-            }
-            else
-            {
-                yield return new Hint("ui_accept", "Drop", MouseText: "Click Outside");
-            }
-
-            yield break;
+            AddCarriedHints(hints);
+            return;
         }
 
-        Control pointed = InputDevice.UsingController ? GetViewport().GuiGetFocusOwner() : GetViewport().GuiGetHoveredControl();
+        AddSlotHints(hints, HintBar.PointedControl(GetViewport()));
+    }
 
+    // With an item carried, only where it can go.
+    public static void AddCarriedHints(List<Hint> hints)
+    {
+        if (InputDevice.UsingController)
+        {
+            hints.Add(new Hint("ui_cancel", "Put Back"));
+            hints.Add(new Hint("ui_cancel", "Drop", Hold: true));
+        }
+        else
+        {
+            hints.Add(new Hint("ui_accept", "Drop", MouseText: "Click Outside"));
+        }
+    }
+
+    // What an item in one of this panel's slots offers - nothing for a control outside the panel.
+    public void AddSlotHints(List<Hint> hints, Control pointed)
+    {
         if (pointed == null || !IsAncestorOf(pointed) || !ItemDragController.Instance.TryGetSlot(pointed, out SlotHandle slot)
             || slot.GetItem() is not Item item)
         {
-            yield break;
+            return;
+        }
+
+        if (item is RuneTome)
+        {
+            hints.Add(new Hint("inventory_use", "Learn", MouseText: "Right Click"));
+            return;
         }
 
         bool equipped = Array.Exists(_equipmentSlots, view => view.Button == pointed);
 
-        if (item is RuneTome)
-        {
-            yield return new Hint("inventory_use", "Learn", MouseText: "Right Click");
-            yield break;
-        }
-
         if (equipped || IsCompatible(item))
         {
-            yield return new Hint("inventory_use", equipped ? "Unequip" : "Equip", MouseText: "Right Click");
+            hints.Add(new Hint("inventory_use", equipped ? "Unequip" : "Equip", MouseText: "Right Click"));
         }
 
-        yield return new Hint("advanced_tooltip", "Details", Hold: true);
+        AddInspectHints(hints, canCompare: !equipped);
+    }
 
-        if (!equipped)
+    // Details and Compare - Compare only for an item that isn't already the one equipped.
+    public static void AddInspectHints(List<Hint> hints, bool canCompare)
+    {
+        hints.Add(new Hint("advanced_tooltip", "Details", Hold: true));
+
+        if (canCompare)
         {
-            yield return new Hint("compare_item", "Compare", Hold: true);
+            hints.Add(new Hint("compare_item", "Compare", Hold: true));
         }
     }
 

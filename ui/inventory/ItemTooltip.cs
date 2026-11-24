@@ -109,6 +109,12 @@ public partial class ItemTooltip : CanvasLayer
         control.FocusExited += () => OnSourceExited(control);
     }
 
+    // The item a registered control is showing right now, or null.
+    public Item ItemFor(Control control)
+    {
+        return control != null && _sources.TryGetValue(control, out Func<Item> getItem) ? getItem() : null;
+    }
+
     private void PruneDeadSources()
     {
         List<Control> deadKeys = new();

@@ -2,11 +2,12 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 
-// The row of control hints along the bottom of whichever panel is on top, inside its bottom edge -
-// a panel whose content reaches the bottom leaves ReservedHeight free for it. Rebuilt only when the
-// top panel's hints or the device change; repositioned every frame, since panels move (the
-// inventory drops below the wave bar while it shows). Lives in the persistent main scene, above
-// every menu layer, so the main menu has hints too.
+// The row of control hints along the bottom of the open panel the player is pointing into (the top
+// panel when they're pointing at nothing), inside its bottom edge - a panel whose content reaches the
+// bottom leaves ReservedHeight free for it. The hints themselves always come from the top panel.
+// Rebuilt only when the hints, the panel it sits under or the device change; repositioned every
+// frame, since panels move (the inventory drops below the wave bar while it shows). Lives in the
+// persistent main scene, above every menu layer, so the main menu has hints too.
 public partial class HintBar : CanvasLayer
 {
     private const float EdgeGap = 12f;
@@ -28,8 +29,12 @@ public partial class HintBar : CanvasLayer
 
     private Control _shownFor;
     private List<Hint> _shown = new();
+    private List<Hint> _pending = new();
     private bool _shownForController;
     private int _shownForJoypad;
+
+    // The last open panel the pointer was in - where the bar stays while it points at nothing.
+    private Control _lastPointedPanel;
 
     public override void _Ready()
     {
@@ -50,23 +55,29 @@ public partial class HintBar : CanvasLayer
     public override void _Process(double delta)
     {
         Control top = UiPanelStack.Top;
-        List<Hint> hints = top is IHintSource source && top.IsVisibleInTree() ? source.GetHints().ToList() : null;
+        _pending.Clear();
 
-        if (hints == null || hints.Count == 0)
+        if (top is IHintSource source && top.IsVisibleInTree())
+        {
+            source.AddHints(_pending);
+        }
+
+        if (_pending.Count == 0)
         {
             _background.Visible = false;
             _shownFor = null;
             return;
         }
 
-        Rect2 area = top.GetGlobalRect();
+        Control anchor = ResolveAnchor(top);
+        Rect2 area = anchor.GetGlobalRect();
 
-        if (top != _shownFor || InputDevice.UsingController != _shownForController
-            || InputDevice.LastJoypad != _shownForJoypad || !hints.SequenceEqual(_shown))
+        if (anchor != _shownFor || InputDevice.UsingController != _shownForController
+            || InputDevice.LastJoypad != _shownForJoypad || !_pending.SequenceEqual(_shown))
         {
-            Rebuild(hints, area.Size.X - EdgeGap * 2f - SidePadding * 2f);
-            _shownFor = top;
-            _shown = hints;
+            Rebuild(_pending, area.Size.X - EdgeGap * 2f - SidePadding * 2f);
+            (_shown, _pending) = (_pending, _shown);
+            _shownFor = anchor;
             _shownForController = InputDevice.UsingController;
             _shownForJoypad = InputDevice.LastJoypad;
         }
@@ -76,6 +87,55 @@ public partial class HintBar : CanvasLayer
         _background.Position = new Vector2(
             area.Position.X + (area.Size.X - _background.Size.X) / 2f,
             area.End.Y - EdgeGap - _background.Size.Y);
+    }
+
+    // The focused control on a controller, the hovered one on a mouse.
+    public static Control PointedControl(Viewport viewport)
+    {
+        return InputDevice.UsingController ? viewport.GuiGetFocusOwner() : viewport.GuiGetHoveredControl();
+    }
+
+    // The panel the pointer is in; else the last one it was in, if that's still open; else the top one.
+    private Control ResolveAnchor(Control top)
+    {
+        Control pointedPanel = PanelHolding(PointedControl(GetViewport()));
+
+        if (pointedPanel != null)
+        {
+            _lastPointedPanel = pointedPanel;
+            return pointedPanel;
+        }
+
+        if (_lastPointedPanel != null && IsInstanceValid(_lastPointedPanel)
+            && UiPanelStack.Open.Contains(_lastPointedPanel) && _lastPointedPanel.IsVisibleInTree())
+        {
+            return _lastPointedPanel;
+        }
+
+        _lastPointedPanel = null;
+        return top;
+    }
+
+    // The topmost open panel holding the pointer - a station and Inventory sit side by side, and the
+    // bar goes under whichever one the player is working in.
+    private static Control PanelHolding(Control pointed)
+    {
+        if (pointed == null)
+        {
+            return null;
+        }
+
+        for (int i = UiPanelStack.Open.Count - 1; i >= 0; i--)
+        {
+            Control panel = UiPanelStack.Open[i];
+
+            if (panel.IsVisibleInTree() && (panel == pointed || panel.IsAncestorOf(pointed)))
+            {
+                return panel;
+            }
+        }
+
+        return null;
     }
 
     // Adds hints in order until the next one would overflow the panel's width.

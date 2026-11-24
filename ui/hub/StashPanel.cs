@@ -1,10 +1,11 @@
 using Godot;
+using System.Collections.Generic;
 
 // The hub stash: named tabs, each a grid like Inventory's, beside Inventory like the vendor and
 // crafting table. The first tab is free and each extra one costs GameRules.StashTabGoldCost. One
 // ItemGridView shows whichever tab is current, so dragging, tooltips and quick-move all work across the
 // two panels; with the stash open, a quick-move from Inventory lands in the current tab.
-public partial class StashPanel : Control
+public partial class StashPanel : Control, IHintSource
 {
     public static StashPanel Instance { get; private set; }
 
@@ -67,6 +68,9 @@ public partial class StashPanel : Control
             GetViewport().SetInputAsHandled();
         }
     }
+
+    public void AddHints(List<Hint> hints) =>
+        StationHints.Add(hints, this, "Stash", "To Stash", item => CurrentTab.Grid.HasRoomFor(item));
 
     // The current tab's first space it fits. Never from the stash into itself - a quick-move from the
     // stash falls through to Inventory instead.

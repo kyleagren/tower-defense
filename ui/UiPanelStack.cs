@@ -98,6 +98,9 @@ public static class UiPanelStack
 
     public static Control Top => _open.Count > 0 ? _open[^1] : null;
 
+    // Bottom to top.
+    public static IReadOnlyList<Control> Open => _open;
+
     // Some panels stand the character still, keyboard included: one whose choice replaces the
     // character or the level, where there's nowhere worth walking to mid-choice, and the build menu.
     public static bool BlocksMovement => _blockingMovement.Count > 0;

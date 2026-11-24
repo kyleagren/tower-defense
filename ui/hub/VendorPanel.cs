@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 // The vendor. Two tabs - items currently for sale, and a buyback list of whatever's been sold
 // this hub visit - both regenerated fresh every time the hub loads, and the stock rerollable for
@@ -9,7 +10,7 @@ using System;
 // parked there to a crash would be real loss. Buying and buying back both spend
 // gold for an item at its SaleValue; selling (drag onto this panel, or Ctrl+click while it's open)
 // pays that same value and moves the item into Buyback - no markup either direction.
-public partial class VendorPanel : Control
+public partial class VendorPanel : Control, IHintSource
 {
     public static VendorPanel Instance { get; private set; }
 
@@ -73,6 +74,9 @@ public partial class VendorPanel : Control
             GetViewport().SetInputAsHandled();
         }
     }
+
+    public void AddHints(List<Hint> hints) =>
+        StationHints.Add(hints, this, "Vendor", "Sell", _ => true, carriedLabel: "Sell");
 
     private void Close()
     {

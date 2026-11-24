@@ -5,5 +5,5 @@ using System.Collections.Generic;
 // whatever doesn't fit from the end.
 public interface IHintSource
 {
-    IEnumerable<Hint> GetHints();
+    void AddHints(List<Hint> hints);
 }
